@@ -1,0 +1,28 @@
+{
+    "compilerOptions": {
+        //"baseUrl": "./src2",
+        "sourceMap": false,
+        "module": "es6",
+        "target": "es6",
+        "esModuleInterop": true,
+        "jsx": "preserve",
+        "lib": [
+            "dom",
+            "es6"
+        ],
+        "outDir": "js/",
+        "allowSyntheticDefaultImports": true,
+        "moduleResolution": "node",
+        "strictNullChecks": true
+    },
+    "files": [
+        "src/wastes.d.ts"
+    ],
+    "include": [
+        "src",
+        "util"
+    ],
+    "exclude": [
+        "node_modules",
+    ]
+}
