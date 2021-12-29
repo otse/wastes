@@ -320,7 +320,7 @@ namespace lod {
 }
 
 export namespace Util {
-	const showWireframe = true;
+	const showWireframe = false;
 	export function SectorShow(sector: lod.Sector) {
 		let breadth = lod.Unit * lod.UnitsPerSector;
 		let any = sector as any;

@@ -726,7 +726,6 @@ void main() {
             any.mesh.updateMatrix();
             any.mesh.frustumCulled = false;
             any.mesh.matrixAutoUpdate = false;
-            ren.groups.axisSwap.add(any.mesh);
         }
         Util.SectorShow = SectorShow;
         function SectorHide(sector) {
@@ -1133,20 +1132,32 @@ void main() {
             objectmaps.objectmap = new ObjectMap('objectmap');
             objectmaps.treemap = new ObjectMap('treemap');
             objectmaps.colormap = new ObjectMap('colormap');
-            /*hooks.register('sectorCreate', (x) => {
-                return
-                let sector = x as lod.Sector
-                pts.func(sector.small, (pos) => {
-                    const color = treemap.bit(pos)
-                    if (color[0] > treeTreshold) {
-                        let tree = new Tree()
-                        tree.wpos = pos
-                        wastes.view.add(tree)
+            /*lod.SectorHooks.OnShow.register((sector: lod.Sector) => {
+                objectmap.loop(sector.small, (pos, color) => {
+                    if (color[0] == 254) {
+                        let wall = new Wall()
+                        wall.wpos = [pos[0], pos[1]]
+                        wests.view.add(wall)
                     }
-                    return false
                 })
                 return false
             })*/
+            const treeTreshold = 50;
+            hooks.register('sectorCreate', (x) => {
+                let sector = x;
+                pts.func(sector.small, (pos) => {
+                    const color = objectmaps.treemap.bit(pos);
+                    if (color[0] > treeTreshold) {
+                        let shrubs = new Shrubs();
+                        shrubs.wpos = pos;
+                        shrubs.create();
+                        wests.view.add(shrubs);
+                        console.log('shrubs');
+                    }
+                    return false;
+                });
+                return false;
+            });
             hooks.register('sectorCreate', (x) => {
                 let sector = x;
                 pts.func(sector.small, (pos) => {
@@ -1210,6 +1221,20 @@ void main() {
             }
         }
         objectmaps.House = House;
+        class Shrubs extends lod$1.Obj {
+            constructor() {
+                super(undefined);
+            }
+            create() {
+                this.size = [16, 14];
+                new Sprite({
+                    bind: this,
+                    img: 'tex/shrubs',
+                    z: 1
+                });
+            }
+        }
+        objectmaps.Shrubs = Shrubs;
     })(objectmaps || (objectmaps = {}));
     var objectmaps$1 = objectmaps;
 

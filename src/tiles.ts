@@ -26,23 +26,23 @@ export namespace tiles {
 		console.log(' tiles start ');
 
 		pts.func(new aabb2([0, 0], [mapSize - 1, mapSize - 1]), (pos: vec2) => {
-			let x = pos[0]
-			let y = pos[1]
+			let x = pos[0];
+			let y = pos[1];
 			if (tiles[y] == undefined)
-				tiles[y] = []
-			let tile = new Tile([x, y])
-			tiles[y][x] = tile
-			tile.create()
-			wests.view.add(tile)
-			return false
+				tiles[y] = [];
+			let tile = new Tile([x, y]);
+			tiles[y][x] = tile;
+			tile.create();
+			wests.view.add(tile);
+			return false;
 		})
 	}
 
 	export class Tile extends lod.Obj {
 		constructor(wpos: vec2) {
-			super(undefined, Numbers.Tiles)
-			this.wpos = wpos
-			this.size = [16, 14]
+			super(undefined, Numbers.Tiles);
+			this.wpos = wpos;
+			this.size = [16, 14];
 			
 		}
 		create() {

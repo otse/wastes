@@ -23,9 +23,9 @@ namespace objectmaps {
 
 		console.log(' objects register ');
 
-		objectmap = new ObjectMap('objectmap')
-		treemap = new ObjectMap('treemap')
-		colormap = new ObjectMap('colormap')
+		objectmap = new ObjectMap('objectmap');
+		treemap = new ObjectMap('treemap');
+		colormap = new ObjectMap('colormap');
 
 		/*lod.SectorHooks.OnShow.register((sector: lod.Sector) => {
 			objectmap.loop(sector.small, (pos, color) => {
@@ -37,22 +37,24 @@ namespace objectmaps {
 			})
 			return false
 		})*/
-		const treeTreshold = 50
+		const treeTreshold = 50;
 
-		/*hooks.register('sectorCreate', (x) => {
-			return
+		hooks.register('sectorCreate', (x) => {
 			let sector = x as lod.Sector
 			pts.func(sector.small, (pos) => {
-				const color = treemap.bit(pos)
-				if (color[0] > treeTreshold) {
-					let tree = new Tree()
-					tree.wpos = pos
-					wastes.view.add(tree)
+				const color = treemap.bit(pos);
+				if (color[0] > treeTreshold) {					
+					let shrubs = new Shrubs();
+					shrubs.wpos = pos;
+					shrubs.create();
+					wastes.view.add(shrubs);
+					console.log('shrubs');
+					
 				}
-				return false
+				return false;
 			})
-			return false
-		})*/
+			return false;
+		})
 
 		hooks.register('sectorCreate', (x) => {
 			let sector = x as lod.Sector
@@ -65,9 +67,9 @@ namespace objectmaps {
 					shack.create();
 					wastes.view.add(shack);
 				}
-				return false
+				return false;
 			})
-			return false
+			return false;
 		})
 	}
 
@@ -82,26 +84,26 @@ namespace objectmaps {
 		canvas
 		ctx
 		constructor(id: string) {
-			var img = document.getElementById(id) as any
-			this.canvas = document.createElement('canvas')!
-			this.canvas.width = mapSpan
-			this.canvas.height = mapSpan
-			this.ctx = this.canvas.getContext('2d')!
+			var img = document.getElementById(id) as any;
+			this.canvas = document.createElement('canvas')!;
+			this.canvas.width = mapSpan;
+			this.canvas.height = mapSpan;
+			this.ctx = this.canvas.getContext('2d')!;
 			//this.ctx.scale(1, 1);
-			this.ctx.drawImage(img, 0, 0, img.width, img.height)
-			this.process()
+			this.ctx.drawImage(img, 0, 0, img.width, img.height);
+			this.process();
 		}
 		bit(pos: vec2): vec4 {
-			return this.bits[pos[1]] ? this.bits[pos[1]][pos[0]] || [0, 0, 0, 0] : [0, 0, 0, 0]
+			return this.bits[pos[1]] ? this.bits[pos[1]][pos[0]] || [0, 0, 0, 0] : [0, 0, 0, 0];
 		}
 		process() {
 			for (let y = 0; y < mapSpan; y++) {
-				this.bits[y] = []
+				this.bits[y] = [];
 				for (let x = 0; x < mapSpan; x++) {
-					const data = this.ctx.getImageData(x, mapSpan - 1 - y, 1, 1).data
+					const data = this.ctx.getImageData(x, mapSpan - 1 - y, 1, 1).data;
 					if (this.bits[y] == undefined)
-						this.bits[y] = []
-					this.bits[y][x] = data
+						this.bits[y] = [];
+					this.bits[y][x] = data;
 				}
 			}
 		}
@@ -117,6 +119,22 @@ namespace objectmaps {
 				bind: this,
 				img: 'tex/house',
 				z: 2
+			});
+		}
+		//tick() {
+		//}
+	}
+
+	export class Shrubs extends lod.Obj {
+		constructor() {
+			super(undefined);
+		}
+		create() {
+			this.size = [16, 14];
+			let shape = new Sprite({
+				bind: this,
+				img: 'tex/shrubs',
+				z: 1
 			});
 		}
 		//tick() {
