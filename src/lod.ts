@@ -6,14 +6,14 @@ import wests from "./wastes";
 import ren from "./renderer";
 import hooks from "./hooks";
 
-export namespace Counts {
-	export type Count = [active: number, total: number];
+export namespace Numbers {
+	export type Tally = [active: number, total: number]
 
-	export var Sectors: Count = [0, 0]
-	export var Objs: Count = [0, 0]
-	export var Trees: Count = [0, 0]
-	export var Sprites: Count = [0, 0]
-	export var Tiles: Count = [0, 0]
+	export var Sectors: Tally = [0, 0]
+	export var Objs: Tally = [0, 0]
+	export var Trees: Tally = [0, 0]
+	export var Sprites: Tally = [0, 0]
+	export var Tiles: Tally = [0, 0]
 };
 
 class Toggle {
@@ -43,12 +43,11 @@ namespace lod {
 	type Units = vec2
 	type SectorUnits = vec2
 	type Pixels = vec2
-	
-	export const Unit = 16
-	export const SectorSpan = 4
 
-	export function register()
-	{
+	export const Unit = 16
+	export const UnitsPerSector = 4
+
+	export function register() {
 		hooks.create('sectorCreate')
 		hooks.create('sectorShow')
 		hooks.create('sectorHide')
@@ -61,59 +60,66 @@ namespace lod {
 			this.grid = new Grid(5, 5, this);
 		}
 		update(wpos: Units) {
-			this.grid.big = Galaxy.big(wpos)
-			this.grid.offs()
-			this.grid.crawl()
+			this.grid.big = Galaxy.big(wpos);
+			this.grid.offs();
+			this.grid.crawl();
 		}
-		lookup(x, y): Sector | undefined {
-			if (this.arrays[y] == undefined)
-				this.arrays[y] = []
-			return this.arrays[y][x]
+		lookup(big: vec2): Sector | undefined {
+			if (this.arrays[big[1]] == undefined)
+				this.arrays[big[1]] = [];
+			return this.arrays[big[1]][big[0]];
 		}
-		at(x, y): Sector {
-			return this.lookup(x, y) || this.make(x, y)
+		atrpos(pixels: Pixels): Sector {
+			let units = Galaxy.unproject(pixels);
+			let bigs = Galaxy.big(units);
+			return this.at(bigs);
 		}
-		atwpos(wpos: Units): Sector {
-			let big = Galaxy.big(wpos)
-			return this.at(big[0], big[1])
+		at(big: vec2): Sector {
+			return this.lookup(big) || this.make(big);
 		}
-		protected make(x, y): Sector {
-			let s = this.lookup(x, y)
+		add(obj: Obj) {
+			obj.wtorpos();
+			let sector = this.atrpos(obj.rpos);
+			sector.add(obj);
+		}
+		protected make(big): Sector {
+			let s = this.lookup(big);
 			if (s)
-				return s
-			s = this.arrays[y][x] = new Sector(x, y, this)
-			return s
+				return s;
+			s = this.arrays[big[1]][big[0]] = new Sector(big, this);
+			return s;
 		}
-		static big(wpos: Units): SectorUnits {
-			return pts.floor(pts.divide(wpos, SectorSpan));
+		static big(units: Units): SectorUnits {
+			return pts.floor(pts.divide(units, UnitsPerSector));
 		}
-		static unproject(rpos: Pixels): Units {
-			return pts.divide(rpos, lod.Unit);
+		static unproject(pixels: Pixels): Units {
+			return pts.divide(pixels, Unit);
 		}
 	}
-	
+
 	export class Sector extends Toggle {
 		group: Group;
 		//readonly span = 2000;
-		readonly big: SectorUnits;
+		readonly screen: aabb2;
 		readonly small: aabb2;
 		private readonly objs: Obj[] = [];
 		objs_(): ReadonlyArray<Obj> { return this.objs; }
 		constructor(
-			public readonly x,
-			public readonly y,
+			public readonly big: vec2,
 			readonly galaxy: Galaxy
 		) {
-			super()
-			this.big = [x, y]
+			super();
+			let x = pts.mult(big, Unit);
+			let y = pts.add(x, [Unit, Unit]);
+			this.screen = new aabb2(x, y);
 			this.small = new aabb2(
-				[x * SectorSpan, y * SectorSpan],
-				[x * SectorSpan + SectorSpan - 1, y * SectorSpan + SectorSpan - 1])
-			this.group = new Group
-			Counts.Sectors[1]++
-			galaxy.arrays[y][x] = this
-			hooks.call('sectorCreate', this)
-			
+				[this.big[0] * UnitsPerSector, this.big[1] * UnitsPerSector],
+				[this.big[0] * UnitsPerSector + UnitsPerSector - 1, this.big[1] * UnitsPerSector + UnitsPerSector - 1]);
+			this.group = new Group;
+			Numbers.Sectors[1]++;
+			galaxy.arrays[this.big[1]][this.big[0]] = this;
+			hooks.call('sectorCreate', this);
+
 		}
 		add(obj: Obj) {
 			let i = this.objs.indexOf(obj);
@@ -132,7 +138,7 @@ namespace lod {
 			}
 		}
 		swap(obj: Obj) {
-			let newSector = this.galaxy.atwpos(obj.wpos);
+			let newSector = this.galaxy.atrpos(obj.rpos);
 			if (obj.sector != newSector) {
 				obj.sector?.remove(obj);
 				newSector.add(obj);
@@ -148,7 +154,7 @@ namespace lod {
 		show() {
 			if (this.on())
 				return;
-			Counts.Sectors[0]++;
+			Numbers.Sectors[0]++;
 			Util.SectorShow(this);
 			//console.log(' sector show ');
 			for (let obj of this.objs)
@@ -159,7 +165,7 @@ namespace lod {
 		hide() {
 			if (this.off())
 				return;
-			Counts.Sectors[0]--;
+			Numbers.Sectors[0]--;
 			Util.SectorHide(this);
 			//console.log(' sector hide ');
 			for (let obj of this.objs)
@@ -187,7 +193,7 @@ namespace lod {
 			for (let y = -this.spread; y < this.spread; y++) {
 				for (let x = -this.spread; x < this.spread; x++) {
 					let pos = pts.add(this.big, [x, y]);
-					let sector = this.galaxy.lookup(pos[0], pos[1]);
+					let sector = this.galaxy.lookup(pos);
 					if (!sector)
 						continue;
 					if (!sector.isActive()) {
@@ -219,6 +225,7 @@ namespace lod {
 	};
 	export class Obj extends Toggle {
 		aabb: aabb2
+		hexagonal: boolean
 		wpos: Units = [0, 0]
 		rpos: Pixels = [0, 0]
 		size: vec2 = [100, 100]
@@ -228,8 +235,9 @@ namespace lod {
 		rz = 0
 		constructor(
 			stuffs: ObjStuffs | undefined,
-			public readonly counts: Counts.Count = Counts.Objs) {
+			public readonly counts: Numbers.Tally = Numbers.Objs) {
 			super();
+			this.hexagonal = false
 			this.counts[1]++;
 		}
 		finalize() {
@@ -274,16 +282,16 @@ namespace lod {
 	}
 
 	export namespace Shape {
-		export type Parameters = Shape['properties'];
+		export type Parameters = Shape['pars'];
 	};
 
 	export class Shape extends Toggle {
 		constructor(
-			public readonly properties: { bind: Obj },
+			public readonly pars: { bind: Obj },
 			public readonly counts
 		) {
 			super();
-			this.properties.bind.shape = this;
+			this.pars.bind.shape = this;
 			this.counts[1]++;
 		}
 		update() { // implement me
@@ -312,9 +320,9 @@ namespace lod {
 }
 
 export namespace Util {
-	const showWireframe = false;
+	const showWireframe = true;
 	export function SectorShow(sector: lod.Sector) {
-		let breadth = lod.Unit * lod.SectorSpan;
+		let breadth = lod.Unit * lod.UnitsPerSector;
 		let any = sector as any;
 		any.geometry = new PlaneBufferGeometry(breadth, breadth, 2, 2);
 		any.material = new MeshBasicMaterial({
@@ -323,7 +331,7 @@ export namespace Util {
 			color: 'red'
 		});
 		any.mesh = new Mesh(any.geometry, any.material);
-		any.mesh.position.fromArray([sector.x * breadth + breadth / 2, sector.y * breadth + breadth / 2, 0]);
+		any.mesh.position.fromArray([sector.big[0] * breadth + breadth / 2, sector.big[1] * breadth + breadth / 2, 0]);
 		any.mesh.updateMatrix();
 		any.mesh.frustumCulled = false;
 		any.mesh.matrixAutoUpdate = false;

@@ -1,6 +1,6 @@
 import { default as THREE, Group, Matrix, Matrix4, AxesHelper } from 'three';
 
-import App from "../app";
+import app from "../app";
 import wests from '../wastes';
 import pts from "../pts";
 import ren from "../renderer";
@@ -41,13 +41,13 @@ namespace panningScript {
 		if (!enabled)
 			return
 
-		if (App.button(1) == 1) {
-			begin = App.mouse()
+		if (app.button(1) == 1) {
+			begin = app.mouse()
 			before = last
 		}
-		if (App.button(1) >= 1) {
+		if (app.button(1) >= 1) {
 			console.log('hold')
-			let dif = pts.subtract(begin, App.mouse())
+			let dif = pts.subtract(begin, app.mouse())
 			dif = pts.divide(dif, 250)
 			dif = pts.add(dif, before)
 			last = pts.clone(dif)

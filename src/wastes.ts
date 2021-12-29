@@ -49,7 +49,7 @@ export namespace wests {
 			start()
 	}
 
-	const MAX_WAIT = 1000
+	const MAX_WAIT = 500
 	function reasonable_waiter() {
 		if (time + MAX_WAIT < new Date().getTime()) {
 			console.warn(` passed reasonable wait time for resources `);

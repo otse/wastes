@@ -1,6 +1,6 @@
 import { default as THREE, OrthographicCamera, PerspectiveCamera, Clock, Scene, WebGLRenderer, Texture, TextureLoader, WebGLRenderTarget, ShaderMaterial, Mesh, PlaneBufferGeometry, Color, NearestFilter, RGBAFormat, Group, Renderer, AmbientLight, DirectionalLight } from 'three';
 
-import App from './app';
+import app from './app';
 import wests from './wastes';
 import View from './view';
 
@@ -207,7 +207,7 @@ namespace Renderer {
 	export function load_texture(file: string, mode = 1, cb?, key?: string): Texture {
 		if (mem[key || file])
 			return mem[key || file];
-		let texture = new TextureLoader().load(file + `?v=${App.salt}`, cb);
+		let texture = new TextureLoader().load(file + `?v=${app.salt}`, cb);
 		texture.generateMipmaps = false;
 		texture.center.set(0, 1);
 		texture.wrapS = texture.wrapT = THREE.RepeatWrapping;

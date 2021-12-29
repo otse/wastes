@@ -2,13 +2,14 @@ import { THREE, Group, Mesh, Shader, BoxGeometry, ConeGeometry, CylinderGeometry
 
 import { ColladaLoader } from "three/examples/jsm/loaders/ColladaLoader";
 
-import lod, { Counts } from "./lod";
+import lod, { Numbers } from "./lod";
 import wastes from "./wastes";
 import ren from "./renderer";
 import pts from "./pts";
 import aabb2 from "./aabb2";
 import tiles from "./tiles";
 import hooks from "./hooks";
+import Sprite from "./sprite";
 
 namespace objectmaps {
 
@@ -53,20 +54,21 @@ namespace objectmaps {
 			return false
 		})*/
 
-		/*hooks.register('sectorCreate', (x) => {
+		hooks.register('sectorCreate', (x) => {
 			let sector = x as lod.Sector
 			pts.func(sector.small, (pos) => {
-				const color = objectmap.bit(pos)
-				if (color[0] == 255 && color[1] == 255 && color[2] == 255) {
+				const clr = objectmap.bit(pos)
+				if (clr[0] == 255 && clr[1] == 255 && clr[2] == 255) {
 					console.log('make a shack');
-					let shack = new Shack()
-					shack.wpos = pos
-					//wests.view.add(shack)
+					let shack = new House();
+					shack.wpos = pos;
+					shack.create();
+					wastes.view.add(shack);
 				}
 				return false
 			})
 			return false
-		})*/
+		})
 	}
 
 	export function start() {
@@ -103,6 +105,22 @@ namespace objectmaps {
 				}
 			}
 		}
+	}
+
+	export class House extends lod.Obj {
+		constructor() {
+			super(undefined);
+		}
+		create() {
+			this.size = [20, 22];
+			let shape = new Sprite({
+				bind: this,
+				img: 'tex/house',
+				z: 2
+			});
+		}
+		//tick() {
+		//}
 	}
 }
 

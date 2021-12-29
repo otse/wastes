@@ -1,7 +1,7 @@
 import { Vector2, Mesh, Shader, Texture, PlaneBufferGeometry, MeshLambertMaterial, MeshLambertMaterialParameters, Matrix3, Matrix4 } from "three";
 
 import wests from "./wastes";
-import lod, { Counts } from "./lod";
+import lod, { Numbers } from "./lod";
 import ren from "./renderer";
 import pts from "./pts";
 import objectmaps from "./objects";
@@ -11,7 +11,7 @@ import Sprite from "./sprite";
 
 export namespace tiles {
 
-	const mapSize = 10
+	const mapSize = 100
 
 	var tiles: Tile[][] = []
 
@@ -39,14 +39,13 @@ export namespace tiles {
 	}
 
 	export class Tile extends lod.Obj {
-		constructor(pos: vec2) {
-			super(undefined, Counts.Tiles)
-			this.wpos = pos
+		constructor(wpos: vec2) {
+			super(undefined, Numbers.Tiles)
+			this.wpos = wpos
 			this.size = [16, 14]
 			
 		}
 		create() {
-			console.log('tile create');
 			const clr = objectmaps.colormap.bit(this.wpos);
 			let shape = new Sprite({
 				bind: this,

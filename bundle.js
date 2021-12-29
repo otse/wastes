@@ -25,11 +25,17 @@ var wastes = (function (exports, THREE) {
                 }
             }
         }
-        static projecthex(a) {
-            let mult = pts.mult(a, 16, 11);
-            mult[0] = a[1] % 2 ? mult[0] : mult[0] + 8;
+        static projecthex(w) {
+            let mult = pts.mult(w, 16, 11);
+            mult[0] = w[1] % 2 ? mult[0] : mult[0] + 8;
             //mult[1] = a[1] % 2 ? mult[1] : mult[1]
             return mult;
+        }
+        static unprojecthex(r) {
+            let div = pts.divide(r, 16, 11);
+            div[0] = r[1] % 2 ? div[0] : div[0] - .5;
+            //mult[1] = a[1] % 2 ? mult[1] : mult[1]
+            return div;
         }
         static project(a) {
             return [a[0] / 2 + a[1] / 2, a[1] / 4 - a[0] / 4];
@@ -140,8 +146,8 @@ var wastes = (function (exports, THREE) {
     }
     aabb2.TEST = TEST;
 
-    var App;
-    (function (App) {
+    var app;
+    (function (app) {
         let KEY;
         (function (KEY) {
             KEY[KEY["OFF"] = 0] = "OFF";
@@ -149,12 +155,12 @@ var wastes = (function (exports, THREE) {
             KEY[KEY["WAIT"] = 2] = "WAIT";
             KEY[KEY["AGAIN"] = 3] = "AGAIN";
             KEY[KEY["UP"] = 4] = "UP";
-        })(KEY = App.KEY || (App.KEY = {}));
+        })(KEY = app.KEY || (app.KEY = {}));
         var keys = {};
         var buttons = {};
         var pos = [0, 0];
-        App.salt = 'x';
-        App.wheel = 0;
+        app.salt = 'x';
+        app.wheel = 0;
         function onkeys(event) {
             const key = event.key.toLowerCase();
             if ('keydown' == event.type)
@@ -164,25 +170,25 @@ var wastes = (function (exports, THREE) {
             if (event.keyCode == 114)
                 event.preventDefault();
         }
-        App.onkeys = onkeys;
+        app.onkeys = onkeys;
         function key(k) {
             return keys[k];
         }
-        App.key = key;
+        app.key = key;
         function button(b) {
             return buttons[b];
         }
-        App.button = button;
+        app.button = button;
         function mouse() {
             return [...pos];
         }
-        App.mouse = mouse;
+        app.mouse = mouse;
         function boot(version) {
-            App.salt = version;
+            app.salt = version;
             function onmousemove(e) { pos[0] = e.clientX; pos[1] = e.clientY; }
             function onmousedown(e) { buttons[e.button] = 1; }
             function onmouseup(e) { buttons[e.button] = 0; }
-            function onwheel(e) { App.wheel = e.deltaY < 0 ? 1 : -1; }
+            function onwheel(e) { app.wheel = e.deltaY < 0 ? 1 : -1; }
             document.onkeydown = document.onkeyup = onkeys;
             document.onmousemove = onmousemove;
             document.onmousedown = onmousedown;
@@ -192,7 +198,7 @@ var wastes = (function (exports, THREE) {
             exports.wests.init();
             loop();
         }
-        App.boot = boot;
+        app.boot = boot;
         function delay() {
             for (let i in keys) {
                 if (KEY.PRESS == keys[i])
@@ -201,27 +207,27 @@ var wastes = (function (exports, THREE) {
                     keys[i] = KEY.OFF;
             }
         }
-        App.delay = delay;
+        app.delay = delay;
         function loop(timestamp) {
             requestAnimationFrame(loop);
             ren.update();
             exports.wests.tick();
             ren.render();
-            App.wheel = 0;
+            app.wheel = 0;
             for (let b of [0, 1, 2])
                 if (buttons[b] == 1)
                     buttons[b] = 2;
             delay();
         }
-        App.loop = loop;
+        app.loop = loop;
         function sethtml(selector, html) {
             let element = document.querySelectorAll(selector)[0];
             element.innerHTML = html;
         }
-        App.sethtml = sethtml;
-    })(App || (App = {}));
-    window['App'] = App;
-    var App$1 = App;
+        app.sethtml = sethtml;
+    })(app || (app = {}));
+    window['App'] = app;
+    var app$1 = app;
 
     const fragmentPost = `
 // Todo add effect
@@ -345,7 +351,7 @@ void main() {
         function load_texture(file, mode = 1, cb, key) {
             if (mem[key || file])
                 return mem[key || file];
-            let texture = new THREE.TextureLoader().load(file + `?v=${App$1.salt}`, cb);
+            let texture = new THREE.TextureLoader().load(file + `?v=${app$1.salt}`, cb);
             texture.generateMipmaps = false;
             texture.center.set(0, 1);
             texture.wrapS = texture.wrapT = THREE__default["default"].RepeatWrapping;
@@ -412,14 +418,14 @@ void main() {
         }
     }
 
-    var Counts;
-    (function (Counts) {
-        Counts.Sectors = [0, 0];
-        Counts.Objs = [0, 0];
-        Counts.Trees = [0, 0];
-        Counts.Sprites = [0, 0];
-        Counts.Tiles = [0, 0];
-    })(Counts || (Counts = {}));
+    var Numbers;
+    (function (Numbers) {
+        Numbers.Sectors = [0, 0];
+        Numbers.Objs = [0, 0];
+        Numbers.Trees = [0, 0];
+        Numbers.Sprites = [0, 0];
+        Numbers.Tiles = [0, 0];
+    })(Numbers || (Numbers = {}));
     class Toggle {
         constructor() {
             this.active = false;
@@ -448,7 +454,7 @@ void main() {
     var lod;
     (function (lod) {
         lod.Unit = 16;
-        lod.SectorSpan = 4;
+        lod.UnitsPerSector = 4;
         function register() {
             hooks.create('sectorCreate');
             hooks.create('sectorShow');
@@ -465,45 +471,52 @@ void main() {
                 this.grid.offs();
                 this.grid.crawl();
             }
-            lookup(x, y) {
-                if (this.arrays[y] == undefined)
-                    this.arrays[y] = [];
-                return this.arrays[y][x];
+            lookup(big) {
+                if (this.arrays[big[1]] == undefined)
+                    this.arrays[big[1]] = [];
+                return this.arrays[big[1]][big[0]];
             }
-            at(x, y) {
-                return this.lookup(x, y) || this.make(x, y);
+            atrpos(pixels) {
+                let units = Galaxy.unproject(pixels);
+                let bigs = Galaxy.big(units);
+                return this.at(bigs);
             }
-            atwpos(wpos) {
-                let big = Galaxy.big(wpos);
-                return this.at(big[0], big[1]);
+            at(big) {
+                return this.lookup(big) || this.make(big);
             }
-            make(x, y) {
-                let s = this.lookup(x, y);
+            add(obj) {
+                obj.wtorpos();
+                let sector = this.atrpos(obj.rpos);
+                sector.add(obj);
+            }
+            make(big) {
+                let s = this.lookup(big);
                 if (s)
                     return s;
-                s = this.arrays[y][x] = new Sector(x, y, this);
+                s = this.arrays[big[1]][big[0]] = new Sector(big, this);
                 return s;
             }
-            static big(wpos) {
-                return pts.floor(pts.divide(wpos, lod.SectorSpan));
+            static big(units) {
+                return pts.floor(pts.divide(units, lod.UnitsPerSector));
             }
-            static unproject(rpos) {
-                return pts.divide(rpos, lod.Unit);
+            static unproject(pixels) {
+                return pts.divide(pixels, lod.Unit);
             }
         }
         lod.Galaxy = Galaxy;
         class Sector extends Toggle {
-            constructor(x, y, galaxy) {
+            constructor(big, galaxy) {
                 super();
-                this.x = x;
-                this.y = y;
+                this.big = big;
                 this.galaxy = galaxy;
                 this.objs = [];
-                this.big = [x, y];
-                this.small = new aabb2([x * lod.SectorSpan, y * lod.SectorSpan], [x * lod.SectorSpan + lod.SectorSpan - 1, y * lod.SectorSpan + lod.SectorSpan - 1]);
+                let x = pts.mult(big, lod.Unit);
+                let y = pts.add(x, [lod.Unit, lod.Unit]);
+                this.screen = new aabb2(x, y);
+                this.small = new aabb2([this.big[0] * lod.UnitsPerSector, this.big[1] * lod.UnitsPerSector], [this.big[0] * lod.UnitsPerSector + lod.UnitsPerSector - 1, this.big[1] * lod.UnitsPerSector + lod.UnitsPerSector - 1]);
                 this.group = new THREE.Group;
-                Counts.Sectors[1]++;
-                galaxy.arrays[y][x] = this;
+                Numbers.Sectors[1]++;
+                galaxy.arrays[this.big[1]][this.big[0]] = this;
                 hooks.call('sectorCreate', this);
             }
             objs_() { return this.objs; }
@@ -525,7 +538,7 @@ void main() {
             }
             swap(obj) {
                 var _a;
-                let newSector = this.galaxy.atwpos(obj.wpos);
+                let newSector = this.galaxy.atrpos(obj.rpos);
                 if (obj.sector != newSector) {
                     (_a = obj.sector) === null || _a === void 0 ? void 0 : _a.remove(obj);
                     newSector.add(obj);
@@ -541,7 +554,7 @@ void main() {
             show() {
                 if (this.on())
                     return;
-                Counts.Sectors[0]++;
+                Numbers.Sectors[0]++;
                 Util.SectorShow(this);
                 //console.log(' sector show ');
                 for (let obj of this.objs)
@@ -552,7 +565,7 @@ void main() {
             hide() {
                 if (this.off())
                     return;
-                Counts.Sectors[0]--;
+                Numbers.Sectors[0]--;
                 Util.SectorHide(this);
                 //console.log(' sector hide ');
                 for (let obj of this.objs)
@@ -580,7 +593,7 @@ void main() {
                 for (let y = -this.spread; y < this.spread; y++) {
                     for (let x = -this.spread; x < this.spread; x++) {
                         let pos = pts.add(this.big, [x, y]);
-                        let sector = this.galaxy.lookup(pos[0], pos[1]);
+                        let sector = this.galaxy.lookup(pos);
                         if (!sector)
                             continue;
                         if (!sector.isActive()) {
@@ -609,13 +622,14 @@ void main() {
         }
         lod.Grid = Grid;
         class Obj extends Toggle {
-            constructor(stuffs, counts = Counts.Objs) {
+            constructor(stuffs, counts = Numbers.Objs) {
                 super();
                 this.counts = counts;
                 this.wpos = [0, 0];
                 this.rpos = [0, 0];
                 this.size = [100, 100];
                 this.rz = 0;
+                this.hexagonal = false;
                 this.counts[1]++;
             }
             finalize() {
@@ -664,11 +678,11 @@ void main() {
         }
         lod.Obj = Obj;
         class Shape extends Toggle {
-            constructor(properties, counts) {
+            constructor(pars, counts) {
                 super();
-                this.properties = properties;
+                this.pars = pars;
                 this.counts = counts;
-                this.properties.bind.shape = this;
+                this.pars.bind.shape = this;
                 this.counts[1]++;
             }
             update() {
@@ -699,7 +713,7 @@ void main() {
     var Util;
     (function (Util) {
         function SectorShow(sector) {
-            let breadth = lod.Unit * lod.SectorSpan;
+            let breadth = lod.Unit * lod.UnitsPerSector;
             let any = sector;
             any.geometry = new THREE.PlaneBufferGeometry(breadth, breadth, 2, 2);
             any.material = new THREE.MeshBasicMaterial({
@@ -708,10 +722,11 @@ void main() {
                 color: 'red'
             });
             any.mesh = new THREE.Mesh(any.geometry, any.material);
-            any.mesh.position.fromArray([sector.x * breadth + breadth / 2, sector.y * breadth + breadth / 2, 0]);
+            any.mesh.position.fromArray([sector.big[0] * breadth + breadth / 2, sector.big[1] * breadth + breadth / 2, 0]);
             any.mesh.updateMatrix();
             any.mesh.frustumCulled = false;
             any.mesh.matrixAutoUpdate = false;
+            ren.groups.axisSwap.add(any.mesh);
         }
         Util.SectorShow = SectorShow;
         function SectorHide(sector) {
@@ -800,13 +815,13 @@ void main() {
         var last = [0, 0]; // isometric
         var before = [0, 0];
         function tick() {
-            if (App$1.button(1) == 1) {
-                begin = App$1.mouse();
+            if (app$1.button(1) == 1) {
+                begin = app$1.mouse();
                 before = last;
             }
-            if (App$1.button(1) >= 1) {
+            if (app$1.button(1) >= 1) {
                 console.log('hold');
-                let dif = pts.subtract(begin, App$1.mouse());
+                let dif = pts.subtract(begin, app$1.mouse());
                 dif = pts.divide(dif, 250);
                 dif = pts.add(dif, before);
                 last = pts.clone(dif);
@@ -825,30 +840,20 @@ void main() {
     var panningScript$1 = panningScript;
 
     class Sprite extends lod$1.Shape {
-        constructor(properties) {
-            super(properties, Counts.Sprites);
-            this.properties = properties;
+        constructor(pars) {
+            super(pars, Numbers.Sprites);
+            this.pars = pars;
             this.dimetric = true;
-            if (!this.properties.color)
-                this.properties.color = [1, 1, 1, 1];
-            this.offset = [0, 0];
-            this.repeat = [1, 1];
-            this.center = [0, 1];
-            this.rotation = 0;
             this.spriteMatrix = new THREE.Matrix3;
         }
         update() {
             var _a, _b;
             if (!this.mesh)
                 return;
-            let offset = this.properties.offset || [0, 0];
-            let repeat = this.properties.repeat || [1, 1];
-            let center = this.properties.center || [0, 1];
-            this.spriteMatrix.setUvTransform(offset[0], offset[1], repeat[0], repeat[1], this.rotation, center[0], center[1]);
-            this.mesh.rotation.z = this.properties.bind.rz;
-            const obj = this.properties.bind;
+            this.mesh.rotation.z = this.pars.bind.rz;
+            const obj = this.pars.bind;
             let pos = pts.add(obj.rpos, pts.divide(obj.size, 2));
-            (_a = this.mesh) === null || _a === void 0 ? void 0 : _a.position.fromArray([...pos, 0]);
+            (_a = this.mesh) === null || _a === void 0 ? void 0 : _a.position.fromArray([...pos, this.pars.z || 0]);
             (_b = this.mesh) === null || _b === void 0 ? void 0 : _b.updateMatrix();
         }
         dispose() {
@@ -860,43 +865,40 @@ void main() {
             (_c = this.mesh.parent) === null || _c === void 0 ? void 0 : _c.remove(this.mesh);
         }
         create() {
-            let w = this.properties.bind.size[0];
-            let h = this.properties.bind.size[1];
-            this.geometry = new THREE.PlaneBufferGeometry(w, h);
-            this.material = MySpriteMaterial({
-                map: ren.load_texture(`${this.properties.img}.png`, 0),
+            this.geometry = new THREE.PlaneBufferGeometry(this.pars.bind.size[0], this.pars.bind.size[1]);
+            const color = this.pars.color || [255, 255, 255, 255];
+            this.material = SpriteMaterial({
+                map: ren.load_texture(`${this.pars.img}.png`, 0),
                 transparent: true,
-                shininess: 0,
-                color: new THREE.Color(`rgb(${this.properties.color[0]}, ${this.properties.color[1]}, ${this.properties.color[2]})}
+                color: new THREE.Color(`rgb(${color[0]}, ${color[1]}, ${color[2]})}
 			`)
-            }, {
-                spriteMatrix: this.spriteMatrix
             });
             this.mesh = new THREE.Mesh(this.geometry, this.material);
             this.mesh.frustumCulled = false;
             this.mesh.matrixAutoUpdate = false;
             this.update();
-            //if (this.y.drawable.x.obj.sector)
-            //	this.y.drawable.x.obj.sector.group.add(this.mesh);
-            //else
             ren.groups.axisSwap.add(this.mesh);
-            console.log('created sprite');
         }
     }
-    function MySpriteMaterial(parameters, uniforms) {
-        let material = new THREE.MeshPhongMaterial(parameters);
-        material.name = "MeshPhongSpriteMat";
+    function SpriteMaterial(parameters, uniforms) {
+        let material = new THREE.MeshBasicMaterial(parameters);
+        material.name = "SpriteMaterial";
         material.onBeforeCompile = function (shader) {
             shader.defines = {};
-            shader.uniforms.spriteMatrix = { value: uniforms.spriteMatrix };
-            shader.vertexShader = shader.vertexShader.replace(`#define PHONG`, `#define PHONG
-			uniform mat3 spriteMatrix;
-			`);
-            shader.vertexShader = shader.vertexShader.replace(`#include <uv_vertex>`, `#include <uv_vertex>
-			#ifdef USE_UV
-			vUv = ( spriteMatrix * vec3( uv, 1 ) ).xy;
-			#endif
-			`);
+            /*shader.vertexShader = shader.vertexShader.replace(
+                `#define PHONG`,
+                `#define PHONG
+                uniform mat3 spriteMatrix;
+                `
+            );
+            shader.vertexShader = shader.vertexShader.replace(
+                `#include <uv_vertex>`,
+                `#include <uv_vertex>
+                #ifdef USE_UV
+                vUv = ( spriteMatrix * vec3( uv, 1 ) ).xy;
+                #endif
+                `
+            );*/
         };
         return material;
     }
@@ -1008,7 +1010,7 @@ void main() {
     class View {
         constructor() {
             this.zoom = .3;
-            this.wpos = [5, 5];
+            this.wpos = [40, 30];
             this.rpos = [0, 0];
             this.mpos = [0, 0];
             this.mwpos = [0, 0];
@@ -1023,8 +1025,7 @@ void main() {
         chart(big) {
         }
         add(obj) {
-            let sector = this.galaxy.atwpos(obj.wpos);
-            sector.add(obj);
+            this.galaxy.add(obj);
         }
         remove(obj) {
             var _a;
@@ -1039,38 +1040,38 @@ void main() {
             this.galaxy.update(wpos);
         }
         mouse() {
-            let mouse = App$1.mouse();
+            let mouse = app$1.mouse();
             mouse = pts.subtract(mouse, pts.divide([ren.w, ren.h], 2));
             mouse = pts.mult(mouse, ren.ndpi);
             mouse[1] = -mouse[1];
             this.mrpos = pts.divide(pts.add(mouse, this.rpos), this.zoom);
             this.mwpos = lod$1.Galaxy.unproject(this.mrpos);
             // now..
-            if (App$1.button(2) >= 1) {
+            if (app$1.button(2) >= 1) {
                 hooks.call('viewClick', this);
             }
         }
         move() {
             let pan = 3;
             const zoomFactor = 1 / 10;
-            if (App$1.key('x'))
+            if (app$1.key('x'))
                 pan *= 3;
-            if (App$1.key('w'))
+            if (app$1.key('w'))
                 this.rpos[1] += pan;
-            if (App$1.key('s'))
+            if (app$1.key('s'))
                 this.rpos[1] -= pan;
-            if (App$1.key('a'))
+            if (app$1.key('a'))
                 this.rpos[0] -= pan;
-            if (App$1.key('d'))
+            if (app$1.key('d'))
                 this.rpos[0] += pan;
-            if (App$1.key('r') == 1)
+            if (app$1.key('r') == 1)
                 this.zoom -= zoomFactor;
-            if (App$1.key('f') == 1)
+            if (app$1.key('f') == 1)
                 this.zoom += zoomFactor;
             const min = .1;
             const max = 1;
             this.zoom = this.zoom > max ? max : this.zoom < min ? min : this.zoom;
-            this.wpos = lod$1.Galaxy.unproject(this.rpos);
+            this.wpos = pts.unprojecthex(this.rpos);
             pts.inv(this.rpos);
             //Renderer.camera.scale.fromArray([this.zoom, this.zoom, this.zoom]);
             //ren.groups.dimetric.scale.fromArray([this.zoom, this.zoom, this.zoom])
@@ -1088,7 +1089,7 @@ void main() {
             ren.groups.axisSwap.position.set(inv[0], inv[1], 0);
         }
         stats() {
-            if (App$1.key('h') == 1)
+            if (app$1.key('h') == 1)
                 this.show = !this.show;
             let crunch = ``;
             crunch += `DPI_UPSCALED_RT: ${ren.DPI_UPSCALED_RT}<br />`;
@@ -1111,11 +1112,11 @@ void main() {
             crunch += `view zoom: ${this.zoom.toPrecision(2)}<br />`;
             crunch += '<br />';
             //crunch += `world wpos: ${pts.to_string(this.pos)}<br /><br />`;
-            crunch += `sectors: ${Counts.Sectors[0]} / ${Counts.Sectors[1]}<br />`;
-            crunch += `game objs: ${Counts.Objs[0]} / ${Counts.Objs[1]}<br />`;
-            crunch += `sprites: ${Counts.Sprites[0]} / ${Counts.Sprites[1]}<br />`;
-            crunch += `trees: ${Counts.Trees[0]} / ${Counts.Trees[1]}<br />`;
-            crunch += `tiles: ${Counts.Tiles[0]} / ${Counts.Tiles[1]}<br />`;
+            crunch += `sectors: ${Numbers.Sectors[0]} / ${Numbers.Sectors[1]}<br />`;
+            crunch += `game objs: ${Numbers.Objs[0]} / ${Numbers.Objs[1]}<br />`;
+            crunch += `sprites: ${Numbers.Sprites[0]} / ${Numbers.Sprites[1]}<br />`;
+            crunch += `trees: ${Numbers.Trees[0]} / ${Numbers.Trees[1]}<br />`;
+            crunch += `tiles: ${Numbers.Tiles[0]} / ${Numbers.Tiles[1]}<br />`;
             crunch += '<br />';
             crunch += `controls: WASD, X to go fast, middlemouse to pan<br />`;
             let element = document.querySelectorAll('.stats')[0];
@@ -1146,20 +1147,21 @@ void main() {
                 })
                 return false
             })*/
-            /*hooks.register('sectorCreate', (x) => {
-                let sector = x as lod.Sector
+            hooks.register('sectorCreate', (x) => {
+                let sector = x;
                 pts.func(sector.small, (pos) => {
-                    const color = objectmap.bit(pos)
-                    if (color[0] == 255 && color[1] == 255 && color[2] == 255) {
+                    const clr = objectmaps.objectmap.bit(pos);
+                    if (clr[0] == 255 && clr[1] == 255 && clr[2] == 255) {
                         console.log('make a shack');
-                        let shack = new Shack()
-                        shack.wpos = pos
-                        //wests.view.add(shack)
+                        let shack = new House();
+                        shack.wpos = pos;
+                        shack.create();
+                        wests.view.add(shack);
                     }
-                    return false
-                })
-                return false
-            })*/
+                    return false;
+                });
+                return false;
+            });
         }
         objectmaps.register = register;
         function start() {
@@ -1194,12 +1196,26 @@ void main() {
             }
         }
         objectmaps.ObjectMap = ObjectMap;
+        class House extends lod$1.Obj {
+            constructor() {
+                super(undefined);
+            }
+            create() {
+                this.size = [20, 22];
+                new Sprite({
+                    bind: this,
+                    img: 'tex/house',
+                    z: 2
+                });
+            }
+        }
+        objectmaps.House = House;
     })(objectmaps || (objectmaps = {}));
     var objectmaps$1 = objectmaps;
 
     var tiles;
     (function (tiles_1) {
-        const mapSize = 10;
+        const mapSize = 100;
         var tiles = [];
         function register() {
             console.log(' tiles register ');
@@ -1221,13 +1237,12 @@ void main() {
         }
         tiles_1.start = start;
         class Tile extends lod$1.Obj {
-            constructor(pos) {
-                super(undefined, Counts.Tiles);
-                this.wpos = pos;
+            constructor(wpos) {
+                super(undefined, Numbers.Tiles);
+                this.wpos = wpos;
                 this.size = [16, 14];
             }
             create() {
-                console.log('tile create');
                 const clr = objectmaps$1.colormap.bit(this.wpos);
                 new Sprite({
                     bind: this,
@@ -1283,7 +1298,7 @@ void main() {
             if (count == RESOURCES.COUNT)
                 start();
         }
-        const MAX_WAIT = 1000;
+        const MAX_WAIT = 500;
         function reasonable_waiter() {
             if (time + MAX_WAIT < new Date().getTime()) {
                 console.warn(` passed reasonable wait time for resources `);

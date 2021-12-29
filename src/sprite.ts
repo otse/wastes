@@ -1,6 +1,6 @@
-import { Color, Mesh, BoxGeometry, PlaneBufferGeometry, MeshPhongMaterial, MeshPhongMaterialParameters, Shader, Matrix3, Vector2 } from "three";
+import { Color, Mesh, BoxGeometry, PlaneBufferGeometry, MeshBasicMaterial, MeshBasicMaterialParameters, Shader, Matrix3, Vector2 } from "three";
 
-import lod, { Counts } from "./lod";
+import lod, { Numbers } from "./lod";
 import pts from "./pts";
 import ren from "./renderer";
 
@@ -9,58 +9,36 @@ interface SpriteParameters {
 	img: string,
 	color?: vec4,
 	mask?: string,
-	offset?: vec2,
-	repeat?: vec2
-	center?: vec2
+	z?: number
 };
 
 export namespace Sprite {
-	export type Parameters = Sprite['properties'];
+	export type Parameters = Sprite['pars'];
 };
 
 export class Sprite extends lod.Shape {
 	dimetric = true
-	mesh: Mesh | undefined
-	material: MeshPhongMaterial
+	mesh: Mesh
+	material: MeshBasicMaterial
 	geometry: PlaneBufferGeometry
-	offset: vec2
-	repeat: vec2
-	center: vec2
-	rotation
 	spriteMatrix: Matrix3
 	constructor(
-		public readonly properties: SpriteParameters
+		public readonly pars: SpriteParameters
 	) {
-		super(properties, Counts.Sprites);
-		if (!this.properties.color)
-			this.properties.color = [1, 1, 1, 1];
-		this.offset = [0, 0];
-		this.repeat = [1, 1];
-		this.center = [0, 1];
-		this.rotation = 0;
+		super(pars, Numbers.Sprites);
 		this.spriteMatrix = new Matrix3;
 	}
 	update() {
 		if (!this.mesh)
 			return;
 
-		let offset = this.properties.offset || [0, 0];
-		let repeat = this.properties.repeat || [1, 1];
-		let center = this.properties.center || [0, 1];
+		this.mesh.rotation.z = this.pars.bind.rz;
 
-		this.spriteMatrix.setUvTransform(
-			offset[0], offset[1],
-			repeat[0], repeat[1],
-			this.rotation,
-			center[0], center[1]);
-
-		this.mesh.rotation.z = this.properties.bind.rz
-
-		const obj = this.properties.bind;
+		const obj = this.pars.bind;
 
 		let pos = pts.add(obj.rpos, pts.divide(obj.size, 2));
 
-		this.mesh?.position.fromArray([...pos, 0]);
+		this.mesh?.position.fromArray([...pos, this.pars.z || 0]);
 		this.mesh?.updateMatrix();
 	}
 	dispose() {
@@ -71,37 +49,39 @@ export class Sprite extends lod.Shape {
 		this.mesh.parent?.remove(this.mesh);
 	}
 	create() {
-		let w = this.properties.bind.size[0];
-		let h = this.properties.bind.size[1];
-		this.geometry = new PlaneBufferGeometry(w, h)
-		this.material = MySpriteMaterial({
-			map: ren.load_texture(`${this.properties.img}.png`, 0),
+
+		this.geometry = new PlaneBufferGeometry(
+			this.pars.bind.size[0], this.pars.bind.size[1]);
+
+		const color = this.pars.color || [255, 255, 255, 255];
+
+		this.material = SpriteMaterial({
+			map: ren.load_texture(`${this.pars.img}.png`, 0),
 			transparent: true,
-			shininess: 0,
-			color: new Color(`rgb(${this.properties.color![0]}, ${this.properties.color![1]}, ${this.properties.color![2]})}
+			color: new Color(`rgb(${color[0]}, ${color[1]}, ${color[2]})}
 			`)
 		}, {
-			spriteMatrix: this.spriteMatrix
+			
 		});
-		this.mesh = new Mesh(this.geometry, this.material);
+
+		this.mesh = new Mesh(
+			this.geometry, this.material);
+
 		this.mesh.frustumCulled = false;
 		this.mesh.matrixAutoUpdate = false;
+
 		this.update();
-		//if (this.y.drawable.x.obj.sector)
-		//	this.y.drawable.x.obj.sector.group.add(this.mesh);
-		//else
+		
 		ren.groups.axisSwap.add(this.mesh);
-		console.log('created sprite');
 	}
 };
 
-function MySpriteMaterial(parameters: MeshPhongMaterialParameters, uniforms: any) {
-	let material = new MeshPhongMaterial(parameters)
-	material.name = "MeshPhongSpriteMat";
+function SpriteMaterial(parameters: MeshBasicMaterialParameters, uniforms: any) {
+	let material = new MeshBasicMaterial(parameters)
+	material.name = "SpriteMaterial";
 	material.onBeforeCompile = function (shader: Shader) {
 		shader.defines = {};
-		shader.uniforms.spriteMatrix = { value: uniforms.spriteMatrix }
-		shader.vertexShader = shader.vertexShader.replace(
+		/*shader.vertexShader = shader.vertexShader.replace(
 			`#define PHONG`,
 			`#define PHONG
 			uniform mat3 spriteMatrix;
@@ -114,7 +94,7 @@ function MySpriteMaterial(parameters: MeshPhongMaterialParameters, uniforms: any
 			vUv = ( spriteMatrix * vec3( uv, 1 ) ).xy;
 			#endif
 			`
-		);
+		);*/
 	}
 	return material;
 }

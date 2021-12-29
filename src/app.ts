@@ -2,7 +2,7 @@ import { wests } from "./wastes"
 
 import Renderer from "./renderer"
 
-namespace App {
+namespace app {
 	export enum KEY {
 		OFF = 0,
 		PRESS,
@@ -73,6 +73,6 @@ namespace App {
 	}
 }
 
-window['App'] = App;
+window['App'] = app;
 
-export default App;
+export default app;

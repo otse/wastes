@@ -26,11 +26,18 @@ class pts {
 		}
 	}
 
-	static projecthex(a: vec2): vec2 {
-		let mult = pts.mult(a, 16, 11);
-		mult[0]= a[1] % 2 ? mult[0] : mult[0]+ 8
+	static projecthex(w: vec2): vec2 {
+		let mult = pts.mult(w, 16, 11);
+		mult[0]= w[1] % 2 ? mult[0] : mult[0]+ 8
 		//mult[1] = a[1] % 2 ? mult[1] : mult[1]
 		return mult
+	}
+
+	static unprojecthex(r: vec2): vec2 {
+		let div = pts.divide(r, 16, 11);
+		div[0] = r[1] % 2 ? div[0] : div[0] - .5
+		//mult[1] = a[1] % 2 ? mult[1] : mult[1]
+		return div
 	}
 
 	static project(a: vec2): vec2 { // dimetric
