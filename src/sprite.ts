@@ -45,6 +45,8 @@ export class Sprite extends lod.Shape {
 		this.mesh.parent?.remove(this.mesh);
 	}
 	create() {
+		const obj = this.pars.bind;
+
 		this.geometry = new PlaneBufferGeometry(
 			this.pars.bind.size[0], this.pars.bind.size[1]);
 		let color;
@@ -66,6 +68,7 @@ export class Sprite extends lod.Shape {
 		this.mesh = new Mesh(this.geometry, this.material);
 		this.mesh.frustumCulled = false;
 		this.mesh.matrixAutoUpdate = false;
+		this.mesh.renderOrder = obj.z + obj.wpos[0];
 		this.update();
 		ren.groups.axisSwap.add(this.mesh);
 	}

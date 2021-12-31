@@ -78,7 +78,7 @@ namespace testing_chamber {
 		}
 		tick() {
 			let shape = this.shape as Sprite;
-			if (this.moused(wastes.view.mrpos))
+			if (this.mousedSquare(wastes.view.mrpos))
 				shape.mesh.material.color.set('green');
 			else
 				shape.material.color.set('white');

@@ -46,9 +46,11 @@ export class View {
 		let mouse = app.mouse();
 		mouse = pts.subtract(mouse, pts.divide([ren.w, ren.h], 2));
 		mouse = pts.mult(mouse, ren.ndpi);
+		mouse = pts.mult(mouse, this.zoom);
 		mouse[1] = -mouse[1];
-		this.mrpos = pts.divide(pts.add(mouse, this.rpos), this.zoom);
+		this.mrpos = pts.add(mouse, this.rpos);
 		this.mwpos = lod.galaxy.unproject(this.mrpos);
+		this.mwpos = pts.add(this.mwpos, [.5, -.5])
 		// now..
 		if (app.button(2) >= 1) {
 			hooks.call('viewClick', this);

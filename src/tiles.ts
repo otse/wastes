@@ -45,10 +45,17 @@ export namespace tiles {
 			this.size = [24, 12];
 		}
 		create() {
+			let img = 'tex/dtile';
+			if (Math.random() > .9)
+			{
+				img = 'tex/dtileup';
+				this.size = [24, 17];
+				this.z = 1;
+			}
 			const clr = objectmaps.colormap.bit(this.wpos);
 			let shape = new Sprite({
 				bind: this,
-				img: 'tex/dtile',
+				img: img,
 				color: clr
 			})
 		}
@@ -56,8 +63,11 @@ export namespace tiles {
 		delete() {
 		}
 		tick() {
-			//super.update();
-			//this.sector?.swap(this);
+			let shape = this.shape as Sprite;			
+			if (pts.equals(this.wpos, pts.floor(wastes.view.mwpos)))
+				shape.mesh.material.color.set('green');
+			//else
+				//shape.material.color.set('white');
 		}
 	}
 

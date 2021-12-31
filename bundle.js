@@ -455,7 +455,7 @@ void main() {
         class Galaxy {
             constructor(span) {
                 this.arrays = [];
-                this.grid = new Grid(2, 2, this);
+                this.grid = new Grid(4, 8, this);
             }
             update(wpos) {
                 this.grid.big = this.big(wpos);
@@ -548,8 +548,6 @@ void main() {
                 if (this.on())
                     return;
                 Numbers.Sectors[0]++;
-                Util.SectorShow(this);
-                //console.log(' sector show ');
                 for (let obj of this.objs)
                     obj.show();
                 ren.scene.add(this.group);
@@ -559,8 +557,6 @@ void main() {
                 if (this.off())
                     return;
                 Numbers.Sectors[0]--;
-                Util.SectorHide(this);
-                //console.log(' sector hide ');
                 for (let obj of this.objs)
                     obj.hide();
                 ren.scene.remove(this.group);
@@ -621,6 +617,7 @@ void main() {
                 this.wpos = [0, 0];
                 this.rpos = [0, 0];
                 this.size = [100, 100];
+                this.z = 0;
                 this.rz = 0;
                 this.hexagonal = false;
                 this.counts[1]++;
@@ -660,12 +657,12 @@ void main() {
                 (_a = this.shape) === null || _a === void 0 ? void 0 : _a.update();
             }
             bound() {
-                this.aabb = new aabb2([0, 0], this.size);
-                this.aabb.translate(this.rpos);
+                this.aabbScreen = new aabb2([0, 0], this.size);
+                this.aabbScreen.translate(this.rpos);
             }
-            moused(mouse) {
+            mousedSquare(mouse) {
                 var _a;
-                if ((_a = this.aabb) === null || _a === void 0 ? void 0 : _a.test(new aabb2(mouse, mouse)))
+                if ((_a = this.aabbScreen) === null || _a === void 0 ? void 0 : _a.test(new aabb2(mouse, mouse)))
                     return true;
             }
         }
@@ -703,31 +700,6 @@ void main() {
         }
         lod.Shape = Shape;
     })(lod || (lod = {}));
-    var Util;
-    (function (Util) {
-        function SectorShow(sector) {
-            let breadth = lod.Unit * lod.UnitsPerSector;
-            let any = sector;
-            any.geometry = new THREE.PlaneBufferGeometry(breadth, breadth, 2, 2);
-            any.material = new THREE.MeshBasicMaterial({
-                wireframe: true,
-                transparent: true,
-                color: 'red'
-            });
-            any.mesh = new THREE.Mesh(any.geometry, any.material);
-            any.mesh.position.fromArray([sector.big[0] * breadth + breadth / 2, sector.big[1] * breadth + breadth / 2, 0]);
-            any.mesh.updateMatrix();
-            any.mesh.frustumCulled = false;
-            any.mesh.matrixAutoUpdate = false;
-            ren.groups.axisSwap.add(any.mesh);
-        }
-        Util.SectorShow = SectorShow;
-        function SectorHide(sector) {
-            let any = sector;
-            ren.groups.axisSwap.remove(any.mesh);
-        }
-        Util.SectorHide = SectorHide;
-    })(Util || (Util = {}));
     var lod$1 = lod;
 
     var menuScript;
@@ -858,6 +830,7 @@ void main() {
             (_c = this.mesh.parent) === null || _c === void 0 ? void 0 : _c.remove(this.mesh);
         }
         create() {
+            const obj = this.pars.bind;
             this.geometry = new THREE.PlaneBufferGeometry(this.pars.bind.size[0], this.pars.bind.size[1]);
             let color;
             if (this.pars.bind.sector.color) {
@@ -875,6 +848,7 @@ void main() {
             this.mesh = new THREE.Mesh(this.geometry, this.material);
             this.mesh.frustumCulled = false;
             this.mesh.matrixAutoUpdate = false;
+            this.mesh.renderOrder = obj.z + obj.wpos[0];
             this.update();
             ren.groups.axisSwap.add(this.mesh);
         }
@@ -969,7 +943,7 @@ void main() {
             }
             tick() {
                 let shape = this.shape;
-                if (this.moused(wastes.view.mrpos))
+                if (this.mousedSquare(wastes.view.mrpos))
                     shape.mesh.material.color.set('green');
                 else
                     shape.material.color.set('white');
@@ -1042,9 +1016,11 @@ void main() {
             let mouse = app$1.mouse();
             mouse = pts.subtract(mouse, pts.divide([ren.w, ren.h], 2));
             mouse = pts.mult(mouse, ren.ndpi);
+            mouse = pts.mult(mouse, this.zoom);
             mouse[1] = -mouse[1];
-            this.mrpos = pts.divide(pts.add(mouse, this.rpos), this.zoom);
+            this.mrpos = pts.add(mouse, this.rpos);
             this.mwpos = lod$1.galaxy.unproject(this.mrpos);
+            this.mwpos = pts.add(this.mwpos, [.5, -.5]);
             // now..
             if (app$1.button(2) >= 1) {
                 hooks.call('viewClick', this);
@@ -1263,10 +1239,16 @@ void main() {
                 this.size = [24, 12];
             }
             create() {
+                let img = 'tex/dtile';
+                if (Math.random() > .9) {
+                    img = 'tex/dtileup';
+                    this.size = [24, 17];
+                    this.z = 1;
+                }
                 const clr = objects.colormap.bit(this.wpos);
                 new Sprite({
                     bind: this,
-                    img: 'tex/dtile',
+                    img: img,
                     color: clr
                 });
             }
@@ -1274,8 +1256,11 @@ void main() {
             delete() {
             }
             tick() {
-                //super.update();
-                //this.sector?.swap(this);
+                let shape = this.shape;
+                if (pts.equals(this.wpos, pts.floor(wastes.view.mwpos)))
+                    shape.mesh.material.color.set('green');
+                //else
+                //shape.material.color.set('white');
             }
         }
         tiles_1.Tile = Tile;

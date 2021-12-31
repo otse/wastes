@@ -56,7 +56,7 @@ namespace lod {
 		readonly arrays: Sector[][] = []
 		readonly grid: Grid
 		constructor(span) {
-			this.grid = new Grid(2, 2, this);
+			this.grid = new Grid(4, 8, this);
 		}
 		update(wpos: vec2) {
 			this.grid.big = this.big(wpos);
@@ -154,8 +154,6 @@ namespace lod {
 			if (this.on())
 				return;
 			Numbers.Sectors[0]++;
-			Util.SectorShow(this);
-			//console.log(' sector show ');
 			for (let obj of this.objs)
 				obj.show();
 			ren.scene.add(this.group);
@@ -165,8 +163,6 @@ namespace lod {
 			if (this.off())
 				return;
 			Numbers.Sectors[0]--;
-			Util.SectorHide(this);
-			//console.log(' sector hide ');
 			for (let obj of this.objs)
 				obj.hide();
 			ren.scene.remove(this.group);
@@ -226,7 +222,7 @@ namespace lod {
 	};
 
 	export class Obj extends Toggle {
-		aabb: aabb2
+		aabbScreen: aabb2
 		hexagonal: boolean
 		wpos: vec2 = [0, 0]
 		rpos: vec2 = [0, 0]
@@ -234,6 +230,7 @@ namespace lod {
 		shape: Shape | null
 		sector: Sector | null
 		stuffs: ObjStuffs
+		z = 0
 		rz = 0
 		constructor(
 			stuffs: ObjStuffs | undefined,
@@ -274,11 +271,11 @@ namespace lod {
 			this.shape?.update();
 		}
 		bound() {
-			this.aabb = new aabb2([0, 0], this.size);
-			this.aabb.translate(this.rpos);
+			this.aabbScreen = new aabb2([0, 0], this.size);
+			this.aabbScreen.translate(this.rpos);
 		}
-		moused(mouse: Vec2) {
-			if (this.aabb?.test(new aabb2(mouse, mouse)))
+		mousedSquare(mouse: Vec2) {
+			if (this.aabbScreen?.test(new aabb2(mouse, mouse)))
 				return true;
 		}
 	}
@@ -321,28 +318,4 @@ namespace lod {
 	}
 }
 
-export namespace Util {
-	const showWireframe = true;
-	export function SectorShow(sector: lod.Sector) {
-		let breadth = lod.Unit * lod.UnitsPerSector;
-		let any = sector as any;
-		any.geometry = new PlaneBufferGeometry(breadth, breadth, 2, 2);
-		any.material = new MeshBasicMaterial({
-			wireframe: true,
-			transparent: true,
-			color: 'red'
-		});
-		any.mesh = new Mesh(any.geometry, any.material);
-		any.mesh.position.fromArray([sector.big[0] * breadth + breadth / 2, sector.big[1] * breadth + breadth / 2, 0]);
-		any.mesh.updateMatrix();
-		any.mesh.frustumCulled = false;
-		any.mesh.matrixAutoUpdate = false;
-		if (showWireframe)
-			ren.groups.axisSwap.add(any.mesh);
-	}
-	export function SectorHide(sector: lod.Sector) {
-		let any = sector as any;
-		ren.groups.axisSwap.remove(any.mesh);
-	}
-}
 export default lod;
