@@ -702,108 +702,6 @@ void main() {
     })(lod || (lod = {}));
     var lod$1 = lod;
 
-    var menuScript;
-    (function (menuScript) {
-        menuScript.enabled = false;
-        function start() {
-            console.log(' menu start ');
-            if (menuScript.enabled) {
-                squishedDiamond.start();
-            }
-            window['Menu'] = menuScript;
-        }
-        menuScript.start = start;
-        function tick() {
-            if (menuScript.enabled) {
-                squishedDiamond.tick();
-            }
-        }
-        menuScript.tick = tick;
-        class squishedDiamond {
-            static start() {
-                /*Modeler.load_obj('obj/logo', (object) => {
-                    squishedDiamond.object = object;
-                    object.scale.multiplyScalar(3);
-                    object.rotation.fromArray([-Math.PI / 2, 0, 0]);
-                    object.position.fromArray([-Renderer.w2 / 2 + 250, Renderer.h2 / 2 - 350, 0]);
-                    Renderer.scene.add(object);
-                    console.log('diamond is', object);
-                });*/
-            }
-            static easeOutElastic(x) {
-                const c4 = (2 * Math.PI) / 3;
-                return x === 0
-                    ? 0
-                    : x === 1
-                        ? 1
-                        : Math.pow(2, -10 * x) * Math.sin((x * 10 - 0.75) * c4) + 1;
-            }
-            static tick() {
-                const time = 2;
-                this.timer += ren.delta;
-                this.fpsHalver += ren.delta;
-                if (this.timer < time) {
-                    let ease = this.easeOutElastic(this.timer / time);
-                    if (this.fpsHalver >= 0.032 * 2 + ease / 15) {
-                        this.fpsHalver = 0;
-                        this.spin = ease * Math.PI;
-                    }
-                    this.object.rotation.fromArray([-Math.PI / 2, 0, this.spin]);
-                }
-                else if (this.timer > time + 1)
-                    this.timer = 0;
-            }
-        }
-        squishedDiamond.timer = 0;
-        squishedDiamond.spin = 0;
-        squishedDiamond.fpsHalver = 0;
-        menuScript.squishedDiamond = squishedDiamond;
-    })(menuScript || (menuScript = {}));
-    var menuScript$1 = menuScript;
-
-    // scripts have a .start, .tick
-    var panningScript;
-    (function (panningScript) {
-        const isometric = [0, 0]; // [-Math.PI / 4, Math.PI / 3]
-        function start() {
-            panningScript.center = new THREE.Group;
-            panningScript.yawGroup = new THREE.Group;
-            panningScript.pitchGroup = new THREE.Group;
-            panningScript.center.add(panningScript.yawGroup);
-            //center.add(new AxesHelper(100))
-            panningScript.yawGroup.add(panningScript.pitchGroup);
-            panningScript.pitchGroup.add(ren.camera);
-            ren.groups.axisSwap.add(panningScript.center);
-        }
-        panningScript.start = start;
-        var begin = [0, 0];
-        var last = [0, 0]; // isometric
-        var before = [0, 0];
-        function tick() {
-            if (app$1.button(1) == 1) {
-                begin = app$1.mouse();
-                before = last;
-            }
-            if (app$1.button(1) >= 1) {
-                console.log('hold');
-                let dif = pts.subtract(begin, app$1.mouse());
-                dif = pts.divide(dif, 250);
-                dif = pts.add(dif, before);
-                last = pts.clone(dif);
-            }
-            else {
-                last = isometric;
-            }
-            panningScript.yawGroup.rotation.z = last[0];
-            panningScript.pitchGroup.rotation.x = last[1];
-            panningScript.center.position.fromArray([...wastes.view.rpos, 0]);
-            ren.camera.scale.set(wastes.view.zoom / 1, wastes.view.zoom / 1, wastes.view.zoom / 1);
-            ren.camera.updateProjectionMatrix();
-        }
-        panningScript.tick = tick;
-    })(panningScript || (panningScript = {}));
-    var panningScript$1 = panningScript;
-
     class Sprite extends lod$1.Shape {
         constructor(pars) {
             super(pars, Numbers.Sprites);
@@ -818,7 +716,7 @@ void main() {
             this.mesh.rotation.z = this.pars.bind.rz;
             const obj = this.pars.bind;
             let rpos = pts.add(obj.rpos, pts.divide(obj.size, 2));
-            (_a = this.mesh) === null || _a === void 0 ? void 0 : _a.position.fromArray([...rpos, this.pars.z || 0]);
+            (_a = this.mesh) === null || _a === void 0 ? void 0 : _a.position.fromArray([...rpos, 0]);
             (_b = this.mesh) === null || _b === void 0 ? void 0 : _b.updateMatrix();
         }
         dispose() {
@@ -848,7 +746,7 @@ void main() {
             this.mesh = new THREE.Mesh(this.geometry, this.material);
             this.mesh.frustumCulled = false;
             this.mesh.matrixAutoUpdate = false;
-            this.mesh.renderOrder = obj.z + obj.wpos[0];
+            this.mesh.renderOrder = -obj.wpos[1] + obj.wpos[0] + (this.pars.order || 0);
             this.update();
             ren.groups.axisSwap.add(this.mesh);
         }
@@ -983,7 +881,7 @@ void main() {
     class View {
         constructor() {
             this.zoom = 0.5;
-            this.wpos = [0, 0];
+            this.wpos = [39, 39];
             this.rpos = [0, 0];
             this.mpos = [0, 0];
             this.mwpos = [0, 0];
@@ -1011,6 +909,8 @@ void main() {
             this.stats();
             this.wpos = lod$1.galaxy.unproject(this.rpos);
             lod$1.galaxy.update(this.wpos);
+            ren.camera.scale.set(wastes.view.zoom / 1, wastes.view.zoom / 1, wastes.view.zoom / 1);
+            ren.camera.updateProjectionMatrix();
         }
         mouse() {
             let mouse = app$1.mouse();
@@ -1062,7 +962,6 @@ void main() {
                 this.show = !this.show;
             let crunch = ``;
             crunch += `DPI_UPSCALED_RT: ${ren.DPI_UPSCALED_RT}<br />`;
-            //crunch += `MODELER: ${wests.CRPG}<br />`
             crunch += '<br />';
             crunch += `dpi: ${ren.ndpi}<br />`;
             crunch += `fps: ${ren.fps} / ${ren.delta.toPrecision(3)}<br />`;
@@ -1094,14 +993,15 @@ void main() {
         }
     }
 
-    var objectmaps;
-    (function (objectmaps) {
+    var objects;
+    (function (objects) {
         const mapSpan = 100;
         function register() {
             console.log(' objects register ');
-            objectmaps.objectmap = new ObjectMap('objectmap');
-            objectmaps.treemap = new ObjectMap('treemap');
-            objectmaps.colormap = new ObjectMap('colormap');
+            objects.heightmap = new ObjectMap('heightmap');
+            objects.objectmap = new ObjectMap('objectmap');
+            objects.treemap = new ObjectMap('treemap');
+            objects.colormap = new ObjectMap('colormap');
             /*lod.SectorHooks.OnShow.register((sector: lod.Sector) => {
                 objectmap.loop(sector.small, (pos, color) => {
                     if (color[0] == 254) {
@@ -1116,7 +1016,7 @@ void main() {
             hooks.register('sectorCreate', (x) => {
                 let sector = x;
                 pts.func(sector.small, (pos) => {
-                    const color = objectmaps.treemap.bit(pos);
+                    const color = objects.treemap.bit(pos);
                     if (color[0] > treeTreshold) {
                         let shrubs = new Shrubs();
                         shrubs.wpos = pos;
@@ -1131,7 +1031,7 @@ void main() {
             hooks.register('sectorCreate', (x) => {
                 let sector = x;
                 pts.func(sector.small, (pos) => {
-                    const clr = objectmaps.objectmap.bit(pos);
+                    const clr = objects.objectmap.bit(pos);
                     if (clr[0] == 255 && clr[1] == 255 && clr[2] == 255) {
                         console.log('make a shack');
                         let shack = new House();
@@ -1144,11 +1044,11 @@ void main() {
                 return false;
             });
         }
-        objectmaps.register = register;
+        objects.register = register;
         function start() {
             console.log(' objects start ');
         }
-        objectmaps.start = start;
+        objects.start = start;
         const zeroes = [0, 0, 0, 0];
         class ObjectMap {
             constructor(id) {
@@ -1177,37 +1077,37 @@ void main() {
                 }
             }
         }
-        objectmaps.ObjectMap = ObjectMap;
+        objects.ObjectMap = ObjectMap;
         class House extends lod$1.Obj {
             constructor() {
                 super(undefined);
             }
             create() {
-                this.size = [20, 22];
+                this.size = [24, 18];
                 new Sprite({
                     bind: this,
                     img: 'tex/house',
-                    z: 2
+                    order: .5
                 });
             }
         }
-        objectmaps.House = House;
+        objects.House = House;
         class Shrubs extends lod$1.Obj {
             constructor() {
                 super(undefined);
             }
             create() {
-                this.size = [16, 14];
+                this.size = [24, 15];
                 new Sprite({
                     bind: this,
                     img: 'tex/shrubs',
-                    z: 1
+                    order: .5
                 });
             }
         }
-        objectmaps.Shrubs = Shrubs;
-    })(objectmaps || (objectmaps = {}));
-    var objects = objectmaps;
+        objects.Shrubs = Shrubs;
+    })(objects || (objects = {}));
+    var objects$1 = objects;
 
     var tiles;
     (function (tiles_1) {
@@ -1237,6 +1137,7 @@ void main() {
                 super(undefined, Numbers.Tiles);
                 this.wpos = wpos;
                 this.size = [24, 12];
+                this.z = objects$1.heightmap.bit(this.wpos)[0];
             }
             create() {
                 let img = 'tex/dtile';
@@ -1245,7 +1146,7 @@ void main() {
                     this.size = [24, 17];
                     this.z = 1;
                 }
-                const clr = objects.colormap.bit(this.wpos);
+                const clr = objects$1.colormap.bit(this.wpos);
                 new Sprite({
                     bind: this,
                     img: img,
@@ -1319,13 +1220,12 @@ void main() {
         function registers() {
             lod$1.register();
             tiles$1.register();
-            objects.register();
+            objects$1.register();
         }
         function starts() {
             tests$1.start();
             tiles$1.start();
-            objects.start();
-            panningScript$1.start();
+            objects$1.start();
             if (window.location.href.indexOf("#testingchamber") != -1) {
                 //CRPG = false
                 testing_chamber$1.start();
@@ -1335,7 +1235,6 @@ void main() {
             if (started)
                 return;
             started = true;
-            //if (window.location.href.indexOf("#modeler") != -1)
             console.log(' wastes starting ');
             wastes.view = View.make();
             registers();
@@ -1358,8 +1257,6 @@ void main() {
             wastes.view.tick();
             tests$1.tick();
             //lands.tick();
-            panningScript$1.tick();
-            menuScript$1.tick();
         }
         wastes.tick = tick;
     })(exports.wastes || (exports.wastes = {}));

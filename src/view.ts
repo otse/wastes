@@ -14,7 +14,7 @@ import hooks from "./hooks";
 
 export class View {
 	zoom = 0.5
-	wpos: vec2 = [0, 0]
+	wpos: vec2 = [39, 39]
 	rpos: vec2 = [0, 0]
 	mpos: vec2 = [0, 0]
 	mwpos: vec2 = [0, 0]
@@ -41,6 +41,8 @@ export class View {
 		this.stats();
 		this.wpos = lod.galaxy.unproject(this.rpos);
 		lod.galaxy.update(this.wpos);
+		ren.camera.scale.set(wastes.view.zoom / 1, wastes.view.zoom / 1, wastes.view.zoom / 1)
+		ren.camera.updateProjectionMatrix()
 	}
 	mouse() {
 		let mouse = app.mouse();
@@ -93,7 +95,6 @@ export class View {
 			this.show = !this.show;
 		let crunch = ``;
 		crunch += `DPI_UPSCALED_RT: ${ren.DPI_UPSCALED_RT}<br />`;
-		//crunch += `MODELER: ${wests.CRPG}<br />`
 		crunch += '<br />';
 
 		crunch += `dpi: ${ren.ndpi}<br />`;

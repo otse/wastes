@@ -11,10 +11,11 @@ import tiles from "./tiles";
 import hooks from "./hooks";
 import Sprite from "./sprite";
 
-namespace objectmaps {
+namespace objects {
 
 	const mapSpan = 100;
 
+	export var heightmap: ObjectMap
 	export var objectmap: ObjectMap
 	export var treemap: ObjectMap
 	export var colormap: ObjectMap
@@ -23,6 +24,7 @@ namespace objectmaps {
 
 		console.log(' objects register ');
 
+		heightmap = new ObjectMap('heightmap');
 		objectmap = new ObjectMap('objectmap');
 		treemap = new ObjectMap('treemap');
 		colormap = new ObjectMap('colormap');
@@ -58,7 +60,7 @@ namespace objectmaps {
 		hooks.register('sectorCreate', (x) => {
 			let sector = x as lod.Sector
 			pts.func(sector.small, (pos) => {
-				const clr = objectmap.bit(pos)
+				const clr = objectmap.bit(pos);
 				if (clr[0] == 255 && clr[1] == 255 && clr[2] == 255) {
 					console.log('make a shack');
 					let shack = new House();
@@ -115,11 +117,11 @@ namespace objectmaps {
 			super(undefined);
 		}
 		create() {
-			this.size = [20, 22];
+			this.size = [24, 18];
 			let shape = new Sprite({
 				bind: this,
 				img: 'tex/house',
-				z: 2
+				order: .5
 			});
 		}
 		//tick() {
@@ -131,11 +133,11 @@ namespace objectmaps {
 			super(undefined);
 		}
 		create() {
-			this.size = [16, 14];
+			this.size = [24, 15];
 			let shape = new Sprite({
 				bind: this,
 				img: 'tex/shrubs',
-				z: 1
+				order: .5
 			});
 		}
 		//tick() {
@@ -143,4 +145,4 @@ namespace objectmaps {
 	}
 }
 
-export default objectmaps;
+export default objects;

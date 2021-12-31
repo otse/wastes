@@ -1,6 +1,4 @@
 import lod from "./lod";
-import menuScript from "./scripts/menu";
-import panningScript from "./scripts/panning";
 import testing_chamber from "./testing_chamber";
 import tests from "./tests";
 import View from "./view";
@@ -74,7 +72,6 @@ export namespace wastes {
 		tests.start();
 		tiles.start();
 		objects.start();
-		panningScript.start();
 		if (window.location.href.indexOf("#testingchamber") != -1) {
 			//CRPG = false
 			testing_chamber.start();
@@ -85,7 +82,6 @@ export namespace wastes {
 		if (started)
 			return;
 		started = true;
-		//if (window.location.href.indexOf("#modeler") != -1)
 		console.log(' wastes starting ');
 		view = View.make();
 		registers();
@@ -109,8 +105,6 @@ export namespace wastes {
 		view.tick();
 		tests.tick();
 		//lands.tick();
-		panningScript.tick();
-		menuScript.tick();
 	}
 
 }

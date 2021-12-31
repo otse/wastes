@@ -9,7 +9,7 @@ interface SpriteParameters {
 	img: string,
 	color?: vec4,
 	mask?: string,
-	z?: number
+	order?: number
 };
 
 export namespace Sprite {
@@ -34,7 +34,7 @@ export class Sprite extends lod.Shape {
 		this.mesh.rotation.z = this.pars.bind.rz;
 		const obj = this.pars.bind;
 		let rpos = pts.add(obj.rpos, pts.divide(obj.size, 2));
-		this.mesh?.position.fromArray([...rpos, this.pars.z || 0]);
+		this.mesh?.position.fromArray([...rpos, 0]);
 		this.mesh?.updateMatrix();
 	}
 	dispose() {
@@ -68,7 +68,7 @@ export class Sprite extends lod.Shape {
 		this.mesh = new Mesh(this.geometry, this.material);
 		this.mesh.frustumCulled = false;
 		this.mesh.matrixAutoUpdate = false;
-		this.mesh.renderOrder = obj.z + obj.wpos[0];
+		this.mesh.renderOrder = -obj.wpos[1] + obj.wpos[0] + (this.pars.order || 0);
 		this.update();
 		ren.groups.axisSwap.add(this.mesh);
 	}

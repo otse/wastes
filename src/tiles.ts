@@ -4,7 +4,7 @@ import wastes from "./wastes";
 import lod, { Numbers } from "./lod";
 import ren from "./renderer";
 import pts from "./pts";
-import objectmaps from "./objects";
+import objects from "./objects";
 import aabb2 from "./aabb2";
 import hooks from "./hooks";
 import Sprite from "./sprite";
@@ -43,6 +43,7 @@ export namespace tiles {
 			super(undefined, Numbers.Tiles);
 			this.wpos = wpos;
 			this.size = [24, 12];
+			this.z = objects.heightmap.bit(this.wpos)[0];
 		}
 		create() {
 			let img = 'tex/dtile';
@@ -52,7 +53,7 @@ export namespace tiles {
 				this.size = [24, 17];
 				this.z = 1;
 			}
-			const clr = objectmaps.colormap.bit(this.wpos);
+			const clr = objects.colormap.bit(this.wpos);
 			let shape = new Sprite({
 				bind: this,
 				img: img,
