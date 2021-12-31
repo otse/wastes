@@ -1,7 +1,7 @@
 import { default as THREE, OrthographicCamera, PerspectiveCamera, Clock, Scene, WebGLRenderer, Texture, TextureLoader, WebGLRenderTarget, ShaderMaterial, Mesh, PlaneBufferGeometry, Color, NearestFilter, RGBAFormat, Group, Renderer, AmbientLight, DirectionalLight } from 'three';
 
 import app from './app';
-import wests from './wastes';
+import wastes from './wastes';
 import View from './view';
 
 export { THREE };

@@ -1,20 +1,22 @@
 import lod from "./lod";
 import menuScript from "./scripts/menu";
 import panningScript from "./scripts/panning";
-import TestingChamber from "./testing_chamber";
+import testing_chamber from "./testing_chamber";
 import tests from "./tests";
 import View from "./view";
 import tiles from "./tiles";
-import objectmaps from "./objects";
+import objects from "./objects";
 
 
-export namespace wests {
+export namespace wastes {
 
-	export var view: View
+	export const size = 24;
 
-	export var SOME_OTHER_SETTING = false
+	export var view: View;
 
-	export const tileSize = lod.Unit
+	export var SOME_OTHER_SETTING = false;
+
+	export const tileSize = lod.Unit;
 
 	var started = false;
 
@@ -32,24 +34,24 @@ export namespace wests {
 		CANT_FIND,
 		READY,
 		COUNT
-	}
+	};
 
-	let time
-	let resources_loaded = 0b0
+	let time;
+	let resources_loaded = 0b0;
 	export function resourced(word: string) {
-		resources_loaded |= 0b1 << RESOURCES[word]
-		try_start()
+		resources_loaded |= 0b1 << RESOURCES[word];
+		try_start();
 	}
 
 	function try_start() {
-		let count = 0
+		let count = 0;
 		for (let i = 0; i < RESOURCES.COUNT; i++)
-			if (resources_loaded & 0b1 << i) count++
+			if (resources_loaded & 0b1 << i) count++;
 		if (count == RESOURCES.COUNT)
-			start()
+			start();
 	}
 
-	const MAX_WAIT = 500
+	const MAX_WAIT = 500;
 	function reasonable_waiter() {
 		if (time + MAX_WAIT < new Date().getTime()) {
 			console.warn(` passed reasonable wait time for resources `);
@@ -59,37 +61,44 @@ export namespace wests {
 	
 	export function critical(mask: string) {
 		// Couldn't load
-		console.error('resource', mask)
+		console.error('resource', mask);
+	}
+
+	function registers() {
+		lod.register();
+		tiles.register();
+		objects.register();
+	}
+
+	function starts() {
+		tests.start();
+		tiles.start();
+		objects.start();
+		panningScript.start();
+		if (window.location.href.indexOf("#testingchamber") != -1) {
+			//CRPG = false
+			testing_chamber.start();
+		}
 	}
 
 	function start() {
 		if (started)
-			return
-		started = true
+			return;
+		started = true;
 		//if (window.location.href.indexOf("#modeler") != -1)
-		console.log(' wests starting ')
-		view = View.make()
-		lod.register()
-		tiles.register()
-		objectmaps.register()
-		tests.start()
-		tiles.start()
-		objectmaps.start()
-		menuScript.start()
-		panningScript.start()
-		if (window.location.href.indexOf("#testingchamber") != -1) {
-			//CRPG = false
-			TestingChamber.start()
-		}
+		console.log(' wastes starting ');
+		view = View.make();
+		registers();
+		starts();
 	}
 
 	export function init() {
-		console.log(' wests init ')
-		time = new Date().getTime()
-		resourced('RC_UNDEFINED')
-		resourced('POPULAR_ASSETS')
-		resourced('READY')
-		window['wests'] = wests
+		console.log(' wests init ');
+		time = new Date().getTime();
+		resourced('RC_UNDEFINED');
+		resourced('POPULAR_ASSETS');
+		resourced('READY');
+		window['wastes'] = wastes;
 	}
 
 	export function tick() {
@@ -97,13 +106,13 @@ export namespace wests {
 			reasonable_waiter()
 			return
 		}
-		view.tick()
-		tests.tick()
-		//lands.tick()
-		panningScript.tick()
-		menuScript.tick()
+		view.tick();
+		tests.tick();
+		//lands.tick();
+		panningScript.tick();
+		menuScript.tick();
 	}
 
 }
 
-export default wests;
+export default wastes;

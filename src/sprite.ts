@@ -31,14 +31,10 @@ export class Sprite extends lod.Shape {
 	update() {
 		if (!this.mesh)
 			return;
-
 		this.mesh.rotation.z = this.pars.bind.rz;
-
 		const obj = this.pars.bind;
-
-		let pos = pts.add(obj.rpos, pts.divide(obj.size, 2));
-
-		this.mesh?.position.fromArray([...pos, this.pars.z || 0]);
+		let rpos = pts.add(obj.rpos, pts.divide(obj.size, 2));
+		this.mesh?.position.fromArray([...rpos, this.pars.z || 0]);
 		this.mesh?.updateMatrix();
 	}
 	dispose() {
@@ -49,29 +45,28 @@ export class Sprite extends lod.Shape {
 		this.mesh.parent?.remove(this.mesh);
 	}
 	create() {
-
 		this.geometry = new PlaneBufferGeometry(
 			this.pars.bind.size[0], this.pars.bind.size[1]);
-
-		const color = this.pars.color || [255, 255, 255, 255];
-
+		let color;
+		if (this.pars.bind!.sector!.color)
+		{
+			color = new Color(this.pars.bind!.sector!.color);
+		}
+		else
+		{
+			const c = this.pars.color || [255, 255, 255, 255];
+			color = new Color(`rgb(${c[0]}, ${c[1]}, ${c[2]})}`);
+		}
 		this.material = SpriteMaterial({
 			map: ren.load_texture(`${this.pars.img}.png`, 0),
 			transparent: true,
-			color: new Color(`rgb(${color[0]}, ${color[1]}, ${color[2]})}
-			`)
+			color: color
 		}, {
-			
 		});
-
-		this.mesh = new Mesh(
-			this.geometry, this.material);
-
+		this.mesh = new Mesh(this.geometry, this.material);
 		this.mesh.frustumCulled = false;
 		this.mesh.matrixAutoUpdate = false;
-
 		this.update();
-		
 		ren.groups.axisSwap.add(this.mesh);
 	}
 };

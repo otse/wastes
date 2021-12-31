@@ -1,11 +1,10 @@
 import lod from "./lod";
 import Sprite from "./sprite";
-import wests from "./wastes";
-import View from "./view";
+import wastes from "./wastes";
 import pts from "./pts";
 import hooks from "./hooks";
 
-namespace TestingChamber {
+namespace testing_chamber {
 
 	export function start() {
 		console.log(' start testing chamber ');
@@ -19,16 +18,16 @@ namespace TestingChamber {
 				let square = TestingSquare.make();
 				square.wpos = [x * conversion, y * conversion];
 				square.create();
-				wests.view.add(square);
+				wastes.view.add(square);
 			}
 		}
 
 		hooks.register('viewClick', (view) => {
 			console.log(' asteorid! ')
 			let ping = new Asteroid
-			ping.wpos = pts.add(wests.view.mwpos, [-1, -1])
+			ping.wpos = pts.add(wastes.view.mwpos, [-1, -1])
 			ping.create()
-			wests.view.add(ping)
+			wastes.view.add(ping)
 			return false
 		});
 	}
@@ -79,7 +78,7 @@ namespace TestingChamber {
 		}
 		tick() {
 			let shape = this.shape as Sprite;
-			if (this.moused(wests.view.mrpos))
+			if (this.moused(wastes.view.mrpos))
 				shape.mesh.material.color.set('green');
 			else
 				shape.material.color.set('white');
@@ -87,4 +86,4 @@ namespace TestingChamber {
 	}
 }
 
-export default TestingChamber;
+export default testing_chamber;

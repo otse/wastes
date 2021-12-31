@@ -1,6 +1,6 @@
 import { Group } from 'three';
 import app from "../app";
-import wests from '../wastes';
+import wastes from '../wastes';
 import pts from "../pts";
 import ren from "../renderer";
 // scripts have a .start, .tick
@@ -43,8 +43,8 @@ var panningScript;
         }
         panningScript.yawGroup.rotation.z = last[0];
         panningScript.pitchGroup.rotation.x = last[1];
-        panningScript.center.position.fromArray([...wests.view.rpos, 0]);
-        ren.camera.scale.set(wests.view.zoom / 1, wests.view.zoom / 1, wests.view.zoom / 1);
+        panningScript.center.position.fromArray([...wastes.view.rpos, 0]);
+        ren.camera.scale.set(wastes.view.zoom / 1, wastes.view.zoom / 1, wastes.view.zoom / 1);
         ren.camera.updateProjectionMatrix();
     }
     panningScript.tick = tick;

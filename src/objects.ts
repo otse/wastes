@@ -13,7 +13,7 @@ import Sprite from "./sprite";
 
 namespace objectmaps {
 
-	const mapSpan = 100
+	const mapSpan = 100;
 
 	export var objectmap: ObjectMap
 	export var treemap: ObjectMap
@@ -30,12 +30,12 @@ namespace objectmaps {
 		/*lod.SectorHooks.OnShow.register((sector: lod.Sector) => {
 			objectmap.loop(sector.small, (pos, color) => {
 				if (color[0] == 254) {
-					let wall = new Wall()
-					wall.wpos = [pos[0], pos[1]]
-					wests.view.add(wall)
+					let wall = new Wall();
+					wall.wpos = [pos[0], pos[1]];
+					wests.view.add(wall);
 				}
 			})
-			return false
+			return false;
 		})*/
 		const treeTreshold = 50;
 
@@ -43,13 +43,12 @@ namespace objectmaps {
 			let sector = x as lod.Sector
 			pts.func(sector.small, (pos) => {
 				const color = treemap.bit(pos);
-				if (color[0] > treeTreshold) {					
+				if (color[0] > treeTreshold) {
 					let shrubs = new Shrubs();
 					shrubs.wpos = pos;
 					shrubs.create();
 					wastes.view.add(shrubs);
-					console.log('shrubs');
-					
+					//console.log('shrubs');
 				}
 				return false;
 			})
@@ -79,6 +78,8 @@ namespace objectmaps {
 
 	}
 
+	const zeroes: vec4 =  [0, 0, 0, 0]
+	
 	export class ObjectMap {
 		readonly bits: vec4[][] = []
 		canvas
@@ -94,7 +95,7 @@ namespace objectmaps {
 			this.process();
 		}
 		bit(pos: vec2): vec4 {
-			return this.bits[pos[1]] ? this.bits[pos[1]][pos[0]] || [0, 0, 0, 0] : [0, 0, 0, 0];
+			return this.bits[pos[1]] ? this.bits[pos[1]][pos[0]] || zeroes : zeroes;
 		}
 		process() {
 			for (let y = 0; y < mapSpan; y++) {

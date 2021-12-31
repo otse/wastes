@@ -2,7 +2,7 @@ import { Mesh, PlaneBufferGeometry, MeshBasicMaterial, Vector3, Color, Group } f
 
 import aabb2 from "./aabb2";
 import pts from "./pts";
-import wests from "./wastes";
+import wastes from "./wastes";
 import ren from "./renderer";
 import hooks from "./hooks";
 
@@ -40,12 +40,11 @@ class Toggle {
 }
 
 namespace lod {
-	type Units = vec2
-	type SectorUnits = vec2
-	type Pixels = vec2
 
-	export const Unit = 16
-	export const UnitsPerSector = 4
+	export var galaxy: Galaxy;
+
+	export const Unit = 1;
+	export const UnitsPerSector = 4;
 
 	export function register() {
 		hooks.create('sectorCreate')
@@ -57,10 +56,10 @@ namespace lod {
 		readonly arrays: Sector[][] = []
 		readonly grid: Grid
 		constructor(span) {
-			this.grid = new Grid(5, 5, this);
+			this.grid = new Grid(2, 2, this);
 		}
-		update(wpos: Units) {
-			this.grid.big = Galaxy.big(wpos);
+		update(wpos: vec2) {
+			this.grid.big = this.big(wpos);
 			this.grid.offs();
 			this.grid.crawl();
 		}
@@ -69,17 +68,17 @@ namespace lod {
 				this.arrays[big[1]] = [];
 			return this.arrays[big[1]][big[0]];
 		}
-		atrpos(pixels: Pixels): Sector {
-			let units = Galaxy.unproject(pixels);
-			let bigs = Galaxy.big(units);
+		sectoratpixel(pixel: vec2): Sector {
+			let units = this.unproject(pixel);
+			let bigs = this.big(units);
 			return this.at(bigs);
 		}
 		at(big: vec2): Sector {
 			return this.lookup(big) || this.make(big);
 		}
 		add(obj: Obj) {
-			obj.wtorpos();
-			let sector = this.atrpos(obj.rpos);
+			//obj.wtorpos();
+			let sector = this.at(this.big(obj.wpos));
 			sector.add(obj);
 		}
 		protected make(big): Sector {
@@ -89,18 +88,20 @@ namespace lod {
 			s = this.arrays[big[1]][big[0]] = new Sector(big, this);
 			return s;
 		}
-		static big(units: Units): SectorUnits {
+		big(units: vec2): vec2 {
 			return pts.floor(pts.divide(units, UnitsPerSector));
 		}
-		static unproject(pixels: Pixels): Units {
-			return pts.divide(pixels, Unit);
+		project(unit: vec2): vec2 {
+			return pts.mult(pts.project(unit), wastes.size);
+		}
+		unproject(pixel: vec2): vec2 {
+			return pts.divide(pts.unproject(pixel), wastes.size);
 		}
 	}
 
 	export class Sector extends Toggle {
+		color;
 		group: Group;
-		//readonly span = 2000;
-		readonly screen: aabb2;
 		readonly small: aabb2;
 		private readonly objs: Obj[] = [];
 		objs_(): ReadonlyArray<Obj> { return this.objs; }
@@ -109,12 +110,10 @@ namespace lod {
 			readonly galaxy: Galaxy
 		) {
 			super();
-			let x = pts.mult(big, Unit);
-			let y = pts.add(x, [Unit, Unit]);
-			this.screen = new aabb2(x, y);
-			this.small = new aabb2(
-				[this.big[0] * UnitsPerSector, this.big[1] * UnitsPerSector],
-				[this.big[0] * UnitsPerSector + UnitsPerSector - 1, this.big[1] * UnitsPerSector + UnitsPerSector - 1]);
+			//this.color = (['salmon', 'blue', 'cyan', 'purple'])[Math.floor(Math.random() * 4)];
+			let min = pts.mult(this.big, UnitsPerSector);
+			let max = pts.add(min, [UnitsPerSector - 1, UnitsPerSector - 1]);
+			this.small = new aabb2(max, min);
 			this.group = new Group;
 			Numbers.Sectors[1]++;
 			galaxy.arrays[this.big[1]][this.big[0]] = this;
@@ -138,13 +137,13 @@ namespace lod {
 			}
 		}
 		swap(obj: Obj) {
-			let newSector = this.galaxy.atrpos(obj.rpos);
+			/*let newSector = this.galaxy.sectoratpixel(obj.rpos);
 			if (obj.sector != newSector) {
 				obj.sector?.remove(obj);
 				newSector.add(obj);
 				if (!newSector.isActive())
 					obj.hide();
-			}
+			}*/
 		}
 		tick() {
 			hooks.call('sectorTick', this);
@@ -177,6 +176,7 @@ namespace lod {
 			return pts.distsimple(this.big, this.galaxy.grid.big);
 		}
 	}
+
 	export class Grid {
 		big: vec2 = [0, 0];
 		public shown: Sector[] = [];
@@ -211,7 +211,7 @@ namespace lod {
 				sector = this.shown[i];
 				allObjs = allObjs.concat(sector.objs_());
 				sector.tick();
-				if (sector.dist() > this.outside) {
+				if (sector.dist() >= this.outside) {
 					sector.hide();
 					this.shown.splice(i, 1);
 				}
@@ -220,14 +220,16 @@ namespace lod {
 				obj.tick();
 		}
 	}
+
 	interface ObjStuffs {
 
 	};
+
 	export class Obj extends Toggle {
 		aabb: aabb2
 		hexagonal: boolean
-		wpos: Units = [0, 0]
-		rpos: Pixels = [0, 0]
+		wpos: vec2 = [0, 0]
+		rpos: vec2 = [0, 0]
 		size: vec2 = [100, 100]
 		shape: Shape | null
 		sector: Sector | null
@@ -259,12 +261,12 @@ namespace lod {
 			// console.log(' obj.hide ');
 		}
 		wtorpos() {
-			this.rpos = pts.projecthex(this.wpos);
+			this.rpos = lod.galaxy.project(this.wpos);
 		}
 		tick() { // implement me
 		}
 		create() { // implement me
-			console.warn(' obj.make ');
+			console.warn(' obj.create ');
 		}
 		update() {
 			this.wtorpos();
@@ -320,7 +322,7 @@ namespace lod {
 }
 
 export namespace Util {
-	const showWireframe = false;
+	const showWireframe = true;
 	export function SectorShow(sector: lod.Sector) {
 		let breadth = lod.Unit * lod.UnitsPerSector;
 		let any = sector as any;

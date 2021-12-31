@@ -25,18 +25,6 @@ var wastes = (function (exports, THREE) {
                 }
             }
         }
-        static projecthex(w) {
-            let mult = pts.mult(w, 16, 11);
-            mult[0] = w[1] % 2 ? mult[0] : mult[0] + 8;
-            //mult[1] = a[1] % 2 ? mult[1] : mult[1]
-            return mult;
-        }
-        static unprojecthex(r) {
-            let div = pts.divide(r, 16, 11);
-            div[0] = r[1] % 2 ? div[0] : div[0] - .5;
-            //mult[1] = a[1] % 2 ? mult[1] : mult[1]
-            return div;
-        }
         static project(a) {
             return [a[0] / 2 + a[1] / 2, a[1] / 4 - a[0] / 4];
         }
@@ -77,6 +65,9 @@ var wastes = (function (exports, THREE) {
         }
         static add(a, b) {
             return [a[0] + b[0], a[1] + b[1]];
+        }
+        static addn(a, b) {
+            return [a[0] + b, a[1] + b];
         }
         static abs(a) {
             return [Math.abs(a[0]), Math.abs(a[1])];
@@ -195,7 +186,7 @@ var wastes = (function (exports, THREE) {
             document.onmouseup = onmouseup;
             document.onwheel = onwheel;
             ren.init();
-            exports.wests.init();
+            exports.wastes.init();
             loop();
         }
         app.boot = boot;
@@ -211,7 +202,7 @@ var wastes = (function (exports, THREE) {
         function loop(timestamp) {
             requestAnimationFrame(loop);
             ren.update();
-            exports.wests.tick();
+            exports.wastes.tick();
             ren.render();
             app.wheel = 0;
             for (let b of [0, 1, 2])
@@ -453,7 +444,7 @@ void main() {
     }
     var lod;
     (function (lod) {
-        lod.Unit = 16;
+        lod.Unit = 1;
         lod.UnitsPerSector = 4;
         function register() {
             hooks.create('sectorCreate');
@@ -464,10 +455,10 @@ void main() {
         class Galaxy {
             constructor(span) {
                 this.arrays = [];
-                this.grid = new Grid(5, 5, this);
+                this.grid = new Grid(2, 2, this);
             }
             update(wpos) {
-                this.grid.big = Galaxy.big(wpos);
+                this.grid.big = this.big(wpos);
                 this.grid.offs();
                 this.grid.crawl();
             }
@@ -476,17 +467,17 @@ void main() {
                     this.arrays[big[1]] = [];
                 return this.arrays[big[1]][big[0]];
             }
-            atrpos(pixels) {
-                let units = Galaxy.unproject(pixels);
-                let bigs = Galaxy.big(units);
+            sectoratpixel(pixel) {
+                let units = this.unproject(pixel);
+                let bigs = this.big(units);
                 return this.at(bigs);
             }
             at(big) {
                 return this.lookup(big) || this.make(big);
             }
             add(obj) {
-                obj.wtorpos();
-                let sector = this.atrpos(obj.rpos);
+                //obj.wtorpos();
+                let sector = this.at(this.big(obj.wpos));
                 sector.add(obj);
             }
             make(big) {
@@ -496,11 +487,14 @@ void main() {
                 s = this.arrays[big[1]][big[0]] = new Sector(big, this);
                 return s;
             }
-            static big(units) {
+            big(units) {
                 return pts.floor(pts.divide(units, lod.UnitsPerSector));
             }
-            static unproject(pixels) {
-                return pts.divide(pixels, lod.Unit);
+            project(unit) {
+                return pts.mult(pts.project(unit), wastes.size);
+            }
+            unproject(pixel) {
+                return pts.divide(pts.unproject(pixel), wastes.size);
             }
         }
         lod.Galaxy = Galaxy;
@@ -510,10 +504,10 @@ void main() {
                 this.big = big;
                 this.galaxy = galaxy;
                 this.objs = [];
-                let x = pts.mult(big, lod.Unit);
-                let y = pts.add(x, [lod.Unit, lod.Unit]);
-                this.screen = new aabb2(x, y);
-                this.small = new aabb2([this.big[0] * lod.UnitsPerSector, this.big[1] * lod.UnitsPerSector], [this.big[0] * lod.UnitsPerSector + lod.UnitsPerSector - 1, this.big[1] * lod.UnitsPerSector + lod.UnitsPerSector - 1]);
+                //this.color = (['salmon', 'blue', 'cyan', 'purple'])[Math.floor(Math.random() * 4)];
+                let min = pts.mult(this.big, lod.UnitsPerSector);
+                let max = pts.add(min, [lod.UnitsPerSector - 1, lod.UnitsPerSector - 1]);
+                this.small = new aabb2(max, min);
                 this.group = new THREE.Group;
                 Numbers.Sectors[1]++;
                 galaxy.arrays[this.big[1]][this.big[0]] = this;
@@ -537,14 +531,13 @@ void main() {
                 }
             }
             swap(obj) {
-                var _a;
-                let newSector = this.galaxy.atrpos(obj.rpos);
+                /*let newSector = this.galaxy.sectoratpixel(obj.rpos);
                 if (obj.sector != newSector) {
-                    (_a = obj.sector) === null || _a === void 0 ? void 0 : _a.remove(obj);
+                    obj.sector?.remove(obj);
                     newSector.add(obj);
                     if (!newSector.isActive())
                         obj.hide();
-                }
+                }*/
             }
             tick() {
                 hooks.call('sectorTick', this);
@@ -611,7 +604,7 @@ void main() {
                     sector = this.shown[i];
                     allObjs = allObjs.concat(sector.objs_());
                     sector.tick();
-                    if (sector.dist() > this.outside) {
+                    if (sector.dist() >= this.outside) {
                         sector.hide();
                         this.shown.splice(i, 1);
                     }
@@ -653,12 +646,12 @@ void main() {
                 // console.log(' obj.hide ');
             }
             wtorpos() {
-                this.rpos = pts.projecthex(this.wpos);
+                this.rpos = lod.galaxy.project(this.wpos);
             }
             tick() {
             }
             create() {
-                console.warn(' obj.make ');
+                console.warn(' obj.create ');
             }
             update() {
                 var _a;
@@ -726,6 +719,7 @@ void main() {
             any.mesh.updateMatrix();
             any.mesh.frustumCulled = false;
             any.mesh.matrixAutoUpdate = false;
+            ren.groups.axisSwap.add(any.mesh);
         }
         Util.SectorShow = SectorShow;
         function SectorHide(sector) {
@@ -830,8 +824,8 @@ void main() {
             }
             panningScript.yawGroup.rotation.z = last[0];
             panningScript.pitchGroup.rotation.x = last[1];
-            panningScript.center.position.fromArray([...wests.view.rpos, 0]);
-            ren.camera.scale.set(wests.view.zoom / 1, wests.view.zoom / 1, wests.view.zoom / 1);
+            panningScript.center.position.fromArray([...wastes.view.rpos, 0]);
+            ren.camera.scale.set(wastes.view.zoom / 1, wastes.view.zoom / 1, wastes.view.zoom / 1);
             ren.camera.updateProjectionMatrix();
         }
         panningScript.tick = tick;
@@ -851,8 +845,8 @@ void main() {
                 return;
             this.mesh.rotation.z = this.pars.bind.rz;
             const obj = this.pars.bind;
-            let pos = pts.add(obj.rpos, pts.divide(obj.size, 2));
-            (_a = this.mesh) === null || _a === void 0 ? void 0 : _a.position.fromArray([...pos, this.pars.z || 0]);
+            let rpos = pts.add(obj.rpos, pts.divide(obj.size, 2));
+            (_a = this.mesh) === null || _a === void 0 ? void 0 : _a.position.fromArray([...rpos, this.pars.z || 0]);
             (_b = this.mesh) === null || _b === void 0 ? void 0 : _b.updateMatrix();
         }
         dispose() {
@@ -865,12 +859,18 @@ void main() {
         }
         create() {
             this.geometry = new THREE.PlaneBufferGeometry(this.pars.bind.size[0], this.pars.bind.size[1]);
-            const color = this.pars.color || [255, 255, 255, 255];
+            let color;
+            if (this.pars.bind.sector.color) {
+                color = new THREE.Color(this.pars.bind.sector.color);
+            }
+            else {
+                const c = this.pars.color || [255, 255, 255, 255];
+                color = new THREE.Color(`rgb(${c[0]}, ${c[1]}, ${c[2]})}`);
+            }
             this.material = SpriteMaterial({
                 map: ren.load_texture(`${this.pars.img}.png`, 0),
                 transparent: true,
-                color: new THREE.Color(`rgb(${color[0]}, ${color[1]}, ${color[2]})}
-			`)
+                color: color
             });
             this.mesh = new THREE.Mesh(this.geometry, this.material);
             this.mesh.frustumCulled = false;
@@ -902,8 +902,8 @@ void main() {
         return material;
     }
 
-    var TestingChamber;
-    (function (TestingChamber) {
+    var testing_chamber;
+    (function (testing_chamber) {
         function start() {
             console.log(' start testing chamber ');
             console.log('placing squares on game area that should take up 1:1 pixels on screen...');
@@ -914,19 +914,19 @@ void main() {
                     let square = TestingSquare.make();
                     square.wpos = [x * conversion, y * conversion];
                     square.create();
-                    wests.view.add(square);
+                    wastes.view.add(square);
                 }
             }
             hooks.register('viewClick', (view) => {
                 console.log(' asteorid! ');
                 let ping = new Asteroid;
-                ping.wpos = pts.add(wests.view.mwpos, [-1, -1]);
+                ping.wpos = pts.add(wastes.view.mwpos, [-1, -1]);
                 ping.create();
-                wests.view.add(ping);
+                wastes.view.add(ping);
                 return false;
             });
         }
-        TestingChamber.start = start;
+        testing_chamber.start = start;
         class Asteroid extends lod$1.Obj {
             constructor() {
                 super(undefined);
@@ -952,7 +952,7 @@ void main() {
             }
         }
         Asteroid.slowness = 12;
-        TestingChamber.Asteroid = Asteroid;
+        testing_chamber.Asteroid = Asteroid;
         class TestingSquare extends lod$1.Obj {
             static make() {
                 return new TestingSquare;
@@ -969,15 +969,15 @@ void main() {
             }
             tick() {
                 let shape = this.shape;
-                if (this.moused(wests.view.mrpos))
+                if (this.moused(wastes.view.mrpos))
                     shape.mesh.material.color.set('green');
                 else
                     shape.material.color.set('white');
             }
         }
-        TestingChamber.TestingSquare = TestingSquare;
-    })(TestingChamber || (TestingChamber = {}));
-    var TestingChamber$1 = TestingChamber;
+        testing_chamber.TestingSquare = TestingSquare;
+    })(testing_chamber || (testing_chamber = {}));
+    var testing_chamber$1 = testing_chamber;
 
     var tests;
     (function (tests) {
@@ -995,7 +995,7 @@ void main() {
             static tick() {
                 var _a;
                 if (this.obj) {
-                    this.obj.rpos = wests.view.mrpos;
+                    this.obj.rpos = wastes.view.mrpos;
                     (_a = this.obj.shape) === null || _a === void 0 ? void 0 : _a.update();
                     this.obj.shape;
                 }
@@ -1008,15 +1008,15 @@ void main() {
     // the view manages what it sees
     class View {
         constructor() {
-            this.zoom = .3;
-            this.wpos = [40, 30];
+            this.zoom = 0.5;
+            this.wpos = [0, 0];
             this.rpos = [0, 0];
             this.mpos = [0, 0];
             this.mwpos = [0, 0];
             this.mrpos = [0, 0];
             this.show = true;
-            this.galaxy = new lod$1.Galaxy(10);
-            this.rpos = pts.mult(this.wpos, lod$1.Unit);
+            lod$1.galaxy = new lod$1.Galaxy(10);
+            this.rpos = lod$1.galaxy.project(this.wpos);
         }
         static make() {
             return new View;
@@ -1024,7 +1024,7 @@ void main() {
         chart(big) {
         }
         add(obj) {
-            this.galaxy.add(obj);
+            lod$1.galaxy.add(obj);
         }
         remove(obj) {
             var _a;
@@ -1035,8 +1035,8 @@ void main() {
             this.chase();
             this.mouse();
             this.stats();
-            let wpos = lod$1.Galaxy.unproject(this.rpos);
-            this.galaxy.update(wpos);
+            this.wpos = lod$1.galaxy.unproject(this.rpos);
+            lod$1.galaxy.update(this.wpos);
         }
         mouse() {
             let mouse = app$1.mouse();
@@ -1044,39 +1044,33 @@ void main() {
             mouse = pts.mult(mouse, ren.ndpi);
             mouse[1] = -mouse[1];
             this.mrpos = pts.divide(pts.add(mouse, this.rpos), this.zoom);
-            this.mwpos = lod$1.Galaxy.unproject(this.mrpos);
+            this.mwpos = lod$1.galaxy.unproject(this.mrpos);
             // now..
             if (app$1.button(2) >= 1) {
                 hooks.call('viewClick', this);
             }
         }
         move() {
-            let pan = 3;
+            let pan = 10;
             const zoomFactor = 1 / 10;
             if (app$1.key('x'))
-                pan *= 3;
+                pan *= 2;
             if (app$1.key('w'))
-                this.rpos[1] += pan;
+                this.rpos = pts.add(this.rpos, [0, pan]);
             if (app$1.key('s'))
-                this.rpos[1] -= pan;
+                this.rpos = pts.add(this.rpos, [0, -pan]);
             if (app$1.key('a'))
-                this.rpos[0] -= pan;
+                this.rpos = pts.add(this.rpos, [-pan, 0]);
             if (app$1.key('d'))
-                this.rpos[0] += pan;
+                this.rpos = pts.add(this.rpos, [pan, 0]);
             if (app$1.key('r') == 1)
                 this.zoom -= zoomFactor;
             if (app$1.key('f') == 1)
                 this.zoom += zoomFactor;
+            //this.rpos = lod.galaxy.project(this.wpos);
             const min = .1;
             const max = 1;
             this.zoom = this.zoom > max ? max : this.zoom < min ? min : this.zoom;
-            this.wpos = pts.unprojecthex(this.rpos);
-            pts.inv(this.rpos);
-            //Renderer.camera.scale.fromArray([this.zoom, this.zoom, this.zoom]);
-            //ren.groups.dimetric.scale.fromArray([this.zoom, this.zoom, this.zoom])
-            //Renderer.groups.dimetric.matrixAutoUpdate = false;
-            //Renderer.groups.dimetric.updateMatrixWorld();
-            //ren.groups.dimetric.position.set(inv[0], inv[1], 0)
         }
         chase() {
             ren.delta;
@@ -1107,7 +1101,7 @@ void main() {
             crunch += `mrpos: ${pts.to_string(pts.floor(this.mrpos))}<br />`;
             crunch += '<br />';
             crunch += `view wpos: ${pts.to_string(pts.floor(this.wpos))}<br />`;
-            crunch += `view bigpos: ${pts.to_string(lod$1.Galaxy.big(this.wpos))}<br />`;
+            crunch += `view bigpos: ${pts.to_string(lod$1.galaxy.big(this.wpos))}<br />`;
             crunch += `view zoom: ${this.zoom.toPrecision(2)}<br />`;
             crunch += '<br />';
             //crunch += `world wpos: ${pts.to_string(this.pos)}<br /><br />`;
@@ -1135,12 +1129,12 @@ void main() {
             /*lod.SectorHooks.OnShow.register((sector: lod.Sector) => {
                 objectmap.loop(sector.small, (pos, color) => {
                     if (color[0] == 254) {
-                        let wall = new Wall()
-                        wall.wpos = [pos[0], pos[1]]
-                        wests.view.add(wall)
+                        let wall = new Wall();
+                        wall.wpos = [pos[0], pos[1]];
+                        wests.view.add(wall);
                     }
                 })
-                return false
+                return false;
             })*/
             const treeTreshold = 50;
             hooks.register('sectorCreate', (x) => {
@@ -1151,8 +1145,8 @@ void main() {
                         let shrubs = new Shrubs();
                         shrubs.wpos = pos;
                         shrubs.create();
-                        wests.view.add(shrubs);
-                        console.log('shrubs');
+                        wastes.view.add(shrubs);
+                        //console.log('shrubs');
                     }
                     return false;
                 });
@@ -1167,7 +1161,7 @@ void main() {
                         let shack = new House();
                         shack.wpos = pos;
                         shack.create();
-                        wests.view.add(shack);
+                        wastes.view.add(shack);
                     }
                     return false;
                 });
@@ -1179,6 +1173,7 @@ void main() {
             console.log(' objects start ');
         }
         objectmaps.start = start;
+        const zeroes = [0, 0, 0, 0];
         class ObjectMap {
             constructor(id) {
                 this.bits = [];
@@ -1192,7 +1187,7 @@ void main() {
                 this.process();
             }
             bit(pos) {
-                return this.bits[pos[1]] ? this.bits[pos[1]][pos[0]] || [0, 0, 0, 0] : [0, 0, 0, 0];
+                return this.bits[pos[1]] ? this.bits[pos[1]][pos[0]] || zeroes : zeroes;
             }
             process() {
                 for (let y = 0; y < mapSpan; y++) {
@@ -1236,7 +1231,7 @@ void main() {
         }
         objectmaps.Shrubs = Shrubs;
     })(objectmaps || (objectmaps = {}));
-    var objectmaps$1 = objectmaps;
+    var objects = objectmaps;
 
     var tiles;
     (function (tiles_1) {
@@ -1256,7 +1251,7 @@ void main() {
                 let tile = new Tile([x, y]);
                 tiles[y][x] = tile;
                 tile.create();
-                wests.view.add(tile);
+                wastes.view.add(tile);
                 return false;
             });
         }
@@ -1265,41 +1260,42 @@ void main() {
             constructor(wpos) {
                 super(undefined, Numbers.Tiles);
                 this.wpos = wpos;
-                this.size = [16, 14];
+                this.size = [24, 12];
             }
             create() {
-                const clr = objectmaps$1.colormap.bit(this.wpos);
+                const clr = objects.colormap.bit(this.wpos);
                 new Sprite({
                     bind: this,
-                    img: 'tex/grass',
+                    img: 'tex/dtile',
                     color: clr
                 });
             }
+            //update() {}
             delete() {
             }
             tick() {
-                var _a;
-                super.update();
-                (_a = this.sector) === null || _a === void 0 ? void 0 : _a.swap(this);
+                //super.update();
+                //this.sector?.swap(this);
             }
         }
         tiles_1.Tile = Tile;
     })(tiles || (tiles = {}));
     var tiles$1 = tiles;
 
-    exports.wests = void 0;
-    (function (wests) {
-        wests.SOME_OTHER_SETTING = false;
-        wests.tileSize = lod$1.Unit;
+    exports.wastes = void 0;
+    (function (wastes) {
+        wastes.size = 24;
+        wastes.SOME_OTHER_SETTING = false;
+        wastes.tileSize = lod$1.Unit;
         var started = false;
         function sample(a) {
             return a[Math.floor(Math.random() * a.length)];
         }
-        wests.sample = sample;
+        wastes.sample = sample;
         function clamp(val, min, max) {
             return val > max ? max : val < min ? min : val;
         }
-        wests.clamp = clamp;
+        wastes.clamp = clamp;
         let RESOURCES;
         (function (RESOURCES) {
             RESOURCES[RESOURCES["RC_UNDEFINED"] = 0] = "RC_UNDEFINED";
@@ -1307,14 +1303,14 @@ void main() {
             RESOURCES[RESOURCES["CANT_FIND"] = 2] = "CANT_FIND";
             RESOURCES[RESOURCES["READY"] = 3] = "READY";
             RESOURCES[RESOURCES["COUNT"] = 4] = "COUNT";
-        })(RESOURCES = wests.RESOURCES || (wests.RESOURCES = {}));
+        })(RESOURCES = wastes.RESOURCES || (wastes.RESOURCES = {}));
         let time;
         let resources_loaded = 0b0;
         function resourced(word) {
             resources_loaded |= 0b1 << RESOURCES[word];
             try_start();
         }
-        wests.resourced = resourced;
+        wastes.resourced = resourced;
         function try_start() {
             let count = 0;
             for (let i = 0; i < RESOURCES.COUNT; i++)
@@ -1334,26 +1330,31 @@ void main() {
             // Couldn't load
             console.error('resource', mask);
         }
-        wests.critical = critical;
+        wastes.critical = critical;
+        function registers() {
+            lod$1.register();
+            tiles$1.register();
+            objects.register();
+        }
+        function starts() {
+            tests$1.start();
+            tiles$1.start();
+            objects.start();
+            panningScript$1.start();
+            if (window.location.href.indexOf("#testingchamber") != -1) {
+                //CRPG = false
+                testing_chamber$1.start();
+            }
+        }
         function start() {
             if (started)
                 return;
             started = true;
             //if (window.location.href.indexOf("#modeler") != -1)
-            console.log(' wests starting ');
-            wests.view = View.make();
-            lod$1.register();
-            tiles$1.register();
-            objectmaps$1.register();
-            tests$1.start();
-            tiles$1.start();
-            objectmaps$1.start();
-            menuScript$1.start();
-            panningScript$1.start();
-            if (window.location.href.indexOf("#testingchamber") != -1) {
-                //CRPG = false
-                TestingChamber$1.start();
-            }
+            console.log(' wastes starting ');
+            wastes.view = View.make();
+            registers();
+            starts();
         }
         function init() {
             console.log(' wests init ');
@@ -1361,25 +1362,25 @@ void main() {
             resourced('RC_UNDEFINED');
             resourced('POPULAR_ASSETS');
             resourced('READY');
-            window['wests'] = wests;
+            window['wastes'] = wastes;
         }
-        wests.init = init;
+        wastes.init = init;
         function tick() {
             if (!started) {
                 reasonable_waiter();
                 return;
             }
-            wests.view.tick();
+            wastes.view.tick();
             tests$1.tick();
-            //lands.tick()
+            //lands.tick();
             panningScript$1.tick();
             menuScript$1.tick();
         }
-        wests.tick = tick;
-    })(exports.wests || (exports.wests = {}));
-    var wests = exports.wests;
+        wastes.tick = tick;
+    })(exports.wastes || (exports.wastes = {}));
+    var wastes = exports.wastes;
 
-    exports["default"] = wests;
+    exports["default"] = wastes;
 
     Object.defineProperty(exports, '__esModule', { value: true });
 

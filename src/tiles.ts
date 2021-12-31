@@ -1,6 +1,6 @@
 import { Vector2, Mesh, Shader, Texture, PlaneBufferGeometry, MeshLambertMaterial, MeshLambertMaterialParameters, Matrix3, Matrix4 } from "three";
 
-import wests from "./wastes";
+import wastes from "./wastes";
 import lod, { Numbers } from "./lod";
 import ren from "./renderer";
 import pts from "./pts";
@@ -33,7 +33,7 @@ export namespace tiles {
 			let tile = new Tile([x, y]);
 			tiles[y][x] = tile;
 			tile.create();
-			wests.view.add(tile);
+			wastes.view.add(tile);
 			return false;
 		})
 	}
@@ -42,22 +42,22 @@ export namespace tiles {
 		constructor(wpos: vec2) {
 			super(undefined, Numbers.Tiles);
 			this.wpos = wpos;
-			this.size = [16, 14];
-			
+			this.size = [24, 12];
 		}
 		create() {
 			const clr = objectmaps.colormap.bit(this.wpos);
 			let shape = new Sprite({
 				bind: this,
-				img: 'tex/grass',
+				img: 'tex/dtile',
 				color: clr
 			})
 		}
+		//update() {}
 		delete() {
 		}
 		tick() {
-			super.update();
-			this.sector?.swap(this);
+			//super.update();
+			//this.sector?.swap(this);
 		}
 	}
 

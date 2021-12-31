@@ -1,5 +1,5 @@
 import lod from "./lod";
-import wests from "./wastes";
+import wastes from "./wastes";
 import ren from "./renderer";
 import Sprite from "./sprite";
 
@@ -29,7 +29,7 @@ export namespace tests {
 		}
 		static tick() {
 			if (this.obj) {
-				this.obj.rpos = wests.view.mrpos;
+				this.obj.rpos = wastes.view.mrpos;
 				this.obj.shape?.update();
 				let sprite = this.obj.shape as Sprite;
 			}

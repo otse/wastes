@@ -1,4 +1,4 @@
-import { wests } from "./wastes"
+import { wastes } from "./wastes"
 
 import Renderer from "./renderer"
 
@@ -45,7 +45,7 @@ namespace app {
 		document.onmouseup = onmouseup;
 		document.onwheel = onwheel;
 		Renderer.init();
-		wests.init();
+		wastes.init();
 		loop(0);
 	}
 	export function delay() {
@@ -59,7 +59,7 @@ namespace app {
 	export function loop(timestamp) {
 		requestAnimationFrame(loop);
 		Renderer.update();
-		wests.tick();
+		wastes.tick();
 		Renderer.render();
 		wheel = 0;
 		for (let b of [0, 1, 2])
