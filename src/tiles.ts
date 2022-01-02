@@ -16,7 +16,7 @@ export namespace tiles {
 	var tiles: Tile[][] = []
 
 	export function register() {
-		
+
 		console.log(' tiles register ');
 
 	}
@@ -49,11 +49,10 @@ export namespace tiles {
 			let img, clr;
 			img = 'tex/dtileup';
 			this.size = [24, 17];
-			this.z = 1;
+			this.z = 3;
 			clr = objects.colormap.bit(this.wpos);
 			//clr = [255, 255, 255, 255];
-			if ((clr[0] == 0 && clr[1] == 0 && clr[2] == 0))
-			{
+			if ((clr[0] == 0 && clr[1] == 0 && clr[2] == 0)) {
 				img = 'tex/dtile';
 				clr = [63, 63, 127, 255];
 				this.size = [24, 12];
@@ -72,10 +71,14 @@ export namespace tiles {
 			if (!this.shape)
 				return;
 			let shape = this.shape as Sprite;
-			if (pts.equals(this.wpos, pts.floor(wastes.view.mwpos)))
+			let mrpos = pts.add(wastes.view.mrpos, [0, -this.z]);
+			let mwpos = lod.galaxy.unproject(mrpos);
+			if (false)
+				shape.mesh.material.color.set('salmon');
+			if (pts.equals(this.wpos, pts.floor(mwpos)))
 				shape.mesh.material.color.set('green');
 			//else
-				//shape.material.color.set('white');
+			//shape.material.color.set('white');
 		}
 	}
 

@@ -52,8 +52,9 @@ export class View {
 		mouse = pts.mult(mouse, this.zoom);
 		mouse[1] = -mouse[1];
 		this.mrpos = pts.add(mouse, this.rpos);
+		this.mrpos = pts.add(this.mrpos, lod.galaxy.project([.5, -.5])); // correction
 		this.mwpos = lod.galaxy.unproject(this.mrpos);
-		this.mwpos = pts.add(this.mwpos, [.5, -.5])
+		//this.mwpos = pts.add(this.mwpos, [.5, -.5])
 		// now..
 		if (app.button(2) >= 1) {
 			hooks.call('viewClick', this);

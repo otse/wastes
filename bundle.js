@@ -15,6 +15,10 @@ var wastes = (function (exports, THREE) {
         static make(n, m) {
             return [n, m];
         }
+        static to_string(a) {
+            const pr = (b) => b != undefined ? `, ${b}` : '';
+            return `${a[0]}, ${a[1]}` + pr(a[2]) + pr(a[3]);
+        }
         static func(bb, callback) {
             let y = bb.min[1];
             for (; y <= bb.max[1]; y++) {
@@ -31,13 +35,12 @@ var wastes = (function (exports, THREE) {
         static unproject(a) {
             return [a[0] - a[1] * 2, a[1] * 2 + a[0]];
         }
-        static to_string(a) {
-            const pr = (b) => b != undefined ? `, ${b}` : '';
-            return `${a[0]}, ${a[1]}` + pr(a[2]) + pr(a[3]);
-        }
         static equals(a, b) {
             return a[0] == b[0] && a[1] == b[1];
         }
+        //static range(a: vec2, b: vec2): boolean {
+        //	return true 
+        //}
         /*
         static clamp(a: vec2, min: vec2, max: vec2): vec2 {
             const clamp = (val, min, max) =>
@@ -919,8 +922,9 @@ void main() {
             mouse = pts.mult(mouse, this.zoom);
             mouse[1] = -mouse[1];
             this.mrpos = pts.add(mouse, this.rpos);
+            this.mrpos = pts.add(this.mrpos, lod$1.galaxy.project([.5, -.5])); // correction
             this.mwpos = lod$1.galaxy.unproject(this.mrpos);
-            this.mwpos = pts.add(this.mwpos, [.5, -.5]);
+            //this.mwpos = pts.add(this.mwpos, [.5, -.5])
             // now..
             if (app$1.button(2) >= 1) {
                 hooks.call('viewClick', this);
@@ -1149,7 +1153,7 @@ void main() {
                 let img, clr;
                 img = 'tex/dtileup';
                 this.size = [24, 17];
-                this.z = 1;
+                this.z = 3;
                 clr = objects$1.colormap.bit(this.wpos);
                 //clr = [255, 255, 255, 255];
                 if ((clr[0] == 0 && clr[1] == 0 && clr[2] == 0)) {
@@ -1171,7 +1175,9 @@ void main() {
                 if (!this.shape)
                     return;
                 let shape = this.shape;
-                if (pts.equals(this.wpos, pts.floor(wastes.view.mwpos)))
+                let mrpos = pts.add(wastes.view.mrpos, [0, -this.z]);
+                let mwpos = lod$1.galaxy.unproject(mrpos);
+                if (pts.equals(this.wpos, pts.floor(mwpos)))
                     shape.mesh.material.color.set('green');
                 //else
                 //shape.material.color.set('white');

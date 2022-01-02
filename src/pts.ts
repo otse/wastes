@@ -15,6 +15,12 @@ class pts {
 		return [n, m];
 	}
 
+	static to_string(a: vec2 | vec3 | vec4) {
+		const pr = (b) => b != undefined ? `, ${b}` : '';
+
+		return `${a[0]}, ${a[1]}` + pr(a[2]) + pr(a[3]);
+	}
+
 	static func(bb: aabb2, callback: (pos: vec2) => boolean) {
 		let y = bb.min[1];
 		for (; y <= bb.max[1]; y++) {
@@ -34,16 +40,13 @@ class pts {
 		return [a[0] - a[1] * 2, a[1] * 2 + a[0]];
 	}
 
-	static to_string(a: vec2 | vec3 | vec4) {
-		const pr = (b) => b != undefined ? `, ${b}` : '';
-
-		return `${a[0]}, ${a[1]}` + pr(a[2]) + pr(a[3]);
-	}
-
 	static equals(a: vec2, b: vec2): boolean {
 		return a[0] == b[0] && a[1] == b[1];
 	}
 
+	//static range(a: vec2, b: vec2): boolean {
+	//	return true 
+	//}
 	/*
 	static clamp(a: vec2, min: vec2, max: vec2): vec2 {
 		const clamp = (val, min, max) =>
