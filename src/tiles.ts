@@ -46,14 +46,19 @@ export namespace tiles {
 			this.z = objects.heightmap.bit(this.wpos)[0];
 		}
 		create() {
-			let img = 'tex/dtile';
-			if (Math.random() > .9)
+			let img, clr;
+			img = 'tex/dtileup';
+			this.size = [24, 17];
+			this.z = 1;
+			clr = objects.colormap.bit(this.wpos);
+			//clr = [255, 255, 255, 255];
+			if ((clr[0] == 0 && clr[1] == 0 && clr[2] == 0))
 			{
-				img = 'tex/dtileup';
-				this.size = [24, 17];
-				this.z = 1;
+				img = 'tex/dtile';
+				clr = [63, 63, 127, 255];
+				this.size = [24, 12];
+				this.z = 0;
 			}
-			const clr = objects.colormap.bit(this.wpos);
 			let shape = new Sprite({
 				bind: this,
 				img: img,
@@ -64,7 +69,9 @@ export namespace tiles {
 		delete() {
 		}
 		tick() {
-			let shape = this.shape as Sprite;			
+			if (!this.shape)
+				return;
+			let shape = this.shape as Sprite;
 			if (pts.equals(this.wpos, pts.floor(wastes.view.mwpos)))
 				shape.mesh.material.color.set('green');
 			//else

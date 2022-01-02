@@ -15,19 +15,19 @@ namespace objects {
 
 	const mapSpan = 100;
 
-	export var heightmap: ObjectMap
-	export var objectmap: ObjectMap
-	export var treemap: ObjectMap
-	export var colormap: ObjectMap
+	export var heightmap: ColorMap
+	export var objectmap: ColorMap
+	export var treemap: ColorMap
+	export var colormap: ColorMap
 
 	export function register() {
 
 		console.log(' objects register ');
 
-		heightmap = new ObjectMap('heightmap');
-		objectmap = new ObjectMap('objectmap');
-		treemap = new ObjectMap('treemap');
-		colormap = new ObjectMap('colormap');
+		heightmap = new ColorMap('heightmap');
+		objectmap = new ColorMap('objectmap');
+		treemap = new ColorMap('treemap');
+		colormap = new ColorMap('colormap');
 
 		/*lod.SectorHooks.OnShow.register((sector: lod.Sector) => {
 			objectmap.loop(sector.small, (pos, color) => {
@@ -63,10 +63,10 @@ namespace objects {
 				const clr = objectmap.bit(pos);
 				if (clr[0] == 255 && clr[1] == 255 && clr[2] == 255) {
 					console.log('make a shack');
-					let shack = new House();
-					shack.wpos = pos;
-					shack.create();
-					wastes.view.add(shack);
+					let wall = new Wall();
+					wall.wpos = pos;
+					wall.create();
+					wastes.view.add(wall);
 				}
 				return false;
 			})
@@ -82,7 +82,7 @@ namespace objects {
 
 	const zeroes: vec4 =  [0, 0, 0, 0]
 	
-	export class ObjectMap {
+	export class ColorMap {
 		readonly bits: vec4[][] = []
 		canvas
 		ctx
@@ -99,6 +99,9 @@ namespace objects {
 		bit(pos: vec2): vec4 {
 			return this.bits[pos[1]] ? this.bits[pos[1]][pos[0]] || zeroes : zeroes;
 		}
+		offset(pos: vec2, offset: vec2) : vec4 {
+			return this.bit(pts.add(pos, offset));
+		}
 		process() {
 			for (let y = 0; y < mapSpan; y++) {
 				this.bits[y] = [];
@@ -112,17 +115,20 @@ namespace objects {
 		}
 	}
 
-	export class House extends lod.Obj {
+	export class Wall extends lod.Obj {
 		constructor() {
 			super(undefined);
 		}
 		create() {
-			this.size = [24, 18];
+			this.size = [24, 40];
 			let shape = new Sprite({
 				bind: this,
-				img: 'tex/house',
+				img: 'tex/dwall',
 				order: .5
 			});
+		}
+		adapt() {
+			// change sprite to surrounding walls
 		}
 		//tick() {
 		//}
@@ -140,6 +146,7 @@ namespace objects {
 				order: .5
 			});
 		}
+		
 		//tick() {
 		//}
 	}

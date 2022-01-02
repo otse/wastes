@@ -444,8 +444,7 @@ void main() {
     }
     var lod;
     (function (lod) {
-        lod.Unit = 1;
-        lod.UnitsPerSector = 4;
+        lod.SectorSpan = 4;
         function register() {
             hooks.create('sectorCreate');
             hooks.create('sectorShow');
@@ -455,7 +454,7 @@ void main() {
         class Galaxy {
             constructor(span) {
                 this.arrays = [];
-                this.grid = new Grid(4, 8, this);
+                this.grid = new Grid(4, 4, this);
             }
             update(wpos) {
                 this.grid.big = this.big(wpos);
@@ -488,7 +487,7 @@ void main() {
                 return s;
             }
             big(units) {
-                return pts.floor(pts.divide(units, lod.UnitsPerSector));
+                return pts.floor(pts.divide(units, lod.SectorSpan));
             }
             project(unit) {
                 return pts.mult(pts.project(unit), wastes.size);
@@ -505,8 +504,8 @@ void main() {
                 this.galaxy = galaxy;
                 this.objs = [];
                 //this.color = (['salmon', 'blue', 'cyan', 'purple'])[Math.floor(Math.random() * 4)];
-                let min = pts.mult(this.big, lod.UnitsPerSector);
-                let max = pts.add(min, [lod.UnitsPerSector - 1, lod.UnitsPerSector - 1]);
+                let min = pts.mult(this.big, lod.SectorSpan);
+                let max = pts.add(min, [lod.SectorSpan - 1, lod.SectorSpan - 1]);
                 this.small = new aabb2(max, min);
                 this.group = new THREE.Group;
                 Numbers.Sectors[1]++;
@@ -782,7 +781,7 @@ void main() {
             console.log('...regardless of your os or browsers dpi setting');
             for (let y = 0; y < 50; y++) {
                 for (let x = 0; x < 50; x++) {
-                    let conversion = 100 / lod$1.Unit;
+                    let conversion = 100;
                     let square = TestingSquare.make();
                     square.wpos = [x * conversion, y * conversion];
                     square.create();
@@ -909,7 +908,8 @@ void main() {
             this.stats();
             this.wpos = lod$1.galaxy.unproject(this.rpos);
             lod$1.galaxy.update(this.wpos);
-            ren.camera.scale.set(wastes.view.zoom / 1, wastes.view.zoom / 1, wastes.view.zoom / 1);
+            const zoom = wastes.view.zoom;
+            ren.camera.scale.set(zoom, zoom, zoom);
             ren.camera.updateProjectionMatrix();
         }
         mouse() {
@@ -927,7 +927,7 @@ void main() {
             }
         }
         move() {
-            let pan = 10;
+            let pan = 5;
             const zoomFactor = 1 / 10;
             if (app$1.key('x'))
                 pan *= 2;
@@ -998,10 +998,10 @@ void main() {
         const mapSpan = 100;
         function register() {
             console.log(' objects register ');
-            objects.heightmap = new ObjectMap('heightmap');
-            objects.objectmap = new ObjectMap('objectmap');
-            objects.treemap = new ObjectMap('treemap');
-            objects.colormap = new ObjectMap('colormap');
+            objects.heightmap = new ColorMap('heightmap');
+            objects.objectmap = new ColorMap('objectmap');
+            objects.treemap = new ColorMap('treemap');
+            objects.colormap = new ColorMap('colormap');
             /*lod.SectorHooks.OnShow.register((sector: lod.Sector) => {
                 objectmap.loop(sector.small, (pos, color) => {
                     if (color[0] == 254) {
@@ -1034,10 +1034,10 @@ void main() {
                     const clr = objects.objectmap.bit(pos);
                     if (clr[0] == 255 && clr[1] == 255 && clr[2] == 255) {
                         console.log('make a shack');
-                        let shack = new House();
-                        shack.wpos = pos;
-                        shack.create();
-                        wastes.view.add(shack);
+                        let wall = new Wall();
+                        wall.wpos = pos;
+                        wall.create();
+                        wastes.view.add(wall);
                     }
                     return false;
                 });
@@ -1050,7 +1050,7 @@ void main() {
         }
         objects.start = start;
         const zeroes = [0, 0, 0, 0];
-        class ObjectMap {
+        class ColorMap {
             constructor(id) {
                 this.bits = [];
                 var img = document.getElementById(id);
@@ -1065,6 +1065,9 @@ void main() {
             bit(pos) {
                 return this.bits[pos[1]] ? this.bits[pos[1]][pos[0]] || zeroes : zeroes;
             }
+            offset(pos, offset) {
+                return this.bit(pts.add(pos, offset));
+            }
             process() {
                 for (let y = 0; y < mapSpan; y++) {
                     this.bits[y] = [];
@@ -1077,21 +1080,24 @@ void main() {
                 }
             }
         }
-        objects.ObjectMap = ObjectMap;
-        class House extends lod$1.Obj {
+        objects.ColorMap = ColorMap;
+        class Wall extends lod$1.Obj {
             constructor() {
                 super(undefined);
             }
             create() {
-                this.size = [24, 18];
+                this.size = [24, 40];
                 new Sprite({
                     bind: this,
-                    img: 'tex/house',
+                    img: 'tex/dwall',
                     order: .5
                 });
             }
+            adapt() {
+                // change sprite to surrounding walls
+            }
         }
-        objects.House = House;
+        objects.Wall = Wall;
         class Shrubs extends lod$1.Obj {
             constructor() {
                 super(undefined);
@@ -1140,13 +1146,18 @@ void main() {
                 this.z = objects$1.heightmap.bit(this.wpos)[0];
             }
             create() {
-                let img = 'tex/dtile';
-                if (Math.random() > .9) {
-                    img = 'tex/dtileup';
-                    this.size = [24, 17];
-                    this.z = 1;
+                let img, clr;
+                img = 'tex/dtileup';
+                this.size = [24, 17];
+                this.z = 1;
+                clr = objects$1.colormap.bit(this.wpos);
+                //clr = [255, 255, 255, 255];
+                if ((clr[0] == 0 && clr[1] == 0 && clr[2] == 0)) {
+                    img = 'tex/dtile';
+                    clr = [63, 63, 127, 255];
+                    this.size = [24, 12];
+                    this.z = 0;
                 }
-                const clr = objects$1.colormap.bit(this.wpos);
                 new Sprite({
                     bind: this,
                     img: img,
@@ -1157,6 +1168,8 @@ void main() {
             delete() {
             }
             tick() {
+                if (!this.shape)
+                    return;
                 let shape = this.shape;
                 if (pts.equals(this.wpos, pts.floor(wastes.view.mwpos)))
                     shape.mesh.material.color.set('green');
@@ -1172,7 +1185,6 @@ void main() {
     (function (wastes) {
         wastes.size = 24;
         wastes.SOME_OTHER_SETTING = false;
-        wastes.tileSize = lod$1.Unit;
         var started = false;
         function sample(a) {
             return a[Math.floor(Math.random() * a.length)];

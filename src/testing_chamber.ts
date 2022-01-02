@@ -14,7 +14,7 @@ namespace testing_chamber {
 
 		for (let y = 0; y < 50; y++) {
 			for (let x = 0; x < 50; x++) {
-				let conversion = 100 / lod.Unit;
+				let conversion = 100;
 				let square = TestingSquare.make();
 				square.wpos = [x * conversion, y * conversion];
 				square.create();
@@ -24,11 +24,11 @@ namespace testing_chamber {
 
 		hooks.register('viewClick', (view) => {
 			console.log(' asteorid! ')
-			let ping = new Asteroid
-			ping.wpos = pts.add(wastes.view.mwpos, [-1, -1])
-			ping.create()
-			wastes.view.add(ping)
-			return false
+			let ping = new Asteroid;
+			ping.wpos = pts.add(wastes.view.mwpos, [-1, -1]);
+			ping.create();
+			wastes.view.add(ping);
+			return false;
 		});
 	}
 

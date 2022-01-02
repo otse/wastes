@@ -43,8 +43,7 @@ namespace lod {
 
 	export var galaxy: Galaxy;
 
-	export const Unit = 1;
-	export const UnitsPerSector = 4;
+	export const SectorSpan = 4;
 
 	export function register() {
 		hooks.create('sectorCreate')
@@ -56,7 +55,7 @@ namespace lod {
 		readonly arrays: Sector[][] = []
 		readonly grid: Grid
 		constructor(span) {
-			this.grid = new Grid(4, 8, this);
+			this.grid = new Grid(4, 4, this);
 		}
 		update(wpos: vec2) {
 			this.grid.big = this.big(wpos);
@@ -89,7 +88,7 @@ namespace lod {
 			return s;
 		}
 		big(units: vec2): vec2 {
-			return pts.floor(pts.divide(units, UnitsPerSector));
+			return pts.floor(pts.divide(units, SectorSpan));
 		}
 		project(unit: vec2): vec2 {
 			return pts.mult(pts.project(unit), wastes.size);
@@ -111,8 +110,8 @@ namespace lod {
 		) {
 			super();
 			//this.color = (['salmon', 'blue', 'cyan', 'purple'])[Math.floor(Math.random() * 4)];
-			let min = pts.mult(this.big, UnitsPerSector);
-			let max = pts.add(min, [UnitsPerSector - 1, UnitsPerSector - 1]);
+			let min = pts.mult(this.big, SectorSpan);
+			let max = pts.add(min, [SectorSpan - 1, SectorSpan - 1]);
 			this.small = new aabb2(max, min);
 			this.group = new Group;
 			Numbers.Sectors[1]++;

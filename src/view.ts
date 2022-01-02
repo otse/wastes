@@ -41,8 +41,9 @@ export class View {
 		this.stats();
 		this.wpos = lod.galaxy.unproject(this.rpos);
 		lod.galaxy.update(this.wpos);
-		ren.camera.scale.set(wastes.view.zoom / 1, wastes.view.zoom / 1, wastes.view.zoom / 1)
-		ren.camera.updateProjectionMatrix()
+		const zoom = wastes.view.zoom;
+		ren.camera.scale.set(zoom, zoom, zoom);
+		ren.camera.updateProjectionMatrix();
 	}
 	mouse() {
 		let mouse = app.mouse();
@@ -59,7 +60,7 @@ export class View {
 		}
 	}
 	move() {
-		let pan = 10;
+		let pan = 5;
 		const zoomFactor = 1 / 10;
 		if (app.key('x'))
 			pan *= 2;

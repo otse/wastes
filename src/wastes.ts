@@ -14,8 +14,6 @@ export namespace wastes {
 
 	export var SOME_OTHER_SETTING = false;
 
-	export const tileSize = lod.Unit;
-
 	var started = false;
 
 	export function sample(a) {
