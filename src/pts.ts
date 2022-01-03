@@ -21,13 +21,12 @@ class pts {
 		return `${a[0]}, ${a[1]}` + pr(a[2]) + pr(a[3]);
 	}
 
-	static func(bb: aabb2, callback: (pos: vec2) => boolean) {
+	static func(bb: aabb2, callback: (pos: vec2) => any) {
 		let y = bb.min[1];
 		for (; y <= bb.max[1]; y++) {
 			let x = bb.max[0];
 			for (; x >= bb.min[0]; x--) {
-				if(callback([x, y]))
-					return;
+				callback([x, y]);
 			}
 		}
 	}

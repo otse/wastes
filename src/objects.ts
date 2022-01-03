@@ -48,11 +48,9 @@ namespace objects {
 				if (color[0] > treeTreshold) {
 					let shrubs = new Shrubs();
 					shrubs.wpos = pos;
-					shrubs.create();
 					wastes.view.add(shrubs);
 					//console.log('shrubs');
 				}
-				return false;
 			})
 			return false;
 		})
@@ -65,10 +63,8 @@ namespace objects {
 					console.log('make a shack');
 					let wall = new Wall();
 					wall.wpos = pos;
-					wall.create();
 					wastes.view.add(wall);
 				}
-				return false;
 			})
 			return false;
 		})

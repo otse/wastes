@@ -21,12 +21,15 @@ export class Sprite extends lod.Shape {
 	mesh: Mesh
 	material: MeshBasicMaterial
 	geometry: PlaneBufferGeometry
-	spriteMatrix: Matrix3
+	offset: vec2 = [0, 0]
+	repeat: vec2 = [1, 1]
+	center: vec2 = [0, 1]
+	myUvTransform: Matrix3
 	constructor(
 		public readonly pars: SpriteParameters
 	) {
 		super(pars, Numbers.Sprites);
-		this.spriteMatrix = new Matrix3;
+		this.myUvTransform = new Matrix3;
 	}
 	update() {
 		if (!this.mesh)
@@ -47,6 +50,12 @@ export class Sprite extends lod.Shape {
 	create() {
 		const obj = this.pars.bind;
 
+		this.myUvTransform.setUvTransform(
+			this.offset[0], this.offset[1],
+			this.repeat[0], this.repeat[1],
+			0,
+			this.center[0], this.center[1]);
+
 		this.geometry = new PlaneBufferGeometry(
 			this.pars.bind.size[0], this.pars.bind.size[1]);
 		let color;
@@ -64,12 +73,15 @@ export class Sprite extends lod.Shape {
 			transparent: true,
 			color: color
 		}, {
+			myUvTransform: this.myUvTransform
 		});
 		this.mesh = new Mesh(this.geometry, this.material);
 		this.mesh.frustumCulled = false;
 		this.mesh.matrixAutoUpdate = false;
 		this.mesh.renderOrder = -obj.wpos[1] + obj.wpos[0] + (this.pars.order || 0);
 		this.update();
+		const sector = this.pars.bind.sector;
+		sector?.group.add(this.mesh);
 		ren.groups.axisSwap.add(this.mesh);
 	}
 };
@@ -79,20 +91,21 @@ function SpriteMaterial(parameters: MeshBasicMaterialParameters, uniforms: any) 
 	material.name = "SpriteMaterial";
 	material.onBeforeCompile = function (shader: Shader) {
 		shader.defines = {};
-		/*shader.vertexShader = shader.vertexShader.replace(
-			`#define PHONG`,
-			`#define PHONG
-			uniform mat3 spriteMatrix;
+		shader.uniforms.myUvTransform = { value: uniforms.myUvTransform }
+		shader.vertexShader = shader.vertexShader.replace(
+			`#include <common>`,
+			`#include <common>
+			uniform mat3 myUvTransform;
 			`
 		);
 		shader.vertexShader = shader.vertexShader.replace(
 			`#include <uv_vertex>`,
-			`#include <uv_vertex>
+			`
 			#ifdef USE_UV
-			vUv = ( spriteMatrix * vec3( uv, 1 ) ).xy;
+			vUv = ( myUvTransform * vec3( uv, 1 ) ).xy;
 			#endif
 			`
-		);*/
+		);
 	}
 	return material;
 }

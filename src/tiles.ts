@@ -32,9 +32,7 @@ export namespace tiles {
 				tiles[y] = [];
 			let tile = new Tile([x, y]);
 			tiles[y][x] = tile;
-			tile.create();
 			wastes.view.add(tile);
-			return false;
 		})
 	}
 
@@ -47,9 +45,9 @@ export namespace tiles {
 		}
 		create() {
 			let img, clr;
-			img = 'tex/dtileup';
+			img = 'tex/dtileup4';
 			this.size = [24, 17];
-			this.z = 3;
+			this.z = 4;
 			clr = objects.colormap.bit(this.wpos);
 			//clr = [255, 255, 255, 255];
 			if ((clr[0] == 0 && clr[1] == 0 && clr[2] == 0)) {
@@ -68,6 +66,7 @@ export namespace tiles {
 		delete() {
 		}
 		tick() {
+			return;
 			if (!this.shape)
 				return;
 			let shape = this.shape as Sprite;

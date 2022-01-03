@@ -24,8 +24,7 @@ var wastes = (function (exports, THREE) {
             for (; y <= bb.max[1]; y++) {
                 let x = bb.max[0];
                 for (; x >= bb.min[0]; x--) {
-                    if (callback([x, y]))
-                        return;
+                    callback([x, y]);
                 }
             }
         }
@@ -457,7 +456,7 @@ void main() {
         class Galaxy {
             constructor(span) {
                 this.arrays = [];
-                this.grid = new Grid(4, 4, this);
+                this.grid = new Grid(8, 8, this);
             }
             update(wpos) {
                 this.grid.big = this.big(wpos);
@@ -511,8 +510,11 @@ void main() {
                 let max = pts.add(min, [lod.SectorSpan - 1, lod.SectorSpan - 1]);
                 this.small = new aabb2(max, min);
                 this.group = new THREE.Group;
+                this.group.frustumCulled = false;
+                this.group.matrixAutoUpdate = false;
                 Numbers.Sectors[1]++;
                 galaxy.arrays[this.big[1]][this.big[0]] = this;
+                //console.log('sector');
                 hooks.call('sectorCreate', this);
             }
             objs_() { return this.objs; }
@@ -550,6 +552,7 @@ void main() {
                 if (this.on())
                     return;
                 Numbers.Sectors[0]++;
+                //console.log('?');
                 for (let obj of this.objs)
                     obj.show();
                 ren.scene.add(this.group);
@@ -600,9 +603,8 @@ void main() {
                 while (i--) {
                     let sector;
                     sector = this.shown[i];
-                    allObjs = allObjs.concat(sector.objs_());
                     sector.tick();
-                    if (sector.dist() >= this.outside) {
+                    if (sector.dist() > this.outside) {
                         sector.hide();
                         this.shown.splice(i, 1);
                     }
@@ -633,6 +635,7 @@ void main() {
                 if (this.on())
                     return;
                 this.counts[0]++;
+                this.create();
                 this.update();
                 (_a = this.shape) === null || _a === void 0 ? void 0 : _a.show();
             }
@@ -641,6 +644,7 @@ void main() {
                 if (this.off())
                     return;
                 this.counts[0]--;
+                this.delete();
                 (_a = this.shape) === null || _a === void 0 ? void 0 : _a.hide();
                 // console.log(' obj.hide ');
             }
@@ -651,6 +655,9 @@ void main() {
             }
             create() {
                 console.warn(' obj.create ');
+            }
+            delete() {
+                console.warn(' obj.delete ');
             }
             update() {
                 var _a;
@@ -709,7 +716,10 @@ void main() {
             super(pars, Numbers.Sprites);
             this.pars = pars;
             this.dimetric = true;
-            this.spriteMatrix = new THREE.Matrix3;
+            this.offset = [0, 0];
+            this.repeat = [1, 1];
+            this.center = [0, 1];
+            this.myUvTransform = new THREE.Matrix3;
         }
         update() {
             var _a, _b;
@@ -731,6 +741,7 @@ void main() {
         }
         create() {
             const obj = this.pars.bind;
+            this.myUvTransform.setUvTransform(this.offset[0], this.offset[1], this.repeat[0], this.repeat[1], 0, this.center[0], this.center[1]);
             this.geometry = new THREE.PlaneBufferGeometry(this.pars.bind.size[0], this.pars.bind.size[1]);
             let color;
             if (this.pars.bind.sector.color) {
@@ -744,12 +755,16 @@ void main() {
                 map: ren.load_texture(`${this.pars.img}.png`, 0),
                 transparent: true,
                 color: color
+            }, {
+                myUvTransform: this.myUvTransform
             });
             this.mesh = new THREE.Mesh(this.geometry, this.material);
             this.mesh.frustumCulled = false;
             this.mesh.matrixAutoUpdate = false;
             this.mesh.renderOrder = -obj.wpos[1] + obj.wpos[0] + (this.pars.order || 0);
             this.update();
+            const sector = this.pars.bind.sector;
+            sector === null || sector === void 0 ? void 0 : sector.group.add(this.mesh);
             ren.groups.axisSwap.add(this.mesh);
         }
     }
@@ -758,20 +773,15 @@ void main() {
         material.name = "SpriteMaterial";
         material.onBeforeCompile = function (shader) {
             shader.defines = {};
-            /*shader.vertexShader = shader.vertexShader.replace(
-                `#define PHONG`,
-                `#define PHONG
-                uniform mat3 spriteMatrix;
-                `
-            );
-            shader.vertexShader = shader.vertexShader.replace(
-                `#include <uv_vertex>`,
-                `#include <uv_vertex>
-                #ifdef USE_UV
-                vUv = ( spriteMatrix * vec3( uv, 1 ) ).xy;
-                #endif
-                `
-            );*/
+            shader.uniforms.myUvTransform = { value: uniforms.myUvTransform };
+            shader.vertexShader = shader.vertexShader.replace(`#include <common>`, `#include <common>
+			uniform mat3 myUvTransform;
+			`);
+            shader.vertexShader = shader.vertexShader.replace(`#include <uv_vertex>`, `
+			#ifdef USE_UV
+			vUv = ( myUvTransform * vec3( uv, 1 ) ).xy;
+			#endif
+			`);
         };
         return material;
     }
@@ -1024,11 +1034,9 @@ void main() {
                     if (color[0] > treeTreshold) {
                         let shrubs = new Shrubs();
                         shrubs.wpos = pos;
-                        shrubs.create();
                         wastes.view.add(shrubs);
                         //console.log('shrubs');
                     }
-                    return false;
                 });
                 return false;
             });
@@ -1040,10 +1048,8 @@ void main() {
                         console.log('make a shack');
                         let wall = new Wall();
                         wall.wpos = pos;
-                        wall.create();
                         wastes.view.add(wall);
                     }
-                    return false;
                 });
                 return false;
             });
@@ -1136,9 +1142,7 @@ void main() {
                     tiles[y] = [];
                 let tile = new Tile([x, y]);
                 tiles[y][x] = tile;
-                tile.create();
                 wastes.view.add(tile);
-                return false;
             });
         }
         tiles_1.start = start;
@@ -1151,9 +1155,9 @@ void main() {
             }
             create() {
                 let img, clr;
-                img = 'tex/dtileup';
+                img = 'tex/dtileup4';
                 this.size = [24, 17];
-                this.z = 3;
+                this.z = 4;
                 clr = objects$1.colormap.bit(this.wpos);
                 //clr = [255, 255, 255, 255];
                 if ((clr[0] == 0 && clr[1] == 0 && clr[2] == 0)) {
@@ -1172,13 +1176,7 @@ void main() {
             delete() {
             }
             tick() {
-                if (!this.shape)
-                    return;
-                let shape = this.shape;
-                let mrpos = pts.add(wastes.view.mrpos, [0, -this.z]);
-                let mwpos = lod$1.galaxy.unproject(mrpos);
-                if (pts.equals(this.wpos, pts.floor(mwpos)))
-                    shape.mesh.material.color.set('green');
+                return;
                 //else
                 //shape.material.color.set('white');
             }

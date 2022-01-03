@@ -55,7 +55,7 @@ namespace lod {
 		readonly arrays: Sector[][] = []
 		readonly grid: Grid
 		constructor(span) {
-			this.grid = new Grid(4, 4, this);
+			this.grid = new Grid(8, 8, this);
 		}
 		update(wpos: vec2) {
 			this.grid.big = this.big(wpos);
@@ -114,8 +114,12 @@ namespace lod {
 			let max = pts.add(min, [SectorSpan - 1, SectorSpan - 1]);
 			this.small = new aabb2(max, min);
 			this.group = new Group;
+			this.group.frustumCulled = false;
+			this.group.matrixAutoUpdate = false;
 			Numbers.Sectors[1]++;
 			galaxy.arrays[this.big[1]][this.big[0]] = this;
+			//console.log('sector');
+			
 			hooks.call('sectorCreate', this);
 
 		}
@@ -153,6 +157,8 @@ namespace lod {
 			if (this.on())
 				return;
 			Numbers.Sectors[0]++;
+			//console.log('?');
+			
 			for (let obj of this.objs)
 				obj.show();
 			ren.scene.add(this.group);
@@ -199,14 +205,16 @@ namespace lod {
 			}
 		}
 		offs() {
+			const noConcat = true;
 			let allObjs: Obj[] = [];
 			let i = this.shown.length;
 			while (i--) {
 				let sector: Sector;
 				sector = this.shown[i];
-				allObjs = allObjs.concat(sector.objs_());
+				if (!noConcat)
+					allObjs = allObjs.concat(sector.objs_());
 				sector.tick();
-				if (sector.dist() >= this.outside) {
+				if (sector.dist() > this.outside) {
 					sector.hide();
 					this.shown.splice(i, 1);
 				}
@@ -246,13 +254,15 @@ namespace lod {
 			if (this.on())
 				return;
 			this.counts[0]++;
+			this.create();
 			this.update();
 			this.shape?.show();
 		}
 		hide() {
 			if (this.off())
-				return;
+				return;			
 			this.counts[0]--;
+			this.delete();
 			this.shape?.hide();
 			// console.log(' obj.hide ');
 		}
@@ -263,6 +273,9 @@ namespace lod {
 		}
 		create() { // implement me
 			console.warn(' obj.create ');
+		}
+		delete() { // implement me
+			console.warn(' obj.delete ');
 		}
 		update() {
 			this.wtorpos();
