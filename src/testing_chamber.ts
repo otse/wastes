@@ -14,6 +14,7 @@ namespace testing_chamber {
 		console.log('placing squares on game area that should take up 1:1 pixels on screen...');
 		console.log('...regardless of your os or browsers dpi setting');
 
+		wastes.view.zoom = 1;
 		wastes.view.wpos = [0, 0];
 		wastes.view.rpos = lod.unproject([0, 0]);
 
@@ -32,7 +33,7 @@ namespace testing_chamber {
 
 		lod.SectorSpan = 4;
 		lod.grid = new lod.Grid(1, 1);
-		lod.project = function(unit: vec2) { return unit; }
+		lod.project = function(unit: vec2) { return pts.mult(unit, 100); }
 		lod.unproject = function(pixel: vec2) { return pts.divide(pixel, 100); }
 
 		for (let y = 0; y < 10; y++) {
@@ -85,10 +86,6 @@ namespace testing_chamber {
 		constructor() {
 			super(undefined);
 			console.log('square');
-		}
-		wtorpos() {
-			this.rpos = pts.mult(this.wpos, 100);
-			console.log('square wtorpos');
 		}
 		create() {
 			console.log('create');

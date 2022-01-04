@@ -991,6 +991,7 @@ void main() {
             console.log(' start testing chamber ');
             console.log('placing squares on game area that should take up 1:1 pixels on screen...');
             console.log('...regardless of your os or browsers dpi setting');
+            wastes.view.zoom = 1;
             wastes.view.wpos = [0, 0];
             wastes.view.rpos = lod$1.unproject([0, 0]);
             hooks.register('sectorShow', (x) => {
@@ -1006,7 +1007,7 @@ void main() {
             });
             lod$1.SectorSpan = 4;
             lod$1.grid = new lod$1.Grid(1, 1);
-            lod$1.project = function (unit) { return unit; };
+            lod$1.project = function (unit) { return pts.mult(unit, 100); };
             lod$1.unproject = function (pixel) { return pts.divide(pixel, 100); };
             for (let y = 0; y < 10; y++) {
                 for (let x = 0; x < 10; x++) {
@@ -1053,10 +1054,6 @@ void main() {
             constructor() {
                 super(undefined);
                 console.log('square');
-            }
-            wtorpos() {
-                this.rpos = pts.mult(this.wpos, 100);
-                console.log('square wtorpos');
             }
             create() {
                 console.log('create');
