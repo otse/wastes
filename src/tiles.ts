@@ -15,6 +15,13 @@ export namespace tiles {
 
 	var tiles: Tile[][] = []
 
+	export var raisedmpos: vec2
+
+	export function get(pos: vec2) {
+		if (tiles[pos[1]])
+			return tiles[pos[1]][pos[0]];
+	}
+
 	export function register() {
 
 		console.log(' tiles register ');
@@ -32,32 +39,44 @@ export namespace tiles {
 				tiles[y] = [];
 			let tile = new Tile([x, y]);
 			tiles[y][x] = tile;
-			wastes.view.add(tile);
+			lod.add(tile);
 		})
 	}
 
+	export function tick() {
+		raisedmpos = lod.unproject(pts.add(wastes.view.mrpos, [0, -4]));
+		raisedmpos = pts.floor(raisedmpos);
+
+		const tile = get(raisedmpos);
+		if (tile && tile.z == 4)
+			tile?.hover();
+	}
+
 	export class Tile extends lod.Obj {
+		z = 0
 		constructor(wpos: vec2) {
 			super(undefined, Numbers.Tiles);
 			this.wpos = wpos;
 			this.size = [24, 12];
-			this.z = objects.heightmap.bit(this.wpos)[0];
+			let clr = objects.colormap.bit(this.wpos);
+			this.z = 4;
+			if (clr[0] == 0 && clr[1] == 0 && clr[2] == 0)
+				this.z = 0;
+			//this.z = objects.heightmap.bit(this.wpos)[0];
 		}
 		create() {
 			let img, clr;
 			img = 'tex/dtileup4';
 			this.size = [24, 17];
-			this.z = 4;
 			clr = objects.colormap.bit(this.wpos);
 			//clr = [255, 255, 255, 255];
-			if ((clr[0] == 0 && clr[1] == 0 && clr[2] == 0)) {
+			if (this.z == 0) {
 				img = 'tex/dtile';
 				clr = [63, 63, 127, 255];
 				this.size = [24, 12];
-				this.z = 0;
 			}
 			let shape = new Sprite({
-				bind: this,
+				bindObj: this,
 				img: img,
 				color: clr
 			})
@@ -65,19 +84,13 @@ export namespace tiles {
 		//update() {}
 		delete() {
 		}
-		tick() {
-			return;
-			if (!this.shape)
+		hover() {
+			let sprite = this.shape as Sprite;
+			if (!sprite?.mesh)
 				return;
-			let shape = this.shape as Sprite;
-			let mrpos = pts.add(wastes.view.mrpos, [0, -this.z]);
-			let mwpos = lod.galaxy.unproject(mrpos);
-			if (false)
-				shape.mesh.material.color.set('salmon');
-			if (pts.equals(this.wpos, pts.floor(mwpos)))
-				shape.mesh.material.color.set('green');
-			//else
-			//shape.material.color.set('white');
+			sprite.mesh.material.color.set('green');
+		}
+		tick() {
 		}
 	}
 

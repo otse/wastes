@@ -3,13 +3,14 @@ import { Color, Mesh, BoxGeometry, PlaneBufferGeometry, MeshBasicMaterial, MeshB
 import lod, { Numbers } from "./lod";
 import pts from "./pts";
 import ren from "./renderer";
+import tiles from "./tiles";
 
 interface SpriteParameters {
-	bind: lod.Obj,
+	bindObj: lod.Obj,
 	img: string,
 	color?: vec4,
 	mask?: string,
-	order?: number
+	orderOffset?: number
 };
 
 export namespace Sprite {
@@ -17,7 +18,7 @@ export namespace Sprite {
 };
 
 export class Sprite extends lod.Shape {
-	dimetric = true
+	z = 0
 	mesh: Mesh
 	material: MeshBasicMaterial
 	geometry: PlaneBufferGeometry
@@ -28,15 +29,19 @@ export class Sprite extends lod.Shape {
 	constructor(
 		public readonly pars: SpriteParameters
 	) {
-		super(pars, Numbers.Sprites);
+		super(pars.bindObj, Numbers.Sprites);
 		this.myUvTransform = new Matrix3;
 	}
 	update() {
 		if (!this.mesh)
 			return;
-		this.mesh.rotation.z = this.pars.bind.rz;
-		const obj = this.pars.bind;
+		this.mesh.rotation.z = this.pars.bindObj.rz;
+		const obj = this.pars.bindObj;
+		const tile = tiles.get(obj.wpos);
+		if (tile && tile != obj)
+			this.z = tile.z;
 		let rpos = pts.add(obj.rpos, pts.divide(obj.size, 2));
+		rpos = pts.add(rpos, [0, this.z]);
 		this.mesh?.position.fromArray([...rpos, 0]);
 		this.mesh?.updateMatrix();
 	}
@@ -48,7 +53,7 @@ export class Sprite extends lod.Shape {
 		this.mesh.parent?.remove(this.mesh);
 	}
 	create() {
-		const obj = this.pars.bind;
+		const obj = this.pars.bindObj;
 
 		this.myUvTransform.setUvTransform(
 			this.offset[0], this.offset[1],
@@ -57,11 +62,11 @@ export class Sprite extends lod.Shape {
 			this.center[0], this.center[1]);
 
 		this.geometry = new PlaneBufferGeometry(
-			this.pars.bind.size[0], this.pars.bind.size[1]);
+			this.pars.bindObj.size[0], this.pars.bindObj.size[1]);
 		let color;
-		if (this.pars.bind!.sector!.color)
+		if (this.pars.bindObj!.sector!.color)
 		{
-			color = new Color(this.pars.bind!.sector!.color);
+			color = new Color(this.pars.bindObj!.sector!.color);
 		}
 		else
 		{
@@ -78,9 +83,9 @@ export class Sprite extends lod.Shape {
 		this.mesh = new Mesh(this.geometry, this.material);
 		this.mesh.frustumCulled = false;
 		this.mesh.matrixAutoUpdate = false;
-		this.mesh.renderOrder = -obj.wpos[1] + obj.wpos[0] + (this.pars.order || 0);
+		this.mesh.renderOrder = -obj.wpos[1] + obj.wpos[0] + (this.pars.orderOffset || 0);
 		this.update();
-		const sector = this.pars.bind.sector;
+		const sector = this.pars.bindObj.sector;
 		sector?.group.add(this.mesh);
 		ren.groups.axisSwap.add(this.mesh);
 	}

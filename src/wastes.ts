@@ -54,7 +54,7 @@ export namespace wastes {
 			start();
 		}
 	}
-	
+
 	export function critical(mask: string) {
 		// Couldn't load
 		console.error('resource', mask);
@@ -67,12 +67,13 @@ export namespace wastes {
 	}
 
 	function starts() {
-		tests.start();
-		tiles.start();
-		objects.start();
 		if (window.location.href.indexOf("#testingchamber") != -1) {
-			//CRPG = false
 			testing_chamber.start();
+			tests.start();
+		}
+		else {
+			tiles.start();
+			objects.start();
 		}
 	}
 
@@ -101,7 +102,11 @@ export namespace wastes {
 			return
 		}
 		view.tick();
-		tests.tick();
+		if (!testing_chamber.started) {
+			tiles.tick();
+			tests.tick();
+		}
+		testing_chamber.tick();
 		//lands.tick();
 	}
 

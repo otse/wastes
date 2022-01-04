@@ -48,8 +48,7 @@ namespace objects {
 				if (color[0] > treeTreshold) {
 					let shrubs = new Shrubs();
 					shrubs.wpos = pos;
-					wastes.view.add(shrubs);
-					//console.log('shrubs');
+					lod.add(shrubs);
 				}
 			})
 			return false;
@@ -60,10 +59,9 @@ namespace objects {
 			pts.func(sector.small, (pos) => {
 				const clr = objectmap.bit(pos);
 				if (clr[0] == 255 && clr[1] == 255 && clr[2] == 255) {
-					console.log('make a shack');
 					let wall = new Wall();
 					wall.wpos = pos;
-					wastes.view.add(wall);
+					lod.add(wall);
 				}
 			})
 			return false;
@@ -76,7 +74,7 @@ namespace objects {
 
 	}
 
-	const zeroes: vec4 =  [0, 0, 0, 0]
+	const zeroes: vec4 = [0, 0, 0, 0]
 	
 	export class ColorMap {
 		readonly bits: vec4[][] = []
@@ -118,9 +116,9 @@ namespace objects {
 		create() {
 			this.size = [24, 40];
 			let shape = new Sprite({
-				bind: this,
+				bindObj: this,
 				img: 'tex/dwall',
-				order: .5
+				orderOffset: .5
 			});
 		}
 		adapt() {
@@ -137,9 +135,9 @@ namespace objects {
 		create() {
 			this.size = [24, 15];
 			let shape = new Sprite({
-				bind: this,
+				bindObj: this,
 				img: 'tex/shrubs',
-				order: .5
+				orderOffset: .5
 			});
 		}
 		

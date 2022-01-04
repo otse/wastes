@@ -25,11 +25,8 @@ export class View {
 	chart(big: vec2) {
 	}
 	constructor() {
-		lod.galaxy = new lod.Galaxy(10);
-		this.rpos = lod.galaxy.project(this.wpos);
-	}
-	add(obj: lod.Obj) {
-		lod.galaxy.add(obj);
+		new lod.Galaxy(10);
+		this.rpos = lod.project(this.wpos);
 	}
 	remove(obj: lod.Obj) {
 		obj.sector?.remove(obj);
@@ -39,7 +36,7 @@ export class View {
 		this.chase();
 		this.mouse();
 		this.stats();
-		this.wpos = lod.galaxy.unproject(this.rpos);
+		this.wpos = lod.unproject(this.rpos);
 		lod.galaxy.update(this.wpos);
 		const zoom = wastes.view.zoom;
 		ren.camera.scale.set(zoom, zoom, zoom);
@@ -52,8 +49,8 @@ export class View {
 		mouse = pts.mult(mouse, this.zoom);
 		mouse[1] = -mouse[1];
 		this.mrpos = pts.add(mouse, this.rpos);
-		this.mrpos = pts.add(this.mrpos, lod.galaxy.project([.5, -.5])); // correction
-		this.mwpos = lod.galaxy.unproject(this.mrpos);
+		this.mrpos = pts.add(this.mrpos, lod.project([.5, -.5])); // correction
+		this.mwpos = lod.unproject(this.mrpos);
 		//this.mwpos = pts.add(this.mwpos, [.5, -.5])
 		// now..
 		if (app.button(2) >= 1) {

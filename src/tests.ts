@@ -21,7 +21,7 @@ export namespace tests {
 			const mouseAsteroid = false;
 			if (mouseAsteroid) {
 				this.obj = new lod.Obj({});
-				this.obj.shape = new Sprite({ bind: this.obj, img: 'pngwing.com' });
+				this.obj.shape = new Sprite({ bindObj: this.obj, img: 'pngwing.com' });
 				this.obj.show();
 				let sprite = this.obj.shape as Sprite;
 				ren.scene.add(sprite.mesh);

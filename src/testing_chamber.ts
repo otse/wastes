@@ -6,30 +6,47 @@ import hooks from "./hooks";
 
 namespace testing_chamber {
 
+	export var started = false;
+
 	export function start() {
 		console.log(' start testing chamber ');
 
 		console.log('placing squares on game area that should take up 1:1 pixels on screen...');
 		console.log('...regardless of your os or browsers dpi setting');
 
-		for (let y = 0; y < 50; y++) {
-			for (let x = 0; x < 50; x++) {
-				let conversion = 100;
-				let square = TestingSquare.make();
-				square.wpos = [x * conversion, y * conversion];
-				square.create();
-				wastes.view.add(square);
-			}
-		}
+		wastes.view.wpos = [0, 0];
+		wastes.view.rpos = lod.unproject([0, 0]);
+
+		hooks.register('sectorShow', (x) => {
+			console.log('(testing chamber) show sector');
+			return false;
+		});
 
 		hooks.register('viewClick', (view) => {
 			console.log(' asteorid! ')
 			let ping = new Asteroid;
 			ping.wpos = pts.add(wastes.view.mwpos, [-1, -1]);
-			ping.create();
-			wastes.view.add(ping);
+			lod.add(ping);
 			return false;
 		});
+
+		lod.SectorSpan = 4;
+		lod.grid = new lod.Grid(1, 1);
+		lod.project = function(unit: vec2) { return unit; }
+		lod.unproject = function(pixel: vec2) { return pts.divide(pixel, 100); }
+
+		for (let y = 0; y < 10; y++) {
+			for (let x = 0; x < 10; x++) {
+				let square = Square.make();
+				square.wpos = [x, y];
+				lod.add(square);
+			}
+		}
+
+		started = true;
+	}
+
+	export function tick() {
 	}
 
 	export class Asteroid extends lod.Obj {
@@ -48,10 +65,9 @@ namespace testing_chamber {
 		create() {
 			this.size = [200, 200];
 			let shape = new Sprite({
-				bind: this,
+				bindObj: this,
 				img: 'tex/pngwing.com'
 			});
-			shape.dimetric = false;
 		}
 		tick() {
 			this.wpos[0] += this.float[0];
@@ -62,17 +78,23 @@ namespace testing_chamber {
 		}
 	}
 
-	export class TestingSquare extends lod.Obj {
+	export class Square extends lod.Obj {
 		static make() {
-			return new TestingSquare;
+			return new Square;
 		}
 		constructor() {
 			super(undefined);
+			console.log('square');
+		}
+		wtorpos() {
+			this.rpos = pts.mult(this.wpos, 100);
+			console.log('square wtorpos');
 		}
 		create() {
+			console.log('create');
 			this.size = [100, 100];
 			let shape = new Sprite({
-				bind: this,
+				bindObj: this,
 				img: 'tex/test100'
 			});
 		}

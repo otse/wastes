@@ -10,10 +10,12 @@ export namespace Numbers {
 	export type Tally = [active: number, total: number]
 
 	export var Sectors: Tally = [0, 0]
-	export var Objs: Tally = [0, 0]
-	export var Trees: Tally = [0, 0]
 	export var Sprites: Tally = [0, 0]
+	export var Objs: Tally = [0, 0]
+
 	export var Tiles: Tally = [0, 0]
+	export var Trees: Tally = [0, 0]
+	export var Walls: Tally = [0, 0]
 };
 
 class Toggle {
@@ -21,7 +23,7 @@ class Toggle {
 	isActive() { return this.active };
 	on() {
 		if (this.active) {
-			console.warn(' already on ');
+			console.warn(' (lod) already on ');
 			return true;
 			// it was on before
 		}
@@ -31,7 +33,7 @@ class Toggle {
 	}
 	off() {
 		if (!this.active) {
-			console.warn(' already off ');
+			console.warn(' (lod) already off ');
 			return true;
 		}
 		this.active = false;
@@ -42,8 +44,9 @@ class Toggle {
 namespace lod {
 
 	export var galaxy: Galaxy;
+	export var grid: Grid;
 
-	export const SectorSpan = 4;
+	export var SectorSpan = 4;
 
 	export function register() {
 		hooks.create('sectorCreate')
@@ -51,34 +54,37 @@ namespace lod {
 		hooks.create('sectorHide')
 	}
 
+	export function project(unit: vec2): vec2 {
+		return pts.mult(pts.project(unit), wastes.size);
+	}
+
+	export function unproject(pixel: vec2): vec2 {
+		return pts.divide(pts.unproject(pixel), wastes.size);
+	}
+
+	export function add(obj: Obj) {
+		let sector = galaxy.at(galaxy.big(obj.wpos));
+		sector.add(obj);
+	}
+
 	export class Galaxy {
 		readonly arrays: Sector[][] = []
-		readonly grid: Grid
 		constructor(span) {
-			this.grid = new Grid(8, 8, this);
+			galaxy = this;
+			new Grid(8, 8);
 		}
 		update(wpos: vec2) {
-			this.grid.big = this.big(wpos);
-			this.grid.offs();
-			this.grid.crawl();
+			grid.big = this.big(wpos);
+			grid.offs();
+			grid.crawl();
 		}
 		lookup(big: vec2): Sector | undefined {
 			if (this.arrays[big[1]] == undefined)
 				this.arrays[big[1]] = [];
 			return this.arrays[big[1]][big[0]];
 		}
-		sectoratpixel(pixel: vec2): Sector {
-			let units = this.unproject(pixel);
-			let bigs = this.big(units);
-			return this.at(bigs);
-		}
 		at(big: vec2): Sector {
 			return this.lookup(big) || this.make(big);
-		}
-		add(obj: Obj) {
-			//obj.wtorpos();
-			let sector = this.at(this.big(obj.wpos));
-			sector.add(obj);
 		}
 		protected make(big): Sector {
 			let s = this.lookup(big);
@@ -89,12 +95,6 @@ namespace lod {
 		}
 		big(units: vec2): vec2 {
 			return pts.floor(pts.divide(units, SectorSpan));
-		}
-		project(unit: vec2): vec2 {
-			return pts.mult(pts.project(unit), wastes.size);
-		}
-		unproject(pixel: vec2): vec2 {
-			return pts.divide(pts.unproject(pixel), wastes.size);
 		}
 	}
 
@@ -119,7 +119,7 @@ namespace lod {
 			Numbers.Sectors[1]++;
 			galaxy.arrays[this.big[1]][this.big[0]] = this;
 			//console.log('sector');
-			
+
 			hooks.call('sectorCreate', this);
 
 		}
@@ -158,7 +158,7 @@ namespace lod {
 				return;
 			Numbers.Sectors[0]++;
 			//console.log('?');
-			
+
 			for (let obj of this.objs)
 				obj.show();
 			ren.scene.add(this.group);
@@ -174,7 +174,7 @@ namespace lod {
 			hooks.call('sectorHide', this);
 		}
 		dist() {
-			return pts.distsimple(this.big, this.galaxy.grid.big);
+			return pts.distsimple(this.big, grid.big);
 		}
 	}
 
@@ -183,9 +183,9 @@ namespace lod {
 		public shown: Sector[] = [];
 		constructor(
 			public readonly spread,
-			public readonly outside,
-			readonly galaxy: Galaxy
+			public readonly outside
 		) {
+			grid = this;
 		}
 		visible(sector: Sector) {
 			return sector.dist() < this.spread;
@@ -194,7 +194,7 @@ namespace lod {
 			for (let y = -this.spread; y < this.spread; y++) {
 				for (let x = -this.spread; x < this.spread; x++) {
 					let pos = pts.add(this.big, [x, y]);
-					let sector = this.galaxy.lookup(pos);
+					let sector = galaxy.lookup(pos);
 					if (!sector)
 						continue;
 					if (!sector.isActive()) {
@@ -205,7 +205,7 @@ namespace lod {
 			}
 		}
 		offs() {
-			const noConcat = true;
+			const noConcat = false;
 			let allObjs: Obj[] = [];
 			let i = this.shown.length;
 			while (i--) {
@@ -230,20 +230,17 @@ namespace lod {
 
 	export class Obj extends Toggle {
 		aabbScreen: aabb2
-		hexagonal: boolean
 		wpos: vec2 = [0, 0]
 		rpos: vec2 = [0, 0]
 		size: vec2 = [100, 100]
 		shape: Shape | null
 		sector: Sector | null
 		stuffs: ObjStuffs
-		z = 0
 		rz = 0
 		constructor(
 			stuffs: ObjStuffs | undefined,
 			public readonly counts: Numbers.Tally = Numbers.Objs) {
 			super();
-			this.hexagonal = false
 			this.counts[1]++;
 		}
 		finalize() {
@@ -260,22 +257,22 @@ namespace lod {
 		}
 		hide() {
 			if (this.off())
-				return;			
+				return;
 			this.counts[0]--;
 			this.delete();
 			this.shape?.hide();
 			// console.log(' obj.hide ');
 		}
 		wtorpos() {
-			this.rpos = lod.galaxy.project(this.wpos);
+			this.rpos = lod.project(this.wpos);
 		}
 		tick() { // implement me
 		}
 		create() { // implement me
-			console.warn(' obj.create ');
+			console.warn(' (lod) obj.create ');
 		}
 		delete() { // implement me
-			console.warn(' obj.delete ');
+			console.warn(' (lod) obj.delete ');
 		}
 		update() {
 			this.wtorpos();
@@ -293,16 +290,17 @@ namespace lod {
 	}
 
 	export namespace Shape {
-		export type Parameters = Shape['pars'];
+		//export type Parameters = Shape['pars'];
 	};
 
 	export class Shape extends Toggle {
+
 		constructor(
-			public readonly pars: { bind: Obj },
+			public readonly bindObj: Obj,
 			public readonly counts
 		) {
 			super();
-			this.pars.bind.shape = this;
+			this.bindObj.shape = this;
 			this.counts[1]++;
 		}
 		update() { // implement me
