@@ -33,14 +33,52 @@ export class View {
 	}
 	tick() {
 		this.move();
-		this.chase();
 		this.mouse();
+		this.chase();
 		this.stats();
 		this.wpos = lod.unproject(this.rpos);
 		lod.galaxy.update(this.wpos);
 		const zoom = wastes.view.zoom;
 		ren.camera.scale.set(zoom, zoom, zoom);
 		ren.camera.updateProjectionMatrix();
+	}
+	begin: vec2 = [0, 0]
+	before: vec2 = [0, 0]
+	pan() {
+		let continousMode = false;
+		const panSpeed = 5;
+		const continuousSpeed = 200;
+		if (app.button(1) == 1) {
+			let mouse = app.mouse();
+			this.begin = [mouse[0], -mouse[1]];
+			this.before = pts.clone(this.rpos);
+		}
+		if (app.button(1) >= 1) {
+			let mouse = app.mouse();
+			mouse[1] = -mouse[1];
+			let dif = pts.subtract(this.begin, mouse);
+			if (continousMode) {
+				dif = pts.divide(dif, continuousSpeed);
+				this.rpos = pts.add(this.rpos, pts.inv(dif));
+			}
+			else
+			{
+				dif = pts.divide(dif, panSpeed);
+				dif = pts.subtract(dif, this.before);
+				this.rpos = pts.inv(dif);
+			}
+		}
+	}
+	chase() {
+		const time = ren.delta;
+		pts.mult([0, 0], 0);
+		this.pan();
+		//let ply = PRY.ply.rpos;
+		//this.rpos = pts.add(pts.mult(pts.subtract(ply, this.rpos), time * 5), this.rpos);
+		//this.rpos = pts.mult(this.rpos, this.zoom);
+		let inv = pts.inv(this.rpos);
+		//ren.camera.position.set(inv[0], inv[1], 0);
+		ren.groups.axisSwap.position.set(inv[0], inv[1], 0);
 	}
 	mouse() {
 		let mouse = app.mouse();
@@ -78,15 +116,6 @@ export class View {
 		const min = .1;
 		const max = 1;
 		this.zoom = this.zoom > max ? max : this.zoom < min ? min : this.zoom;
-	}
-	chase() {
-		const time = ren.delta;
-		pts.mult([0, 0], 0);
-		//let ply = PRY.ply.rpos;
-		//this.rpos = pts.add(pts.mult(pts.subtract(ply, this.rpos), time * 5), this.rpos);
-		//this.rpos = pts.mult(this.rpos, this.zoom);
-		let inv = pts.inv(this.rpos);
-		ren.groups.axisSwap.position.set(inv[0], inv[1], 0);
 	}
 	show = true
 	stats() {

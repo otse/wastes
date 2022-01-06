@@ -53,32 +53,30 @@ export namespace tiles {
 	}
 
 	export class Tile extends lod.Obj {
-		z = 0
+		z: number
+		img: string
+		color: vec4
 		constructor(wpos: vec2) {
 			super(undefined, Numbers.Tiles);
 			this.wpos = wpos;
+			this.img = 'tex/dtile';
 			this.size = [24, 12];
-			let clr = objects.colormap.bit(this.wpos);
-			this.z = 4;
-			if (clr[0] == 0 && clr[1] == 0 && clr[2] == 0)
-				this.z = 0;
-			//this.z = objects.heightmap.bit(this.wpos)[0];
+			this.z = 0;
+			this.color = [63, 63, 127, 255];
+			let pixel = wastes.colormap.pixel(this.wpos);
+			if (!pixel.is_black()) {
+				this.z = 4;
+				this.size = [24, 17];
+				this.img = 'tex/dtileup4';
+				this.color = wastes.colormap.pixel(this.wpos).array;
+			}
 		}
 		create() {
-			let img, clr;
-			img = 'tex/dtileup4';
-			this.size = [24, 17];
-			clr = objects.colormap.bit(this.wpos);
-			//clr = [255, 255, 255, 255];
-			if (this.z == 0) {
-				img = 'tex/dtile';
-				clr = [63, 63, 127, 255];
-				this.size = [24, 12];
-			}
+			
 			let shape = new Sprite({
 				bindObj: this,
-				img: img,
-				color: clr
+				img: this.img,
+				color: this.color
 			})
 		}
 		//update() {}

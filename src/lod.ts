@@ -224,7 +224,7 @@ namespace lod {
 		}
 	}
 
-	interface ObjStuffs {
+	interface ObjHints {
 
 	};
 
@@ -235,10 +235,9 @@ namespace lod {
 		size: vec2 = [100, 100]
 		shape: Shape | null
 		sector: Sector | null
-		stuffs: ObjStuffs
 		rz = 0
 		constructor(
-			stuffs: ObjStuffs | undefined,
+			hints: ObjHints | undefined,
 			public readonly counts: Numbers.Tally = Numbers.Objs) {
 			super();
 			this.counts[1]++;

@@ -615,7 +615,7 @@ void main() {
         }
         lod.Grid = Grid;
         class Obj extends Toggle {
-            constructor(stuffs, counts = Numbers.Objs) {
+            constructor(hints, counts = Numbers.Objs) {
                 super();
                 this.counts = counts;
                 this.wpos = [0, 0];
@@ -709,201 +709,6 @@ void main() {
     })(lod || (lod = {}));
     var lod$1 = lod;
 
-    var objects;
-    (function (objects) {
-        const mapSpan = 100;
-        function register() {
-            console.log(' objects register ');
-            objects.heightmap = new ColorMap('heightmap');
-            objects.objectmap = new ColorMap('objectmap');
-            objects.treemap = new ColorMap('treemap');
-            objects.colormap = new ColorMap('colormap');
-            /*lod.SectorHooks.OnShow.register((sector: lod.Sector) => {
-                objectmap.loop(sector.small, (pos, color) => {
-                    if (color[0] == 254) {
-                        let wall = new Wall();
-                        wall.wpos = [pos[0], pos[1]];
-                        wests.view.add(wall);
-                    }
-                })
-                return false;
-            })*/
-            const treeTreshold = 50;
-            hooks.register('sectorCreate', (x) => {
-                let sector = x;
-                pts.func(sector.small, (pos) => {
-                    const color = objects.treemap.bit(pos);
-                    if (color[0] > treeTreshold) {
-                        let shrubs = new Shrubs();
-                        shrubs.wpos = pos;
-                        lod$1.add(shrubs);
-                    }
-                });
-                return false;
-            });
-            hooks.register('sectorCreate', (x) => {
-                let sector = x;
-                pts.func(sector.small, (pos) => {
-                    const clr = objects.objectmap.bit(pos);
-                    if (clr[0] == 255 && clr[1] == 255 && clr[2] == 255) {
-                        let wall = new Wall();
-                        wall.wpos = pos;
-                        lod$1.add(wall);
-                    }
-                });
-                return false;
-            });
-        }
-        objects.register = register;
-        function start() {
-            console.log(' objects start ');
-        }
-        objects.start = start;
-        const zeroes = [0, 0, 0, 0];
-        class ColorMap {
-            constructor(id) {
-                this.bits = [];
-                var img = document.getElementById(id);
-                this.canvas = document.createElement('canvas');
-                this.canvas.width = mapSpan;
-                this.canvas.height = mapSpan;
-                this.ctx = this.canvas.getContext('2d');
-                //this.ctx.scale(1, 1);
-                this.ctx.drawImage(img, 0, 0, img.width, img.height);
-                this.process();
-            }
-            bit(pos) {
-                return this.bits[pos[1]] ? this.bits[pos[1]][pos[0]] || zeroes : zeroes;
-            }
-            offset(pos, offset) {
-                return this.bit(pts.add(pos, offset));
-            }
-            process() {
-                for (let y = 0; y < mapSpan; y++) {
-                    this.bits[y] = [];
-                    for (let x = 0; x < mapSpan; x++) {
-                        const data = this.ctx.getImageData(x, mapSpan - 1 - y, 1, 1).data;
-                        if (this.bits[y] == undefined)
-                            this.bits[y] = [];
-                        this.bits[y][x] = data;
-                    }
-                }
-            }
-        }
-        objects.ColorMap = ColorMap;
-        class Wall extends lod$1.Obj {
-            constructor() {
-                super(undefined);
-            }
-            create() {
-                this.size = [24, 40];
-                new Sprite$1({
-                    bindObj: this,
-                    img: 'tex/dwall',
-                    orderOffset: .5
-                });
-            }
-            adapt() {
-                // change sprite to surrounding walls
-            }
-        }
-        objects.Wall = Wall;
-        class Shrubs extends lod$1.Obj {
-            constructor() {
-                super(undefined);
-            }
-            create() {
-                this.size = [24, 15];
-                new Sprite$1({
-                    bindObj: this,
-                    img: 'tex/shrubs',
-                    orderOffset: .5
-                });
-            }
-        }
-        objects.Shrubs = Shrubs;
-    })(objects || (objects = {}));
-    var objects$1 = objects;
-
-    var tiles;
-    (function (tiles_1) {
-        const mapSize = 100;
-        var tiles = [];
-        function get(pos) {
-            if (tiles[pos[1]])
-                return tiles[pos[1]][pos[0]];
-        }
-        tiles_1.get = get;
-        function register() {
-            console.log(' tiles register ');
-        }
-        tiles_1.register = register;
-        function start() {
-            console.log(' tiles start ');
-            pts.func(new aabb2([0, 0], [mapSize - 1, mapSize - 1]), (pos) => {
-                let x = pos[0];
-                let y = pos[1];
-                if (tiles[y] == undefined)
-                    tiles[y] = [];
-                let tile = new Tile([x, y]);
-                tiles[y][x] = tile;
-                lod$1.add(tile);
-            });
-        }
-        tiles_1.start = start;
-        function tick() {
-            tiles_1.raisedmpos = lod$1.unproject(pts.add(wastes.view.mrpos, [0, -4]));
-            tiles_1.raisedmpos = pts.floor(tiles_1.raisedmpos);
-            const tile = get(tiles_1.raisedmpos);
-            if (tile && tile.z == 4)
-                tile === null || tile === void 0 ? void 0 : tile.hover();
-        }
-        tiles_1.tick = tick;
-        class Tile extends lod$1.Obj {
-            constructor(wpos) {
-                super(undefined, Numbers.Tiles);
-                this.z = 0;
-                this.wpos = wpos;
-                this.size = [24, 12];
-                let clr = objects$1.colormap.bit(this.wpos);
-                this.z = 4;
-                if (clr[0] == 0 && clr[1] == 0 && clr[2] == 0)
-                    this.z = 0;
-                //this.z = objects.heightmap.bit(this.wpos)[0];
-            }
-            create() {
-                let img, clr;
-                img = 'tex/dtileup4';
-                this.size = [24, 17];
-                clr = objects$1.colormap.bit(this.wpos);
-                //clr = [255, 255, 255, 255];
-                if (this.z == 0) {
-                    img = 'tex/dtile';
-                    clr = [63, 63, 127, 255];
-                    this.size = [24, 12];
-                }
-                new Sprite$1({
-                    bindObj: this,
-                    img: img,
-                    color: clr
-                });
-            }
-            //update() {}
-            delete() {
-            }
-            hover() {
-                let sprite = this.shape;
-                if (!(sprite === null || sprite === void 0 ? void 0 : sprite.mesh))
-                    return;
-                sprite.mesh.material.color.set('green');
-            }
-            tick() {
-            }
-        }
-        tiles_1.Tile = Tile;
-    })(tiles || (tiles = {}));
-    var tiles$1 = tiles;
-
     class Sprite extends lod$1.Shape {
         constructor(pars) {
             super(pars.bindObj, Numbers.Sprites);
@@ -920,9 +725,6 @@ void main() {
                 return;
             this.mesh.rotation.z = this.pars.bindObj.rz;
             const obj = this.pars.bindObj;
-            const tile = tiles$1.get(obj.wpos);
-            if (tile && tile != obj)
-                this.z = tile.z;
             let rpos = pts.add(obj.rpos, pts.divide(obj.size, 2));
             rpos = pts.add(rpos, [0, this.z]);
             (_a = this.mesh) === null || _a === void 0 ? void 0 : _a.position.fromArray([...rpos, 0]);
@@ -982,7 +784,6 @@ void main() {
         };
         return material;
     }
-    var Sprite$1 = Sprite;
 
     var testing_chamber;
     (function (testing_chamber) {
@@ -1031,7 +832,7 @@ void main() {
             }
             create() {
                 this.size = [200, 200];
-                new Sprite$1({
+                new Sprite({
                     bindObj: this,
                     img: 'tex/pngwing.com'
                 });
@@ -1058,7 +859,7 @@ void main() {
             create() {
                 console.log('create');
                 this.size = [100, 100];
-                new Sprite$1({
+                new Sprite({
                     bindObj: this,
                     img: 'tex/test100'
                 });
@@ -1110,6 +911,8 @@ void main() {
             this.mpos = [0, 0];
             this.mwpos = [0, 0];
             this.mrpos = [0, 0];
+            this.begin = [0, 0];
+            this.before = [0, 0];
             this.show = true;
             new lod$1.Galaxy(10);
             this.rpos = lod$1.project(this.wpos);
@@ -1125,14 +928,43 @@ void main() {
         }
         tick() {
             this.move();
-            this.chase();
             this.mouse();
+            this.chase();
             this.stats();
             this.wpos = lod$1.unproject(this.rpos);
             lod$1.galaxy.update(this.wpos);
             const zoom = wastes.view.zoom;
             ren.camera.scale.set(zoom, zoom, zoom);
             ren.camera.updateProjectionMatrix();
+        }
+        pan() {
+            const panSpeed = 5;
+            if (app$1.button(1) == 1) {
+                let mouse = app$1.mouse();
+                this.begin = [mouse[0], -mouse[1]];
+                this.before = pts.clone(this.rpos);
+            }
+            if (app$1.button(1) >= 1) {
+                let mouse = app$1.mouse();
+                mouse[1] = -mouse[1];
+                let dif = pts.subtract(this.begin, mouse);
+                {
+                    dif = pts.divide(dif, panSpeed);
+                    dif = pts.subtract(dif, this.before);
+                    this.rpos = pts.inv(dif);
+                }
+            }
+        }
+        chase() {
+            ren.delta;
+            pts.mult([0, 0], 0);
+            this.pan();
+            //let ply = PRY.ply.rpos;
+            //this.rpos = pts.add(pts.mult(pts.subtract(ply, this.rpos), time * 5), this.rpos);
+            //this.rpos = pts.mult(this.rpos, this.zoom);
+            let inv = pts.inv(this.rpos);
+            //ren.camera.position.set(inv[0], inv[1], 0);
+            ren.groups.axisSwap.position.set(inv[0], inv[1], 0);
         }
         mouse() {
             let mouse = app$1.mouse();
@@ -1171,15 +1003,6 @@ void main() {
             const max = 1;
             this.zoom = this.zoom > max ? max : this.zoom < min ? min : this.zoom;
         }
-        chase() {
-            ren.delta;
-            pts.mult([0, 0], 0);
-            //let ply = PRY.ply.rpos;
-            //this.rpos = pts.add(pts.mult(pts.subtract(ply, this.rpos), time * 5), this.rpos);
-            //this.rpos = pts.mult(this.rpos, this.zoom);
-            let inv = pts.inv(this.rpos);
-            ren.groups.axisSwap.position.set(inv[0], inv[1], 0);
-        }
         stats() {
             if (app$1.key('h') == 1)
                 this.show = !this.show;
@@ -1215,6 +1038,234 @@ void main() {
             element.style.visibility = this.show ? 'visible' : 'hidden';
         }
     }
+
+    var tiles;
+    (function (tiles_1) {
+        const mapSize = 100;
+        var tiles = [];
+        function get(pos) {
+            if (tiles[pos[1]])
+                return tiles[pos[1]][pos[0]];
+        }
+        tiles_1.get = get;
+        function register() {
+            console.log(' tiles register ');
+        }
+        tiles_1.register = register;
+        function start() {
+            console.log(' tiles start ');
+            pts.func(new aabb2([0, 0], [mapSize - 1, mapSize - 1]), (pos) => {
+                let x = pos[0];
+                let y = pos[1];
+                if (tiles[y] == undefined)
+                    tiles[y] = [];
+                let tile = new Tile([x, y]);
+                tiles[y][x] = tile;
+                lod$1.add(tile);
+            });
+        }
+        tiles_1.start = start;
+        function tick() {
+            tiles_1.raisedmpos = lod$1.unproject(pts.add(wastes.view.mrpos, [0, -4]));
+            tiles_1.raisedmpos = pts.floor(tiles_1.raisedmpos);
+            const tile = get(tiles_1.raisedmpos);
+            if (tile && tile.z == 4)
+                tile === null || tile === void 0 ? void 0 : tile.hover();
+        }
+        tiles_1.tick = tick;
+        class Tile extends lod$1.Obj {
+            constructor(wpos) {
+                super(undefined, Numbers.Tiles);
+                this.wpos = wpos;
+                this.img = 'tex/dtile';
+                this.size = [24, 12];
+                this.z = 0;
+                this.color = [63, 63, 127, 255];
+                let pixel = wastes.colormap.pixel(this.wpos);
+                if (!pixel.is_black()) {
+                    this.z = 4;
+                    this.size = [24, 17];
+                    this.img = 'tex/dtileup4';
+                    this.color = wastes.colormap.pixel(this.wpos).array;
+                }
+            }
+            create() {
+                new Sprite({
+                    bindObj: this,
+                    img: this.img,
+                    color: this.color
+                });
+            }
+            //update() {}
+            delete() {
+            }
+            hover() {
+                let sprite = this.shape;
+                if (!(sprite === null || sprite === void 0 ? void 0 : sprite.mesh))
+                    return;
+                sprite.mesh.material.color.set('green');
+            }
+            tick() {
+            }
+        }
+        tiles_1.Tile = Tile;
+    })(tiles || (tiles = {}));
+    var tiles$1 = tiles;
+
+    var objects;
+    (function (objects) {
+        const mapSpan = 100;
+        function register() {
+            console.log(' objects register ');
+            wastes.heightmap = new ColorMap('heightmap');
+            wastes.objectmap = new ColorMap('objectmap');
+            wastes.treemap = new ColorMap('treemap');
+            wastes.colormap = new ColorMap('colormap');
+            const treeTreshold = 50;
+            hooks.register('sectorCreate', (x) => {
+                let sector = x;
+                pts.func(sector.small, (pos) => {
+                    let pixel = wastes.treemap.pixel(pos);
+                    if (pixel.array[0] > treeTreshold) {
+                        let shrubs = new Shrubs();
+                        shrubs.pixel = pixel;
+                        shrubs.wpos = pos;
+                        lod$1.add(shrubs);
+                    }
+                });
+                return false;
+            });
+            hooks.register('sectorCreate', (x) => {
+                let sector = x;
+                pts.func(sector.small, (pos) => {
+                    let pixel = wastes.objectmap.pixel(pos);
+                    if (pixel.is_white()) {
+                        let wall = new Wall();
+                        wall.pixel = pixel;
+                        wall.wpos = pos;
+                        lod$1.add(wall);
+                    }
+                });
+                return false;
+            });
+        }
+        objects.register = register;
+        function start() {
+            console.log(' objects start ');
+        }
+        objects.start = start;
+        const zeroes = [0, 0, 0, 0];
+        class Pixel {
+            constructor(context, pos, array) {
+                this.context = context;
+                this.pos = pos;
+                this.array = array;
+            }
+            left() {
+                this.context.pixel(pts.add(this.pos, [-1, 0]));
+            }
+            right() {
+                this.context.pixel(pts.add(this.pos, [1, 0]));
+            }
+            up() {
+                this.context.pixel(pts.add(this.pos, [0, 1]));
+            }
+            down() {
+                this.context.pixel(pts.add(this.pos, [0, -1]));
+            }
+            equals(vec) {
+                return vec[0] == this.array[0] && vec[1] == this.array[1] && vec[2] == this.array[2];
+            }
+            is_black() {
+                return this.equals([0, 0, 0]);
+            }
+            is_white() {
+                return this.equals([255, 255, 255]);
+            }
+            purple_water() {
+                return [63, 63, 127];
+            }
+        }
+        class ColorMap {
+            constructor(id) {
+                this.data = [];
+                var img = document.getElementById(id);
+                this.canvas = document.createElement('canvas');
+                this.canvas.width = mapSpan;
+                this.canvas.height = mapSpan;
+                this.ctx = this.canvas.getContext('2d');
+                //this.ctx.scale(1, 1);
+                this.ctx.drawImage(img, 0, 0, img.width, img.height);
+                this.process();
+            }
+            get(pos) {
+                if (this.data[pos[1]])
+                    return this.data[pos[1]][pos[0]];
+                return zeroes;
+            }
+            pixel(pos) {
+                return new Pixel(this, pos, this.get(pos));
+            }
+            process() {
+                for (let y = 0; y < mapSpan; y++) {
+                    this.data[y] = [];
+                    for (let x = 0; x < mapSpan; x++) {
+                        const data = this.ctx.getImageData(x, mapSpan - 1 - y, 1, 1).data;
+                        if (this.data[y] == undefined)
+                            this.data[y] = [];
+                        this.data[y][x] = data;
+                    }
+                }
+            }
+        }
+        objects.ColorMap = ColorMap;
+        class TiledObj extends lod$1.Obj {
+            constructor(x, y) {
+                super(x, y);
+            }
+            update() {
+                if (this.shape) {
+                    const tile = tiles$1.get(this.wpos);
+                    if (tile)
+                        this.shape.z = tile.z;
+                }
+                super.update();
+            }
+        }
+        objects.TiledObj = TiledObj;
+        class Wall extends TiledObj {
+            constructor() {
+                super(undefined, Numbers.Walls);
+            }
+            create() {
+                this.size = [24, 40];
+                new Sprite({
+                    bindObj: this,
+                    img: 'tex/dwall',
+                    orderOffset: .5
+                });
+            }
+            adapt() {
+                // change sprite to surrounding walls
+            }
+        }
+        objects.Wall = Wall;
+        class Shrubs extends TiledObj {
+            constructor() {
+                super(undefined, Numbers.Trees);
+            }
+            create() {
+                this.size = [24, 15];
+                new Sprite({
+                    bindObj: this,
+                    img: 'tex/shrubs',
+                    orderOffset: .5
+                });
+            }
+        }
+        objects.Shrubs = Shrubs;
+    })(objects || (objects = {}));
+    var objects$1 = objects;
 
     exports.wastes = void 0;
     (function (wastes) {

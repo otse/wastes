@@ -37,9 +37,7 @@ export class Sprite extends lod.Shape {
 			return;
 		this.mesh.rotation.z = this.pars.bindObj.rz;
 		const obj = this.pars.bindObj;
-		const tile = tiles.get(obj.wpos);
-		if (tile && tile != obj)
-			this.z = tile.z;
+		
 		let rpos = pts.add(obj.rpos, pts.divide(obj.size, 2));
 		rpos = pts.add(rpos, [0, this.z]);
 		this.mesh?.position.fromArray([...rpos, 0]);

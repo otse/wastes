@@ -15,38 +15,24 @@ namespace objects {
 
 	const mapSpan = 100;
 
-	export var heightmap: ColorMap
-	export var objectmap: ColorMap
-	export var treemap: ColorMap
-	export var colormap: ColorMap
-
 	export function register() {
 
 		console.log(' objects register ');
 
-		heightmap = new ColorMap('heightmap');
-		objectmap = new ColorMap('objectmap');
-		treemap = new ColorMap('treemap');
-		colormap = new ColorMap('colormap');
+		wastes.heightmap = new ColorMap('heightmap');
+		wastes.objectmap = new ColorMap('objectmap');
+		wastes.treemap = new ColorMap('treemap');
+		wastes.colormap = new ColorMap('colormap');
 
-		/*lod.SectorHooks.OnShow.register((sector: lod.Sector) => {
-			objectmap.loop(sector.small, (pos, color) => {
-				if (color[0] == 254) {
-					let wall = new Wall();
-					wall.wpos = [pos[0], pos[1]];
-					wests.view.add(wall);
-				}
-			})
-			return false;
-		})*/
 		const treeTreshold = 50;
 
 		hooks.register('sectorCreate', (x) => {
 			let sector = x as lod.Sector
 			pts.func(sector.small, (pos) => {
-				const color = treemap.bit(pos);
-				if (color[0] > treeTreshold) {
+				let pixel = wastes.treemap.pixel(pos);
+				if (pixel.array[0] > treeTreshold) {
 					let shrubs = new Shrubs();
+					shrubs.pixel = pixel;
 					shrubs.wpos = pos;
 					lod.add(shrubs);
 				}
@@ -57,9 +43,10 @@ namespace objects {
 		hooks.register('sectorCreate', (x) => {
 			let sector = x as lod.Sector
 			pts.func(sector.small, (pos) => {
-				const clr = objectmap.bit(pos);
-				if (clr[0] == 255 && clr[1] == 255 && clr[2] == 255) {
+				let pixel = wastes.objectmap.pixel(pos);
+				if (pixel.is_white()) {
 					let wall = new Wall();
+					wall.pixel = pixel;
 					wall.wpos = pos;
 					lod.add(wall);
 				}
@@ -75,9 +62,41 @@ namespace objects {
 	}
 
 	const zeroes: vec4 = [0, 0, 0, 0]
-	
+
+	class Pixel {
+		constructor(
+			public context: ColorMap,
+			public pos: vec2,
+			public array: vec4) {
+		}
+		left() {
+			this.context.pixel(pts.add(this.pos, [-1, 0]));
+		}
+		right() {
+			this.context.pixel(pts.add(this.pos, [1, 0]));
+		}
+		up() {
+			this.context.pixel(pts.add(this.pos, [0, 1]));
+		}
+		down() {
+			this.context.pixel(pts.add(this.pos, [0, -1]));
+		}
+		equals(vec: vec3) {
+			return vec[0] == this.array[0] && vec[1] == this.array[1] && vec[2] == this.array[2];
+		}
+		is_black() {
+			return this.equals([0, 0, 0]);
+		}
+		is_white() {
+			return this.equals([255, 255, 255]);
+		}
+		purple_water() {
+			return [63, 63, 127];
+		}
+	}
+
 	export class ColorMap {
-		readonly bits: vec4[][] = []
+		readonly data: vec4[][] = []
 		canvas
 		ctx
 		constructor(id: string) {
@@ -90,31 +109,47 @@ namespace objects {
 			this.ctx.drawImage(img, 0, 0, img.width, img.height);
 			this.process();
 		}
-		bit(pos: vec2): vec4 {
-			return this.bits[pos[1]] ? this.bits[pos[1]][pos[0]] || zeroes : zeroes;
+		get(pos: vec2) {
+			if (this.data[pos[1]])
+				return this.data[pos[1]][pos[0]];
+			return zeroes;
 		}
-		offset(pos: vec2, offset: vec2) : vec4 {
-			return this.bit(pts.add(pos, offset));
+		pixel(pos: vec2): Pixel {
+			return new Pixel(this, pos, this.get(pos));
 		}
 		process() {
 			for (let y = 0; y < mapSpan; y++) {
-				this.bits[y] = [];
+				this.data[y] = [];
 				for (let x = 0; x < mapSpan; x++) {
 					const data = this.ctx.getImageData(x, mapSpan - 1 - y, 1, 1).data;
-					if (this.bits[y] == undefined)
-						this.bits[y] = [];
-					this.bits[y][x] = data;
+					if (this.data[y] == undefined)
+						this.data[y] = [];
+					this.data[y][x] = data;
 				}
 			}
 		}
 	}
 
-	export class Wall extends lod.Obj {
+	export class TiledObj extends lod.Obj {
+		pixel: Pixel | undefined
+		constructor(x, y: Numbers.Tally) {
+			super(x, y);
+		}
+		update(): void {
+			if (this.shape) {
+				const tile = tiles.get(this.wpos);
+				if (tile)
+					(<Sprite>this.shape).z = tile.z;
+			}
+			super.update();
+		}
+	}
+	export class Wall extends TiledObj {
 		constructor() {
-			super(undefined);
+			super(undefined, Numbers.Walls);
 		}
 		create() {
-			this.size = [24, 40];
+			this.size = [24, 40]; 
 			let shape = new Sprite({
 				bindObj: this,
 				img: 'tex/dwall',
@@ -128,9 +163,9 @@ namespace objects {
 		//}
 	}
 
-	export class Shrubs extends lod.Obj {
+	export class Shrubs extends TiledObj {
 		constructor() {
-			super(undefined);
+			super(undefined, Numbers.Trees);
 		}
 		create() {
 			this.size = [24, 15];
@@ -140,7 +175,7 @@ namespace objects {
 				orderOffset: .5
 			});
 		}
-		
+
 		//tick() {
 		//}
 	}

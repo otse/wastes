@@ -16,6 +16,11 @@ export namespace wastes {
 
 	var started = false;
 
+	export var heightmap: objects.ColorMap
+	export var objectmap: objects.ColorMap
+	export var treemap: objects.ColorMap
+	export var colormap: objects.ColorMap
+
 	export function sample(a) {
 		return a[Math.floor(Math.random() * a.length)];
 	}
