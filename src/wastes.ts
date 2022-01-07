@@ -4,6 +4,7 @@ import tests from "./tests";
 import View from "./view";
 import tiles from "./tiles";
 import objects from "./objects";
+import modeler from "./modeler";
 
 
 export namespace wastes {
@@ -75,6 +76,10 @@ export namespace wastes {
 		if (window.location.href.indexOf("#testingchamber") != -1) {
 			testing_chamber.start();
 			tests.start();
+		}
+		else if (window.location.href.indexOf("#modeler") != -1) {
+			modeler.start();
+			console.log('woo');
 		}
 		else {
 			tiles.start();

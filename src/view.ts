@@ -36,6 +36,7 @@ export class View {
 		this.mouse();
 		this.chase();
 		this.stats();
+		this.rpos = pts.floor(this.rpos);
 		this.wpos = lod.unproject(this.rpos);
 		lod.galaxy.update(this.wpos);
 		const zoom = wastes.view.zoom;
@@ -46,11 +47,12 @@ export class View {
 	before: vec2 = [0, 0]
 	pan() {
 		let continousMode = false;
-		const panSpeed = 5;
-		const continuousSpeed = 200;
+		const panDivisor = 3;
+		const continuousSpeed = 100;
 		if (app.button(1) == 1) {
 			let mouse = app.mouse();
-			this.begin = [mouse[0], -mouse[1]];
+			mouse[1] = -mouse[1];
+			this.begin = mouse;
 			this.before = pts.clone(this.rpos);
 		}
 		if (app.button(1) >= 1) {
@@ -63,7 +65,7 @@ export class View {
 			}
 			else
 			{
-				dif = pts.divide(dif, panSpeed);
+				dif = pts.divide(dif, panDivisor);
 				dif = pts.subtract(dif, this.before);
 				this.rpos = pts.inv(dif);
 			}

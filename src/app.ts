@@ -1,6 +1,6 @@
 import { wastes } from "./wastes"
 
-import Renderer from "./renderer"
+import ren from "./renderer"
 
 namespace app {
 	export enum KEY {
@@ -44,7 +44,7 @@ namespace app {
 		document.onmousedown = onmousedown;
 		document.onmouseup = onmouseup;
 		document.onwheel = onwheel;
-		Renderer.init();
+		ren.init();
 		wastes.init();
 		loop(0);
 	}
@@ -58,9 +58,9 @@ namespace app {
 	}
 	export function loop(timestamp) {
 		requestAnimationFrame(loop);
-		Renderer.update();
+		ren.update();
 		wastes.tick();
-		Renderer.render();
+		ren.render();
 		wheel = 0;
 		for (let b of [0, 1, 2])
 			if (buttons[b] == 1)

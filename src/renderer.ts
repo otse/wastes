@@ -1,8 +1,7 @@
-import { default as THREE, OrthographicCamera, PerspectiveCamera, Clock, Scene, WebGLRenderer, Texture, TextureLoader, WebGLRenderTarget, ShaderMaterial, Mesh, PlaneBufferGeometry, Color, NearestFilter, RGBAFormat, Group, Renderer, AmbientLight, DirectionalLight } from 'three';
+import { default as THREE, OrthographicCamera, PerspectiveCamera, Clock, Scene, WebGLRenderer, Texture, TextureLoader, WebGLRenderTarget, ShaderMaterial, Mesh, PlaneBufferGeometry, Color, NearestFilter, RGBAFormat, Group, Renderer as ren, AmbientLight, DirectionalLight } from 'three';
 
 import app from './app';
 import wastes from './wastes';
-import View from './view';
 
 export { THREE };
 
@@ -33,7 +32,7 @@ void main() {
 
 // three quarter
 
-namespace Renderer {
+namespace ren {
 
 	export const DPI_UPSCALED_RT = true
 
@@ -163,7 +162,7 @@ namespace Renderer {
 
 		scenert.add(quadPost);
 
-		(window as any).Renderer = Renderer
+		(window as any).Renderer = ren
 	}
 
 	export var w, h, w2, h2;
@@ -246,4 +245,4 @@ namespace Renderer {
 	}
 }
 
-export default Renderer;
+export default ren;
