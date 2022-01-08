@@ -47,8 +47,8 @@ export class View {
 	before: vec2 = [0, 0]
 	pan() {
 		let continousMode = false;
-		const panDivisor = 3;
-		const continuousSpeed = 100;
+		const panDivisor = -1;
+		const continuousSpeed = -100;
 		if (app.button(1) == 1) {
 			let mouse = app.mouse();
 			mouse[1] = -mouse[1];
@@ -65,7 +65,7 @@ export class View {
 			}
 			else
 			{
-				dif = pts.divide(dif, panDivisor);
+				dif = pts.divide(dif, panDivisor / this.zoom);
 				dif = pts.subtract(dif, this.before);
 				this.rpos = pts.inv(dif);
 			}

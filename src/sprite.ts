@@ -22,6 +22,7 @@ export class Sprite extends lod.Shape {
 	mesh: Mesh
 	material: MeshBasicMaterial
 	geometry: PlaneBufferGeometry
+	roffset: vec2 = [0, 0]
 	offset: vec2 = [0, 0]
 	repeat: vec2 = [1, 1]
 	center: vec2 = [0, 1]
@@ -39,7 +40,7 @@ export class Sprite extends lod.Shape {
 		const obj = this.pars.bindObj;
 		
 		let rpos = pts.add(obj.rpos, pts.divide(obj.size, 2));
-		rpos = pts.add(rpos, [0, this.z]);
+		rpos = pts.add(rpos, pts.add(this.roffset, [0, this.z]));
 		this.mesh?.position.fromArray([...rpos, 0]);
 		this.mesh?.updateMatrix();
 	}

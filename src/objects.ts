@@ -31,10 +31,10 @@ namespace objects {
 			pts.func(sector.small, (pos) => {
 				let pixel = wastes.treemap.pixel(pos);
 				if (pixel.array[0] > treeTreshold) {
-					let shrubs = new Shrubs();
-					shrubs.pixel = pixel;
-					shrubs.wpos = pos;
-					lod.add(shrubs);
+					//let shrubs = new Shrubs();
+					//shrubs.pixel = pixel;
+					//shrubs.wpos = pos;
+					//lod.add(shrubs);
 				}
 			})
 			return false;
@@ -44,7 +44,9 @@ namespace objects {
 			let sector = x as lod.Sector
 			pts.func(sector.small, (pos) => {
 				let pixel = wastes.objectmap.pixel(pos);
-				if (pixel.is_white()) {
+				if (pixel.is_white() ||
+					pixel.is_color_castle_wall()
+				) {
 					let wall = new Wall();
 					wall.pixel = pixel;
 					wall.wpos = pos;
@@ -63,7 +65,7 @@ namespace objects {
 
 	const zeroes: vec4 = [0, 0, 0, 0]
 
-	class Pixel {
+	export class Pixel {
 		constructor(
 			public context: ColorMap,
 			public pos: vec2,
@@ -90,8 +92,11 @@ namespace objects {
 		is_white() {
 			return this.equals([255, 255, 255]);
 		}
-		purple_water() {
-			return [63, 63, 127];
+		is_color_castle_wall() {
+			return this.equals([200, 200, 200]);
+		}
+		static purple_water(): vec4 {
+			return [30, 70, 127, 255];
 		}
 	}
 
@@ -132,6 +137,7 @@ namespace objects {
 
 	export class TiledObj extends lod.Obj {
 		pixel: Pixel | undefined
+		img: string
 		constructor(x, y: Numbers.Tally) {
 			super(x, y);
 		}
@@ -149,12 +155,19 @@ namespace objects {
 			super(undefined, Numbers.Walls);
 		}
 		create() {
-			this.size = [24, 40]; 
+			this.img = 'tex/dwall';
+			this.size = [24, 40];
+			if (this.pixel?.is_color_castle_wall()) {
+				this.size = [24, 70];
+				this.img = 'tex/dcastlewall';
+			}
 			let shape = new Sprite({
 				bindObj: this,
-				img: 'tex/dwall',
-				orderOffset: .5
+				img: this.img,
+				orderOffset: .5,
 			});
+			if (Math.random() > .5)
+				shape.repeat = [-1, 1];
 		}
 		adapt() {
 			// change sprite to surrounding walls

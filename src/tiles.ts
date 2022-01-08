@@ -62,7 +62,7 @@ export namespace tiles {
 			this.img = 'tex/dtile';
 			this.size = [24, 12];
 			this.z = 0;
-			this.color = [63, 63, 127, 255];
+			this.color = objects.Pixel.purple_water();
 			let pixel = wastes.colormap.pixel(this.wpos);
 			if (!pixel.is_black()) {
 				this.z = 4;
@@ -72,7 +72,6 @@ export namespace tiles {
 			}
 		}
 		create() {
-			
 			let shape = new Sprite({
 				bindObj: this,
 				img: this.img,

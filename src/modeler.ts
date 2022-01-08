@@ -29,10 +29,13 @@ namespace modeler {
 
 			elf = collada.scene;
 			let group = new Group;
+			group.rotation.set(Math.PI / 6, Math.PI / 4, 0);
 			group.rotation.set(Math.PI / 6, Math.PI / 4, 0)
 			group.add(elf);
-			elf.scale.set(2, 2, 2);
-			elf.add(new AxesHelper(100));
+			group.add(new AxesHelper(300));
+			console.log(elf.scale);
+			
+			elf.scale.multiplyScalar(100);
 			elf.rotation.set(-Math.PI / 2, 0, 0);
 
 			ren.scene.add(group);
