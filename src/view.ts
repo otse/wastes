@@ -34,9 +34,9 @@ export class View {
 	tick() {
 		this.move();
 		this.mouse();
+		this.pan();
 		this.chase();
 		this.stats();
-		this.rpos = pts.floor(this.rpos);
 		this.wpos = lod.unproject(this.rpos);
 		lod.galaxy.update(this.wpos);
 		const zoom = wastes.view.zoom;
@@ -74,14 +74,8 @@ export class View {
 		}
 	}
 	chase() {
-		const time = ren.delta;
-		pts.mult([0, 0], 0);
-		this.pan();
-		//let ply = PRY.ply.rpos;
-		//this.rpos = pts.add(pts.mult(pts.subtract(ply, this.rpos), time * 5), this.rpos);
-		//this.rpos = pts.mult(this.rpos, this.zoom);
+		this.rpos = pts.floor(this.rpos);
 		let inv = pts.inv(this.rpos);
-		//ren.camera.position.set(inv[0], inv[1], 0);
 		ren.groups.axisSwap.position.set(inv[0], inv[1], 0);
 	}
 	mouse() {

@@ -137,16 +137,15 @@ class pts {
 
 	// https://vorg.github.io/pex/docs/pex-geom/Vec2.html
 
-	static dist(a: vec2, b: vec2): number {
-		let dx = b[0] - a[0];
-		let dy = b[1] - a[1];
-		return Math.sqrt(dx * dx + dy * dy);
-	}
+	//static dist(a: vec2, b: vec2): number {
+	//	let dx = b[0] - a[0];
+	//	let dy = b[1] - a[1];
+	//	return Math.sqrt(dx * dx + dy * dy);
+	//}
 
 	static distsimple(a: vec2, b: vec2) {
-		let dx = Math.abs(b[0] - a[0]);
-		let dy = Math.abs(b[1] - a[1]);
-		return Math.max(dx, dy);
+		let c = pts.abs(pts.subtract(a, b));
+		return Math.max(c[0], c[1]);
 	};
 
 }

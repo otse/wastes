@@ -52,6 +52,8 @@ namespace lod {
 		hooks.create('sectorCreate')
 		hooks.create('sectorShow')
 		hooks.create('sectorHide')
+
+		// hooks.register('sectorHide', () => { console.log('~'); return false; } );
 	}
 
 	export function project(unit: vec2): vec2 {
@@ -71,7 +73,7 @@ namespace lod {
 		readonly arrays: Sector[][] = []
 		constructor(span) {
 			galaxy = this;
-			new Grid(8, 8);
+			new Grid(4, 6);
 		}
 		update(wpos: vec2) {
 			grid.big = this.big(wpos);
@@ -109,7 +111,7 @@ namespace lod {
 			readonly galaxy: Galaxy
 		) {
 			super();
-			//this.color = (['salmon', 'blue', 'cyan', 'purple'])[Math.floor(Math.random() * 4)];
+			// this.color = (['salmon', 'blue', 'cyan', 'purple'])[Math.floor(Math.random() * 4)];
 			let min = pts.mult(this.big, SectorSpan);
 			let max = pts.add(min, [SectorSpan - 1, SectorSpan - 1]);
 			this.small = new aabb2(max, min);
@@ -182,17 +184,22 @@ namespace lod {
 		big: vec2 = [0, 0];
 		public shown: Sector[] = [];
 		constructor(
-			public readonly spread,
-			public readonly outside
+			public spread,
+			public outside
 		) {
 			grid = this;
+			if (this.outside < this.spread) {
+				console.warn(' outside less than spread ', this.spread, this.outside);
+				this.outside = this.spread;
+			}
 		}
 		visible(sector: Sector) {
 			return sector.dist() < this.spread;
 		}
 		crawl() {
-			for (let y = -this.spread; y < this.spread; y++) {
-				for (let x = -this.spread; x < this.spread; x++) {
+			// spread = -2; < 2
+			for (let y = -this.spread; y < this.spread + 1; y++) {
+				for (let x = -this.spread; x < this.spread + 1; x++) {
 					let pos = pts.add(this.big, [x, y]);
 					let sector = galaxy.lookup(pos);
 					if (!sector)

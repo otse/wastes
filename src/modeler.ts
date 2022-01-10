@@ -1,4 +1,4 @@
-import { THREE, LoadingManager, Group, AxesHelper } from "three";
+import { THREE, LoadingManager, Group, AxesHelper, DirectionalLight } from "three";
 
 import { ColladaLoader } from '../node_modules/three/examples/jsm/loaders/ColladaLoader.js';
 
@@ -29,6 +29,11 @@ namespace modeler {
 
 			wastes.view.zoom = 1.0;
 
+			let sun = new DirectionalLight(0xffffff, 0.5);
+			sun.position.set(-1, 1, .5);
+			ren.scene.add(sun);
+			ren.scene.add(sun.target);
+
 			elf = collada.scene;
 			let group = new Group;
 			group.rotation.set(Math.PI / 6, Math.PI / 4, 0);
@@ -38,7 +43,7 @@ namespace modeler {
 			
 			elf.scale.multiplyScalar(wastes.size);
 			elf.rotation.set(-Math.PI / 2, 0, 0);
-			//elf.position.set(1, 0, 0);
+			elf.position.set(wastes.size, 0, 0);
 
 			ren.scene.add(group);
 

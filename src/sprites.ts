@@ -18,7 +18,7 @@ export namespace sprites {
 
 	export function get_uv_transform(cell: vec2, tuple: tuple) {
 		let offset = pts.mults(pts.divides(tuple[0], tuple[1]), cell);
-		let repeat = pts.divides(tuple[1], tuple[0]);			
+		let repeat = pts.divides(tuple[1], tuple[0]);
 		let center = [0, 1];
 		let mat = new Matrix3;
 		mat.setUvTransform(offset[0], offset[1], repeat[0], repeat[1], 0, center[0], center[1]);

@@ -113,15 +113,14 @@ var wastes = (function (exports, THREE) {
             return b;
         }
         // https://vorg.github.io/pex/docs/pex-geom/Vec2.html
-        static dist(a, b) {
-            let dx = b[0] - a[0];
-            let dy = b[1] - a[1];
-            return Math.sqrt(dx * dx + dy * dy);
-        }
+        //static dist(a: vec2, b: vec2): number {
+        //	let dx = b[0] - a[0];
+        //	let dy = b[1] - a[1];
+        //	return Math.sqrt(dx * dx + dy * dy);
+        //}
         static distsimple(a, b) {
-            let dx = Math.abs(b[0] - a[0]);
-            let dy = Math.abs(b[1] - a[1]);
-            return Math.max(dx, dy);
+            let c = pts.abs(pts.subtract(a, b));
+            return Math.max(c[0], c[1]);
         }
         ;
     }
@@ -489,6 +488,7 @@ void main() {
             hooks.create('sectorCreate');
             hooks.create('sectorShow');
             hooks.create('sectorHide');
+            // hooks.register('sectorHide', () => { console.log('~'); return false; } );
         }
         lod.register = register;
         function project(unit) {
@@ -508,7 +508,7 @@ void main() {
             constructor(span) {
                 this.arrays = [];
                 lod.galaxy = this;
-                new Grid(8, 8);
+                new Grid(4, 6);
             }
             update(wpos) {
                 lod.grid.big = this.big(wpos);
@@ -541,7 +541,7 @@ void main() {
                 this.big = big;
                 this.galaxy = galaxy;
                 this.objs = [];
-                //this.color = (['salmon', 'blue', 'cyan', 'purple'])[Math.floor(Math.random() * 4)];
+                // this.color = (['salmon', 'blue', 'cyan', 'purple'])[Math.floor(Math.random() * 4)];
                 let min = pts.mult(this.big, lod.SectorSpan);
                 let max = pts.add(min, [lod.SectorSpan - 1, lod.SectorSpan - 1]);
                 this.small = new aabb2(max, min);
@@ -615,13 +615,18 @@ void main() {
                 this.big = [0, 0];
                 this.shown = [];
                 lod.grid = this;
+                if (this.outside < this.spread) {
+                    console.warn(' outside less than spread ', this.spread, this.outside);
+                    this.outside = this.spread;
+                }
             }
             visible(sector) {
                 return sector.dist() < this.spread;
             }
             crawl() {
-                for (let y = -this.spread; y < this.spread; y++) {
-                    for (let x = -this.spread; x < this.spread; x++) {
+                // spread = -2; < 2
+                for (let y = -this.spread; y < this.spread + 1; y++) {
+                    for (let x = -this.spread; x < this.spread + 1; x++) {
                         let pos = pts.add(this.big, [x, y]);
                         let sector = lod.galaxy.lookup(pos);
                         if (!sector)
@@ -993,9 +998,9 @@ void main() {
         tick() {
             this.move();
             this.mouse();
+            this.pan();
             this.chase();
             this.stats();
-            this.rpos = pts.floor(this.rpos);
             this.wpos = lod$1.unproject(this.rpos);
             lod$1.galaxy.update(this.wpos);
             const zoom = wastes.view.zoom;
@@ -1024,14 +1029,8 @@ void main() {
             }
         }
         chase() {
-            ren$1.delta;
-            pts.mult([0, 0], 0);
-            this.pan();
-            //let ply = PRY.ply.rpos;
-            //this.rpos = pts.add(pts.mult(pts.subtract(ply, this.rpos), time * 5), this.rpos);
-            //this.rpos = pts.mult(this.rpos, this.zoom);
+            this.rpos = pts.floor(this.rpos);
             let inv = pts.inv(this.rpos);
-            //ren.camera.position.set(inv[0], inv[1], 0);
             ren$1.groups.axisSwap.position.set(inv[0], inv[1], 0);
         }
         mouse() {
@@ -5886,6 +5885,10 @@ void main() {
             const loader = new ColladaLoader(loadingManager);
             loader.load('./modeler/collada/diner.dae', function (collada) {
                 wastes.view.zoom = 1.0;
+                let sun = new THREE.DirectionalLight(0xffffff, 0.5);
+                sun.position.set(-1, 1, .5);
+                ren$1.scene.add(sun);
+                ren$1.scene.add(sun.target);
                 elf = collada.scene;
                 let group = new THREE.Group;
                 group.rotation.set(Math.PI / 6, Math.PI / 4, 0);
@@ -5894,7 +5897,7 @@ void main() {
                 console.log(elf.scale);
                 elf.scale.multiplyScalar(wastes.size);
                 elf.rotation.set(-Math.PI / 2, 0, 0);
-                //elf.position.set(1, 0, 0);
+                elf.position.set(wastes.size, 0, 0);
                 ren$1.scene.add(group);
                 window['group'] = group;
                 window['elf'] = elf;
