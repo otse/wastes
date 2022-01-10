@@ -10,6 +10,7 @@ import aabb2 from "./aabb2";
 import tiles from "./tiles";
 import hooks from "./hooks";
 import Sprite from "./sprite";
+import sprites from "./sprites";
 
 namespace objects {
 
@@ -72,16 +73,19 @@ namespace objects {
 			public array: vec4) {
 		}
 		left() {
-			this.context.pixel(pts.add(this.pos, [-1, 0]));
+			return this.context.pixel(pts.add(this.pos, [-1, 0]));
 		}
 		right() {
-			this.context.pixel(pts.add(this.pos, [1, 0]));
+			return this.context.pixel(pts.add(this.pos, [1, 0]));
 		}
 		up() {
-			this.context.pixel(pts.add(this.pos, [0, 1]));
+			return this.context.pixel(pts.add(this.pos, [0, 1]));
 		}
 		down() {
-			this.context.pixel(pts.add(this.pos, [0, -1]));
+			return this.context.pixel(pts.add(this.pos, [0, -1]));
+		}
+		same(pixel: Pixel) {
+			return this.equals(<vec3><unknown>pixel.array);
 		}
 		equals(vec: vec3) {
 			return vec[0] == this.array[0] && vec[1] == this.array[1] && vec[2] == this.array[2];
@@ -137,7 +141,6 @@ namespace objects {
 
 	export class TiledObj extends lod.Obj {
 		pixel: Pixel | undefined
-		img: string
 		constructor(x, y: Numbers.Tally) {
 			super(x, y);
 		}
@@ -155,19 +158,24 @@ namespace objects {
 			super(undefined, Numbers.Walls);
 		}
 		create() {
-			this.img = 'tex/dwall';
 			this.size = [24, 40];
 			if (this.pixel?.is_color_castle_wall()) {
-				this.size = [24, 70];
-				this.img = 'tex/dcastlewall';
+				
+			}
+			if (this.pixel?.left().same(this.pixel) &&
+				this.pixel?.up().same(this.pixel))
+			{
+				
 			}
 			let shape = new Sprite({
-				bindObj: this,
-				img: this.img,
-				orderOffset: .5,
+				binded: this,
+				tuple: sprites.dwall,
+				order: .5,
 			});
-			if (Math.random() > .5)
-				shape.repeat = [-1, 1];
+			if (this.pixel?.right().same(this.pixel)) {
+				//shape.repeat = [-1, 1];
+			}
+
 		}
 		adapt() {
 			// change sprite to surrounding walls
@@ -183,9 +191,9 @@ namespace objects {
 		create() {
 			this.size = [24, 15];
 			let shape = new Sprite({
-				bindObj: this,
-				img: 'tex/shrubs',
-				orderOffset: .5
+				binded: this,
+				tuple: sprites.shrubs,
+				order: .5
 			});
 		}
 

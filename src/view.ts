@@ -65,7 +65,9 @@ export class View {
 			}
 			else
 			{
-				dif = pts.divide(dif, panDivisor / this.zoom);
+				dif = pts.divide(dif, panDivisor);
+				dif = pts.mult(dif, ren.ndpi);
+				dif = pts.mult(dif, this.zoom);
 				dif = pts.subtract(dif, this.before);
 				this.rpos = pts.inv(dif);
 			}
@@ -84,7 +86,7 @@ export class View {
 	}
 	mouse() {
 		let mouse = app.mouse();
-		mouse = pts.subtract(mouse, pts.divide([ren.w, ren.h], 2));
+		mouse = pts.subtract(mouse, pts.divide([ren.screen[0], ren.screen[1]], 2));
 		mouse = pts.mult(mouse, ren.ndpi);
 		mouse = pts.mult(mouse, this.zoom);
 		mouse[1] = -mouse[1];

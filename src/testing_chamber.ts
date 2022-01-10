@@ -3,6 +3,7 @@ import Sprite from "./sprite";
 import wastes from "./wastes";
 import pts from "./pts";
 import hooks from "./hooks";
+import sprites from "./sprites";
 
 namespace testing_chamber {
 
@@ -66,8 +67,8 @@ namespace testing_chamber {
 		create() {
 			this.size = [200, 200];
 			let shape = new Sprite({
-				bindObj: this,
-				img: 'tex/pngwing.com'
+				binded: this,
+				tuple: sprites.asteroid
 			});
 		}
 		tick() {
@@ -91,8 +92,8 @@ namespace testing_chamber {
 			console.log('create');
 			this.size = [100, 100];
 			let shape = new Sprite({
-				bindObj: this,
-				img: 'tex/test100'
+				binded: this,
+				tuple: sprites.test100
 			});
 		}
 		tick() {

@@ -1,6 +1,7 @@
 import { default as THREE, OrthographicCamera, PerspectiveCamera, Clock, Scene, WebGLRenderer, Texture, TextureLoader, WebGLRenderTarget, ShaderMaterial, Mesh, PlaneBufferGeometry, Color, NearestFilter, RGBAFormat, Group, Renderer as ren, AmbientLight, DirectionalLight } from 'three';
 
 import app from './app';
+import pts from './pts';
 import wastes from './wastes';
 
 export { THREE };
@@ -65,10 +66,10 @@ namespace ren {
 
 	export function update() {
 
-		delta = clock.getDelta()
+		delta = clock.getDelta();
 
 		if (delta > 2)
-			delta = 0.016
+			delta = 0.016;
 
 		//filmic.composer.render();
 	}
@@ -81,30 +82,29 @@ namespace ren {
 
 	// https://github.com/mrdoob/stats.js/blob/master/src/Stats.js#L71
 	export function calc() {
-		const s = Date.now() / 1000
-		frames++
+		const s = Date.now() / 1000;
+		frames++;
 		if (s - reset >= 1) {
-			reset = s
-			fps = frames
-			frames = 0
+			reset = s;
+			fps = frames;
+			frames = 0;
 		}
 
-		memory = (<any>window.performance).memory
+		memory = (<any>window.performance).memory;
 	}
 	export function render() {
 
-		calc()
+		calc();
 
-		renderer.setRenderTarget(target)
-		renderer.clear()
-		renderer.render(scene, camera)
+		renderer.setRenderTarget(target);
+		renderer.clear();
+		renderer.render(scene, camera);
 
-		renderer.setRenderTarget(null)
-		renderer.clear()
-		renderer.render(scenert, camera2)
+		renderer.setRenderTarget(null);
+		renderer.clear();
+		renderer.render(scenert, camera2);
 	}
 
-	export var wh: vec2
 	export var plane
 
 	export function init() {
@@ -113,22 +113,22 @@ namespace ren {
 
 		clock = new Clock()
 
-		groups.axisSwap = new Group
-		groups.tiles = new Group
+		groups.axisSwap = new Group;
+		groups.tiles = new Group;
 		//groups.menu = new Group
 
-		scene = new Scene()
-		groups.axisSwap.add(groups.tiles)
-		scene.add(groups.axisSwap)
-		scene.background = new Color('#292929')
+		scene = new Scene();
+		groups.axisSwap.add(groups.tiles);
+		scene.add(groups.axisSwap);
+		scene.background = new Color('#292929');
 
-		scenert = new Scene()
+		scenert = new Scene();
 
-		ambientLight = new AmbientLight(0xffffff)
-		scene.add(ambientLight)
+		ambientLight = new AmbientLight(0xffffff);
+		scene.add(ambientLight);
 
 		if (DPI_UPSCALED_RT)
-			ndpi = window.devicePixelRatio
+			ndpi = window.devicePixelRatio;
 
 		target = new WebGLRenderTarget(
 			window.innerWidth, window.innerHeight,
@@ -138,15 +138,15 @@ namespace ren {
 				format: THREE.RGBFormat
 			});
 
-		renderer = new WebGLRenderer({ antialias: false })
-		renderer.setPixelRatio(ndpi)
-		renderer.setSize(100, 100)
-		renderer.autoClear = true
-		renderer.setClearColor(0xffffff, 0)
+		renderer = new WebGLRenderer({ antialias: false });
+		renderer.setPixelRatio(ndpi);
+		renderer.setSize(100, 100);
+		renderer.autoClear = true;
+		renderer.setClearColor(0xffffff, 0);
 
-		document.body.appendChild(renderer.domElement)
+		document.body.appendChild(renderer.domElement);
 
-		window.addEventListener('resize', onWindowResize, false)
+		window.addEventListener('resize', onWindowResize, false);
 
 		materialPost = new ShaderMaterial({
 			uniforms: { tDiffuse: { value: target.texture } },
@@ -157,48 +157,51 @@ namespace ren {
 
 		onWindowResize();
 
-		quadPost = new Mesh(plane, materialPost)
+		quadPost = new Mesh(plane, materialPost);
 		//quadPost.position.z = -100;
 
 		scenert.add(quadPost);
 
-		(window as any).Renderer = ren
+		(window as any).ren = ren;
 	}
 
-	export var w, h, w2, h2;
+	export var screen: vec2 = [0, 0];
+	export var screenCorrected: vec2 = [0, 0];
 
 	function onWindowResize() {
-		w = w2 = window.innerWidth
-		h = h2 = window.innerHeight
+		screen = [window.innerWidth, window.innerHeight];
+		//screen = pts.divide(screen, 2);
+		screen = pts.floor(screen);
+		//screen = pts.even(screen, -1);
+		//screen = [800, 600];
+		screenCorrected = pts.clone(screen);
 		if (DPI_UPSCALED_RT) {
-			w2 = w * ndpi
-			h2 = h * ndpi
-			if (w2 % 2 != 0) {
-				//w2 -= 1;
-			}
-			if (h2 % 2 != 0) {
-				//h2 -= 1;
-			}
+			//screen = pts.floor(screen);
+			screenCorrected = pts.mult(screen, ndpi);
+			screenCorrected = pts.floor(screenCorrected);
+			screenCorrected = pts.even(screenCorrected, -1);
 		}
-		console.log(`window inner [${w}, ${h}], new is [${w2}, ${h2}]`);
-		target.setSize(w2, h2);
-		plane = new PlaneBufferGeometry(w2, h2);
+		console.log(`
+		window inner ${pts.to_string(screen)}\n
+		      new is ${pts.to_string(screenCorrected)}`);
+		target.setSize(screenCorrected[0], screenCorrected[1]);
+		plane = new PlaneBufferGeometry(screenCorrected[0], screenCorrected[1]);
 		if (quadPost)
 			quadPost.geometry = plane;
 		const cameraMode = 0;
 		if (cameraMode) {
 			camera = new PerspectiveCamera(
-				70, window.innerWidth / window.innerHeight, 1, 3000)
+				70, window.innerWidth / window.innerHeight, 1, 3000);
 			//camera.zoom = camera.aspect; // scales "to fit" rather than zooming out
-			camera.position.z = 800
+			camera.position.z = 800;
 		}
 		else {
-			camera = ortographic_camera(w2, h2)
+			camera = ortographic_camera(screenCorrected[0], screenCorrected[1]);
 		}
 
-		camera2 = ortographic_camera(w2, h2)
-		camera2.updateProjectionMatrix()
-		renderer.setSize(w, h)
+		camera2 = ortographic_camera(screenCorrected[0], screenCorrected[1]);
+		camera2.updateProjectionMatrix();
+		renderer.setSize(screen[0], screen[1]);
 	}
 
 	let mem = []
@@ -215,11 +218,11 @@ namespace ren {
 			texture.minFilter = THREE.LinearFilter;
 		}
 		else {
-			texture.magFilter = THREE.NearestFilter
-			texture.minFilter = THREE.NearestFilter
+			texture.magFilter = THREE.NearestFilter;
+			texture.minFilter = THREE.NearestFilter;
 		}
-		mem[key || file] = texture
-		return texture
+		mem[key || file] = texture;
+		return texture;
 	}
 
 	export function make_render_target(w, h) {
@@ -228,20 +231,20 @@ namespace ren {
 			magFilter: NearestFilter,
 			format: RGBAFormat
 		};
-		let target = new WebGLRenderTarget(w, h, o)
-		return target
+		let target = new WebGLRenderTarget(w, h, o);
+		return target;
 	}
 
 	export function ortographic_camera(w, h) {
-		let camera = new OrthographicCamera(w / - 2, w / 2, h / 2, h / - 2, - 10000, 10000)
-		camera.updateProjectionMatrix()
+		let camera = new OrthographicCamera(w / - 2, w / 2, h / 2, h / - 2, - 10000, 10000);
+		camera.updateProjectionMatrix();
 
-		return camera
+		return camera;
 	}
 
 	export function erase_children(group: Group) {
 		while (group.children.length > 0)
-			group.remove(group.children[0])
+			group.remove(group.children[0]);
 	}
 }
 

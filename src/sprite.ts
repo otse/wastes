@@ -3,18 +3,20 @@ import { Color, Mesh, BoxGeometry, PlaneBufferGeometry, MeshBasicMaterial, MeshB
 import lod, { Numbers } from "./lod";
 import pts from "./pts";
 import ren from "./renderer";
+import sprites from "./sprites";
 import tiles from "./tiles";
 
 interface SpriteParameters {
-	bindObj: lod.Obj,
-	img: string,
+	binded: lod.Obj,
+	tuple: sprites.tuple,
+	cell?: vec2,
 	color?: vec4,
 	mask?: string,
-	orderOffset?: number
+	order?: number
 };
 
 export namespace Sprite {
-	export type Parameters = Sprite['pars'];
+	export type Parameters = Sprite['vars'];
 };
 
 export class Sprite extends lod.Shape {
@@ -23,22 +25,22 @@ export class Sprite extends lod.Shape {
 	material: MeshBasicMaterial
 	geometry: PlaneBufferGeometry
 	roffset: vec2 = [0, 0]
-	offset: vec2 = [0, 0]
-	repeat: vec2 = [1, 1]
-	center: vec2 = [0, 1]
 	myUvTransform: Matrix3
 	constructor(
-		public readonly pars: SpriteParameters
+		public readonly vars: SpriteParameters
 	) {
-		super(pars.bindObj, Numbers.Sprites);
+		super(vars.binded, Numbers.Sprites);
+		if (!this.vars.cell)
+			this.vars.cell = [0, 0];
 		this.myUvTransform = new Matrix3;
+		this.myUvTransform.setUvTransform(0, 0, 1, 1, 0, 0, 1);
 	}
 	update() {
 		if (!this.mesh)
 			return;
-		this.mesh.rotation.z = this.pars.bindObj.rz;
-		const obj = this.pars.bindObj;
-		
+		this.mesh.rotation.z = this.vars.binded.rz;
+		const obj = this.vars.binded;
+
 		let rpos = pts.add(obj.rpos, pts.divide(obj.size, 2));
 		rpos = pts.add(rpos, pts.add(this.roffset, [0, this.z]));
 		this.mesh?.position.fromArray([...rpos, 0]);
@@ -52,28 +54,21 @@ export class Sprite extends lod.Shape {
 		this.mesh.parent?.remove(this.mesh);
 	}
 	create() {
-		const obj = this.pars.bindObj;
+		const obj = this.vars.binded;
 
-		this.myUvTransform.setUvTransform(
-			this.offset[0], this.offset[1],
-			this.repeat[0], this.repeat[1],
-			0,
-			this.center[0], this.center[1]);
+		this.myUvTransform = sprites.get_uv_transform(this.vars.cell!, this.vars.tuple);
 
-		this.geometry = new PlaneBufferGeometry(
-			this.pars.bindObj.size[0], this.pars.bindObj.size[1]);
+		this.geometry = new PlaneBufferGeometry(this.vars.binded.size[0], this.vars.binded.size[1]);
 		let color;
-		if (this.pars.bindObj!.sector!.color)
-		{
-			color = new Color(this.pars.bindObj!.sector!.color);
+		if (this.vars.binded!.sector!.color) {
+			color = new Color(this.vars.binded.sector!.color);
 		}
-		else
-		{
-			const c = this.pars.color || [255, 255, 255, 255];
+		else {
+			const c = this.vars.color || [255, 255, 255, 255];
 			color = new Color(`rgb(${c[0]}, ${c[1]}, ${c[2]})}`);
 		}
 		this.material = SpriteMaterial({
-			map: ren.load_texture(`${this.pars.img}.png`, 0),
+			map: ren.load_texture(`${this.vars.tuple[3]}.png`, 0),
 			transparent: true,
 			color: color
 		}, {
@@ -82,17 +77,19 @@ export class Sprite extends lod.Shape {
 		this.mesh = new Mesh(this.geometry, this.material);
 		this.mesh.frustumCulled = false;
 		this.mesh.matrixAutoUpdate = false;
-		this.mesh.renderOrder = -obj.wpos[1] + obj.wpos[0] + (this.pars.orderOffset || 0);
+		this.mesh.renderOrder = -obj.wpos[1] + obj.wpos[0] + (this.vars.order || 0);
 		this.update();
-		const sector = this.pars.bindObj.sector;
-		sector?.group.add(this.mesh);
+		this.vars.binded.sector?.group.add(this.mesh);
 		ren.groups.axisSwap.add(this.mesh);
 	}
 };
 
 function SpriteMaterial(parameters: MeshBasicMaterialParameters, uniforms: any) {
 	let material = new MeshBasicMaterial(parameters)
-	material.name = "SpriteMaterial";
+	material.customProgramCacheKey = function () {
+		return 'spritemat';
+	}
+	material.name = "spritemat";
 	material.onBeforeCompile = function (shader: Shader) {
 		shader.defines = {};
 		shader.uniforms.myUvTransform = { value: uniforms.myUvTransform }

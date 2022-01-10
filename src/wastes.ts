@@ -5,6 +5,7 @@ import View from "./view";
 import tiles from "./tiles";
 import objects from "./objects";
 import modeler from "./modeler";
+import { sprites } from "./sprites";
 
 
 export namespace wastes {
@@ -82,6 +83,7 @@ export namespace wastes {
 			console.log('woo');
 		}
 		else {
+			sprites.start();
 			tiles.start();
 			objects.start();
 		}

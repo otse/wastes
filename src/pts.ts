@@ -62,6 +62,10 @@ class pts {
 		return [Math.ceil(a[0]), Math.ceil(a[1])];
 	}
 
+	static round(a: vec2): vec2 {
+		return [Math.round(a[0]), Math.round(a[1])];
+	}
+
 	static inv(a: vec2): vec2 {
 		return [-a[0], -a[1]];
 	}
@@ -70,8 +74,16 @@ class pts {
 		return [a[0] * n, a[1] * (m || n)];
 	}
 
+	static mults(a: vec2, b: vec2): vec2 {
+		return [a[0] * b[0], a[1] * b[1]];
+	}
+
 	static divide(a: vec2, n: number, m?: number): vec2 {
 		return [a[0] / n, a[1] / (m || n)];
+	}
+
+	static divides(a: vec2, b: vec2): vec2 {
+		return [a[0] / b[0], a[1] / b[1]];
 	}
 
 	static subtract(a: vec2, b: vec2): vec2 {
@@ -100,6 +112,27 @@ class pts {
 
 	static together(zx: vec2): number {
 		return zx[0] + zx[1];
+	}
+
+	static uneven(a: vec2, n: number = -1): vec2 {
+		let b = pts.clone(a);
+		if (b[0] % 2 != 1) {
+			b[0] += n;
+		}
+		if (b[1] % 2 != 1) {
+			b[1] += n;
+		}
+		return b;
+	}
+	static even(a: vec2, n: number = -1): vec2 {
+		let b = pts.clone(a);
+		if (b[0] % 2 != 0) {
+			b[0] += n;
+		}
+		if (b[1] % 2 != 0) {
+			b[1] += n;
+		}
+		return b;
 	}
 
 	// https://vorg.github.io/pex/docs/pex-geom/Vec2.html

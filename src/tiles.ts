@@ -8,6 +8,7 @@ import objects from "./objects";
 import aabb2 from "./aabb2";
 import hooks from "./hooks";
 import Sprite from "./sprite";
+import sprites from "./sprites";
 
 export namespace tiles {
 
@@ -54,29 +55,29 @@ export namespace tiles {
 
 	export class Tile extends lod.Obj {
 		z: number
-		img: string
+		tuple: sprites.tuple
 		color: vec4
 		constructor(wpos: vec2) {
 			super(undefined, Numbers.Tiles);
+			this.tuple = sprites.dtile;
 			this.wpos = wpos;
-			this.img = 'tex/dtile';
 			this.size = [24, 12];
 			this.z = 0;
 			this.color = objects.Pixel.purple_water();
 			let pixel = wastes.colormap.pixel(this.wpos);
 			if (!pixel.is_black()) {
 				this.z = 4;
+				this.tuple = sprites.dtile4;
 				this.size = [24, 17];
-				this.img = 'tex/dtileup4';
 				this.color = wastes.colormap.pixel(this.wpos).array;
 			}
 		}
 		create() {
 			let shape = new Sprite({
-				bindObj: this,
-				img: this.img,
+				binded: this,
+				tuple: this.tuple,
 				color: this.color
-			})
+			});
 		}
 		//update() {}
 		delete() {
@@ -85,7 +86,7 @@ export namespace tiles {
 			let sprite = this.shape as Sprite;
 			if (!sprite?.mesh)
 				return;
-			sprite.mesh.material.color.set('green');
+			//sprite.mesh.material.color.set('green');
 		}
 		tick() {
 		}

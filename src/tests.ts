@@ -2,6 +2,7 @@ import lod from "./lod";
 import wastes from "./wastes";
 import ren from "./renderer";
 import Sprite from "./sprite";
+import sprites from "./sprites";
 
 
 export namespace tests {
@@ -21,7 +22,7 @@ export namespace tests {
 			const mouseAsteroid = false;
 			if (mouseAsteroid) {
 				this.obj = new lod.Obj({});
-				this.obj.shape = new Sprite({ bindObj: this.obj, img: 'pngwing.com' });
+				this.obj.shape = new Sprite({ binded: this.obj, tuple: sprites.asteroid });
 				this.obj.show();
 				let sprite = this.obj.shape as Sprite;
 				ren.scene.add(sprite.mesh);

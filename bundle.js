@@ -53,14 +53,23 @@ var wastes = (function (exports, THREE) {
         static ceil(a) {
             return [Math.ceil(a[0]), Math.ceil(a[1])];
         }
+        static round(a) {
+            return [Math.round(a[0]), Math.round(a[1])];
+        }
         static inv(a) {
             return [-a[0], -a[1]];
         }
         static mult(a, n, m) {
             return [a[0] * n, a[1] * (m || n)];
         }
+        static mults(a, b) {
+            return [a[0] * b[0], a[1] * b[1]];
+        }
         static divide(a, n, m) {
             return [a[0] / n, a[1] / (m || n)];
+        }
+        static divides(a, b) {
+            return [a[0] / b[0], a[1] / b[1]];
         }
         static subtract(a, b) {
             return [a[0] - b[0], a[1] - b[1]];
@@ -82,6 +91,26 @@ var wastes = (function (exports, THREE) {
         }
         static together(zx) {
             return zx[0] + zx[1];
+        }
+        static uneven(a, n = -1) {
+            let b = pts.clone(a);
+            if (b[0] % 2 != 1) {
+                b[0] += n;
+            }
+            if (b[1] % 2 != 1) {
+                b[1] += n;
+            }
+            return b;
+        }
+        static even(a, n = -1) {
+            let b = pts.clone(a);
+            if (b[0] % 2 != 0) {
+                b[0] += n;
+            }
+            if (b[1] % 2 != 0) {
+                b[1] += n;
+            }
+            return b;
         }
         // https://vorg.github.io/pex/docs/pex-geom/Vec2.html
         static dist(a, b) {
@@ -316,29 +345,37 @@ void main() {
             ren.quadPost = new THREE.Mesh(ren.plane, ren.materialPost);
             //quadPost.position.z = -100;
             ren.scenert.add(ren.quadPost);
-            window.Renderer = ren;
+            window.ren = ren;
         }
         ren.init = init;
+        ren.screen = [0, 0];
+        ren.screenCorrected = [0, 0];
         function onWindowResize() {
-            ren.w = ren.w2 = window.innerWidth;
-            ren.h = ren.h2 = window.innerHeight;
+            ren.screen = [window.innerWidth, window.innerHeight];
+            //screen = pts.divide(screen, 2);
+            ren.screen = pts.floor(ren.screen);
+            //screen = pts.even(screen, -1);
+            //screen = [800, 600];
+            ren.screenCorrected = pts.clone(ren.screen);
             if (ren.DPI_UPSCALED_RT) {
-                ren.w2 = ren.w * ren.ndpi;
-                ren.h2 = ren.h * ren.ndpi;
-                if (ren.w2 % 2 != 0) ;
-                if (ren.h2 % 2 != 0) ;
+                //screen = pts.floor(screen);
+                ren.screenCorrected = pts.mult(ren.screen, ren.ndpi);
+                ren.screenCorrected = pts.floor(ren.screenCorrected);
+                ren.screenCorrected = pts.even(ren.screenCorrected, -1);
             }
-            console.log(`window inner [${ren.w}, ${ren.h}], new is [${ren.w2}, ${ren.h2}]`);
-            ren.target.setSize(ren.w2, ren.h2);
-            ren.plane = new THREE.PlaneBufferGeometry(ren.w2, ren.h2);
+            console.log(`
+		window inner ${pts.to_string(ren.screen)}\n
+		      new is ${pts.to_string(ren.screenCorrected)}`);
+            ren.target.setSize(ren.screenCorrected[0], ren.screenCorrected[1]);
+            ren.plane = new THREE.PlaneBufferGeometry(ren.screenCorrected[0], ren.screenCorrected[1]);
             if (ren.quadPost)
                 ren.quadPost.geometry = ren.plane;
             {
-                ren.camera = ortographic_camera(ren.w2, ren.h2);
+                ren.camera = ortographic_camera(ren.screenCorrected[0], ren.screenCorrected[1]);
             }
-            ren.camera2 = ortographic_camera(ren.w2, ren.h2);
+            ren.camera2 = ortographic_camera(ren.screenCorrected[0], ren.screenCorrected[1]);
             ren.camera2.updateProjectionMatrix();
-            ren.renderer.setSize(ren.w, ren.h);
+            ren.renderer.setSize(ren.screen[0], ren.screen[1]);
         }
         let mem = [];
         function load_texture(file, mode = 1, cb, key) {
@@ -709,23 +746,46 @@ void main() {
     })(lod || (lod = {}));
     var lod$1 = lod;
 
+    var sprites;
+    (function (sprites) {
+        function start() {
+        }
+        sprites.start = start;
+        sprites.test100 = [[100, 100], [100, 100], 0, 'tex/test100'];
+        sprites.asteroid = [[512, 512], [512, 512], 0, 'tex/pngwing.com'];
+        sprites.shrubs = [[24, 15], [24, 15], 0, 'tex/shrubs'];
+        sprites.dtile = [[24, 12], [24, 12], 0, 'tex/dtile'];
+        sprites.dtile4 = [[24, 17], [24, 17], 0, 'tex/dtileup4'];
+        sprites.dwall = [[96, 40], [24, 40], 1, 'tex/dwalls'];
+        function get_uv_transform(cell, tuple) {
+            let offset = pts.mults(pts.divides(tuple[0], tuple[1]), cell);
+            let repeat = pts.divides(tuple[1], tuple[0]);
+            let center = [0, 1];
+            let mat = new THREE.Matrix3;
+            mat.setUvTransform(offset[0], offset[1], repeat[0], repeat[1], 0, center[0], center[1]);
+            return mat;
+        }
+        sprites.get_uv_transform = get_uv_transform;
+    })(sprites || (sprites = {}));
+    var sprites$1 = sprites;
+
     class Sprite extends lod$1.Shape {
-        constructor(pars) {
-            super(pars.bindObj, Numbers.Sprites);
-            this.pars = pars;
+        constructor(vars) {
+            super(vars.binded, Numbers.Sprites);
+            this.vars = vars;
             this.z = 0;
             this.roffset = [0, 0];
-            this.offset = [0, 0];
-            this.repeat = [1, 1];
-            this.center = [0, 1];
+            if (!this.vars.cell)
+                this.vars.cell = [0, 0];
             this.myUvTransform = new THREE.Matrix3;
+            this.myUvTransform.setUvTransform(0, 0, 1, 1, 0, 0, 1);
         }
         update() {
             var _a, _b;
             if (!this.mesh)
                 return;
-            this.mesh.rotation.z = this.pars.bindObj.rz;
-            const obj = this.pars.bindObj;
+            this.mesh.rotation.z = this.vars.binded.rz;
+            const obj = this.vars.binded;
             let rpos = pts.add(obj.rpos, pts.divide(obj.size, 2));
             rpos = pts.add(rpos, pts.add(this.roffset, [0, this.z]));
             (_a = this.mesh) === null || _a === void 0 ? void 0 : _a.position.fromArray([...rpos, 0]);
@@ -740,19 +800,20 @@ void main() {
             (_c = this.mesh.parent) === null || _c === void 0 ? void 0 : _c.remove(this.mesh);
         }
         create() {
-            const obj = this.pars.bindObj;
-            this.myUvTransform.setUvTransform(this.offset[0], this.offset[1], this.repeat[0], this.repeat[1], 0, this.center[0], this.center[1]);
-            this.geometry = new THREE.PlaneBufferGeometry(this.pars.bindObj.size[0], this.pars.bindObj.size[1]);
+            var _a;
+            const obj = this.vars.binded;
+            this.myUvTransform = sprites$1.get_uv_transform(this.vars.cell, this.vars.tuple);
+            this.geometry = new THREE.PlaneBufferGeometry(this.vars.binded.size[0], this.vars.binded.size[1]);
             let color;
-            if (this.pars.bindObj.sector.color) {
-                color = new THREE.Color(this.pars.bindObj.sector.color);
+            if (this.vars.binded.sector.color) {
+                color = new THREE.Color(this.vars.binded.sector.color);
             }
             else {
-                const c = this.pars.color || [255, 255, 255, 255];
+                const c = this.vars.color || [255, 255, 255, 255];
                 color = new THREE.Color(`rgb(${c[0]}, ${c[1]}, ${c[2]})}`);
             }
             this.material = SpriteMaterial({
-                map: ren$1.load_texture(`${this.pars.img}.png`, 0),
+                map: ren$1.load_texture(`${this.vars.tuple[3]}.png`, 0),
                 transparent: true,
                 color: color
             }, {
@@ -761,16 +822,18 @@ void main() {
             this.mesh = new THREE.Mesh(this.geometry, this.material);
             this.mesh.frustumCulled = false;
             this.mesh.matrixAutoUpdate = false;
-            this.mesh.renderOrder = -obj.wpos[1] + obj.wpos[0] + (this.pars.orderOffset || 0);
+            this.mesh.renderOrder = -obj.wpos[1] + obj.wpos[0] + (this.vars.order || 0);
             this.update();
-            const sector = this.pars.bindObj.sector;
-            sector === null || sector === void 0 ? void 0 : sector.group.add(this.mesh);
+            (_a = this.vars.binded.sector) === null || _a === void 0 ? void 0 : _a.group.add(this.mesh);
             ren$1.groups.axisSwap.add(this.mesh);
         }
     }
     function SpriteMaterial(parameters, uniforms) {
         let material = new THREE.MeshBasicMaterial(parameters);
-        material.name = "SpriteMaterial";
+        material.customProgramCacheKey = function () {
+            return 'spritemat';
+        };
+        material.name = "spritemat";
         material.onBeforeCompile = function (shader) {
             shader.defines = {};
             shader.uniforms.myUvTransform = { value: uniforms.myUvTransform };
@@ -834,8 +897,8 @@ void main() {
             create() {
                 this.size = [200, 200];
                 new Sprite({
-                    bindObj: this,
-                    img: 'tex/pngwing.com'
+                    binded: this,
+                    tuple: sprites$1.asteroid
                 });
             }
             tick() {
@@ -861,8 +924,8 @@ void main() {
                 console.log('create');
                 this.size = [100, 100];
                 new Sprite({
-                    bindObj: this,
-                    img: 'tex/test100'
+                    binded: this,
+                    tuple: sprites$1.test100
                 });
             }
             tick() {
@@ -952,7 +1015,9 @@ void main() {
                 mouse[1] = -mouse[1];
                 let dif = pts.subtract(this.begin, mouse);
                 {
-                    dif = pts.divide(dif, panDivisor / this.zoom);
+                    dif = pts.divide(dif, panDivisor);
+                    dif = pts.mult(dif, ren$1.ndpi);
+                    dif = pts.mult(dif, this.zoom);
                     dif = pts.subtract(dif, this.before);
                     this.rpos = pts.inv(dif);
                 }
@@ -971,7 +1036,7 @@ void main() {
         }
         mouse() {
             let mouse = app$1.mouse();
-            mouse = pts.subtract(mouse, pts.divide([ren$1.w, ren$1.h], 2));
+            mouse = pts.subtract(mouse, pts.divide([ren$1.screen[0], ren$1.screen[1]], 2));
             mouse = pts.mult(mouse, ren$1.ndpi);
             mouse = pts.mult(mouse, this.zoom);
             mouse[1] = -mouse[1];
@@ -1088,16 +1153,19 @@ void main() {
                 this.array = array;
             }
             left() {
-                this.context.pixel(pts.add(this.pos, [-1, 0]));
+                return this.context.pixel(pts.add(this.pos, [-1, 0]));
             }
             right() {
-                this.context.pixel(pts.add(this.pos, [1, 0]));
+                return this.context.pixel(pts.add(this.pos, [1, 0]));
             }
             up() {
-                this.context.pixel(pts.add(this.pos, [0, 1]));
+                return this.context.pixel(pts.add(this.pos, [0, 1]));
             }
             down() {
-                this.context.pixel(pts.add(this.pos, [0, -1]));
+                return this.context.pixel(pts.add(this.pos, [0, -1]));
+            }
+            same(pixel) {
+                return this.equals(pixel.array);
             }
             equals(vec) {
                 return vec[0] == this.array[0] && vec[1] == this.array[1] && vec[2] == this.array[2];
@@ -1168,20 +1236,17 @@ void main() {
                 super(undefined, Numbers.Walls);
             }
             create() {
-                var _a;
-                this.img = 'tex/dwall';
+                var _a, _b, _c, _d;
                 this.size = [24, 40];
-                if ((_a = this.pixel) === null || _a === void 0 ? void 0 : _a.is_color_castle_wall()) {
-                    this.size = [24, 70];
-                    this.img = 'tex/dcastlewall';
-                }
-                let shape = new Sprite({
-                    bindObj: this,
-                    img: this.img,
-                    orderOffset: .5,
+                if ((_a = this.pixel) === null || _a === void 0 ? void 0 : _a.is_color_castle_wall()) ;
+                if (((_b = this.pixel) === null || _b === void 0 ? void 0 : _b.left().same(this.pixel)) &&
+                    ((_c = this.pixel) === null || _c === void 0 ? void 0 : _c.up().same(this.pixel))) ;
+                new Sprite({
+                    binded: this,
+                    tuple: sprites$1.dwall,
+                    order: .5,
                 });
-                if (Math.random() > .5)
-                    shape.repeat = [-1, 1];
+                if ((_d = this.pixel) === null || _d === void 0 ? void 0 : _d.right().same(this.pixel)) ;
             }
             adapt() {
                 // change sprite to surrounding walls
@@ -1195,9 +1260,9 @@ void main() {
             create() {
                 this.size = [24, 15];
                 new Sprite({
-                    bindObj: this,
-                    img: 'tex/shrubs',
-                    orderOffset: .5
+                    binded: this,
+                    tuple: sprites$1.shrubs,
+                    order: .5
                 });
             }
         }
@@ -1242,23 +1307,23 @@ void main() {
         class Tile extends lod$1.Obj {
             constructor(wpos) {
                 super(undefined, Numbers.Tiles);
+                this.tuple = sprites$1.dtile;
                 this.wpos = wpos;
-                this.img = 'tex/dtile';
                 this.size = [24, 12];
                 this.z = 0;
                 this.color = objects$1.Pixel.purple_water();
                 let pixel = wastes.colormap.pixel(this.wpos);
                 if (!pixel.is_black()) {
                     this.z = 4;
+                    this.tuple = sprites$1.dtile4;
                     this.size = [24, 17];
-                    this.img = 'tex/dtileup4';
                     this.color = wastes.colormap.pixel(this.wpos).array;
                 }
             }
             create() {
                 new Sprite({
-                    bindObj: this,
-                    img: this.img,
+                    binded: this,
+                    tuple: this.tuple,
                     color: this.color
                 });
             }
@@ -1269,7 +1334,7 @@ void main() {
                 let sprite = this.shape;
                 if (!(sprite === null || sprite === void 0 ? void 0 : sprite.mesh))
                     return;
-                sprite.mesh.material.color.set('green');
+                //sprite.mesh.material.color.set('green');
             }
             tick() {
             }
@@ -5820,15 +5885,16 @@ void main() {
             });
             const loader = new ColladaLoader(loadingManager);
             loader.load('./modeler/collada/diner.dae', function (collada) {
+                wastes.view.zoom = 1.0;
                 elf = collada.scene;
                 let group = new THREE.Group;
                 group.rotation.set(Math.PI / 6, Math.PI / 4, 0);
-                group.rotation.set(Math.PI / 6, Math.PI / 4, 0);
                 group.add(elf);
-                group.add(new THREE.AxesHelper(300));
+                //group.add(new AxesHelper(300));
                 console.log(elf.scale);
-                elf.scale.multiplyScalar(100);
+                elf.scale.multiplyScalar(wastes.size);
                 elf.rotation.set(-Math.PI / 2, 0, 0);
+                //elf.position.set(1, 0, 0);
                 ren$1.scene.add(group);
                 window['group'] = group;
                 window['elf'] = elf;
@@ -5904,6 +5970,7 @@ void main() {
                 console.log('woo');
             }
             else {
+                sprites.start();
                 tiles$1.start();
                 objects$1.start();
             }
