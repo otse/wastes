@@ -27,25 +27,28 @@ namespace modeler {
 		const loader = new ColladaLoader(loadingManager);
 		loader.load('./modeler/collada/diner.dae', function (collada) {
 
-			wastes.view.zoomIndex = 0;
+			wastes.gview.zoomIndex = 0;
 
-			let sun = new DirectionalLight(0xffffff, 0.5);
-			sun.position.set(-.5, .5, 1);
-			ren.scene.add(sun);
-			ren.scene.add(sun.target);
-
+			
 			elf = collada.scene;
 			let group = new Group;
 			group.rotation.set(Math.PI / 6, Math.PI / 4, 0);
+			group.position.set(wastes.size, 0, 0);
 			group.add(elf);
 			//group.add(new AxesHelper(300));
 			console.log(elf.scale);
 			
 			elf.scale.multiplyScalar(wastes.size);
 			elf.rotation.set(-Math.PI / 2, 0, 0);
-			elf.position.set(wastes.size, 0, 0);
-
+			elf.position.set(1, 0, 0);
+			
 			ren.scene.add(group);
+			
+			let sun = new DirectionalLight(0xffffff, 0.5);
+			sun.position.set(-wastes.size, wastes.size * 2, wastes.size / 2);
+			//sun.add(new AxesHelper(100));
+			group.add(sun);
+			group.add(sun.target);
 
 			window['group'] = group;
 			window['elf'] = elf;

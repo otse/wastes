@@ -1,7 +1,7 @@
 import lod from "./lod";
 import testing_chamber from "./testing_chamber";
 import tests from "./tests";
-import View from "./view";
+import view from "./view";
 import tiles from "./tiles";
 import objects from "./objects";
 import modeler from "./modeler";
@@ -12,16 +12,16 @@ export namespace wastes {
 
 	export const size = 24;
 
-	export var view: View;
+	export var gview: view;
 
 	export var SOME_OTHER_SETTING = false;
 
 	var started = false;
 
-	export var heightmap: objects.ColorMap
-	export var objectmap: objects.ColorMap
-	export var treemap: objects.ColorMap
-	export var colormap: objects.ColorMap
+	export var heightmap: objects.colormap
+	export var objectmap: objects.colormap
+	export var treemap: objects.colormap
+	export var colormap: objects.colormap
 
 	export function sample(a) {
 		return a[Math.floor(Math.random() * a.length)];
@@ -94,7 +94,7 @@ export namespace wastes {
 			return;
 		started = true;
 		console.log(' wastes starting ');
-		view = View.make();
+		gview = view.make();
 		registers();
 		starts();
 	}
@@ -113,7 +113,7 @@ export namespace wastes {
 			reasonable_waiter()
 			return
 		}
-		view.tick();
+		gview.tick();
 		if (!testing_chamber.started) {
 			tiles.tick();
 			tests.tick();

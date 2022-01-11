@@ -5,14 +5,14 @@ import app from "./app";
 import pts from "./pts";
 import ren from "./renderer";
 
-import lod, { Numbers } from "./lod";
+import lod, { numbers } from "./lod";
 import wastes from "./wastes";
 import hooks from "./hooks";
 
 // the view manages what it sees
 
 
-export class View {
+export class view {
 	zoom = 0.33
 	zoomIndex = 2
 	zooms = [1, 0.5, 0.33, 0.2]
@@ -22,15 +22,15 @@ export class View {
 	mwpos: vec2 = [0, 0]
 	mrpos: vec2 = [0, 0]
 	static make() {
-		return new View;
+		return new view;
 	}
 	chart(big: vec2) {
 	}
 	constructor() {
-		new lod.Galaxy(10);
+		new lod.galaxy(10);
 		this.rpos = lod.project(this.wpos);
 	}
-	remove(obj: lod.Obj) {
+	remove(obj: lod.obj) {
 		obj.sector?.remove(obj);
 	}
 	tick() {
@@ -40,8 +40,8 @@ export class View {
 		this.chase();
 		this.stats();
 		this.wpos = lod.unproject(this.rpos);
-		lod.galaxy.update(this.wpos);
-		const zoom = wastes.view.zoom;
+		lod.ggalaxy.update(this.wpos);
+		const zoom = wastes.gview.zoom;
 		ren.camera.scale.set(zoom, zoom, zoom);
 		ren.camera.updateProjectionMatrix();
 	}
@@ -139,16 +139,16 @@ export class View {
 		crunch += '<br />';
 
 		crunch += `view wpos: ${pts.to_string(pts.floor(this.wpos))}<br />`;
-		crunch += `view bigpos: ${pts.to_string(lod.galaxy.big(this.wpos))}<br />`;
+		crunch += `view bigpos: ${pts.to_string(lod.ggalaxy.big(this.wpos))}<br />`;
 		crunch += `view zoom: ${this.zoom}<br />`;
 		crunch += '<br />';
 
 		//crunch += `world wpos: ${pts.to_string(this.pos)}<br /><br />`;
-		crunch += `sectors: ${Numbers.Sectors[0]} / ${Numbers.Sectors[1]}<br />`;
-		crunch += `game objs: ${Numbers.Objs[0]} / ${Numbers.Objs[1]}<br />`;
-		crunch += `sprites: ${Numbers.Sprites[0]} / ${Numbers.Sprites[1]}<br />`;
-		crunch += `trees: ${Numbers.Trees[0]} / ${Numbers.Trees[1]}<br />`;
-		crunch += `tiles: ${Numbers.Tiles[0]} / ${Numbers.Tiles[1]}<br />`;
+		crunch += `sectors: ${numbers.sectors[0]} / ${numbers.sectors[1]}<br />`;
+		crunch += `game objs: ${numbers.objs[0]} / ${numbers.objs[1]}<br />`;
+		crunch += `sprites: ${numbers.sprites[0]} / ${numbers.sprites[1]}<br />`;
+		crunch += `trees: ${numbers.trees[0]} / ${numbers.trees[1]}<br />`;
+		crunch += `tiles: ${numbers.tiles[0]} / ${numbers.tiles[1]}<br />`;
 		crunch += '<br />';
 
 		crunch += `controls: WASD, X to go fast, middlemouse to pan<br />`;
@@ -160,4 +160,4 @@ export class View {
 }
 
 
-export default View;
+export default view;

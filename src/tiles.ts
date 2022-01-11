@@ -1,26 +1,26 @@
 import { Vector2, Mesh, Shader, Texture, PlaneBufferGeometry, MeshLambertMaterial, MeshLambertMaterialParameters, Matrix3, Matrix4 } from "three";
 
 import wastes from "./wastes";
-import lod, { Numbers } from "./lod";
+import lod, { numbers } from "./lod";
 import ren from "./renderer";
 import pts from "./pts";
 import objects from "./objects";
 import aabb2 from "./aabb2";
 import hooks from "./hooks";
-import Sprite from "./sprite";
+import sprite from "./sprite";
 import sprites from "./sprites";
 
 export namespace tiles {
 
 	const mapSize = 100
 
-	var tiles: Tile[][] = []
+	var arrays: tiles.tile[][] = []
 
 	export var raisedmpos: vec2
 
 	export function get(pos: vec2) {
-		if (tiles[pos[1]])
-			return tiles[pos[1]][pos[0]];
+		if (arrays[pos[1]])
+			return arrays[pos[1]][pos[0]];
 	}
 
 	export function register() {
@@ -36,16 +36,16 @@ export namespace tiles {
 		pts.func(new aabb2([0, 0], [mapSize - 1, mapSize - 1]), (pos: vec2) => {
 			let x = pos[0];
 			let y = pos[1];
-			if (tiles[y] == undefined)
-				tiles[y] = [];
-			let tile = new Tile([x, y]);
-			tiles[y][x] = tile;
+			if (arrays[y] == undefined)
+				arrays[y] = [];
+			let tile = new tiles.tile([x, y]);
+			arrays[y][x] = tile;
 			lod.add(tile);
 		})
 	}
 
 	export function tick() {
-		raisedmpos = lod.unproject(pts.add(wastes.view.mrpos, [0, -4]));
+		raisedmpos = lod.unproject(pts.add(wastes.gview.mrpos, [0, -4]));
 		raisedmpos = pts.floor(raisedmpos);
 
 		const tile = get(raisedmpos);
@@ -53,17 +53,18 @@ export namespace tiles {
 			tile?.hover();
 	}
 
-	export class Tile extends lod.Obj {
+	export class tile extends lod.obj {
 		z: number
 		tuple: sprites.tuple
+		objs: lod.obj[] = []
 		color: vec4
 		constructor(wpos: vec2) {
-			super(undefined, Numbers.Tiles);
+			super(undefined, numbers.tiles);
 			this.tuple = sprites.dtile;
 			this.wpos = wpos;
 			this.size = [24, 12];
 			this.z = 0;
-			this.color = objects.Pixel.water_color();
+			this.color = objects.pixel.water_color();
 			let pixel = wastes.colormap.pixel(this.wpos);
 			if (!pixel.is_black()) {
 				this.z = 4;
@@ -72,8 +73,18 @@ export namespace tiles {
 				this.color = wastes.colormap.pixel(this.wpos).array;
 			}
 		}
+		add(obj: lod.obj) {
+			let i = this.objs.indexOf(obj);
+			if (i == -1)
+				this.objs.push(obj);
+		}
+		remove(obj: lod.obj) {
+			let i = this.objs.indexOf(obj);
+			if (i > -1)
+				return this.objs.splice(i, 1).length;
+		}
 		create() {
-			let shape = new Sprite({
+			let shape = new sprite({
 				binded: this,
 				tuple: this.tuple,
 				color: this.color
@@ -83,7 +94,7 @@ export namespace tiles {
 		delete() {
 		}
 		hover() {
-			let sprite = this.shape as Sprite;
+			let sprite = this.shape as sprite;
 			if (!sprite?.mesh)
 				return;
 			//sprite.mesh.material.color.set('green');

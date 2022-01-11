@@ -1,13 +1,13 @@
 import { Color, Mesh, BoxGeometry, PlaneBufferGeometry, MeshBasicMaterial, MeshBasicMaterialParameters, Shader, Matrix3, Vector2 } from "three";
 
-import lod, { Numbers } from "./lod";
+import lod, { numbers } from "./lod";
 import pts from "./pts";
 import ren from "./renderer";
 import sprites from "./sprites";
 import tiles from "./tiles";
 
 interface SpriteParameters {
-	binded: lod.Obj,
+	binded: lod.obj,
 	tuple: sprites.tuple,
 	cell?: vec2,
 	color?: vec4,
@@ -15,11 +15,11 @@ interface SpriteParameters {
 	order?: number
 };
 
-export namespace Sprite {
-	export type Parameters = Sprite['vars'];
+export namespace sprite {
+	export type params = sprite['vars'];
 };
 
-export class Sprite extends lod.Shape {
+export class sprite extends lod.shape {
 	z = 0
 	mesh: Mesh
 	material: MeshBasicMaterial
@@ -29,7 +29,7 @@ export class Sprite extends lod.Shape {
 	constructor(
 		public readonly vars: SpriteParameters
 	) {
-		super(vars.binded, Numbers.Sprites);
+		super(vars.binded, numbers.sprites);
 		if (!this.vars.cell)
 			this.vars.cell = [0, 0];
 		this.myUvTransform = new Matrix3;
@@ -111,4 +111,4 @@ function SpriteMaterial(parameters: MeshBasicMaterialParameters, uniforms: any) 
 	return material;
 }
 
-export default Sprite;
+export default sprite;

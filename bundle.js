@@ -447,16 +447,16 @@ void main() {
         }
     }
 
-    var Numbers;
-    (function (Numbers) {
-        Numbers.Sectors = [0, 0];
-        Numbers.Sprites = [0, 0];
-        Numbers.Objs = [0, 0];
-        Numbers.Tiles = [0, 0];
-        Numbers.Trees = [0, 0];
-        Numbers.Walls = [0, 0];
-    })(Numbers || (Numbers = {}));
-    class Toggle {
+    var numbers;
+    (function (numbers) {
+        numbers.sectors = [0, 0];
+        numbers.sprites = [0, 0];
+        numbers.objs = [0, 0];
+        numbers.tiles = [0, 0];
+        numbers.trees = [0, 0];
+        numbers.walls = [0, 0];
+    })(numbers || (numbers = {}));
+    class toggle {
         constructor() {
             this.active = false;
         }
@@ -500,20 +500,20 @@ void main() {
         }
         lod.unproject = unproject;
         function add(obj) {
-            let sector = lod.galaxy.at(lod.galaxy.big(obj.wpos));
+            let sector = lod.ggalaxy.at(lod.ggalaxy.big(obj.wpos));
             sector.add(obj);
         }
         lod.add = add;
-        class Galaxy {
+        class galaxy {
             constructor(span) {
                 this.arrays = [];
-                lod.galaxy = this;
-                new Grid(4, 6);
+                lod.ggalaxy = this;
+                new grid(4, 6);
             }
             update(wpos) {
-                lod.grid.big = this.big(wpos);
-                lod.grid.offs();
-                lod.grid.crawl();
+                lod.ggrid.big = this.big(wpos);
+                lod.ggrid.offs();
+                lod.ggrid.crawl();
             }
             lookup(big) {
                 if (this.arrays[big[1]] == undefined)
@@ -527,15 +527,15 @@ void main() {
                 let s = this.lookup(big);
                 if (s)
                     return s;
-                s = this.arrays[big[1]][big[0]] = new Sector(big, this);
+                s = this.arrays[big[1]][big[0]] = new sector(big, this);
                 return s;
             }
             big(units) {
                 return pts.floor(pts.divide(units, lod.SectorSpan));
             }
         }
-        lod.Galaxy = Galaxy;
-        class Sector extends Toggle {
+        lod.galaxy = galaxy;
+        class sector extends toggle {
             constructor(big, galaxy) {
                 super();
                 this.big = big;
@@ -548,7 +548,7 @@ void main() {
                 this.group = new THREE.Group;
                 this.group.frustumCulled = false;
                 this.group.matrixAutoUpdate = false;
-                Numbers.Sectors[1]++;
+                numbers.sectors[1]++;
                 galaxy.arrays[this.big[1]][this.big[0]] = this;
                 //console.log('sector');
                 hooks.call('sectorCreate', this);
@@ -587,7 +587,7 @@ void main() {
             show() {
                 if (this.on())
                     return;
-                Numbers.Sectors[0]++;
+                numbers.sectors[0]++;
                 //console.log('?');
                 for (let obj of this.objs)
                     obj.show();
@@ -597,24 +597,24 @@ void main() {
             hide() {
                 if (this.off())
                     return;
-                Numbers.Sectors[0]--;
+                numbers.sectors[0]--;
                 for (let obj of this.objs)
                     obj.hide();
                 ren$1.scene.remove(this.group);
                 hooks.call('sectorHide', this);
             }
             dist() {
-                return pts.distsimple(this.big, lod.grid.big);
+                return pts.distsimple(this.big, lod.ggrid.big);
             }
         }
-        lod.Sector = Sector;
-        class Grid {
+        lod.sector = sector;
+        class grid {
             constructor(spread, outside) {
                 this.spread = spread;
                 this.outside = outside;
                 this.big = [0, 0];
                 this.shown = [];
-                lod.grid = this;
+                lod.ggrid = this;
                 if (this.outside < this.spread) {
                     console.warn(' outside less than spread ', this.spread, this.outside);
                     this.outside = this.spread;
@@ -628,7 +628,7 @@ void main() {
                 for (let y = -this.spread; y < this.spread + 1; y++) {
                     for (let x = -this.spread; x < this.spread + 1; x++) {
                         let pos = pts.add(this.big, [x, y]);
-                        let sector = lod.galaxy.lookup(pos);
+                        let sector = lod.ggalaxy.lookup(pos);
                         if (!sector)
                             continue;
                         if (!sector.isActive()) {
@@ -655,9 +655,9 @@ void main() {
                     obj.tick();
             }
         }
-        lod.Grid = Grid;
-        class Obj extends Toggle {
-            constructor(hints, counts = Numbers.Objs) {
+        lod.grid = grid;
+        class obj extends toggle {
+            constructor(hints, counts = numbers.objs) {
                 super();
                 this.counts = counts;
                 this.wpos = [0, 0];
@@ -715,8 +715,8 @@ void main() {
                     return true;
             }
         }
-        lod.Obj = Obj;
-        class Shape extends Toggle {
+        lod.obj = obj;
+        class shape extends toggle {
             constructor(bindObj, counts) {
                 super();
                 this.bindObj = bindObj;
@@ -747,7 +747,7 @@ void main() {
                 this.counts[0]--;
             }
         }
-        lod.Shape = Shape;
+        lod.shape = shape;
     })(lod || (lod = {}));
     var lod$1 = lod;
 
@@ -761,9 +761,9 @@ void main() {
         sprites.shrubs = [[24, 15], [24, 15], 0, 'tex/shrubs'];
         sprites.dtile = [[24, 12], [24, 12], 0, 'tex/dtile'];
         sprites.dtile4 = [[24, 17], [24, 17], 0, 'tex/dtileup4'];
-        sprites.dwall = [[96, 40], [24, 40], 1, 'tex/dwalls'];
-        sprites.dwallsgreeny = [[96, 40], [24, 40], 1, 'tex/dwallsgreeny'];
-        sprites.ddoorwood = [[96, 40], [24, 40], 1, 'tex/ddoor'];
+        sprites.dwall = [[96, 40], [24, 40], 0, 'tex/dwalls'];
+        sprites.dwallsgreeny = [[96, 40], [24, 40], 0, 'tex/dwallsgreeny'];
+        sprites.ddoorwood = [[96, 40], [24, 40], 0, 'tex/ddoor'];
         function get_uv_transform(cell, tuple) {
             let divide = pts.divides(tuple[1], tuple[0]);
             let offset = pts.mults(divide, cell);
@@ -777,9 +777,9 @@ void main() {
     })(sprites || (sprites = {}));
     var sprites$1 = sprites;
 
-    class Sprite extends lod$1.Shape {
+    class sprite extends lod$1.shape {
         constructor(vars) {
-            super(vars.binded, Numbers.Sprites);
+            super(vars.binded, numbers.sprites);
             this.vars = vars;
             this.z = 0;
             this.roffset = [0, 0];
@@ -864,9 +864,9 @@ void main() {
             console.log(' start testing chamber ');
             console.log('placing squares on game area that should take up 1:1 pixels on screen...');
             console.log('...regardless of your os or browsers dpi setting');
-            wastes.view.zoom = 1;
-            wastes.view.wpos = [0, 0];
-            wastes.view.rpos = lod$1.unproject([0, 0]);
+            wastes.gview.zoom = 1;
+            wastes.gview.wpos = [0, 0];
+            wastes.gview.rpos = lod$1.unproject([0, 0]);
             hooks.register('sectorShow', (x) => {
                 console.log('(testing chamber) show sector');
                 return false;
@@ -874,12 +874,12 @@ void main() {
             hooks.register('viewClick', (view) => {
                 console.log(' asteorid! ');
                 let ping = new Asteroid;
-                ping.wpos = pts.add(wastes.view.mwpos, [-1, -1]);
+                ping.wpos = pts.add(wastes.gview.mwpos, [-1, -1]);
                 lod$1.add(ping);
                 return false;
             });
             lod$1.SectorSpan = 4;
-            lod$1.grid = new lod$1.Grid(1, 1);
+            lod$1.ggrid = new lod$1.grid(1, 1);
             lod$1.project = function (unit) { return pts.mult(unit, 100); };
             lod$1.unproject = function (pixel) { return pts.divide(pixel, 100); };
             for (let y = 0; y < 10; y++) {
@@ -895,7 +895,7 @@ void main() {
         function tick() {
         }
         testing_chamber.tick = tick;
-        class Asteroid extends lod$1.Obj {
+        class Asteroid extends lod$1.obj {
             constructor() {
                 super(undefined);
                 this.size = [100, 100];
@@ -904,7 +904,7 @@ void main() {
             }
             create() {
                 this.size = [200, 200];
-                new Sprite({
+                new sprite({
                     binded: this,
                     tuple: sprites$1.asteroid
                 });
@@ -920,7 +920,7 @@ void main() {
         }
         Asteroid.slowness = 12;
         testing_chamber.Asteroid = Asteroid;
-        class Square extends lod$1.Obj {
+        class Square extends lod$1.obj {
             static make() {
                 return new Square;
             }
@@ -931,14 +931,14 @@ void main() {
             create() {
                 console.log('create');
                 this.size = [100, 100];
-                new Sprite({
+                new sprite({
                     binded: this,
                     tuple: sprites$1.test100
                 });
             }
             tick() {
                 let shape = this.shape;
-                if (this.mousedSquare(wastes.view.mrpos))
+                if (this.mousedSquare(wastes.gview.mrpos))
                     shape.mesh.material.color.set('green');
                 else
                     shape.material.color.set('white');
@@ -951,31 +951,31 @@ void main() {
     var tests;
     (function (tests) {
         function start() {
-            BigMouseRock.start();
+            mouserock.start();
         }
         tests.start = start;
         function tick() {
-            BigMouseRock.tick();
+            mouserock.tick();
         }
         tests.tick = tick;
-        class BigMouseRock {
+        class mouserock {
             static start() {
             }
             static tick() {
                 var _a;
                 if (this.obj) {
-                    this.obj.rpos = wastes.view.mrpos;
+                    this.obj.rpos = wastes.gview.mrpos;
                     (_a = this.obj.shape) === null || _a === void 0 ? void 0 : _a.update();
                     this.obj.shape;
                 }
             }
         }
-        tests.BigMouseRock = BigMouseRock;
+        tests.mouserock = mouserock;
     })(tests || (tests = {}));
     var tests$1 = tests;
 
     // the view manages what it sees
-    class View {
+    class view {
         constructor() {
             this.zoom = 0.33;
             this.zoomIndex = 2;
@@ -988,11 +988,11 @@ void main() {
             this.begin = [0, 0];
             this.before = [0, 0];
             this.show = true;
-            new lod$1.Galaxy(10);
+            new lod$1.galaxy(10);
             this.rpos = lod$1.project(this.wpos);
         }
         static make() {
-            return new View;
+            return new view;
         }
         chart(big) {
         }
@@ -1007,8 +1007,8 @@ void main() {
             this.chase();
             this.stats();
             this.wpos = lod$1.unproject(this.rpos);
-            lod$1.galaxy.update(this.wpos);
-            const zoom = wastes.view.zoom;
+            lod$1.ggalaxy.update(this.wpos);
+            const zoom = wastes.gview.zoom;
             ren$1.camera.scale.set(zoom, zoom, zoom);
             ren$1.camera.updateProjectionMatrix();
         }
@@ -1091,15 +1091,15 @@ void main() {
             crunch += `mrpos: ${pts.to_string(pts.floor(this.mrpos))}<br />`;
             crunch += '<br />';
             crunch += `view wpos: ${pts.to_string(pts.floor(this.wpos))}<br />`;
-            crunch += `view bigpos: ${pts.to_string(lod$1.galaxy.big(this.wpos))}<br />`;
+            crunch += `view bigpos: ${pts.to_string(lod$1.ggalaxy.big(this.wpos))}<br />`;
             crunch += `view zoom: ${this.zoom}<br />`;
             crunch += '<br />';
             //crunch += `world wpos: ${pts.to_string(this.pos)}<br /><br />`;
-            crunch += `sectors: ${Numbers.Sectors[0]} / ${Numbers.Sectors[1]}<br />`;
-            crunch += `game objs: ${Numbers.Objs[0]} / ${Numbers.Objs[1]}<br />`;
-            crunch += `sprites: ${Numbers.Sprites[0]} / ${Numbers.Sprites[1]}<br />`;
-            crunch += `trees: ${Numbers.Trees[0]} / ${Numbers.Trees[1]}<br />`;
-            crunch += `tiles: ${Numbers.Tiles[0]} / ${Numbers.Tiles[1]}<br />`;
+            crunch += `sectors: ${numbers.sectors[0]} / ${numbers.sectors[1]}<br />`;
+            crunch += `game objs: ${numbers.objs[0]} / ${numbers.objs[1]}<br />`;
+            crunch += `sprites: ${numbers.sprites[0]} / ${numbers.sprites[1]}<br />`;
+            crunch += `trees: ${numbers.trees[0]} / ${numbers.trees[1]}<br />`;
+            crunch += `tiles: ${numbers.tiles[0]} / ${numbers.tiles[1]}<br />`;
             crunch += '<br />';
             crunch += `controls: WASD, X to go fast, middlemouse to pan<br />`;
             let element = document.querySelectorAll('.stats')[0];
@@ -1115,10 +1115,10 @@ void main() {
         const color_wooden_wall = [255, 255, 255];
         function register() {
             console.log(' objects register ');
-            wastes.heightmap = new ColorMap('heightmap');
-            wastes.objectmap = new ColorMap('objectmap');
-            wastes.treemap = new ColorMap('treemap');
-            wastes.colormap = new ColorMap('colormap');
+            wastes.heightmap = new colormap('heightmap');
+            wastes.objectmap = new colormap('objectmap');
+            wastes.treemap = new colormap('treemap');
+            wastes.colormap = new colormap('colormap');
             const treeTreshold = 50;
             hooks.register('sectorCreate', (sector) => {
                 pts.func(sector.small, (pos) => {
@@ -1131,7 +1131,7 @@ void main() {
                 pts.func(sector.small, (pos) => {
                     let pixel = wastes.objectmap.pixel(pos);
                     if (pixel.is_color(color_wooden_wall)) {
-                        let wall = new Wall;
+                        let wall = new objects.wall;
                         wall.pixel = pixel;
                         wall.wpos = pos;
                         lod$1.add(wall);
@@ -1143,7 +1143,7 @@ void main() {
                 pts.func(sector.small, (pos) => {
                     let pixel = wastes.objectmap.pixel(pos);
                     if (pixel.is_color(color_wooden_door)) {
-                        let door = new Door;
+                        let door = new objects.door;
                         door.pixel = pixel;
                         door.wpos = pos;
                         lod$1.add(door);
@@ -1158,7 +1158,7 @@ void main() {
         }
         objects.start = start;
         const zeroes = [0, 0, 0, 0];
-        class Pixel {
+        class pixel {
             constructor(context, pos, array) {
                 this.context = context;
                 this.pos = pos;
@@ -1192,8 +1192,8 @@ void main() {
                 return [66, 66, 110, 255];
             }
         }
-        objects.Pixel = Pixel;
-        class ColorMap {
+        objects.pixel = pixel;
+        class colormap {
             constructor(id) {
                 this.data = [];
                 var img = document.getElementById(id);
@@ -1211,7 +1211,7 @@ void main() {
                 return zeroes;
             }
             pixel(pos) {
-                return new Pixel(this, pos, this.get(pos));
+                return new pixel(this, pos, this.get(pos));
             }
             process() {
                 for (let y = 0; y < mapSpan; y++) {
@@ -1225,24 +1225,22 @@ void main() {
                 }
             }
         }
-        objects.ColorMap = ColorMap;
-        class TiledObj extends lod$1.Obj {
-            constructor(x, y) {
-                super(x, y);
+        objects.colormap = colormap;
+        class objected extends lod$1.obj {
+            constructor(hints, counts) {
+                super(hints, counts);
             }
             update() {
-                if (this.shape) {
-                    const tile = tiles$1.get(this.wpos);
-                    if (tile)
-                        this.shape.z = tile.z;
-                }
+                this.tile = tiles$1.get(this.wpos);
+                if (this.shape)
+                    this.shape.z = this.tile.z;
                 super.update();
             }
         }
-        objects.TiledObj = TiledObj;
-        class Wall extends TiledObj {
+        objects.objected = objected;
+        class wall extends objected {
             constructor() {
-                super(undefined, Numbers.Walls);
+                super(undefined, numbers.walls);
             }
             create() {
                 var _a, _b, _c, _d, _e, _f, _g, _h;
@@ -1261,7 +1259,7 @@ void main() {
                 else if ((_h = this.pixel) === null || _h === void 0 ? void 0 : _h.up().same(this.pixel)) {
                     this.cell = [3, 0];
                 }
-                new Sprite({
+                new sprite({
                     binded: this,
                     tuple: sprites$1.dwallsgreeny,
                     cell: this.cell,
@@ -1272,14 +1270,14 @@ void main() {
                 // change sprite to surrounding walls
             }
         }
-        objects.Wall = Wall;
-        class Door extends TiledObj {
+        objects.wall = wall;
+        class door extends objected {
             constructor() {
-                super(undefined, Numbers.Walls);
+                super(undefined, numbers.walls);
             }
             create() {
                 this.size = [24, 40];
-                new Sprite({
+                new sprite({
                     binded: this,
                     tuple: sprites$1.ddoorwood,
                     cell: this.cell,
@@ -1290,14 +1288,14 @@ void main() {
                 // change sprite to surrounding walls
             }
         }
-        objects.Door = Door;
-        class Shrubs extends TiledObj {
+        objects.door = door;
+        class Shrubs extends objected {
             constructor() {
-                super(undefined, Numbers.Trees);
+                super(undefined, numbers.trees);
             }
             create() {
                 this.size = [24, 15];
-                new Sprite({
+                new sprite({
                     binded: this,
                     tuple: sprites$1.shrubs,
                     order: .5
@@ -1309,47 +1307,48 @@ void main() {
     var objects$1 = objects;
 
     var tiles;
-    (function (tiles_1) {
+    (function (tiles) {
         const mapSize = 100;
-        var tiles = [];
+        var arrays = [];
         function get(pos) {
-            if (tiles[pos[1]])
-                return tiles[pos[1]][pos[0]];
+            if (arrays[pos[1]])
+                return arrays[pos[1]][pos[0]];
         }
-        tiles_1.get = get;
+        tiles.get = get;
         function register() {
             console.log(' tiles register ');
         }
-        tiles_1.register = register;
+        tiles.register = register;
         function start() {
             console.log(' tiles start ');
             pts.func(new aabb2([0, 0], [mapSize - 1, mapSize - 1]), (pos) => {
                 let x = pos[0];
                 let y = pos[1];
-                if (tiles[y] == undefined)
-                    tiles[y] = [];
-                let tile = new Tile([x, y]);
-                tiles[y][x] = tile;
+                if (arrays[y] == undefined)
+                    arrays[y] = [];
+                let tile = new tiles.tile([x, y]);
+                arrays[y][x] = tile;
                 lod$1.add(tile);
             });
         }
-        tiles_1.start = start;
+        tiles.start = start;
         function tick() {
-            tiles_1.raisedmpos = lod$1.unproject(pts.add(wastes.view.mrpos, [0, -4]));
-            tiles_1.raisedmpos = pts.floor(tiles_1.raisedmpos);
-            const tile = get(tiles_1.raisedmpos);
+            tiles.raisedmpos = lod$1.unproject(pts.add(wastes.gview.mrpos, [0, -4]));
+            tiles.raisedmpos = pts.floor(tiles.raisedmpos);
+            const tile = get(tiles.raisedmpos);
             if (tile && tile.z == 4)
                 tile === null || tile === void 0 ? void 0 : tile.hover();
         }
-        tiles_1.tick = tick;
-        class Tile extends lod$1.Obj {
+        tiles.tick = tick;
+        class tile extends lod$1.obj {
             constructor(wpos) {
-                super(undefined, Numbers.Tiles);
+                super(undefined, numbers.tiles);
+                this.objs = [];
                 this.tuple = sprites$1.dtile;
                 this.wpos = wpos;
                 this.size = [24, 12];
                 this.z = 0;
-                this.color = objects$1.Pixel.water_color();
+                this.color = objects$1.pixel.water_color();
                 let pixel = wastes.colormap.pixel(this.wpos);
                 if (!pixel.is_black()) {
                     this.z = 4;
@@ -1358,8 +1357,18 @@ void main() {
                     this.color = wastes.colormap.pixel(this.wpos).array;
                 }
             }
+            add(obj) {
+                let i = this.objs.indexOf(obj);
+                if (i == -1)
+                    this.objs.push(obj);
+            }
+            remove(obj) {
+                let i = this.objs.indexOf(obj);
+                if (i > -1)
+                    return this.objs.splice(i, 1).length;
+            }
             create() {
-                new Sprite({
+                new sprite({
                     binded: this,
                     tuple: this.tuple,
                     color: this.color
@@ -1377,7 +1386,7 @@ void main() {
             tick() {
             }
         }
-        tiles_1.Tile = Tile;
+        tiles.tile = tile;
     })(tiles || (tiles = {}));
     var tiles$1 = tiles;
 
@@ -5923,21 +5932,23 @@ void main() {
             });
             const loader = new ColladaLoader(loadingManager);
             loader.load('./modeler/collada/diner.dae', function (collada) {
-                wastes.view.zoomIndex = 0;
-                let sun = new THREE.DirectionalLight(0xffffff, 0.5);
-                sun.position.set(-.5, .5, 1);
-                ren$1.scene.add(sun);
-                ren$1.scene.add(sun.target);
+                wastes.gview.zoomIndex = 0;
                 elf = collada.scene;
                 let group = new THREE.Group;
                 group.rotation.set(Math.PI / 6, Math.PI / 4, 0);
+                group.position.set(wastes.size, 0, 0);
                 group.add(elf);
                 //group.add(new AxesHelper(300));
                 console.log(elf.scale);
                 elf.scale.multiplyScalar(wastes.size);
                 elf.rotation.set(-Math.PI / 2, 0, 0);
-                elf.position.set(wastes.size, 0, 0);
+                elf.position.set(1, 0, 0);
                 ren$1.scene.add(group);
+                let sun = new THREE.DirectionalLight(0xffffff, 0.5);
+                sun.position.set(-wastes.size, wastes.size * 2, wastes.size / 2);
+                //sun.add(new AxesHelper(100));
+                group.add(sun);
+                group.add(sun.target);
                 window['group'] = group;
                 window['elf'] = elf;
             });
@@ -6022,7 +6033,7 @@ void main() {
                 return;
             started = true;
             console.log(' wastes starting ');
-            wastes.view = View.make();
+            wastes.gview = view.make();
             registers();
             starts();
         }
@@ -6040,7 +6051,7 @@ void main() {
                 reasonable_waiter();
                 return;
             }
-            wastes.view.tick();
+            wastes.gview.tick();
             if (!testing_chamber$1.started) {
                 tiles$1.tick();
                 tests$1.tick();

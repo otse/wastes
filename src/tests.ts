@@ -1,38 +1,38 @@
 import lod from "./lod";
 import wastes from "./wastes";
 import ren from "./renderer";
-import Sprite from "./sprite";
+import sprite from "./sprite";
 import sprites from "./sprites";
 
 
 export namespace tests {
 	export function start()
 	{
-		BigMouseRock.start();
+		mouserock.start();
 	}
 	
 	export function tick()
 	{
-		BigMouseRock.tick();
+		mouserock.tick();
 	}
 
-	export class BigMouseRock {
-		static obj: lod.Obj;
+	export class mouserock {
+		static obj: lod.obj;
 		static start() {
 			const mouseAsteroid = false;
 			if (mouseAsteroid) {
-				this.obj = new lod.Obj({});
-				this.obj.shape = new Sprite({ binded: this.obj, tuple: sprites.asteroid });
+				this.obj = new lod.obj({});
+				this.obj.shape = new sprite({ binded: this.obj, tuple: sprites.asteroid });
 				this.obj.show();
-				let sprite = this.obj.shape as Sprite;
-				ren.scene.add(sprite.mesh);
+				let daisy = this.obj.shape as sprite;
+				ren.scene.add(daisy.mesh);
 			}
 		}
 		static tick() {
 			if (this.obj) {
-				this.obj.rpos = wastes.view.mrpos;
+				this.obj.rpos = wastes.gview.mrpos;
 				this.obj.shape?.update();
-				let sprite = this.obj.shape as Sprite;
+				let sprite = this.obj.shape as sprite;
 			}
 		}
 	}

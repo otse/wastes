@@ -2,14 +2,14 @@ import { THREE, Group, Mesh, Shader, BoxGeometry, ConeGeometry, CylinderGeometry
 
 import { ColladaLoader } from "three/examples/jsm/loaders/ColladaLoader";
 
-import lod, { Numbers } from "./lod";
+import lod, { numbers } from "./lod";
 import wastes from "./wastes";
 import ren from "./renderer";
 import pts from "./pts";
 import aabb2 from "./aabb2";
 import tiles from "./tiles";
 import hooks from "./hooks";
-import Sprite from "./sprite";
+import sprite from "./sprite";
 import sprites from "./sprites";
 
 namespace objects {
@@ -23,14 +23,14 @@ namespace objects {
 
 		console.log(' objects register ');
 
-		wastes.heightmap = new ColorMap('heightmap');
-		wastes.objectmap = new ColorMap('objectmap');
-		wastes.treemap = new ColorMap('treemap');
-		wastes.colormap = new ColorMap('colormap');
+		wastes.heightmap = new colormap('heightmap');
+		wastes.objectmap = new colormap('objectmap');
+		wastes.treemap = new colormap('treemap');
+		wastes.colormap = new colormap('colormap');
 
 		const treeTreshold = 50;
 
-		hooks.register('sectorCreate', (sector: lod.Sector) => {
+		hooks.register('sectorCreate', (sector: lod.sector) => {
 			pts.func(sector.small, (pos) => {
 				let pixel = wastes.treemap.pixel(pos);
 				if (pixel.array[0] > treeTreshold) {
@@ -43,12 +43,11 @@ namespace objects {
 			return false;
 		})
 
-		hooks.register('sectorCreate', (sector: lod.Sector) => {
+		hooks.register('sectorCreate', (sector: lod.sector) => {
 			pts.func(sector.small, (pos) => {
 				let pixel = wastes.objectmap.pixel(pos);
-				if (pixel.is_color(color_wooden_wall)
-				) {
-					let wall = new Wall;
+				if (pixel.is_color(color_wooden_wall)) {
+					let wall = new objects.wall;
 					wall.pixel = pixel;
 					wall.wpos = pos;
 					lod.add(wall);
@@ -57,12 +56,11 @@ namespace objects {
 			return false;
 		})
 
-		hooks.register('sectorCreate', (sector: lod.Sector) => {
+		hooks.register('sectorCreate', (sector: lod.sector) => {
 			pts.func(sector.small, (pos) => {
 				let pixel = wastes.objectmap.pixel(pos);
-				if (pixel.is_color(color_wooden_door)
-				) {
-					let door = new Door;
+				if (pixel.is_color(color_wooden_door)) {
+					let door = new objects.door;
 					door.pixel = pixel;
 					door.wpos = pos;
 					lod.add(door);
@@ -80,9 +78,9 @@ namespace objects {
 
 	const zeroes: vec4 = [0, 0, 0, 0]
 
-	export class Pixel {
+	export class pixel {
 		constructor(
-			public context: ColorMap,
+			public context: colormap,
 			public pos: vec2,
 			public array: vec4) {
 		}
@@ -98,7 +96,7 @@ namespace objects {
 		down() {
 			return this.context.pixel(pts.add(this.pos, [0, -1]));
 		}
-		same(pixel: Pixel) {
+		same(pixel: pixel) {
 			return this.is_color(<vec3><unknown>pixel.array);
 		}
 		is_color(vec: vec3) {
@@ -115,7 +113,7 @@ namespace objects {
 		}
 	}
 
-	export class ColorMap {
+	export class colormap {
 		readonly data: vec4[][] = []
 		canvas
 		ctx
@@ -134,8 +132,8 @@ namespace objects {
 				return this.data[pos[1]][pos[0]];
 			return zeroes;
 		}
-		pixel(pos: vec2): Pixel {
-			return new Pixel(this, pos, this.get(pos));
+		pixel(pos: vec2): pixel {
+			return new pixel(this, pos, this.get(pos));
 		}
 		process() {
 			for (let y = 0; y < mapSpan; y++) {
@@ -150,24 +148,23 @@ namespace objects {
 		}
 	}
 
-	export class TiledObj extends lod.Obj {
-		pixel: Pixel | undefined
-		constructor(x, y: Numbers.Tally) {
-			super(x, y);
+	export class objected extends lod.obj {
+		pixel?: pixel
+		tile?: tiles.tile
+		constructor(hints, counts: numbers.tally) {
+			super(hints, counts);
 		}
 		update(): void {
-			if (this.shape) {
-				const tile = tiles.get(this.wpos);
-				if (tile)
-					(<Sprite>this.shape).z = tile.z;
-			}
+			this.tile = tiles.get(this.wpos);
+			if (this.shape)
+				(<sprite>this.shape).z = this.tile!.z;
 			super.update();
 		}
 	}
-	export class Wall extends TiledObj {
+	export class wall extends objected {
 		cell: vec2
 		constructor() {
-			super(undefined, Numbers.Walls);
+			super(undefined, numbers.walls);
 		}
 		create() {
 			this.size = [24, 40];
@@ -186,7 +183,7 @@ namespace objects {
 			else if (this.pixel?.up().same(this.pixel)) {
 				this.cell = [3, 0];
 			}
-			let shape = new Sprite({
+			let shape = new sprite({
 				binded: this,
 				tuple: sprites.dwallsgreeny,
 				cell: this.cell,
@@ -201,14 +198,14 @@ namespace objects {
 		//}
 	}
 
-	export class Door extends TiledObj {
+	export class door extends objected {
 		cell: vec2
 		constructor() {
-			super(undefined, Numbers.Walls);
+			super(undefined, numbers.walls);
 		}
 		create() {
 			this.size = [24, 40];
-			let shape = new Sprite({
+			let shape = new sprite({
 				binded: this,
 				tuple: sprites.ddoorwood,
 				cell: this.cell,
@@ -223,13 +220,13 @@ namespace objects {
 		//}
 	}
 
-	export class Shrubs extends TiledObj {
+	export class Shrubs extends objected {
 		constructor() {
-			super(undefined, Numbers.Trees);
+			super(undefined, numbers.trees);
 		}
 		create() {
 			this.size = [24, 15];
-			let shape = new Sprite({
+			let shape = new sprite({
 				binded: this,
 				tuple: sprites.shrubs,
 				order: .5

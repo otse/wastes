@@ -3,7 +3,7 @@ import pts from "./pts";
 
 export namespace sprites {
 
-	export type tuple = [size: vec2, sprite: vec2, padding: number, path: string]
+	export type tuple = [totalSize: vec2, singleSize: vec2, padding: number, path: string]
 
 	export function start() {
 
@@ -14,9 +14,9 @@ export namespace sprites {
 	export const shrubs: tuple = [[24, 15], [24, 15], 0, 'tex/shrubs']
 	export const dtile: tuple = [[24, 12], [24, 12], 0, 'tex/dtile']
 	export const dtile4: tuple = [[24, 17], [24, 17], 0, 'tex/dtileup4']
-	export const dwall: tuple = [[96, 40], [24, 40], 1, 'tex/dwalls']
-	export const dwallsgreeny: tuple = [[96, 40], [24, 40], 1, 'tex/dwallsgreeny']
-	export const ddoorwood: tuple = [[96, 40], [24, 40], 1, 'tex/ddoor']
+	export const dwall: tuple = [[96, 40], [24, 40], 0, 'tex/dwalls']
+	export const dwallsgreeny: tuple = [[96, 40], [24, 40], 0, 'tex/dwallsgreeny']
+	export const ddoorwood: tuple = [[96, 40], [24, 40], 0, 'tex/ddoor']
 
 	export function get_uv_transform(cell: vec2, tuple: tuple) {
 		let divide = pts.divides(tuple[1], tuple[0]);

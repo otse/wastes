@@ -1,5 +1,5 @@
 import lod from "./lod";
-import Sprite from "./sprite";
+import sprite from "./sprite";
 import wastes from "./wastes";
 import pts from "./pts";
 import hooks from "./hooks";
@@ -15,9 +15,9 @@ namespace testing_chamber {
 		console.log('placing squares on game area that should take up 1:1 pixels on screen...');
 		console.log('...regardless of your os or browsers dpi setting');
 
-		wastes.view.zoom = 1;
-		wastes.view.wpos = [0, 0];
-		wastes.view.rpos = lod.unproject([0, 0]);
+		wastes.gview.zoom = 1;
+		wastes.gview.wpos = [0, 0];
+		wastes.gview.rpos = lod.unproject([0, 0]);
 
 		hooks.register('sectorShow', (x) => {
 			console.log('(testing chamber) show sector');
@@ -27,13 +27,13 @@ namespace testing_chamber {
 		hooks.register('viewClick', (view) => {
 			console.log(' asteorid! ')
 			let ping = new Asteroid;
-			ping.wpos = pts.add(wastes.view.mwpos, [-1, -1]);
+			ping.wpos = pts.add(wastes.gview.mwpos, [-1, -1]);
 			lod.add(ping);
 			return false;
 		});
 
 		lod.SectorSpan = 4;
-		lod.grid = new lod.Grid(1, 1);
+		lod.ggrid = new lod.grid(1, 1);
 		lod.project = function(unit: vec2) { return pts.mult(unit, 100); }
 		lod.unproject = function(pixel: vec2) { return pts.divide(pixel, 100); }
 
@@ -51,7 +51,7 @@ namespace testing_chamber {
 	export function tick() {
 	}
 
-	export class Asteroid extends lod.Obj {
+	export class Asteroid extends lod.obj {
 		static slowness = 12;
 		rate: number
 		float: vec2
@@ -66,7 +66,7 @@ namespace testing_chamber {
 		}
 		create() {
 			this.size = [200, 200];
-			let shape = new Sprite({
+			let shape = new sprite({
 				binded: this,
 				tuple: sprites.asteroid
 			});
@@ -80,7 +80,7 @@ namespace testing_chamber {
 		}
 	}
 
-	export class Square extends lod.Obj {
+	export class Square extends lod.obj {
 		static make() {
 			return new Square;
 		}
@@ -91,14 +91,14 @@ namespace testing_chamber {
 		create() {
 			console.log('create');
 			this.size = [100, 100];
-			let shape = new Sprite({
+			let shape = new sprite({
 				binded: this,
 				tuple: sprites.test100
 			});
 		}
 		tick() {
-			let shape = this.shape as Sprite;
-			if (this.mousedSquare(wastes.view.mrpos))
+			let shape = this.shape as sprite;
+			if (this.mousedSquare(wastes.gview.mrpos))
 				shape.mesh.material.color.set('green');
 			else
 				shape.material.color.set('white');
