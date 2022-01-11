@@ -553,7 +553,9 @@ void main() {
                 //console.log('sector');
                 hooks.call('sectorCreate', this);
             }
-            objs_() { return this.objs; }
+            objsro() {
+                return this.objs;
+            }
             add(obj) {
                 let i = this.objs.indexOf(obj);
                 if (i == -1) {
@@ -562,6 +564,14 @@ void main() {
                     if (this.isActive())
                         obj.show();
                 }
+            }
+            allat(wpos) {
+                let stack = [];
+                const objs = this.objs;
+                for (let obj of objs)
+                    if (pts.equals(wpos, obj.wpos))
+                        stack.push(obj);
+                return stack;
             }
             remove(obj) {
                 let i = this.objs.indexOf(obj);
@@ -644,7 +654,7 @@ void main() {
                 while (i--) {
                     let sector;
                     sector = this.shown[i];
-                    allObjs = allObjs.concat(sector.objs_());
+                    allObjs = allObjs.concat(sector.objsro());
                     sector.tick();
                     if (sector.dist() > this.outside) {
                         sector.hide();
@@ -762,6 +772,7 @@ void main() {
         sprites.dtile = [[24, 12], [24, 12], 0, 'tex/dtile'];
         sprites.dtile4 = [[24, 17], [24, 17], 0, 'tex/dtileup4'];
         sprites.dwall = [[96, 40], [24, 40], 0, 'tex/dwalls'];
+        sprites.ddeck = [[24, 17], [24, 17], 0, 'tex/ddeck'];
         sprites.dwallsgreeny = [[96, 40], [24, 40], 0, 'tex/dwallsgreeny'];
         sprites.ddoorwood = [[96, 40], [24, 40], 0, 'tex/ddoor'];
         function get_uv_transform(cell, tuple) {
@@ -1112,41 +1123,45 @@ void main() {
     (function (objects) {
         const mapSpan = 100;
         const color_wooden_door = [210, 210, 210];
-        const color_wooden_wall = [255, 255, 255];
+        const color_slimy_wall = [255, 255, 255];
+        const color_deck = [235, 235, 235];
+        const color_slimy_wall_and_deck = [245, 245, 245];
         function register() {
             console.log(' objects register ');
             wastes.heightmap = new colormap('heightmap');
             wastes.objectmap = new colormap('objectmap');
             wastes.treemap = new colormap('treemap');
             wastes.colormap = new colormap('colormap');
-            const treeTreshold = 50;
+            function factory(type, pixel, pos) {
+                let obj = new type;
+                obj.pixel = pixel;
+                obj.wpos = pos;
+                lod$1.add(obj);
+                return obj;
+            }
             hooks.register('sectorCreate', (sector) => {
                 pts.func(sector.small, (pos) => {
-                    let pixel = wastes.treemap.pixel(pos);
-                    if (pixel.array[0] > treeTreshold) ;
+                    wastes.treemap.pixel(pos);
+                    //if (pixel.array[0] > treeTreshold)
+                    //	objectedfactory(objects.shrubs, pixel, pos);
                 });
                 return false;
             });
             hooks.register('sectorCreate', (sector) => {
                 pts.func(sector.small, (pos) => {
                     let pixel = wastes.objectmap.pixel(pos);
-                    if (pixel.is_color(color_wooden_wall)) {
-                        let wall = new objects.wall;
-                        wall.pixel = pixel;
-                        wall.wpos = pos;
-                        lod$1.add(wall);
+                    if (pixel.is_color(color_slimy_wall)) {
+                        factory(objects.wall, pixel, pos);
                     }
-                });
-                return false;
-            });
-            hooks.register('sectorCreate', (sector) => {
-                pts.func(sector.small, (pos) => {
-                    let pixel = wastes.objectmap.pixel(pos);
-                    if (pixel.is_color(color_wooden_door)) {
-                        let door = new objects.door;
-                        door.pixel = pixel;
-                        door.wpos = pos;
-                        lod$1.add(door);
+                    else if (pixel.is_color(color_deck)) {
+                        factory(objects.deck, pixel, pos);
+                    }
+                    else if (pixel.is_color(color_slimy_wall_and_deck)) {
+                        factory(objects.deck, pixel, pos);
+                        factory(objects.wall, pixel, pos);
+                    }
+                    else if (pixel.is_color(color_wooden_door)) {
+                        factory(objects.door, pixel, pos);
                     }
                 });
                 return false;
@@ -1229,21 +1244,50 @@ void main() {
         class objected extends lod$1.obj {
             constructor(hints, counts) {
                 super(hints, counts);
+                this.z = 0;
+                this.height = 0;
+            }
+            tiled() {
+                this.tile = tiles$1.get(this.wpos);
             }
             update() {
-                this.tile = tiles$1.get(this.wpos);
-                if (this.shape)
-                    this.shape.z = this.tile.z;
+                this.tiled();
                 super.update();
+            }
+            stack() {
+                if (this.tile.last)
+                    this.z = this.tile.last.z + this.tile.last.height;
+                else
+                    this.z = this.tile.z;
+                this.shape.z = this.z;
+                this.tile.last = this;
             }
         }
         objects.objected = objected;
+        class deck extends objected {
+            constructor() {
+                super(undefined, numbers.walls);
+                this.height = 4;
+            }
+            create() {
+                this.tiled();
+                this.size = [24, 17];
+                new sprite({
+                    binded: this,
+                    tuple: sprites$1.ddeck,
+                    order: .4,
+                });
+                this.stack();
+            }
+        }
+        objects.deck = deck;
         class wall extends objected {
             constructor() {
                 super(undefined, numbers.walls);
             }
             create() {
                 var _a, _b, _c, _d, _e, _f, _g, _h;
+                this.tiled();
                 this.size = [24, 40];
                 if ((((_a = this.pixel) === null || _a === void 0 ? void 0 : _a.left().same(this.pixel)) &&
                     ((_b = this.pixel) === null || _b === void 0 ? void 0 : _b.up().same(this.pixel))) ||
@@ -1265,6 +1309,7 @@ void main() {
                     cell: this.cell,
                     order: .5,
                 });
+                this.stack();
             }
             adapt() {
                 // change sprite to surrounding walls
@@ -1276,6 +1321,7 @@ void main() {
                 super(undefined, numbers.walls);
             }
             create() {
+                this.tiled();
                 this.size = [24, 40];
                 new sprite({
                     binded: this,
@@ -1283,13 +1329,14 @@ void main() {
                     cell: this.cell,
                     order: .5,
                 });
+                this.stack();
             }
             adapt() {
                 // change sprite to surrounding walls
             }
         }
         objects.door = door;
-        class Shrubs extends objected {
+        class shrubs extends objected {
             constructor() {
                 super(undefined, numbers.trees);
             }
@@ -1302,7 +1349,7 @@ void main() {
                 });
             }
         }
-        objects.Shrubs = Shrubs;
+        objects.shrubs = shrubs;
     })(objects || (objects = {}));
     var objects$1 = objects;
 
@@ -1343,30 +1390,35 @@ void main() {
         class tile extends lod$1.obj {
             constructor(wpos) {
                 super(undefined, numbers.tiles);
+                this.z = 0;
+                this.minz = 0;
                 this.objs = [];
                 this.tuple = sprites$1.dtile;
                 this.wpos = wpos;
                 this.size = [24, 12];
-                this.z = 0;
                 this.color = objects$1.pixel.water_color();
                 let pixel = wastes.colormap.pixel(this.wpos);
                 if (!pixel.is_black()) {
-                    this.z = 4;
+                    this.z = this.minz = 4;
                     this.tuple = sprites$1.dtile4;
                     this.size = [24, 17];
                     this.color = wastes.colormap.pixel(this.wpos).array;
                 }
             }
-            add(obj) {
+            get_stack() {
+                var _a;
+                (_a = this.sector) === null || _a === void 0 ? void 0 : _a.objsro();
+            }
+            /*stack(obj: lod.obj) {
                 let i = this.objs.indexOf(obj);
                 if (i == -1)
                     this.objs.push(obj);
             }
-            remove(obj) {
+            unstack(obj: lod.obj) {
                 let i = this.objs.indexOf(obj);
                 if (i > -1)
                     return this.objs.splice(i, 1).length;
-            }
+            }*/
             create() {
                 new sprite({
                     binded: this,

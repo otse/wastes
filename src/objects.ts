@@ -17,7 +17,9 @@ namespace objects {
 	const mapSpan = 100;
 
 	const color_wooden_door: vec3 = [210, 210, 210];
-	const color_wooden_wall: vec3 = [255, 255, 255];
+	const color_slimy_wall: vec3 = [255, 255, 255];
+	const color_deck: vec3 = [235, 235, 235];
+	const color_slimy_wall_and_deck: vec3 = [245, 245, 245];
 
 	export function register() {
 
@@ -30,15 +32,19 @@ namespace objects {
 
 		const treeTreshold = 50;
 
+		function factory<type extends objected>(type: { new(): type }, pixel, pos) {
+			let obj = new type;
+			obj.pixel = pixel;
+			obj.wpos = pos;
+			lod.add(obj);
+			return obj;
+		}
+
 		hooks.register('sectorCreate', (sector: lod.sector) => {
 			pts.func(sector.small, (pos) => {
 				let pixel = wastes.treemap.pixel(pos);
-				if (pixel.array[0] > treeTreshold) {
-					//let shrubs = new Shrubs();
-					//shrubs.pixel = pixel;
-					//shrubs.wpos = pos;
-					//lod.add(shrubs);
-				}
+				//if (pixel.array[0] > treeTreshold)
+				//	objectedfactory(objects.shrubs, pixel, pos);
 			})
 			return false;
 		})
@@ -46,24 +52,18 @@ namespace objects {
 		hooks.register('sectorCreate', (sector: lod.sector) => {
 			pts.func(sector.small, (pos) => {
 				let pixel = wastes.objectmap.pixel(pos);
-				if (pixel.is_color(color_wooden_wall)) {
-					let wall = new objects.wall;
-					wall.pixel = pixel;
-					wall.wpos = pos;
-					lod.add(wall);
+				if (pixel.is_color(color_slimy_wall)) {
+					factory(objects.wall, pixel, pos);
 				}
-			})
-			return false;
-		})
-
-		hooks.register('sectorCreate', (sector: lod.sector) => {
-			pts.func(sector.small, (pos) => {
-				let pixel = wastes.objectmap.pixel(pos);
-				if (pixel.is_color(color_wooden_door)) {
-					let door = new objects.door;
-					door.pixel = pixel;
-					door.wpos = pos;
-					lod.add(door);
+				else if (pixel.is_color(color_deck)) {
+					factory(objects.deck, pixel, pos);
+				}
+				else if (pixel.is_color(color_slimy_wall_and_deck)) {
+					factory(objects.deck, pixel, pos);
+					factory(objects.wall, pixel, pos);
+				}
+				else if (pixel.is_color(color_wooden_door)) {
+					factory(objects.door, pixel, pos);
 				}
 			})
 			return false;
@@ -149,16 +149,43 @@ namespace objects {
 	}
 
 	export class objected extends lod.obj {
+		z = 0
+		height = 0
 		pixel?: pixel
-		tile?: tiles.tile
+		tile: tiles.tile
 		constructor(hints, counts: numbers.tally) {
 			super(hints, counts);
 		}
+		tiled() {
+			this.tile = tiles.get(this.wpos)!;
+		}
 		update(): void {
-			this.tile = tiles.get(this.wpos);
-			if (this.shape)
-				(<sprite>this.shape).z = this.tile!.z;
+			this.tiled();
 			super.update();
+		}
+		stack() {
+			if (this.tile.last)
+				this.z = this.tile.last.z + this.tile.last.height;
+			else
+				this.z = this.tile.z;
+			(this.shape as sprite).z = this.z; 
+			this.tile.last = this;
+		}
+	}
+	export class deck extends objected {
+		constructor() {
+			super(undefined, numbers.walls);
+			this.height = 4;
+		}
+		create() {
+			this.tiled();
+			this.size = [24, 17];
+			let shape = new sprite({
+				binded: this,
+				tuple: sprites.ddeck,
+				order: .4,
+			});
+			this.stack();
 		}
 	}
 	export class wall extends objected {
@@ -167,14 +194,14 @@ namespace objects {
 			super(undefined, numbers.walls);
 		}
 		create() {
+			this.tiled();
 			this.size = [24, 40];
 			if ((this.pixel?.left().same(this.pixel) &&
 				this.pixel?.up().same(this.pixel)) ||
 				this.pixel?.down().same(this.pixel) &&
 				this.pixel?.right().same(this.pixel) ||
 				this.pixel?.up().same(this.pixel) &&
-				this.pixel?.right().same(this.pixel))
-			{
+				this.pixel?.right().same(this.pixel)) {
 				this.cell = [1, 0];
 			}
 			else if (this.pixel?.right().same(this.pixel)) {
@@ -189,7 +216,7 @@ namespace objects {
 				cell: this.cell,
 				order: .5,
 			});
-
+			this.stack();
 		}
 		adapt() {
 			// change sprite to surrounding walls
@@ -204,6 +231,7 @@ namespace objects {
 			super(undefined, numbers.walls);
 		}
 		create() {
+			this.tiled();
 			this.size = [24, 40];
 			let shape = new sprite({
 				binded: this,
@@ -211,7 +239,7 @@ namespace objects {
 				cell: this.cell,
 				order: .5,
 			});
-
+			this.stack();
 		}
 		adapt() {
 			// change sprite to surrounding walls
@@ -220,7 +248,7 @@ namespace objects {
 		//}
 	}
 
-	export class Shrubs extends objected {
+	export class shrubs extends objected {
 		constructor() {
 			super(undefined, numbers.trees);
 		}

@@ -54,7 +54,9 @@ export namespace tiles {
 	}
 
 	export class tile extends lod.obj {
-		z: number
+		last?: objects.objected
+		z: number = 0
+		minz: number = 0
 		tuple: sprites.tuple
 		objs: lod.obj[] = []
 		color: vec4
@@ -63,26 +65,28 @@ export namespace tiles {
 			this.tuple = sprites.dtile;
 			this.wpos = wpos;
 			this.size = [24, 12];
-			this.z = 0;
 			this.color = objects.pixel.water_color();
 			let pixel = wastes.colormap.pixel(this.wpos);
 			if (!pixel.is_black()) {
-				this.z = 4;
+				this.z = this.minz = 4;
 				this.tuple = sprites.dtile4;
 				this.size = [24, 17];
 				this.color = wastes.colormap.pixel(this.wpos).array;
 			}
 		}
-		add(obj: lod.obj) {
+		get_stack() {
+			const objs = this.sector?.objsro();
+		}
+		/*stack(obj: lod.obj) {
 			let i = this.objs.indexOf(obj);
 			if (i == -1)
 				this.objs.push(obj);
 		}
-		remove(obj: lod.obj) {
+		unstack(obj: lod.obj) {
 			let i = this.objs.indexOf(obj);
 			if (i > -1)
 				return this.objs.splice(i, 1).length;
-		}
+		}*/
 		create() {
 			let shape = new sprite({
 				binded: this,

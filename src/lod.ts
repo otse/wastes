@@ -105,7 +105,6 @@ namespace lod {
 		group: Group;
 		readonly small: aabb2;
 		private readonly objs: obj[] = [];
-		objs_(): ReadonlyArray<obj> { return this.objs; }
 		constructor(
 			public readonly big: vec2,
 			readonly galaxy: galaxy
@@ -125,6 +124,9 @@ namespace lod {
 			hooks.call('sectorCreate', this);
 
 		}
+		objsro(): ReadonlyArray<obj> {
+			return this.objs;
+		}
 		add(obj: obj) {
 			let i = this.objs.indexOf(obj);
 			if (i == -1) {
@@ -133,6 +135,14 @@ namespace lod {
 				if (this.isActive())
 					obj.show();
 			}
+		}
+		allat(wpos: vec2) {
+			let stack: obj[] = [];
+			const objs = this.objs;
+			for (let obj of objs)
+				if (pts.equals(wpos, obj.wpos))
+					stack.push(obj);
+			return stack;
 		}
 		remove(obj: obj): boolean | undefined {
 			let i = this.objs.indexOf(obj);
@@ -219,7 +229,7 @@ namespace lod {
 				let sector: sector;
 				sector = this.shown[i];
 				if (!noConcat)
-					allObjs = allObjs.concat(sector.objs_());
+					allObjs = allObjs.concat(sector.objsro());
 				sector.tick();
 				if (sector.dist() > this.outside) {
 					sector.hide();
