@@ -16,6 +16,7 @@ export namespace sprites {
 	export const dtile4: tuple = [[24, 17], [24, 17], 0, 'tex/dtileup4']
 	export const dwall: tuple = [[96, 40], [24, 40], 1, 'tex/dwalls']
 	export const dwallswood: tuple = [[96, 40], [24, 40], 1, 'tex/dwallswood']
+	export const ddoorwood: tuple = [[96, 40], [24, 40], 1, 'tex/ddoor']
 
 	export function get_uv_transform(cell: vec2, tuple: tuple) {
 		let divide = pts.divides(tuple[1], tuple[0]);

@@ -763,6 +763,7 @@ void main() {
         sprites.dtile4 = [[24, 17], [24, 17], 0, 'tex/dtileup4'];
         sprites.dwall = [[96, 40], [24, 40], 1, 'tex/dwalls'];
         sprites.dwallswood = [[96, 40], [24, 40], 1, 'tex/dwallswood'];
+        sprites.ddoorwood = [[96, 40], [24, 40], 1, 'tex/ddoor'];
         function get_uv_transform(cell, tuple) {
             let divide = pts.divides(tuple[1], tuple[0]);
             let offset = pts.mults(divide, cell);
@@ -1111,6 +1112,8 @@ void main() {
     var objects;
     (function (objects) {
         const mapSpan = 100;
+        const color_wooden_door = [210, 210, 210];
+        const color_wooden_wall = [255, 255, 255];
         function register() {
             console.log(' objects register ');
             wastes.heightmap = new ColorMap('heightmap');
@@ -1118,24 +1121,33 @@ void main() {
             wastes.treemap = new ColorMap('treemap');
             wastes.colormap = new ColorMap('colormap');
             const treeTreshold = 50;
-            hooks.register('sectorCreate', (x) => {
-                let sector = x;
+            hooks.register('sectorCreate', (sector) => {
                 pts.func(sector.small, (pos) => {
                     let pixel = wastes.treemap.pixel(pos);
                     if (pixel.array[0] > treeTreshold) ;
                 });
                 return false;
             });
-            hooks.register('sectorCreate', (x) => {
-                let sector = x;
+            hooks.register('sectorCreate', (sector) => {
                 pts.func(sector.small, (pos) => {
                     let pixel = wastes.objectmap.pixel(pos);
-                    if (pixel.is_white() ||
-                        pixel.is_color_castle_wall()) {
-                        let wall = new Wall();
+                    if (pixel.is_color(color_wooden_wall)) {
+                        let wall = new Wall;
                         wall.pixel = pixel;
                         wall.wpos = pos;
                         lod$1.add(wall);
+                    }
+                });
+                return false;
+            });
+            hooks.register('sectorCreate', (sector) => {
+                pts.func(sector.small, (pos) => {
+                    let pixel = wastes.objectmap.pixel(pos);
+                    if (pixel.is_color(color_wooden_door)) {
+                        let door = new Door;
+                        door.pixel = pixel;
+                        door.wpos = pos;
+                        lod$1.add(door);
                     }
                 });
                 return false;
@@ -1166,19 +1178,16 @@ void main() {
                 return this.context.pixel(pts.add(this.pos, [0, -1]));
             }
             same(pixel) {
-                return this.equals(pixel.array);
+                return this.is_color(pixel.array);
             }
-            equals(vec) {
+            is_color(vec) {
                 return vec[0] == this.array[0] && vec[1] == this.array[1] && vec[2] == this.array[2];
             }
             is_black() {
-                return this.equals([0, 0, 0]);
+                return this.is_color([0, 0, 0]);
             }
             is_white() {
-                return this.equals([255, 255, 255]);
-            }
-            is_color_castle_wall() {
-                return this.equals([200, 200, 200]);
+                return this.is_color([255, 255, 255]);
             }
             static purple_water() {
                 return [30, 70, 127, 255];
@@ -1237,21 +1246,20 @@ void main() {
                 super(undefined, Numbers.Walls);
             }
             create() {
-                var _a, _b, _c, _d, _e, _f, _g, _h, _j;
+                var _a, _b, _c, _d, _e, _f, _g, _h;
                 this.size = [24, 40];
-                if ((_a = this.pixel) === null || _a === void 0 ? void 0 : _a.is_color_castle_wall()) ;
-                if ((((_b = this.pixel) === null || _b === void 0 ? void 0 : _b.left().same(this.pixel)) &&
-                    ((_c = this.pixel) === null || _c === void 0 ? void 0 : _c.up().same(this.pixel))) ||
-                    ((_d = this.pixel) === null || _d === void 0 ? void 0 : _d.down().same(this.pixel)) &&
-                        ((_e = this.pixel) === null || _e === void 0 ? void 0 : _e.right().same(this.pixel)) ||
-                    ((_f = this.pixel) === null || _f === void 0 ? void 0 : _f.up().same(this.pixel)) &&
-                        ((_g = this.pixel) === null || _g === void 0 ? void 0 : _g.right().same(this.pixel))) {
+                if ((((_a = this.pixel) === null || _a === void 0 ? void 0 : _a.left().same(this.pixel)) &&
+                    ((_b = this.pixel) === null || _b === void 0 ? void 0 : _b.up().same(this.pixel))) ||
+                    ((_c = this.pixel) === null || _c === void 0 ? void 0 : _c.down().same(this.pixel)) &&
+                        ((_d = this.pixel) === null || _d === void 0 ? void 0 : _d.right().same(this.pixel)) ||
+                    ((_e = this.pixel) === null || _e === void 0 ? void 0 : _e.up().same(this.pixel)) &&
+                        ((_f = this.pixel) === null || _f === void 0 ? void 0 : _f.right().same(this.pixel))) {
                     this.cell = [0, 0];
                 }
-                else if ((_h = this.pixel) === null || _h === void 0 ? void 0 : _h.right().same(this.pixel)) {
+                else if ((_g = this.pixel) === null || _g === void 0 ? void 0 : _g.right().same(this.pixel)) {
                     this.cell = [2, 0];
                 }
-                else if ((_j = this.pixel) === null || _j === void 0 ? void 0 : _j.up().same(this.pixel)) {
+                else if ((_h = this.pixel) === null || _h === void 0 ? void 0 : _h.up().same(this.pixel)) {
                     this.cell = [3, 0];
                 }
                 new Sprite({
@@ -1266,6 +1274,24 @@ void main() {
             }
         }
         objects.Wall = Wall;
+        class Door extends TiledObj {
+            constructor() {
+                super(undefined, Numbers.Walls);
+            }
+            create() {
+                this.size = [24, 40];
+                new Sprite({
+                    binded: this,
+                    tuple: sprites$1.ddoorwood,
+                    cell: this.cell,
+                    order: .5,
+                });
+            }
+            adapt() {
+                // change sprite to surrounding walls
+            }
+        }
+        objects.Door = Door;
         class Shrubs extends TiledObj {
             constructor() {
                 super(undefined, Numbers.Trees);

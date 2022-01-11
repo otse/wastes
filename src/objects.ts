@@ -16,6 +16,9 @@ namespace objects {
 
 	const mapSpan = 100;
 
+	const color_wooden_door: vec3 = [210, 210, 210];
+	const color_wooden_wall: vec3 = [255, 255, 255];
+
 	export function register() {
 
 		console.log(' objects register ');
@@ -27,8 +30,7 @@ namespace objects {
 
 		const treeTreshold = 50;
 
-		hooks.register('sectorCreate', (x) => {
-			let sector = x as lod.Sector
+		hooks.register('sectorCreate', (sector: lod.Sector) => {
 			pts.func(sector.small, (pos) => {
 				let pixel = wastes.treemap.pixel(pos);
 				if (pixel.array[0] > treeTreshold) {
@@ -41,17 +43,29 @@ namespace objects {
 			return false;
 		})
 
-		hooks.register('sectorCreate', (x) => {
-			let sector = x as lod.Sector
+		hooks.register('sectorCreate', (sector: lod.Sector) => {
 			pts.func(sector.small, (pos) => {
 				let pixel = wastes.objectmap.pixel(pos);
-				if (pixel.is_white() ||
-					pixel.is_color_castle_wall()
+				if (pixel.is_color(color_wooden_wall)
 				) {
-					let wall = new Wall();
+					let wall = new Wall;
 					wall.pixel = pixel;
 					wall.wpos = pos;
 					lod.add(wall);
+				}
+			})
+			return false;
+		})
+
+		hooks.register('sectorCreate', (sector: lod.Sector) => {
+			pts.func(sector.small, (pos) => {
+				let pixel = wastes.objectmap.pixel(pos);
+				if (pixel.is_color(color_wooden_door)
+				) {
+					let door = new Door;
+					door.pixel = pixel;
+					door.wpos = pos;
+					lod.add(door);
 				}
 			})
 			return false;
@@ -85,19 +99,16 @@ namespace objects {
 			return this.context.pixel(pts.add(this.pos, [0, -1]));
 		}
 		same(pixel: Pixel) {
-			return this.equals(<vec3><unknown>pixel.array);
+			return this.is_color(<vec3><unknown>pixel.array);
 		}
-		equals(vec: vec3) {
+		is_color(vec: vec3) {
 			return vec[0] == this.array[0] && vec[1] == this.array[1] && vec[2] == this.array[2];
 		}
 		is_black() {
-			return this.equals([0, 0, 0]);
+			return this.is_color([0, 0, 0]);
 		}
 		is_white() {
-			return this.equals([255, 255, 255]);
-		}
-		is_color_castle_wall() {
-			return this.equals([200, 200, 200]);
+			return this.is_color([255, 255, 255]);
 		}
 		static purple_water(): vec4 {
 			return [30, 70, 127, 255];
@@ -160,9 +171,6 @@ namespace objects {
 		}
 		create() {
 			this.size = [24, 40];
-			if (this.pixel?.is_color_castle_wall()) {
-				
-			}
 			if ((this.pixel?.left().same(this.pixel) &&
 				this.pixel?.up().same(this.pixel)) ||
 				this.pixel?.down().same(this.pixel) &&
@@ -181,6 +189,28 @@ namespace objects {
 			let shape = new Sprite({
 				binded: this,
 				tuple: sprites.dwallswood,
+				cell: this.cell,
+				order: .5,
+			});
+
+		}
+		adapt() {
+			// change sprite to surrounding walls
+		}
+		//tick() {
+		//}
+	}
+
+	export class Door extends TiledObj {
+		cell: vec2
+		constructor() {
+			super(undefined, Numbers.Walls);
+		}
+		create() {
+			this.size = [24, 40];
+			let shape = new Sprite({
+				binded: this,
+				tuple: sprites.ddoorwood,
 				cell: this.cell,
 				order: .5,
 			});
