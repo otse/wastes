@@ -154,6 +154,7 @@ namespace objects {
 		}
 	}
 	export class Wall extends TiledObj {
+		cell: vec2
 		constructor() {
 			super(undefined, Numbers.Walls);
 		}
@@ -162,19 +163,27 @@ namespace objects {
 			if (this.pixel?.is_color_castle_wall()) {
 				
 			}
-			if (this.pixel?.left().same(this.pixel) &&
-				this.pixel?.up().same(this.pixel))
+			if ((this.pixel?.left().same(this.pixel) &&
+				this.pixel?.up().same(this.pixel)) ||
+				this.pixel?.down().same(this.pixel) &&
+				this.pixel?.right().same(this.pixel) ||
+				this.pixel?.up().same(this.pixel) &&
+				this.pixel?.right().same(this.pixel))
 			{
-				
+				this.cell = [0, 0];
+			}
+			else if (this.pixel?.right().same(this.pixel)) {
+				this.cell = [2, 0];
+			}
+			else if (this.pixel?.up().same(this.pixel)) {
+				this.cell = [3, 0];
 			}
 			let shape = new Sprite({
 				binded: this,
-				tuple: sprites.dwall,
+				tuple: sprites.dwallswood,
+				cell: this.cell,
 				order: .5,
 			});
-			if (this.pixel?.right().same(this.pixel)) {
-				//shape.repeat = [-1, 1];
-			}
 
 		}
 		adapt() {

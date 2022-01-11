@@ -15,10 +15,12 @@ export namespace sprites {
 	export const dtile: tuple = [[24, 12], [24, 12], 0, 'tex/dtile']
 	export const dtile4: tuple = [[24, 17], [24, 17], 0, 'tex/dtileup4']
 	export const dwall: tuple = [[96, 40], [24, 40], 1, 'tex/dwalls']
+	export const dwallswood: tuple = [[96, 40], [24, 40], 1, 'tex/dwallswood']
 
 	export function get_uv_transform(cell: vec2, tuple: tuple) {
-		let offset = pts.mults(pts.divides(tuple[0], tuple[1]), cell);
-		let repeat = pts.divides(tuple[1], tuple[0]);
+		let divide = pts.divides(tuple[1], tuple[0]);
+		let offset = pts.mults(divide, cell);
+		let repeat = divide;
 		let center = [0, 1];
 		let mat = new Matrix3;
 		mat.setUvTransform(offset[0], offset[1], repeat[0], repeat[1], 0, center[0], center[1]);

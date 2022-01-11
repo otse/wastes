@@ -762,9 +762,11 @@ void main() {
         sprites.dtile = [[24, 12], [24, 12], 0, 'tex/dtile'];
         sprites.dtile4 = [[24, 17], [24, 17], 0, 'tex/dtileup4'];
         sprites.dwall = [[96, 40], [24, 40], 1, 'tex/dwalls'];
+        sprites.dwallswood = [[96, 40], [24, 40], 1, 'tex/dwallswood'];
         function get_uv_transform(cell, tuple) {
-            let offset = pts.mults(pts.divides(tuple[0], tuple[1]), cell);
-            let repeat = pts.divides(tuple[1], tuple[0]);
+            let divide = pts.divides(tuple[1], tuple[0]);
+            let offset = pts.mults(divide, cell);
+            let repeat = divide;
             let center = [0, 1];
             let mat = new THREE.Matrix3;
             mat.setUvTransform(offset[0], offset[1], repeat[0], repeat[1], 0, center[0], center[1]);
@@ -1235,17 +1237,29 @@ void main() {
                 super(undefined, Numbers.Walls);
             }
             create() {
-                var _a, _b, _c, _d;
+                var _a, _b, _c, _d, _e, _f, _g, _h, _j;
                 this.size = [24, 40];
                 if ((_a = this.pixel) === null || _a === void 0 ? void 0 : _a.is_color_castle_wall()) ;
-                if (((_b = this.pixel) === null || _b === void 0 ? void 0 : _b.left().same(this.pixel)) &&
-                    ((_c = this.pixel) === null || _c === void 0 ? void 0 : _c.up().same(this.pixel))) ;
+                if ((((_b = this.pixel) === null || _b === void 0 ? void 0 : _b.left().same(this.pixel)) &&
+                    ((_c = this.pixel) === null || _c === void 0 ? void 0 : _c.up().same(this.pixel))) ||
+                    ((_d = this.pixel) === null || _d === void 0 ? void 0 : _d.down().same(this.pixel)) &&
+                        ((_e = this.pixel) === null || _e === void 0 ? void 0 : _e.right().same(this.pixel)) ||
+                    ((_f = this.pixel) === null || _f === void 0 ? void 0 : _f.up().same(this.pixel)) &&
+                        ((_g = this.pixel) === null || _g === void 0 ? void 0 : _g.right().same(this.pixel))) {
+                    this.cell = [0, 0];
+                }
+                else if ((_h = this.pixel) === null || _h === void 0 ? void 0 : _h.right().same(this.pixel)) {
+                    this.cell = [2, 0];
+                }
+                else if ((_j = this.pixel) === null || _j === void 0 ? void 0 : _j.up().same(this.pixel)) {
+                    this.cell = [3, 0];
+                }
                 new Sprite({
                     binded: this,
-                    tuple: sprites$1.dwall,
+                    tuple: sprites$1.dwallswood,
+                    cell: this.cell,
                     order: .5,
                 });
-                if ((_d = this.pixel) === null || _d === void 0 ? void 0 : _d.right().same(this.pixel)) ;
             }
             adapt() {
                 // change sprite to surrounding walls
