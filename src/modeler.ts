@@ -27,10 +27,10 @@ namespace modeler {
 		const loader = new ColladaLoader(loadingManager);
 		loader.load('./modeler/collada/diner.dae', function (collada) {
 
-			wastes.view.zoom = 1.0;
+			wastes.view.zoomIndex = 0;
 
 			let sun = new DirectionalLight(0xffffff, 0.5);
-			sun.position.set(-1, 1, .5);
+			sun.position.set(-.5, .5, 1);
 			ren.scene.add(sun);
 			ren.scene.add(sun.target);
 

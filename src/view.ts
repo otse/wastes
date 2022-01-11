@@ -13,7 +13,9 @@ import hooks from "./hooks";
 
 
 export class View {
-	zoom = 0.5
+	zoom = 0.33
+	zoomIndex = 2
+	zooms = [1, 0.5, 0.33, 0.2]
 	wpos: vec2 = [39, 39]
 	rpos: vec2 = [0, 0]
 	mpos: vec2 = [0, 0]
@@ -106,14 +108,12 @@ export class View {
 			this.rpos = pts.add(this.rpos, [-pan, 0]);
 		if (app.key('d'))
 			this.rpos = pts.add(this.rpos, [pan, 0]);
-		if (app.key('r') == 1)
-			this.zoom -= zoomFactor;
-		if (app.key('f') == 1)
-			this.zoom += zoomFactor;
+		if (app.key('f') == 1 && this.zoomIndex > 0)
+			this.zoomIndex -= 1;
+		if (app.key('r') == 1 && this.zoomIndex < this.zooms.length - 1)
+			this.zoomIndex += 1;
 		//this.rpos = lod.galaxy.project(this.wpos);
-		const min = .1;
-		const max = 1;
-		this.zoom = this.zoom > max ? max : this.zoom < min ? min : this.zoom;
+		this.zoom = this.zooms[this.zoomIndex];
 	}
 	show = true
 	stats() {
@@ -140,7 +140,7 @@ export class View {
 
 		crunch += `view wpos: ${pts.to_string(pts.floor(this.wpos))}<br />`;
 		crunch += `view bigpos: ${pts.to_string(lod.galaxy.big(this.wpos))}<br />`;
-		crunch += `view zoom: ${this.zoom.toPrecision(2)}<br />`;
+		crunch += `view zoom: ${this.zoom}<br />`;
 		crunch += '<br />';
 
 		//crunch += `world wpos: ${pts.to_string(this.pos)}<br /><br />`;

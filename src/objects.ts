@@ -110,8 +110,8 @@ namespace objects {
 		is_white() {
 			return this.is_color([255, 255, 255]);
 		}
-		static purple_water(): vec4 {
-			return [30, 70, 127, 255];
+		static water_color(): vec4 {
+			return [66, 66, 110, 255];
 		}
 	}
 
@@ -178,7 +178,7 @@ namespace objects {
 				this.pixel?.up().same(this.pixel) &&
 				this.pixel?.right().same(this.pixel))
 			{
-				this.cell = [0, 0];
+				this.cell = [1, 0];
 			}
 			else if (this.pixel?.right().same(this.pixel)) {
 				this.cell = [2, 0];
@@ -188,7 +188,7 @@ namespace objects {
 			}
 			let shape = new Sprite({
 				binded: this,
-				tuple: sprites.dwallswood,
+				tuple: sprites.dwallsgreeny,
 				cell: this.cell,
 				order: .5,
 			});

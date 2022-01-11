@@ -762,7 +762,7 @@ void main() {
         sprites.dtile = [[24, 12], [24, 12], 0, 'tex/dtile'];
         sprites.dtile4 = [[24, 17], [24, 17], 0, 'tex/dtileup4'];
         sprites.dwall = [[96, 40], [24, 40], 1, 'tex/dwalls'];
-        sprites.dwallswood = [[96, 40], [24, 40], 1, 'tex/dwallswood'];
+        sprites.dwallsgreeny = [[96, 40], [24, 40], 1, 'tex/dwallsgreeny'];
         sprites.ddoorwood = [[96, 40], [24, 40], 1, 'tex/ddoor'];
         function get_uv_transform(cell, tuple) {
             let divide = pts.divides(tuple[1], tuple[0]);
@@ -977,7 +977,9 @@ void main() {
     // the view manages what it sees
     class View {
         constructor() {
-            this.zoom = 0.5;
+            this.zoom = 0.33;
+            this.zoomIndex = 2;
+            this.zooms = [1, 0.5, 0.33, 0.2];
             this.wpos = [39, 39];
             this.rpos = [0, 0];
             this.mpos = [0, 0];
@@ -1053,7 +1055,6 @@ void main() {
         }
         move() {
             let pan = 5;
-            const zoomFactor = 1 / 10;
             if (app$1.key('x'))
                 pan *= 2;
             if (app$1.key('w'))
@@ -1064,14 +1065,12 @@ void main() {
                 this.rpos = pts.add(this.rpos, [-pan, 0]);
             if (app$1.key('d'))
                 this.rpos = pts.add(this.rpos, [pan, 0]);
-            if (app$1.key('r') == 1)
-                this.zoom -= zoomFactor;
-            if (app$1.key('f') == 1)
-                this.zoom += zoomFactor;
+            if (app$1.key('f') == 1 && this.zoomIndex > 0)
+                this.zoomIndex -= 1;
+            if (app$1.key('r') == 1 && this.zoomIndex < this.zooms.length - 1)
+                this.zoomIndex += 1;
             //this.rpos = lod.galaxy.project(this.wpos);
-            const min = .1;
-            const max = 1;
-            this.zoom = this.zoom > max ? max : this.zoom < min ? min : this.zoom;
+            this.zoom = this.zooms[this.zoomIndex];
         }
         stats() {
             if (app$1.key('h') == 1)
@@ -1093,7 +1092,7 @@ void main() {
             crunch += '<br />';
             crunch += `view wpos: ${pts.to_string(pts.floor(this.wpos))}<br />`;
             crunch += `view bigpos: ${pts.to_string(lod$1.galaxy.big(this.wpos))}<br />`;
-            crunch += `view zoom: ${this.zoom.toPrecision(2)}<br />`;
+            crunch += `view zoom: ${this.zoom}<br />`;
             crunch += '<br />';
             //crunch += `world wpos: ${pts.to_string(this.pos)}<br /><br />`;
             crunch += `sectors: ${Numbers.Sectors[0]} / ${Numbers.Sectors[1]}<br />`;
@@ -1189,8 +1188,8 @@ void main() {
             is_white() {
                 return this.is_color([255, 255, 255]);
             }
-            static purple_water() {
-                return [30, 70, 127, 255];
+            static water_color() {
+                return [66, 66, 110, 255];
             }
         }
         objects.Pixel = Pixel;
@@ -1254,7 +1253,7 @@ void main() {
                         ((_d = this.pixel) === null || _d === void 0 ? void 0 : _d.right().same(this.pixel)) ||
                     ((_e = this.pixel) === null || _e === void 0 ? void 0 : _e.up().same(this.pixel)) &&
                         ((_f = this.pixel) === null || _f === void 0 ? void 0 : _f.right().same(this.pixel))) {
-                    this.cell = [0, 0];
+                    this.cell = [1, 0];
                 }
                 else if ((_g = this.pixel) === null || _g === void 0 ? void 0 : _g.right().same(this.pixel)) {
                     this.cell = [2, 0];
@@ -1264,7 +1263,7 @@ void main() {
                 }
                 new Sprite({
                     binded: this,
-                    tuple: sprites$1.dwallswood,
+                    tuple: sprites$1.dwallsgreeny,
                     cell: this.cell,
                     order: .5,
                 });
@@ -1350,7 +1349,7 @@ void main() {
                 this.wpos = wpos;
                 this.size = [24, 12];
                 this.z = 0;
-                this.color = objects$1.Pixel.purple_water();
+                this.color = objects$1.Pixel.water_color();
                 let pixel = wastes.colormap.pixel(this.wpos);
                 if (!pixel.is_black()) {
                     this.z = 4;
@@ -5924,9 +5923,9 @@ void main() {
             });
             const loader = new ColladaLoader(loadingManager);
             loader.load('./modeler/collada/diner.dae', function (collada) {
-                wastes.view.zoom = 1.0;
+                wastes.view.zoomIndex = 0;
                 let sun = new THREE.DirectionalLight(0xffffff, 0.5);
-                sun.position.set(-1, 1, .5);
+                sun.position.set(-.5, .5, 1);
                 ren$1.scene.add(sun);
                 ren$1.scene.add(sun.target);
                 elf = collada.scene;

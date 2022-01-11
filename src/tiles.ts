@@ -63,7 +63,7 @@ export namespace tiles {
 			this.wpos = wpos;
 			this.size = [24, 12];
 			this.z = 0;
-			this.color = objects.Pixel.purple_water();
+			this.color = objects.Pixel.water_color();
 			let pixel = wastes.colormap.pixel(this.wpos);
 			if (!pixel.is_black()) {
 				this.z = 4;
