@@ -5,6 +5,7 @@ import pts from "./pts";
 import wastes from "./wastes";
 import ren from "./renderer";
 import hooks from "./hooks";
+import tiles from "./tiles";
 
 export namespace numbers {
 	export type tally = [active: number, total: number]
@@ -42,6 +43,8 @@ class toggle {
 }
 
 namespace lod {
+
+	const grid_crawl_makes_sectors = true;
 
 	export var ggalaxy: galaxy;
 	export var ggrid: grid;
@@ -138,8 +141,7 @@ namespace lod {
 		}
 		allat(wpos: vec2) {
 			let stack: obj[] = [];
-			const objs = this.objs;
-			for (let obj of objs)
+			for (let obj of this.objs)
 				if (pts.equals(wpos, obj.wpos))
 					stack.push(obj);
 			return stack;
@@ -169,8 +171,6 @@ namespace lod {
 			if (this.on())
 				return;
 			numbers.sectors[0]++;
-			//console.log('?');
-
 			for (let obj of this.objs)
 				obj.show();
 			ren.scene.add(this.group);
@@ -211,7 +211,7 @@ namespace lod {
 			for (let y = -this.spread; y < this.spread + 1; y++) {
 				for (let x = -this.spread; x < this.spread + 1; x++) {
 					let pos = pts.add(this.big, [x, y]);
-					let sector = ggalaxy.lookup(pos);
+					let sector = grid_crawl_makes_sectors ? ggalaxy.at(pos) : ggalaxy.lookup(pos);
 					if (!sector)
 						continue;
 					if (!sector.isActive()) {
@@ -253,6 +253,8 @@ namespace lod {
 		shape: shape | null
 		sector: sector | null
 		rz = 0
+		z = 0
+		height = 0
 		constructor(
 			hints: ObjHints | undefined,
 			public readonly counts: numbers.tally = numbers.objs) {

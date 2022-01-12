@@ -27,21 +27,26 @@ export namespace tiles {
 
 		console.log(' tiles register ');
 
+		hooks.register('sectorCreate', (sector: lod.sector) => {
+			pts.func(sector.small, (pos) => {
+				let x = pos[0];
+				let y = pos[1];
+				if (arrays[y] == undefined)
+					arrays[y] = [];
+				let tile = new tiles.tile([x, y]);
+				arrays[y][x] = tile;
+				lod.add(tile);
+			});
+			return false;
+		});
+
 	}
 
 	export function start() {
 
 		console.log(' tiles start ');
 
-		pts.func(new aabb2([0, 0], [mapSize - 1, mapSize - 1]), (pos: vec2) => {
-			let x = pos[0];
-			let y = pos[1];
-			if (arrays[y] == undefined)
-				arrays[y] = [];
-			let tile = new tiles.tile([x, y]);
-			arrays[y][x] = tile;
-			lod.add(tile);
-		})
+		lod.ggalaxy.at(lod.ggalaxy.big(wastes.gview.wpos));
 	}
 
 	export function tick() {
@@ -56,7 +61,6 @@ export namespace tiles {
 	export class tile extends lod.obj {
 		last?: objects.objected
 		z: number = 0
-		minz: number = 0
 		tuple: sprites.tuple
 		objs: lod.obj[] = []
 		color: vec4
@@ -68,7 +72,7 @@ export namespace tiles {
 			this.color = objects.pixel.water_color();
 			let pixel = wastes.colormap.pixel(this.wpos);
 			if (!pixel.is_black()) {
-				this.z = this.minz = 4;
+				this.z = this.height = 4;
 				this.tuple = sprites.dtile4;
 				this.size = [24, 17];
 				this.color = wastes.colormap.pixel(this.wpos).array;

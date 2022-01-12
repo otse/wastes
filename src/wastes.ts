@@ -70,8 +70,8 @@ export namespace wastes {
 
 	function registers() {
 		lod.register();
-		tiles.register();
 		objects.register();
+		tiles.register();
 	}
 
 	function starts() {

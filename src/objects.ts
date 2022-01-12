@@ -129,7 +129,7 @@ namespace objects {
 				return this.data[pos[1]][pos[0]];
 			return zeroes;
 		}
-		pixel(pos: vec2): pixel {
+		pixel(pos: vec2) {
 			return new pixel(this, pos, this.get(pos));
 		}
 		process() {
@@ -146,8 +146,6 @@ namespace objects {
 	}
 
 	export class objected extends lod.obj {
-		z = 0
-		height = 0
 		pixel?: pixel
 		tile: tiles.tile
 		constructor(hints, counts: numbers.tally) {
@@ -156,15 +154,19 @@ namespace objects {
 		tiled() {
 			this.tile = tiles.get(this.wpos)!;
 		}
-		update(): void {
-			this.tiled();
-			super.update();
-		}
+		//update(): void {
+		//	this.tiled();
+		//	super.update();
+		//}
 		stack() {
-			if (this.tile.last)
-				this.z = this.tile.last.z + this.tile.last.height;
-			else
-				this.z = this.tile.z;
+			this.z = 0;
+			let stack = this.sector!.allat(this.wpos);
+			console.log(stack);
+			for (let obj of stack) {
+				if (obj == this)
+					break;
+				this.z += obj.height;
+			}
 			(this.shape as sprite).z = this.z;
 			this.tile.last = this;
 		}
@@ -189,6 +191,7 @@ namespace objects {
 		cell: vec2
 		constructor() {
 			super(undefined, numbers.walls);
+			this.height = 40;
 		}
 		create() {
 			this.tiled();

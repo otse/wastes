@@ -567,8 +567,7 @@ void main() {
             }
             allat(wpos) {
                 let stack = [];
-                const objs = this.objs;
-                for (let obj of objs)
+                for (let obj of this.objs)
                     if (pts.equals(wpos, obj.wpos))
                         stack.push(obj);
                 return stack;
@@ -598,7 +597,6 @@ void main() {
                 if (this.on())
                     return;
                 numbers.sectors[0]++;
-                //console.log('?');
                 for (let obj of this.objs)
                     obj.show();
                 ren$1.scene.add(this.group);
@@ -638,7 +636,7 @@ void main() {
                 for (let y = -this.spread; y < this.spread + 1; y++) {
                     for (let x = -this.spread; x < this.spread + 1; x++) {
                         let pos = pts.add(this.big, [x, y]);
-                        let sector = lod.ggalaxy.lookup(pos);
+                        let sector = lod.ggalaxy.at(pos) ;
                         if (!sector)
                             continue;
                         if (!sector.isActive()) {
@@ -674,6 +672,8 @@ void main() {
                 this.rpos = [0, 0];
                 this.size = [100, 100];
                 this.rz = 0;
+                this.z = 0;
+                this.height = 0;
                 this.counts[1]++;
             }
             finalize() {
@@ -991,7 +991,7 @@ void main() {
             this.zoom = 0.33;
             this.zoomIndex = 2;
             this.zooms = [1, 0.5, 0.33, 0.2];
-            this.wpos = [39, 39];
+            this.wpos = [50, 43];
             this.rpos = [0, 0];
             this.mpos = [0, 0];
             this.mwpos = [0, 0];
@@ -1242,21 +1242,23 @@ void main() {
         class objected extends lod$1.obj {
             constructor(hints, counts) {
                 super(hints, counts);
-                this.z = 0;
-                this.height = 0;
             }
             tiled() {
                 this.tile = tiles$1.get(this.wpos);
             }
-            update() {
-                this.tiled();
-                super.update();
-            }
+            //update(): void {
+            //	this.tiled();
+            //	super.update();
+            //}
             stack() {
-                if (this.tile.last)
-                    this.z = this.tile.last.z + this.tile.last.height;
-                else
-                    this.z = this.tile.z;
+                this.z = 0;
+                let stack = this.sector.allat(this.wpos);
+                console.log(stack);
+                for (let obj of stack) {
+                    if (obj == this)
+                        break;
+                    this.z += obj.height;
+                }
                 this.shape.z = this.z;
                 this.tile.last = this;
             }
@@ -1282,6 +1284,7 @@ void main() {
         class wall extends objected {
             constructor() {
                 super(undefined, numbers.walls);
+                this.height = 40;
             }
             create() {
                 var _a, _b, _c, _d, _e, _f, _g, _h;
@@ -1353,7 +1356,6 @@ void main() {
 
     var tiles;
     (function (tiles) {
-        const mapSize = 100;
         var arrays = [];
         function get(pos) {
             if (arrays[pos[1]])
@@ -1362,19 +1364,23 @@ void main() {
         tiles.get = get;
         function register() {
             console.log(' tiles register ');
+            hooks.register('sectorCreate', (sector) => {
+                pts.func(sector.small, (pos) => {
+                    let x = pos[0];
+                    let y = pos[1];
+                    if (arrays[y] == undefined)
+                        arrays[y] = [];
+                    let tile = new tiles.tile([x, y]);
+                    arrays[y][x] = tile;
+                    lod$1.add(tile);
+                });
+                return false;
+            });
         }
         tiles.register = register;
         function start() {
             console.log(' tiles start ');
-            pts.func(new aabb2([0, 0], [mapSize - 1, mapSize - 1]), (pos) => {
-                let x = pos[0];
-                let y = pos[1];
-                if (arrays[y] == undefined)
-                    arrays[y] = [];
-                let tile = new tiles.tile([x, y]);
-                arrays[y][x] = tile;
-                lod$1.add(tile);
-            });
+            lod$1.ggalaxy.at(lod$1.ggalaxy.big(wastes.gview.wpos));
         }
         tiles.start = start;
         function tick() {
@@ -1389,7 +1395,6 @@ void main() {
             constructor(wpos) {
                 super(undefined, numbers.tiles);
                 this.z = 0;
-                this.minz = 0;
                 this.objs = [];
                 this.tuple = sprites$1.dtile;
                 this.wpos = wpos;
@@ -1397,7 +1402,7 @@ void main() {
                 this.color = objects$1.pixel.water_color();
                 let pixel = wastes.colormap.pixel(this.wpos);
                 if (!pixel.is_black()) {
-                    this.z = this.minz = 4;
+                    this.z = this.height = 4;
                     this.tuple = sprites$1.dtile4;
                     this.size = [24, 17];
                     this.color = wastes.colormap.pixel(this.wpos).array;
@@ -6060,8 +6065,8 @@ void main() {
         wastes.critical = critical;
         function registers() {
             lod$1.register();
-            tiles$1.register();
             objects$1.register();
+            tiles$1.register();
         }
         function starts() {
             if (window.location.href.indexOf("#testingchamber") != -1) {
