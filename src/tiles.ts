@@ -4,7 +4,6 @@ import wastes from "./wastes";
 import lod, { numbers } from "./lod";
 import ren from "./renderer";
 import pts from "./pts";
-import objects from "./objects";
 import aabb2 from "./aabb2";
 import hooks from "./hooks";
 import sprite from "./sprite";
@@ -16,7 +15,7 @@ export namespace tiles {
 
 	var arrays: tiles.tile[][] = []
 
-	export var raisedmpos: vec2
+	export var mpos4: vec2
 
 	export function get(pos: vec2) {
 		if (arrays[pos[1]])
@@ -50,16 +49,23 @@ export namespace tiles {
 	}
 
 	export function tick() {
-		raisedmpos = lod.unproject(pts.add(wastes.gview.mrpos, [0, -4]));
-		raisedmpos = pts.floor(raisedmpos);
+		let mpos0 = lod.unproject(pts.add(wastes.gview.mrpos, [0, 0]));
+		mpos0 = pts.floor(mpos0);
+		mpos4 = lod.unproject(pts.add(wastes.gview.mrpos, [0, -4]));
+		mpos4 = pts.floor(mpos4);
 
-		const tile = get(raisedmpos);
-		if (tile && tile.z == 4)
-			tile?.hover();
+		const tile4 = get(mpos4);
+		if (tile4 && tile4.z == 4)
+			tile4?.hover();
+
+		const tile0 = get(mpos0);
+		if (tile0 && tile0.z == 0)
+			tile0?.hover();
 	}
 
+	const color_purple_water: vec4 = [66, 66, 110, 255];
+
 	export class tile extends lod.obj {
-		last?: objects.objected
 		z: number = 0
 		tuple: sprites.tuple
 		objs: lod.obj[] = []
@@ -69,7 +75,7 @@ export namespace tiles {
 			this.tuple = sprites.dtile;
 			this.wpos = wpos;
 			this.size = [24, 12];
-			this.color = objects.pixel.water_color();
+			this.color = color_purple_water;
 			let pixel = wastes.colormap.pixel(this.wpos);
 			if (!pixel.is_black()) {
 				this.z = this.height = 4;
@@ -105,7 +111,7 @@ export namespace tiles {
 			let sprite = this.shape as sprite;
 			if (!sprite?.mesh)
 				return;
-			//sprite.mesh.material.color.set('green');
+			// sprite.mesh.material.color.set('green');
 		}
 		tick() {
 		}

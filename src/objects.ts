@@ -21,6 +21,7 @@ namespace objects {
 	const color_slimy_wall: vec3 = [18, 73, 47];
 	const color_deck: vec3 = [114, 128, 124];
 	const color_slimy_wall_and_deck: vec3 = [20, 78, 51];
+	const color_acid_barrel: vec3 = [61, 118, 48];
 
 	export function register() {
 
@@ -44,23 +45,37 @@ namespace objects {
 
 		hooks.register('sectorCreate', (sector: lod.sector) => {
 			pts.func(sector.small, (pos) => {
+				let pixel = wastes.objectmap.pixel(pos);
+				if (pixel.is_color(color_acid_barrel)) {
+					factory(objects.acidbarrel, pixel, pos);
+				}
+			})
+			return false;
+		})
+
+		hooks.register('sectorCreate', (sector: lod.sector) => {
+			pts.func(sector.small, (pos) => {
 				let pixel = wastes.buildingmap.pixel(pos);
 				if (pixel.is_color(color_slimy_wall)) {
 					factory(objects.wall, pixel, pos);
 				}
 				else if (pixel.is_color(color_deck)) {
 					factory(objects.deck, pixel, pos);
+					factory(objects.roof, pixel, pos);
 				}
 				else if (pixel.is_color(color_slimy_wall_and_deck)) {
 					factory(objects.deck, pixel, pos);
 					factory(objects.wall, pixel, pos);
+					factory(objects.roof, pixel, pos);
 				}
 				else if (pixel.is_color(color_wooden_door)) {
 					factory(objects.door, pixel, pos);
+					factory(objects.roof, pixel, pos);
 				}
 				else if (pixel.is_color(color_wooden_door_and_deck)) {
 					factory(objects.deck, pixel, pos);
 					factory(objects.door, pixel, pos);
+					factory(objects.roof, pixel, pos);
 				}
 			})
 			return false;
@@ -104,9 +119,6 @@ namespace objects {
 		}
 		is_white() {
 			return this.is_color([255, 255, 255]);
-		}
-		static water_color(): vec4 {
-			return [66, 66, 110, 255];
 		}
 	}
 
@@ -161,19 +173,18 @@ namespace objects {
 		stack() {
 			this.z = 0;
 			let stack = this.sector!.allat(this.wpos);
-			console.log(stack);
+			//console.log(stack);
 			for (let obj of stack) {
 				if (obj == this)
 					break;
 				this.z += obj.height;
 			}
 			(this.shape as sprite).z = this.z;
-			this.tile.last = this;
 		}
 	}
 	export class deck extends objected {
 		constructor() {
-			super(undefined, numbers.walls);
+			super(undefined, numbers.floors);
 			this.height = 4;
 		}
 		create() {
@@ -187,11 +198,44 @@ namespace objects {
 			this.stack();
 		}
 	}
+	export class acidbarrel extends objected {
+		constructor() {
+			super(undefined, numbers.floors);
+			this.height = 4;
+		}
+		create() {
+			this.tiled();
+			this.size = [24, 35];
+			let shape = new sprite({
+				binded: this,
+				tuple: sprites.dacidbarrel,
+				order: .4,
+			});
+			this.stack();
+		}
+	}
+	export class roof extends objected {
+		constructor() {
+			super(undefined, numbers.roofs);
+			this.height = 4;
+		}
+		create() {
+			return;
+			this.tiled();
+			this.size = [24, 17];
+			let shape = new sprite({
+				binded: this,
+				tuple: sprites.ddeck,
+				order: .6,
+			});
+			this.z = shape.z = 4 + 30;
+		}
+	}
 	export class wall extends objected {
 		cell: vec2
 		constructor() {
 			super(undefined, numbers.walls);
-			this.height = 40;
+			this.height = 26;
 		}
 		create() {
 			this.tiled();

@@ -147,8 +147,10 @@ export class view {
 		crunch += `sectors: ${numbers.sectors[0]} / ${numbers.sectors[1]}<br />`;
 		crunch += `game objs: ${numbers.objs[0]} / ${numbers.objs[1]}<br />`;
 		crunch += `sprites: ${numbers.sprites[0]} / ${numbers.sprites[1]}<br />`;
-		crunch += `trees: ${numbers.trees[0]} / ${numbers.trees[1]}<br />`;
 		crunch += `tiles: ${numbers.tiles[0]} / ${numbers.tiles[1]}<br />`;
+		crunch += `floors: ${numbers.floors[0]} / ${numbers.floors[1]}<br />`;
+		crunch += `walls: ${numbers.walls[0]} / ${numbers.walls[1]}<br />`;
+		crunch += `walls: ${numbers.roofs[0]} / ${numbers.roofs[1]}<br />`;
 		crunch += '<br />';
 
 		crunch += `controls: WASD, X to go fast, middlemouse to pan<br />`;

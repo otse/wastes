@@ -453,8 +453,10 @@ void main() {
         numbers.sprites = [0, 0];
         numbers.objs = [0, 0];
         numbers.tiles = [0, 0];
+        numbers.floors = [0, 0];
         numbers.trees = [0, 0];
         numbers.walls = [0, 0];
+        numbers.roofs = [0, 0];
     })(numbers || (numbers = {}));
     class toggle {
         constructor() {
@@ -773,8 +775,9 @@ void main() {
         sprites.dtile4 = [[24, 17], [24, 17], 0, 'tex/dtileup4'];
         sprites.dwall = [[96, 40], [24, 40], 0, 'tex/dwalls'];
         sprites.ddeck = [[24, 17], [24, 17], 0, 'tex/ddeck'];
-        sprites.dwallsgreeny = [[96, 40], [24, 40], 0, 'tex/dwallsgreeny'];
+        sprites.dwallsgreeny = [[192, 40], [24, 40], 0, 'tex/dwallsgreeny'];
         sprites.ddoorwood = [[96, 40], [24, 40], 0, 'tex/ddoor'];
+        sprites.dacidbarrel = [[24, 35], [24, 35], 0, 'tex/dacidbarrel'];
         function get_uv_transform(cell, tuple) {
             let divide = pts.divides(tuple[1], tuple[0]);
             let offset = pts.mults(divide, cell);
@@ -1109,8 +1112,10 @@ void main() {
             crunch += `sectors: ${numbers.sectors[0]} / ${numbers.sectors[1]}<br />`;
             crunch += `game objs: ${numbers.objs[0]} / ${numbers.objs[1]}<br />`;
             crunch += `sprites: ${numbers.sprites[0]} / ${numbers.sprites[1]}<br />`;
-            crunch += `trees: ${numbers.trees[0]} / ${numbers.trees[1]}<br />`;
             crunch += `tiles: ${numbers.tiles[0]} / ${numbers.tiles[1]}<br />`;
+            crunch += `floors: ${numbers.floors[0]} / ${numbers.floors[1]}<br />`;
+            crunch += `walls: ${numbers.walls[0]} / ${numbers.walls[1]}<br />`;
+            crunch += `walls: ${numbers.roofs[0]} / ${numbers.roofs[1]}<br />`;
             crunch += '<br />';
             crunch += `controls: WASD, X to go fast, middlemouse to pan<br />`;
             let element = document.querySelectorAll('.stats')[0];
@@ -1118,6 +1123,103 @@ void main() {
             element.style.visibility = this.show ? 'visible' : 'hidden';
         }
     }
+
+    var tiles;
+    (function (tiles) {
+        var arrays = [];
+        function get(pos) {
+            if (arrays[pos[1]])
+                return arrays[pos[1]][pos[0]];
+        }
+        tiles.get = get;
+        function register() {
+            console.log(' tiles register ');
+            hooks.register('sectorCreate', (sector) => {
+                pts.func(sector.small, (pos) => {
+                    let x = pos[0];
+                    let y = pos[1];
+                    if (arrays[y] == undefined)
+                        arrays[y] = [];
+                    let tile = new tiles.tile([x, y]);
+                    arrays[y][x] = tile;
+                    lod$1.add(tile);
+                });
+                return false;
+            });
+        }
+        tiles.register = register;
+        function start() {
+            console.log(' tiles start ');
+            lod$1.ggalaxy.at(lod$1.ggalaxy.big(wastes.gview.wpos));
+        }
+        tiles.start = start;
+        function tick() {
+            let mpos0 = lod$1.unproject(pts.add(wastes.gview.mrpos, [0, 0]));
+            mpos0 = pts.floor(mpos0);
+            tiles.mpos4 = lod$1.unproject(pts.add(wastes.gview.mrpos, [0, -4]));
+            tiles.mpos4 = pts.floor(tiles.mpos4);
+            const tile4 = get(tiles.mpos4);
+            if (tile4 && tile4.z == 4)
+                tile4 === null || tile4 === void 0 ? void 0 : tile4.hover();
+            const tile0 = get(mpos0);
+            if (tile0 && tile0.z == 0)
+                tile0 === null || tile0 === void 0 ? void 0 : tile0.hover();
+        }
+        tiles.tick = tick;
+        const color_purple_water = [66, 66, 110, 255];
+        class tile extends lod$1.obj {
+            constructor(wpos) {
+                super(undefined, numbers.tiles);
+                this.z = 0;
+                this.objs = [];
+                this.tuple = sprites$1.dtile;
+                this.wpos = wpos;
+                this.size = [24, 12];
+                this.color = color_purple_water;
+                let pixel = wastes.colormap.pixel(this.wpos);
+                if (!pixel.is_black()) {
+                    this.z = this.height = 4;
+                    this.tuple = sprites$1.dtile4;
+                    this.size = [24, 17];
+                    this.color = wastes.colormap.pixel(this.wpos).array;
+                }
+            }
+            get_stack() {
+                var _a;
+                (_a = this.sector) === null || _a === void 0 ? void 0 : _a.objsro();
+            }
+            /*stack(obj: lod.obj) {
+                let i = this.objs.indexOf(obj);
+                if (i == -1)
+                    this.objs.push(obj);
+            }
+            unstack(obj: lod.obj) {
+                let i = this.objs.indexOf(obj);
+                if (i > -1)
+                    return this.objs.splice(i, 1).length;
+            }*/
+            create() {
+                new sprite({
+                    binded: this,
+                    tuple: this.tuple,
+                    color: this.color
+                });
+            }
+            //update() {}
+            delete() {
+            }
+            hover() {
+                let sprite = this.shape;
+                if (!(sprite === null || sprite === void 0 ? void 0 : sprite.mesh))
+                    return;
+                // sprite.mesh.material.color.set('green');
+            }
+            tick() {
+            }
+        }
+        tiles.tile = tile;
+    })(tiles || (tiles = {}));
+    var tiles$1 = tiles;
 
     var objects;
     (function (objects) {
@@ -1127,6 +1229,7 @@ void main() {
         const color_slimy_wall = [18, 73, 47];
         const color_deck = [114, 128, 124];
         const color_slimy_wall_and_deck = [20, 78, 51];
+        const color_acid_barrel = [61, 118, 48];
         function register() {
             console.log(' objects register ');
             wastes.heightmap = new colormap('heightmap');
@@ -1143,23 +1246,36 @@ void main() {
             }
             hooks.register('sectorCreate', (sector) => {
                 pts.func(sector.small, (pos) => {
+                    let pixel = wastes.objectmap.pixel(pos);
+                    if (pixel.is_color(color_acid_barrel)) {
+                        factory(objects.acidbarrel, pixel, pos);
+                    }
+                });
+                return false;
+            });
+            hooks.register('sectorCreate', (sector) => {
+                pts.func(sector.small, (pos) => {
                     let pixel = wastes.buildingmap.pixel(pos);
                     if (pixel.is_color(color_slimy_wall)) {
                         factory(objects.wall, pixel, pos);
                     }
                     else if (pixel.is_color(color_deck)) {
                         factory(objects.deck, pixel, pos);
+                        factory(objects.roof, pixel, pos);
                     }
                     else if (pixel.is_color(color_slimy_wall_and_deck)) {
                         factory(objects.deck, pixel, pos);
                         factory(objects.wall, pixel, pos);
+                        factory(objects.roof, pixel, pos);
                     }
                     else if (pixel.is_color(color_wooden_door)) {
                         factory(objects.door, pixel, pos);
+                        factory(objects.roof, pixel, pos);
                     }
                     else if (pixel.is_color(color_wooden_door_and_deck)) {
                         factory(objects.deck, pixel, pos);
                         factory(objects.door, pixel, pos);
+                        factory(objects.roof, pixel, pos);
                     }
                 });
                 return false;
@@ -1200,9 +1316,6 @@ void main() {
             }
             is_white() {
                 return this.is_color([255, 255, 255]);
-            }
-            static water_color() {
-                return [66, 66, 110, 255];
             }
         }
         objects.pixel = pixel;
@@ -1253,20 +1366,19 @@ void main() {
             stack() {
                 this.z = 0;
                 let stack = this.sector.allat(this.wpos);
-                console.log(stack);
+                //console.log(stack);
                 for (let obj of stack) {
                     if (obj == this)
                         break;
                     this.z += obj.height;
                 }
                 this.shape.z = this.z;
-                this.tile.last = this;
             }
         }
         objects.objected = objected;
         class deck extends objected {
             constructor() {
-                super(undefined, numbers.walls);
+                super(undefined, numbers.floors);
                 this.height = 4;
             }
             create() {
@@ -1281,10 +1393,37 @@ void main() {
             }
         }
         objects.deck = deck;
+        class acidbarrel extends objected {
+            constructor() {
+                super(undefined, numbers.floors);
+                this.height = 4;
+            }
+            create() {
+                this.tiled();
+                this.size = [24, 35];
+                new sprite({
+                    binded: this,
+                    tuple: sprites$1.dacidbarrel,
+                    order: .4,
+                });
+                this.stack();
+            }
+        }
+        objects.acidbarrel = acidbarrel;
+        class roof extends objected {
+            constructor() {
+                super(undefined, numbers.roofs);
+                this.height = 4;
+            }
+            create() {
+                return;
+            }
+        }
+        objects.roof = roof;
         class wall extends objected {
             constructor() {
                 super(undefined, numbers.walls);
-                this.height = 40;
+                this.height = 26;
             }
             create() {
                 var _a, _b, _c, _d, _e, _f, _g, _h;
@@ -1353,97 +1492,6 @@ void main() {
         objects.shrubs = shrubs;
     })(objects || (objects = {}));
     var objects$1 = objects;
-
-    var tiles;
-    (function (tiles) {
-        var arrays = [];
-        function get(pos) {
-            if (arrays[pos[1]])
-                return arrays[pos[1]][pos[0]];
-        }
-        tiles.get = get;
-        function register() {
-            console.log(' tiles register ');
-            hooks.register('sectorCreate', (sector) => {
-                pts.func(sector.small, (pos) => {
-                    let x = pos[0];
-                    let y = pos[1];
-                    if (arrays[y] == undefined)
-                        arrays[y] = [];
-                    let tile = new tiles.tile([x, y]);
-                    arrays[y][x] = tile;
-                    lod$1.add(tile);
-                });
-                return false;
-            });
-        }
-        tiles.register = register;
-        function start() {
-            console.log(' tiles start ');
-            lod$1.ggalaxy.at(lod$1.ggalaxy.big(wastes.gview.wpos));
-        }
-        tiles.start = start;
-        function tick() {
-            tiles.raisedmpos = lod$1.unproject(pts.add(wastes.gview.mrpos, [0, -4]));
-            tiles.raisedmpos = pts.floor(tiles.raisedmpos);
-            const tile = get(tiles.raisedmpos);
-            if (tile && tile.z == 4)
-                tile === null || tile === void 0 ? void 0 : tile.hover();
-        }
-        tiles.tick = tick;
-        class tile extends lod$1.obj {
-            constructor(wpos) {
-                super(undefined, numbers.tiles);
-                this.z = 0;
-                this.objs = [];
-                this.tuple = sprites$1.dtile;
-                this.wpos = wpos;
-                this.size = [24, 12];
-                this.color = objects$1.pixel.water_color();
-                let pixel = wastes.colormap.pixel(this.wpos);
-                if (!pixel.is_black()) {
-                    this.z = this.height = 4;
-                    this.tuple = sprites$1.dtile4;
-                    this.size = [24, 17];
-                    this.color = wastes.colormap.pixel(this.wpos).array;
-                }
-            }
-            get_stack() {
-                var _a;
-                (_a = this.sector) === null || _a === void 0 ? void 0 : _a.objsro();
-            }
-            /*stack(obj: lod.obj) {
-                let i = this.objs.indexOf(obj);
-                if (i == -1)
-                    this.objs.push(obj);
-            }
-            unstack(obj: lod.obj) {
-                let i = this.objs.indexOf(obj);
-                if (i > -1)
-                    return this.objs.splice(i, 1).length;
-            }*/
-            create() {
-                new sprite({
-                    binded: this,
-                    tuple: this.tuple,
-                    color: this.color
-                });
-            }
-            //update() {}
-            delete() {
-            }
-            hover() {
-                let sprite = this.shape;
-                if (!(sprite === null || sprite === void 0 ? void 0 : sprite.mesh))
-                    return;
-                //sprite.mesh.material.color.set('green');
-            }
-            tick() {
-            }
-        }
-        tiles.tile = tile;
-    })(tiles || (tiles = {}));
-    var tiles$1 = tiles;
 
     class TGALoader extends THREE.DataTextureLoader {
 
@@ -6063,21 +6111,18 @@ void main() {
             console.error('resource', mask);
         }
         wastes.critical = critical;
-        function registers() {
-            lod$1.register();
-            objects$1.register();
-            tiles$1.register();
-        }
         function starts() {
+            lod$1.register();
             if (window.location.href.indexOf("#testingchamber") != -1) {
                 testing_chamber$1.start();
                 tests$1.start();
             }
             else if (window.location.href.indexOf("#modeler") != -1) {
                 modeler$1.start();
-                console.log('woo');
             }
             else {
+                objects$1.register();
+                tiles$1.register();
                 sprites.start();
                 tiles$1.start();
                 objects$1.start();
@@ -6089,7 +6134,6 @@ void main() {
             started = true;
             console.log(' wastes starting ');
             wastes.gview = view.make();
-            registers();
             starts();
         }
         function init() {

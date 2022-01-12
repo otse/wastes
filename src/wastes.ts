@@ -68,22 +68,18 @@ export namespace wastes {
 		console.error('resource', mask);
 	}
 
-	function registers() {
-		lod.register();
-		objects.register();
-		tiles.register();
-	}
-
 	function starts() {
+		lod.register();
 		if (window.location.href.indexOf("#testingchamber") != -1) {
 			testing_chamber.start();
 			tests.start();
 		}
 		else if (window.location.href.indexOf("#modeler") != -1) {
 			modeler.start();
-			console.log('woo');
 		}
 		else {
+			objects.register();
+			tiles.register();
 			sprites.start();
 			tiles.start();
 			objects.start();
@@ -96,7 +92,6 @@ export namespace wastes {
 		started = true;
 		console.log(' wastes starting ');
 		gview = view.make();
-		registers();
 		starts();
 	}
 
