@@ -508,7 +508,7 @@ void main() {
             constructor(span) {
                 this.arrays = [];
                 lod.ggalaxy = this;
-                new grid(4, 6);
+                new grid(4, 4);
             }
             update(wpos) {
                 lod.ggrid.big = this.big(wpos);
@@ -1123,13 +1123,15 @@ void main() {
     (function (objects) {
         const mapSpan = 100;
         const color_wooden_door = [210, 210, 210];
-        const color_slimy_wall = [255, 255, 255];
-        const color_deck = [235, 235, 235];
-        const color_slimy_wall_and_deck = [245, 245, 245];
+        const color_wooden_door_and_deck = [24, 93, 61];
+        const color_slimy_wall = [18, 73, 47];
+        const color_deck = [114, 128, 124];
+        const color_slimy_wall_and_deck = [20, 78, 51];
         function register() {
             console.log(' objects register ');
             wastes.heightmap = new colormap('heightmap');
             wastes.objectmap = new colormap('objectmap');
+            wastes.buildingmap = new colormap('buildingmap');
             wastes.treemap = new colormap('treemap');
             wastes.colormap = new colormap('colormap');
             function factory(type, pixel, pos) {
@@ -1141,15 +1143,7 @@ void main() {
             }
             hooks.register('sectorCreate', (sector) => {
                 pts.func(sector.small, (pos) => {
-                    wastes.treemap.pixel(pos);
-                    //if (pixel.array[0] > treeTreshold)
-                    //	objectedfactory(objects.shrubs, pixel, pos);
-                });
-                return false;
-            });
-            hooks.register('sectorCreate', (sector) => {
-                pts.func(sector.small, (pos) => {
-                    let pixel = wastes.objectmap.pixel(pos);
+                    let pixel = wastes.buildingmap.pixel(pos);
                     if (pixel.is_color(color_slimy_wall)) {
                         factory(objects.wall, pixel, pos);
                     }
@@ -1161,6 +1155,10 @@ void main() {
                         factory(objects.wall, pixel, pos);
                     }
                     else if (pixel.is_color(color_wooden_door)) {
+                        factory(objects.door, pixel, pos);
+                    }
+                    else if (pixel.is_color(color_wooden_door_and_deck)) {
+                        factory(objects.deck, pixel, pos);
                         factory(objects.door, pixel, pos);
                     }
                 });

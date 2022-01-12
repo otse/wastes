@@ -17,9 +17,10 @@ namespace objects {
 	const mapSpan = 100;
 
 	const color_wooden_door: vec3 = [210, 210, 210];
-	const color_slimy_wall: vec3 = [255, 255, 255];
-	const color_deck: vec3 = [235, 235, 235];
-	const color_slimy_wall_and_deck: vec3 = [245, 245, 245];
+	const color_wooden_door_and_deck: vec3 = [24, 93, 61];
+	const color_slimy_wall: vec3 = [18, 73, 47];
+	const color_deck: vec3 = [114, 128, 124];
+	const color_slimy_wall_and_deck: vec3 = [20, 78, 51];
 
 	export function register() {
 
@@ -27,6 +28,7 @@ namespace objects {
 
 		wastes.heightmap = new colormap('heightmap');
 		wastes.objectmap = new colormap('objectmap');
+		wastes.buildingmap = new colormap('buildingmap');
 		wastes.treemap = new colormap('treemap');
 		wastes.colormap = new colormap('colormap');
 
@@ -42,16 +44,7 @@ namespace objects {
 
 		hooks.register('sectorCreate', (sector: lod.sector) => {
 			pts.func(sector.small, (pos) => {
-				let pixel = wastes.treemap.pixel(pos);
-				//if (pixel.array[0] > treeTreshold)
-				//	objectedfactory(objects.shrubs, pixel, pos);
-			})
-			return false;
-		})
-
-		hooks.register('sectorCreate', (sector: lod.sector) => {
-			pts.func(sector.small, (pos) => {
-				let pixel = wastes.objectmap.pixel(pos);
+				let pixel = wastes.buildingmap.pixel(pos);
 				if (pixel.is_color(color_slimy_wall)) {
 					factory(objects.wall, pixel, pos);
 				}
@@ -63,6 +56,10 @@ namespace objects {
 					factory(objects.wall, pixel, pos);
 				}
 				else if (pixel.is_color(color_wooden_door)) {
+					factory(objects.door, pixel, pos);
+				}
+				else if (pixel.is_color(color_wooden_door_and_deck)) {
+					factory(objects.deck, pixel, pos);
 					factory(objects.door, pixel, pos);
 				}
 			})
@@ -168,7 +165,7 @@ namespace objects {
 				this.z = this.tile.last.z + this.tile.last.height;
 			else
 				this.z = this.tile.z;
-			(this.shape as sprite).z = this.z; 
+			(this.shape as sprite).z = this.z;
 			this.tile.last = this;
 		}
 	}
