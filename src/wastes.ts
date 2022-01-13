@@ -21,6 +21,7 @@ export namespace wastes {
 	export var heightmap: objects.colormap
 	export var objectmap: objects.colormap
 	export var buildingmap: objects.colormap
+	export var roofmap: objects.colormap
 	export var treemap: objects.colormap
 	export var colormap: objects.colormap
 

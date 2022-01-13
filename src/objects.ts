@@ -23,6 +23,8 @@ namespace objects {
 	const color_slimy_wall_and_deck: vec3 = [20, 78, 51];
 	const color_acid_barrel: vec3 = [61, 118, 48];
 
+	const color_false_front: vec3 = [255, 255, 255];
+
 	export function register() {
 
 		console.log(' objects register ');
@@ -30,6 +32,7 @@ namespace objects {
 		wastes.heightmap = new colormap('heightmap');
 		wastes.objectmap = new colormap('objectmap');
 		wastes.buildingmap = new colormap('buildingmap');
+		wastes.roofmap = new colormap('roofmap');
 		wastes.treemap = new colormap('treemap');
 		wastes.colormap = new colormap('colormap');
 
@@ -55,27 +58,41 @@ namespace objects {
 
 		hooks.register('sectorCreate', (sector: lod.sector) => {
 			pts.func(sector.small, (pos) => {
+				let pixel = wastes.roofmap.pixel(pos);
+				if (pixel.is_color(color_false_front)) {
+					factory(objects.roof, pixel, pos);
+					factory(objects.falsefront, pixel, pos);
+				}
+			})
+			return false;
+		})
+
+		hooks.register('sectorCreate', (sector: lod.sector) => {
+			pts.func(sector.small, (pos) => {
 				let pixel = wastes.buildingmap.pixel(pos);
 				if (pixel.is_color(color_slimy_wall)) {
+					factory(objects.deck, pixel, pos);
 					factory(objects.wall, pixel, pos);
+					//factory(objects.roof, pixel, pos);
 				}
 				else if (pixel.is_color(color_deck)) {
 					factory(objects.deck, pixel, pos);
-					factory(objects.roof, pixel, pos);
+					//factory(objects.roof, pixel, pos);
 				}
 				else if (pixel.is_color(color_slimy_wall_and_deck)) {
 					factory(objects.deck, pixel, pos);
 					factory(objects.wall, pixel, pos);
-					factory(objects.roof, pixel, pos);
+					//factory(objects.roof, pixel, pos);
 				}
 				else if (pixel.is_color(color_wooden_door)) {
+					factory(objects.deck, pixel, pos);
 					factory(objects.door, pixel, pos);
-					factory(objects.roof, pixel, pos);
+					//factory(objects.roof, pixel, pos);
 				}
 				else if (pixel.is_color(color_wooden_door_and_deck)) {
 					factory(objects.deck, pixel, pos);
 					factory(objects.door, pixel, pos);
-					factory(objects.roof, pixel, pos);
+					//factory(objects.roof, pixel, pos);
 				}
 			})
 			return false;
@@ -165,6 +182,7 @@ namespace objects {
 	export class objected extends lod.obj {
 		pixel?: pixel
 		tile: tiles.tile
+		cell: vec2 = [0, 0]
 		constructor(hints, counts: numbers.tally) {
 			super(hints, counts);
 		}
@@ -186,17 +204,36 @@ namespace objects {
 			(this.shape as sprite).z = this.z;
 		}
 	}
-	export class deck extends objected {
+	export class roof extends objected {
 		constructor() {
-			super(undefined, numbers.floors);
-			this.height = 4;
+			super(undefined, numbers.roofs);
+			this.height = 3;
 		}
 		create() {
 			this.tiled();
 			this.size = [24, 17];
 			let shape = new sprite({
 				binded: this,
+				tuple: sprites.droof,
+				order: .6,
+			});
+			this.z = shape.z = 3 + 30;
+		}
+	}
+	export class deck extends objected {
+		constructor() {
+			super(undefined, numbers.floors);
+			this.height = 3;
+		}
+		create() {
+			this.tiled();
+			this.size = [24, 17];
+			//if (this.pixel!.array[3] < 240)
+			//	this.cell = [240 - this.pixel!.array[3], 0];
+			let shape = new sprite({
+				binded: this,
 				tuple: sprites.ddeck,
+				cell: this.cell,
 				order: .4,
 			});
 			this.stack();
@@ -218,25 +255,25 @@ namespace objects {
 			this.stack();
 		}
 	}
-	export class roof extends objected {
+	export class falsefront extends objected {
 		constructor() {
 			super(undefined, numbers.roofs);
-			this.height = 4;
+			this.height = 10;
 		}
 		create() {
-			return;
 			this.tiled();
-			this.size = [24, 17];
+			this.cell = [255 - this.pixel!.array[3], 0];
+			this.size = [24, 40];
 			let shape = new sprite({
 				binded: this,
-				tuple: sprites.ddeck,
+				tuple: sprites.dfalsefronts,
+				cell: this.cell,
 				order: .6,
 			});
-			this.z = shape.z = 4 + 30;
+			this.stack();
 		}
 	}
 	export class wall extends objected {
-		cell: vec2
 		constructor() {
 			super(undefined, numbers.walls);
 			this.height = 26;
@@ -244,9 +281,7 @@ namespace objects {
 		create() {
 			this.tiled();
 			this.size = [24, 40];
-			this.cell = [(255 - this.pixel!.array[3]), 0];
-			console.log('cell', this.cell);
-			
+			this.cell = [255 - this.pixel!.array[3], 0];
 			let shape = new sprite({
 				binded: this,
 				tuple: sprites.dwallsslimy,
@@ -266,6 +301,7 @@ namespace objects {
 		cell: vec2
 		constructor() {
 			super(undefined, numbers.walls);
+			this.height = 26;
 		}
 		create() {
 			this.tiled();

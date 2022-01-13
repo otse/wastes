@@ -45,7 +45,7 @@ namespace modeler {
 			ren.scene.add(group);
 			
 			let sun = new DirectionalLight(0xffffff, 0.5);
-			sun.position.set(-wastes.size, wastes.size * 2, wastes.size / 2);
+			sun.position.set(-wastes.size, wastes.size * 1, wastes.size / 2);
 			//sun.add(new AxesHelper(100));
 			group.add(sun);
 			group.add(sun.target);

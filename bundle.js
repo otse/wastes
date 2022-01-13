@@ -510,7 +510,7 @@ void main() {
             constructor(span) {
                 this.arrays = [];
                 lod.ggalaxy = this;
-                new grid(4, 4);
+                new grid(3, 3);
             }
             update(wpos) {
                 lod.ggrid.big = this.big(wpos);
@@ -774,10 +774,12 @@ void main() {
         sprites.dtile = [[24, 12], [24, 12], 0, 'tex/dtile'];
         sprites.dtile4 = [[24, 17], [24, 17], 0, 'tex/dtileup4'];
         sprites.dwall = [[96, 40], [24, 40], 0, 'tex/dwalls'];
-        sprites.ddeck = [[24, 17], [24, 17], 0, 'tex/ddeck'];
+        sprites.ddeck = [[72, 17], [24, 17], 0, 'tex/ddeck'];
+        sprites.droof = [[72, 17], [24, 17], 0, 'tex/droof'];
         sprites.dwallsslimy = [[288, 40], [24, 40], 0, 'tex/dwallsslimy'];
         sprites.ddoorwood = [[96, 40], [24, 40], 0, 'tex/ddoor'];
         sprites.dacidbarrel = [[24, 35], [24, 35], 0, 'tex/dacidbarrel'];
+        sprites.dfalsefronts = [[192, 40], [24, 40], 0, 'tex/dfalsefronts'];
         function get_uv_transform(cell, tuple) {
             let divide = pts.divides(tuple[1], tuple[0]);
             let offset = pts.mults(divide, cell);
@@ -1230,11 +1232,13 @@ void main() {
         const color_deck = [114, 128, 124];
         const color_slimy_wall_and_deck = [20, 78, 51];
         const color_acid_barrel = [61, 118, 48];
+        const color_false_front = [255, 255, 255];
         function register() {
             console.log(' objects register ');
             wastes.heightmap = new colormap('heightmap');
             wastes.objectmap = new colormap('objectmap');
             wastes.buildingmap = new colormap('buildingmap');
+            wastes.roofmap = new colormap('roofmap');
             wastes.treemap = new colormap('treemap');
             wastes.colormap = new colormap('colormap');
             function factory(type, pixel, pos) {
@@ -1253,27 +1257,40 @@ void main() {
             });
             hooks.register('sectorCreate', (sector) => {
                 pts.func(sector.small, (pos) => {
+                    let pixel = wastes.roofmap.pixel(pos);
+                    if (pixel.is_color(color_false_front)) {
+                        factory(objects.roof, pixel, pos);
+                        factory(objects.falsefront, pixel, pos);
+                    }
+                });
+                return false;
+            });
+            hooks.register('sectorCreate', (sector) => {
+                pts.func(sector.small, (pos) => {
                     let pixel = wastes.buildingmap.pixel(pos);
                     if (pixel.is_color(color_slimy_wall)) {
+                        factory(objects.deck, pixel, pos);
                         factory(objects.wall, pixel, pos);
+                        //factory(objects.roof, pixel, pos);
                     }
                     else if (pixel.is_color(color_deck)) {
                         factory(objects.deck, pixel, pos);
-                        factory(objects.roof, pixel, pos);
+                        //factory(objects.roof, pixel, pos);
                     }
                     else if (pixel.is_color(color_slimy_wall_and_deck)) {
                         factory(objects.deck, pixel, pos);
                         factory(objects.wall, pixel, pos);
-                        factory(objects.roof, pixel, pos);
+                        //factory(objects.roof, pixel, pos);
                     }
                     else if (pixel.is_color(color_wooden_door)) {
+                        factory(objects.deck, pixel, pos);
                         factory(objects.door, pixel, pos);
-                        factory(objects.roof, pixel, pos);
+                        //factory(objects.roof, pixel, pos);
                     }
                     else if (pixel.is_color(color_wooden_door_and_deck)) {
                         factory(objects.deck, pixel, pos);
                         factory(objects.door, pixel, pos);
-                        factory(objects.roof, pixel, pos);
+                        //factory(objects.roof, pixel, pos);
                     }
                 });
                 return false;
@@ -1358,6 +1375,7 @@ void main() {
         class objected extends lod$1.obj {
             constructor(hints, counts) {
                 super(hints, counts);
+                this.cell = [0, 0];
             }
             tiled() {
                 this.tile = tiles$1.get(this.wpos);
@@ -1378,17 +1396,37 @@ void main() {
             }
         }
         objects.objected = objected;
-        class deck extends objected {
+        class roof extends objected {
             constructor() {
-                super(undefined, numbers.floors);
-                this.height = 4;
+                super(undefined, numbers.roofs);
+                this.height = 3;
             }
             create() {
                 this.tiled();
                 this.size = [24, 17];
+                let shape = new sprite({
+                    binded: this,
+                    tuple: sprites$1.droof,
+                    order: .6,
+                });
+                this.z = shape.z = 3 + 30;
+            }
+        }
+        objects.roof = roof;
+        class deck extends objected {
+            constructor() {
+                super(undefined, numbers.floors);
+                this.height = 3;
+            }
+            create() {
+                this.tiled();
+                this.size = [24, 17];
+                //if (this.pixel!.array[3] < 240)
+                //	this.cell = [240 - this.pixel!.array[3], 0];
                 new sprite({
                     binded: this,
                     tuple: sprites$1.ddeck,
+                    cell: this.cell,
                     order: .4,
                 });
                 this.stack();
@@ -1412,16 +1450,25 @@ void main() {
             }
         }
         objects.acidbarrel = acidbarrel;
-        class roof extends objected {
+        class falsefront extends objected {
             constructor() {
                 super(undefined, numbers.roofs);
-                this.height = 4;
+                this.height = 10;
             }
             create() {
-                return;
+                this.tiled();
+                this.cell = [255 - this.pixel.array[3], 0];
+                this.size = [24, 40];
+                new sprite({
+                    binded: this,
+                    tuple: sprites$1.dfalsefronts,
+                    cell: this.cell,
+                    order: .6,
+                });
+                this.stack();
             }
         }
-        objects.roof = roof;
+        objects.falsefront = falsefront;
         class wall extends objected {
             constructor() {
                 super(undefined, numbers.walls);
@@ -1430,8 +1477,7 @@ void main() {
             create() {
                 this.tiled();
                 this.size = [24, 40];
-                this.cell = [(255 - this.pixel.array[3]), 0];
-                console.log('cell', this.cell);
+                this.cell = [255 - this.pixel.array[3], 0];
                 new sprite({
                     binded: this,
                     tuple: sprites$1.dwallsslimy,
@@ -1448,6 +1494,7 @@ void main() {
         class door extends objected {
             constructor() {
                 super(undefined, numbers.walls);
+                this.height = 26;
             }
             create() {
                 this.tiled();
@@ -6037,7 +6084,7 @@ void main() {
                 elf.position.set(1, 0, 0);
                 ren$1.scene.add(group);
                 let sun = new THREE.DirectionalLight(0xffffff, 0.5);
-                sun.position.set(-wastes.size, wastes.size * 2, wastes.size / 2);
+                sun.position.set(-wastes.size, wastes.size * 1, wastes.size / 2);
                 //sun.add(new AxesHelper(100));
                 group.add(sun);
                 group.add(sun.target);
