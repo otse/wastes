@@ -18,7 +18,7 @@ namespace objects {
 
 	const color_wooden_door: vec3 = [210, 210, 210];
 	const color_wooden_door_and_deck: vec3 = [24, 93, 61];
-	const color_slimy_wall: vec3 = [18, 73, 47];
+	const color_slimy_wall: vec3 = [20, 78, 54];
 	const color_deck: vec3 = [114, 128, 124];
 	const color_slimy_wall_and_deck: vec3 = [20, 78, 51];
 	const color_acid_barrel: vec3 = [61, 118, 48];
@@ -47,7 +47,7 @@ namespace objects {
 			pts.func(sector.small, (pos) => {
 				let pixel = wastes.objectmap.pixel(pos);
 				if (pixel.is_color(color_acid_barrel)) {
-					factory(objects.acidbarrel, pixel, pos);
+					// factory(objects.acidbarrel, pixel, pos);
 				}
 			})
 			return false;
@@ -114,6 +114,11 @@ namespace objects {
 		is_color(vec: vec3) {
 			return vec[0] == this.array[0] && vec[1] == this.array[1] && vec[2] == this.array[2];
 		}
+		is_color_range(a: vec3, b: vec3) {
+			return this.array[0] >= a[0] && this.array[0] <= b[0] &&
+				this.array[1] >= a[1] && this.array[1] <= b[1] &&
+				this.array[2] >= a[2] && this.array[2] <= b[2]
+		}
 		is_black() {
 			return this.is_color([0, 0, 0]);
 		}
@@ -173,7 +178,6 @@ namespace objects {
 		stack() {
 			this.z = 0;
 			let stack = this.sector!.allat(this.wpos);
-			//console.log(stack);
 			for (let obj of stack) {
 				if (obj == this)
 					break;
@@ -240,23 +244,12 @@ namespace objects {
 		create() {
 			this.tiled();
 			this.size = [24, 40];
-			if ((this.pixel?.left().same(this.pixel) &&
-				this.pixel?.up().same(this.pixel)) ||
-				this.pixel?.down().same(this.pixel) &&
-				this.pixel?.right().same(this.pixel) ||
-				this.pixel?.up().same(this.pixel) &&
-				this.pixel?.right().same(this.pixel)) {
-				this.cell = [1, 0];
-			}
-			else if (this.pixel?.right().same(this.pixel)) {
-				this.cell = [2, 0];
-			}
-			else if (this.pixel?.up().same(this.pixel)) {
-				this.cell = [3, 0];
-			}
+			this.cell = [(255 - this.pixel!.array[3]), 0];
+			console.log('cell', this.cell);
+			
 			let shape = new sprite({
 				binded: this,
-				tuple: sprites.dwallsgreeny,
+				tuple: sprites.dwallsslimy,
 				cell: this.cell,
 				order: .5,
 			});

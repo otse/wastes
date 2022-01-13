@@ -775,7 +775,7 @@ void main() {
         sprites.dtile4 = [[24, 17], [24, 17], 0, 'tex/dtileup4'];
         sprites.dwall = [[96, 40], [24, 40], 0, 'tex/dwalls'];
         sprites.ddeck = [[24, 17], [24, 17], 0, 'tex/ddeck'];
-        sprites.dwallsgreeny = [[192, 40], [24, 40], 0, 'tex/dwallsgreeny'];
+        sprites.dwallsslimy = [[288, 40], [24, 40], 0, 'tex/dwallsslimy'];
         sprites.ddoorwood = [[96, 40], [24, 40], 0, 'tex/ddoor'];
         sprites.dacidbarrel = [[24, 35], [24, 35], 0, 'tex/dacidbarrel'];
         function get_uv_transform(cell, tuple) {
@@ -1226,7 +1226,7 @@ void main() {
         const mapSpan = 100;
         const color_wooden_door = [210, 210, 210];
         const color_wooden_door_and_deck = [24, 93, 61];
-        const color_slimy_wall = [18, 73, 47];
+        const color_slimy_wall = [20, 78, 54];
         const color_deck = [114, 128, 124];
         const color_slimy_wall_and_deck = [20, 78, 51];
         const color_acid_barrel = [61, 118, 48];
@@ -1247,9 +1247,7 @@ void main() {
             hooks.register('sectorCreate', (sector) => {
                 pts.func(sector.small, (pos) => {
                     let pixel = wastes.objectmap.pixel(pos);
-                    if (pixel.is_color(color_acid_barrel)) {
-                        factory(objects.acidbarrel, pixel, pos);
-                    }
+                    if (pixel.is_color(color_acid_barrel)) ;
                 });
                 return false;
             });
@@ -1311,6 +1309,11 @@ void main() {
             is_color(vec) {
                 return vec[0] == this.array[0] && vec[1] == this.array[1] && vec[2] == this.array[2];
             }
+            is_color_range(a, b) {
+                return this.array[0] >= a[0] && this.array[0] <= b[0] &&
+                    this.array[1] >= a[1] && this.array[1] <= b[1] &&
+                    this.array[2] >= a[2] && this.array[2] <= b[2];
+            }
             is_black() {
                 return this.is_color([0, 0, 0]);
             }
@@ -1366,7 +1369,6 @@ void main() {
             stack() {
                 this.z = 0;
                 let stack = this.sector.allat(this.wpos);
-                //console.log(stack);
                 for (let obj of stack) {
                     if (obj == this)
                         break;
@@ -1426,26 +1428,13 @@ void main() {
                 this.height = 26;
             }
             create() {
-                var _a, _b, _c, _d, _e, _f, _g, _h;
                 this.tiled();
                 this.size = [24, 40];
-                if ((((_a = this.pixel) === null || _a === void 0 ? void 0 : _a.left().same(this.pixel)) &&
-                    ((_b = this.pixel) === null || _b === void 0 ? void 0 : _b.up().same(this.pixel))) ||
-                    ((_c = this.pixel) === null || _c === void 0 ? void 0 : _c.down().same(this.pixel)) &&
-                        ((_d = this.pixel) === null || _d === void 0 ? void 0 : _d.right().same(this.pixel)) ||
-                    ((_e = this.pixel) === null || _e === void 0 ? void 0 : _e.up().same(this.pixel)) &&
-                        ((_f = this.pixel) === null || _f === void 0 ? void 0 : _f.right().same(this.pixel))) {
-                    this.cell = [1, 0];
-                }
-                else if ((_g = this.pixel) === null || _g === void 0 ? void 0 : _g.right().same(this.pixel)) {
-                    this.cell = [2, 0];
-                }
-                else if ((_h = this.pixel) === null || _h === void 0 ? void 0 : _h.up().same(this.pixel)) {
-                    this.cell = [3, 0];
-                }
+                this.cell = [(255 - this.pixel.array[3]), 0];
+                console.log('cell', this.cell);
                 new sprite({
                     binded: this,
-                    tuple: sprites$1.dwallsgreeny,
+                    tuple: sprites$1.dwallsslimy,
                     cell: this.cell,
                     order: .5,
                 });
