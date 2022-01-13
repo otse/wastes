@@ -60,7 +60,7 @@ namespace objects {
 			pts.func(sector.small, (pos) => {
 				let pixel = wastes.roofmap.pixel(pos);
 				if (pixel.is_color(color_false_front)) {
-					factory(objects.roof, pixel, pos);
+					//factory(objects.roof, pixel, pos);
 					factory(objects.falsefront, pixel, pos);
 				}
 			})
@@ -207,7 +207,7 @@ namespace objects {
 	export class roof extends objected {
 		constructor() {
 			super(undefined, numbers.roofs);
-			this.height = 3;
+			this.height = 4;
 		}
 		create() {
 			this.tiled();
@@ -302,6 +302,7 @@ namespace objects {
 		constructor() {
 			super(undefined, numbers.walls);
 			this.height = 26;
+			//this.cell = [1, 0];
 		}
 		create() {
 			this.tiled();

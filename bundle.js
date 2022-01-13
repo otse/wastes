@@ -510,7 +510,7 @@ void main() {
             constructor(span) {
                 this.arrays = [];
                 lod.ggalaxy = this;
-                new grid(3, 3);
+                new grid(2, 2);
             }
             update(wpos) {
                 lod.ggrid.big = this.big(wpos);
@@ -994,7 +994,7 @@ void main() {
     class view {
         constructor() {
             this.zoom = 0.33;
-            this.zoomIndex = 2;
+            this.zoomIndex = 3;
             this.zooms = [1, 0.5, 0.33, 0.2];
             this.wpos = [50, 43];
             this.rpos = [0, 0];
@@ -1259,7 +1259,7 @@ void main() {
                 pts.func(sector.small, (pos) => {
                     let pixel = wastes.roofmap.pixel(pos);
                     if (pixel.is_color(color_false_front)) {
-                        factory(objects.roof, pixel, pos);
+                        //factory(objects.roof, pixel, pos);
                         factory(objects.falsefront, pixel, pos);
                     }
                 });
@@ -1399,7 +1399,7 @@ void main() {
         class roof extends objected {
             constructor() {
                 super(undefined, numbers.roofs);
-                this.height = 3;
+                this.height = 4;
             }
             create() {
                 this.tiled();
@@ -1495,6 +1495,7 @@ void main() {
             constructor() {
                 super(undefined, numbers.walls);
                 this.height = 26;
+                //this.cell = [1, 0];
             }
             create() {
                 this.tiled();
