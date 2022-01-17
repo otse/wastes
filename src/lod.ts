@@ -54,9 +54,9 @@ namespace lod {
 	export var SectorSpan = 4;
 
 	export function register() {
-		hooks.create('sectorCreate')
-		hooks.create('sectorShow')
-		hooks.create('sectorHide')
+		// hooks.create('sectorCreate')
+		// hooks.create('sectorShow')
+		// hooks.create('sectorHide')
 
 		// hooks.register('sectorHide', () => { console.log('~'); return false; } );
 	}
@@ -258,7 +258,6 @@ namespace lod {
 		z = 0
 		height = 0
 		constructor(
-			hints: ObjHints | undefined,
 			public readonly counts: numbers.tally = numbers.objs) {
 			super();
 			this.counts[1]++;

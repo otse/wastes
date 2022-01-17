@@ -71,15 +71,15 @@ export namespace tiles {
 		objs: lod.obj[] = []
 		color: vec4
 		constructor(wpos: vec2) {
-			super(undefined, numbers.tiles);
+			super(numbers.tiles);
 			this.tuple = sprites.dtile;
 			this.wpos = wpos;
 			this.size = [24, 12];
 			this.color = color_purple_water;
-			let pixel = wastes.colormap.pixel(this.wpos);
+			let pixel = wastes.colormap.pixel(this.wpos);			
 			if (!pixel.is_black()) {
 				this.z = this.height = 4;
-				this.tuple = sprites.dtile4;
+				this.tuple = sprites.dtilesand;
 				this.size = [24, 17];
 				this.color = wastes.colormap.pixel(this.wpos).array;
 			}

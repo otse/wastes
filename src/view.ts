@@ -15,7 +15,7 @@ import hooks from "./hooks";
 export class view {
 	zoom = 0.33
 	zoomIndex = 3
-	zooms = [1, 0.5, 0.33, 0.2]
+	zooms = [1, 0.5, 0.33, 0.2, 0.1]
 	wpos: vec2 = [50, 43]
 	rpos: vec2 = [0, 0]
 	mpos: vec2 = [0, 0]
@@ -129,7 +129,7 @@ export class view {
 
 		crunch += `textures: ${ren.renderer.info.memory.textures}<br />`;
 		crunch += `programs: ${ren.renderer.info.programs.length}<br />`;
-		crunch += `memory: ${Math.floor(ren.memory.usedJSHeapSize / 1000000)} / ${Math.floor(ren.memory.totalJSHeapSize / 1000000)}<br />`;
+		//crunch += `memory: ${Math.floor(ren.memory.usedJSHeapSize / 1000000)} / ${Math.floor(ren.memory.totalJSHeapSize / 1000000)}<br />`;
 		crunch += '<br />';
 
 		//crunch += `mouse: ${pts.to_string(App.mouse())}<br />`;
@@ -138,6 +138,7 @@ export class view {
 		crunch += `mrpos: ${pts.to_string(pts.floor(this.mrpos))}<br />`;
 		crunch += '<br />';
 
+		crunch += `lod grid size: ${lod.ggrid.spread * 2 + 1} / ${lod.ggrid.outside * 2 + 1}<br />`;
 		crunch += `view wpos: ${pts.to_string(pts.floor(this.wpos))}<br />`;
 		crunch += `view bigpos: ${pts.to_string(lod.ggalaxy.big(this.wpos))}<br />`;
 		crunch += `view zoom: ${this.zoom}<br />`;
@@ -153,7 +154,7 @@ export class view {
 		crunch += `walls: ${numbers.roofs[0]} / ${numbers.roofs[1]}<br />`;
 		crunch += '<br />';
 
-		crunch += `controls: WASD, X to go fast, middlemouse to pan<br />`;
+		crunch += `controls: WASD, RF to zoom, X to go fast, middlemouse to pan<br />`;
 
 		let element = document.querySelectorAll('.stats')[0] as any
 		element.innerHTML = crunch;

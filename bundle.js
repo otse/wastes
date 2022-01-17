@@ -210,11 +210,13 @@ var wastes = (function (exports, THREE) {
             function onmousedown(e) { buttons[e.button] = 1; }
             function onmouseup(e) { buttons[e.button] = 0; }
             function onwheel(e) { app.wheel = e.deltaY < 0 ? 1 : -1; }
+            function onerror(message) { document.querySelectorAll('.stats')[0].innerHTML = message; }
             document.onkeydown = document.onkeyup = onkeys;
             document.onmousemove = onmousemove;
             document.onmousedown = onmousedown;
             document.onmouseup = onmouseup;
             document.onwheel = onwheel;
+            window.onerror = onerror;
             ren$1.init();
             exports.wastes.init();
             loop();
@@ -425,14 +427,9 @@ void main() {
         constructor() {
             this.list = [];
         }
-        static create(name) {
-            hooks[name] = [];
-        }
         static register(name, f) {
-            if (!hooks[name]) {
-                console.warn(' hook automatically created ');
-                this.create(name);
-            }
+            if (!hooks[name])
+                hooks[name] = [];
             hooks[name].push(f);
         }
         static unregister(name, f) {
@@ -487,9 +484,9 @@ void main() {
     (function (lod) {
         lod.SectorSpan = 4;
         function register() {
-            hooks.create('sectorCreate');
-            hooks.create('sectorShow');
-            hooks.create('sectorHide');
+            // hooks.create('sectorCreate')
+            // hooks.create('sectorShow')
+            // hooks.create('sectorHide')
             // hooks.register('sectorHide', () => { console.log('~'); return false; } );
         }
         lod.register = register;
@@ -667,7 +664,7 @@ void main() {
         }
         lod.grid = grid;
         class obj extends toggle {
-            constructor(hints, counts = numbers.objs) {
+            constructor(counts = numbers.objs) {
                 super();
                 this.counts = counts;
                 this.wpos = [0, 0];
@@ -773,10 +770,12 @@ void main() {
         sprites.shrubs = [[24, 15], [24, 15], 0, 'tex/shrubs'];
         sprites.dtile = [[24, 12], [24, 12], 0, 'tex/dtile'];
         sprites.dtile4 = [[24, 17], [24, 17], 0, 'tex/dtileup4'];
+        sprites.dtilesand = [[24, 17], [24, 17], 0, 'tex/dtilesand'];
         sprites.dwall = [[96, 40], [24, 40], 0, 'tex/dwalls'];
         sprites.ddeck = [[72, 17], [24, 17], 0, 'tex/ddeck'];
         sprites.droof = [[72, 17], [24, 17], 0, 'tex/droof'];
-        sprites.dwallsslimy = [[288, 40], [24, 40], 0, 'tex/dwallsslimy'];
+        sprites.dwallmetal1 = [[288, 40], [24, 40], 0, 'tex/dwallmetal1'];
+        sprites.dwallslimy = [[288, 40], [24, 40], 0, 'tex/dwallslimy'];
         sprites.ddoorwood = [[96, 40], [24, 40], 0, 'tex/ddoor'];
         sprites.dacidbarrel = [[24, 35], [24, 35], 0, 'tex/dacidbarrel'];
         sprites.dfalsefronts = [[192, 40], [24, 40], 0, 'tex/dfalsefronts'];
@@ -995,7 +994,7 @@ void main() {
         constructor() {
             this.zoom = 0.33;
             this.zoomIndex = 3;
-            this.zooms = [1, 0.5, 0.33, 0.2];
+            this.zooms = [1, 0.5, 0.33, 0.2, 0.1];
             this.wpos = [50, 43];
             this.rpos = [0, 0];
             this.mpos = [0, 0];
@@ -1099,13 +1098,14 @@ void main() {
             crunch += '<br />';
             crunch += `textures: ${ren$1.renderer.info.memory.textures}<br />`;
             crunch += `programs: ${ren$1.renderer.info.programs.length}<br />`;
-            crunch += `memory: ${Math.floor(ren$1.memory.usedJSHeapSize / 1000000)} / ${Math.floor(ren$1.memory.totalJSHeapSize / 1000000)}<br />`;
+            //crunch += `memory: ${Math.floor(ren.memory.usedJSHeapSize / 1000000)} / ${Math.floor(ren.memory.totalJSHeapSize / 1000000)}<br />`;
             crunch += '<br />';
             //crunch += `mouse: ${pts.to_string(App.mouse())}<br />`;
             //crunch += `mpos: ${pts.to_string(pts.floor(this.mpos))}<br />`;
             crunch += `mwpos: ${pts.to_string(pts.floor(this.mwpos))}<br />`;
             crunch += `mrpos: ${pts.to_string(pts.floor(this.mrpos))}<br />`;
             crunch += '<br />';
+            crunch += `lod grid size: ${lod$1.ggrid.spread * 2 + 1} / ${lod$1.ggrid.outside * 2 + 1}<br />`;
             crunch += `view wpos: ${pts.to_string(pts.floor(this.wpos))}<br />`;
             crunch += `view bigpos: ${pts.to_string(lod$1.ggalaxy.big(this.wpos))}<br />`;
             crunch += `view zoom: ${this.zoom}<br />`;
@@ -1119,7 +1119,7 @@ void main() {
             crunch += `walls: ${numbers.walls[0]} / ${numbers.walls[1]}<br />`;
             crunch += `walls: ${numbers.roofs[0]} / ${numbers.roofs[1]}<br />`;
             crunch += '<br />';
-            crunch += `controls: WASD, X to go fast, middlemouse to pan<br />`;
+            crunch += `controls: WASD, RF to zoom, X to go fast, middlemouse to pan<br />`;
             let element = document.querySelectorAll('.stats')[0];
             element.innerHTML = crunch;
             element.style.visibility = this.show ? 'visible' : 'hidden';
@@ -1171,7 +1171,7 @@ void main() {
         const color_purple_water = [66, 66, 110, 255];
         class tile extends lod$1.obj {
             constructor(wpos) {
-                super(undefined, numbers.tiles);
+                super(numbers.tiles);
                 this.z = 0;
                 this.objs = [];
                 this.tuple = sprites$1.dtile;
@@ -1181,7 +1181,7 @@ void main() {
                 let pixel = wastes.colormap.pixel(this.wpos);
                 if (!pixel.is_black()) {
                     this.z = this.height = 4;
-                    this.tuple = sprites$1.dtile4;
+                    this.tuple = sprites$1.dtilesand;
                     this.size = [24, 17];
                     this.color = wastes.colormap.pixel(this.wpos).array;
                 }
@@ -1231,6 +1231,7 @@ void main() {
         const color_slimy_wall = [20, 78, 54];
         const color_deck = [114, 128, 124];
         const color_slimy_wall_and_deck = [20, 78, 51];
+        const color_metal_wall_and_deck = [20, 84, 87];
         const color_acid_barrel = [61, 118, 48];
         const color_false_front = [255, 255, 255];
         function register() {
@@ -1241,8 +1242,9 @@ void main() {
             wastes.roofmap = new colormap('roofmap');
             wastes.treemap = new colormap('treemap');
             wastes.colormap = new colormap('colormap');
-            function factory(type, pixel, pos) {
+            function factory(type, pixel, pos, hints = {}) {
                 let obj = new type;
+                obj.hints = hints;
                 obj.pixel = pixel;
                 obj.wpos = pos;
                 lod$1.add(obj);
@@ -1270,16 +1272,21 @@ void main() {
                     let pixel = wastes.buildingmap.pixel(pos);
                     if (pixel.is_color(color_slimy_wall)) {
                         factory(objects.deck, pixel, pos);
-                        factory(objects.wall, pixel, pos);
-                        //factory(objects.roof, pixel, pos);
-                    }
-                    else if (pixel.is_color(color_deck)) {
-                        factory(objects.deck, pixel, pos);
+                        factory(objects.wall, pixel, pos, { type: 'slimy' });
                         //factory(objects.roof, pixel, pos);
                     }
                     else if (pixel.is_color(color_slimy_wall_and_deck)) {
                         factory(objects.deck, pixel, pos);
                         factory(objects.wall, pixel, pos);
+                        //factory(objects.roof, pixel, pos);
+                    }
+                    else if (pixel.is_color(color_metal_wall_and_deck)) {
+                        factory(objects.deck, pixel, pos);
+                        factory(objects.wall, pixel, pos, { type: 'metal' });
+                        //factory(objects.roof, pixel, pos);
+                    }
+                    else if (pixel.is_color(color_deck)) {
+                        factory(objects.deck, pixel, pos);
                         //factory(objects.roof, pixel, pos);
                     }
                     else if (pixel.is_color(color_wooden_door)) {
@@ -1301,7 +1308,6 @@ void main() {
             console.log(' objects start ');
         }
         objects.start = start;
-        const zeroes = [0, 0, 0, 0];
         class pixel {
             constructor(context, pos, array) {
                 this.context = context;
@@ -1354,10 +1360,9 @@ void main() {
             get(pos) {
                 if (this.data[pos[1]])
                     return this.data[pos[1]][pos[0]];
-                return zeroes;
             }
             pixel(pos) {
-                return new pixel(this, pos, this.get(pos));
+                return new pixel(this, pos, this.get(pos) || [0, 0, 0, 0]);
             }
             process() {
                 for (let y = 0; y < mapSpan; y++) {
@@ -1373,8 +1378,8 @@ void main() {
         }
         objects.colormap = colormap;
         class objected extends lod$1.obj {
-            constructor(hints, counts) {
-                super(hints, counts);
+            constructor(counts) {
+                super(counts);
                 this.cell = [0, 0];
             }
             tiled() {
@@ -1398,7 +1403,7 @@ void main() {
         objects.objected = objected;
         class roof extends objected {
             constructor() {
-                super(undefined, numbers.roofs);
+                super(numbers.roofs);
                 this.height = 4;
             }
             create() {
@@ -1415,7 +1420,7 @@ void main() {
         objects.roof = roof;
         class deck extends objected {
             constructor() {
-                super(undefined, numbers.floors);
+                super(numbers.floors);
                 this.height = 3;
             }
             create() {
@@ -1435,7 +1440,7 @@ void main() {
         objects.deck = deck;
         class acidbarrel extends objected {
             constructor() {
-                super(undefined, numbers.floors);
+                super(numbers.floors);
                 this.height = 4;
             }
             create() {
@@ -1452,7 +1457,7 @@ void main() {
         objects.acidbarrel = acidbarrel;
         class falsefront extends objected {
             constructor() {
-                super(undefined, numbers.roofs);
+                super(numbers.roofs);
                 this.height = 10;
             }
             create() {
@@ -1471,16 +1476,20 @@ void main() {
         objects.falsefront = falsefront;
         class wall extends objected {
             constructor() {
-                super(undefined, numbers.walls);
+                super(numbers.walls);
                 this.height = 26;
             }
             create() {
+                var _a;
                 this.tiled();
                 this.size = [24, 40];
                 this.cell = [255 - this.pixel.array[3], 0];
+                let tuple = sprites$1.dwallslimy;
+                if (((_a = this.hints) === null || _a === void 0 ? void 0 : _a.type) == 'metal')
+                    tuple = sprites$1.dwallmetal1;
                 new sprite({
                     binded: this,
-                    tuple: sprites$1.dwallsslimy,
+                    tuple: tuple,
                     cell: this.cell,
                     order: .5,
                 });
@@ -1493,7 +1502,7 @@ void main() {
         objects.wall = wall;
         class door extends objected {
             constructor() {
-                super(undefined, numbers.walls);
+                super(numbers.walls);
                 this.height = 26;
                 //this.cell = [1, 0];
             }
@@ -1515,7 +1524,7 @@ void main() {
         objects.door = door;
         class shrubs extends objected {
             constructor() {
-                super(undefined, numbers.trees);
+                super(numbers.trees);
             }
             create() {
                 this.size = [24, 15];
@@ -6085,7 +6094,7 @@ void main() {
                 elf.position.set(1, 0, 0);
                 ren$1.scene.add(group);
                 let sun = new THREE.DirectionalLight(0xffffff, 0.5);
-                sun.position.set(-wastes.size, wastes.size * 1, wastes.size / 2);
+                sun.position.set(-wastes.size, wastes.size * 2, wastes.size / 2);
                 //sun.add(new AxesHelper(100));
                 group.add(sun);
                 group.add(sun.target);

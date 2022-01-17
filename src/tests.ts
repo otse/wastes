@@ -21,7 +21,7 @@ export namespace tests {
 		static start() {
 			const mouseAsteroid = false;
 			if (mouseAsteroid) {
-				this.obj = new lod.obj({});
+				this.obj = new lod.obj();
 				this.obj.shape = new sprite({ binded: this.obj, tuple: sprites.asteroid });
 				this.obj.show();
 				let daisy = this.obj.shape as sprite;

@@ -10,6 +10,7 @@ namespace app {
 		AGAIN,
 		UP
 	};
+	export var error;
 	var keys = {};
 	var buttons = {};
 	var pos: vec2 = [0, 0];
@@ -39,11 +40,13 @@ namespace app {
 		function onmousedown(e) { buttons[e.button] = 1; }
 		function onmouseup(e) { buttons[e.button] = 0; }
 		function onwheel(e) { wheel = e.deltaY < 0 ? 1 : -1; }
+		function onerror(message) { document.querySelectorAll('.stats')[0].innerHTML = message; }
 		document.onkeydown = document.onkeyup = onkeys;
 		document.onmousemove = onmousemove;
 		document.onmousedown = onmousedown;
 		document.onmouseup = onmouseup;
 		document.onwheel = onwheel;
+		window.onerror = onerror;
 		ren.init();
 		wastes.init();
 		loop(0);

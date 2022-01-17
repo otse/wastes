@@ -21,6 +21,7 @@ namespace objects {
 	const color_slimy_wall: vec3 = [20, 78, 54];
 	const color_deck: vec3 = [114, 128, 124];
 	const color_slimy_wall_and_deck: vec3 = [20, 78, 51];
+	const color_metal_wall_and_deck: vec3 = [20, 84, 87];
 	const color_acid_barrel: vec3 = [61, 118, 48];
 
 	const color_false_front: vec3 = [255, 255, 255];
@@ -38,8 +39,9 @@ namespace objects {
 
 		const treeTreshold = 50;
 
-		function factory<type extends objected>(type: { new(): type }, pixel, pos) {
+		function factory<type extends objected>(type: { new(): type }, pixel, pos, hints = {}) {
 			let obj = new type;
+			obj.hints = hints;
 			obj.pixel = pixel;
 			obj.wpos = pos;
 			lod.add(obj);
@@ -72,16 +74,21 @@ namespace objects {
 				let pixel = wastes.buildingmap.pixel(pos);
 				if (pixel.is_color(color_slimy_wall)) {
 					factory(objects.deck, pixel, pos);
-					factory(objects.wall, pixel, pos);
-					//factory(objects.roof, pixel, pos);
-				}
-				else if (pixel.is_color(color_deck)) {
-					factory(objects.deck, pixel, pos);
+					factory(objects.wall, pixel, pos, { type: 'slimy' });
 					//factory(objects.roof, pixel, pos);
 				}
 				else if (pixel.is_color(color_slimy_wall_and_deck)) {
 					factory(objects.deck, pixel, pos);
 					factory(objects.wall, pixel, pos);
+					//factory(objects.roof, pixel, pos);
+				}
+				else if (pixel.is_color(color_metal_wall_and_deck)) {
+					factory(objects.deck, pixel, pos);
+					factory(objects.wall, pixel, pos, { type: 'metal' });
+					//factory(objects.roof, pixel, pos);
+				}
+				else if (pixel.is_color(color_deck)) {
+					factory(objects.deck, pixel, pos);
 					//factory(objects.roof, pixel, pos);
 				}
 				else if (pixel.is_color(color_wooden_door)) {
@@ -158,13 +165,12 @@ namespace objects {
 			this.ctx.drawImage(img, 0, 0, img.width, img.height);
 			this.process();
 		}
-		get(pos: vec2) {
+		get(pos: vec2): vec4 | undefined {
 			if (this.data[pos[1]])
 				return this.data[pos[1]][pos[0]];
-			return zeroes;
 		}
 		pixel(pos: vec2) {
-			return new pixel(this, pos, this.get(pos));
+			return new pixel(this, pos, this.get(pos) || [0, 0, 0, 0]);
 		}
 		process() {
 			for (let y = 0; y < mapSpan; y++) {
@@ -181,13 +187,15 @@ namespace objects {
 
 	export class objected extends lod.obj {
 		pixel?: pixel
-		tile: tiles.tile
+		tile?: tiles.tile
 		cell: vec2 = [0, 0]
-		constructor(hints, counts: numbers.tally) {
-			super(hints, counts);
+		hints?: any
+		constructor(counts: numbers.tally) {
+			super(counts);
+
 		}
 		tiled() {
-			this.tile = tiles.get(this.wpos)!;
+			this.tile = tiles.get(this.wpos);
 		}
 		//update(): void {
 		//	this.tiled();
@@ -206,7 +214,7 @@ namespace objects {
 	}
 	export class roof extends objected {
 		constructor() {
-			super(undefined, numbers.roofs);
+			super(numbers.roofs);
 			this.height = 4;
 		}
 		create() {
@@ -222,7 +230,7 @@ namespace objects {
 	}
 	export class deck extends objected {
 		constructor() {
-			super(undefined, numbers.floors);
+			super(numbers.floors);
 			this.height = 3;
 		}
 		create() {
@@ -241,7 +249,7 @@ namespace objects {
 	}
 	export class acidbarrel extends objected {
 		constructor() {
-			super(undefined, numbers.floors);
+			super(numbers.floors);
 			this.height = 4;
 		}
 		create() {
@@ -257,7 +265,7 @@ namespace objects {
 	}
 	export class falsefront extends objected {
 		constructor() {
-			super(undefined, numbers.roofs);
+			super(numbers.roofs);
 			this.height = 10;
 		}
 		create() {
@@ -275,16 +283,19 @@ namespace objects {
 	}
 	export class wall extends objected {
 		constructor() {
-			super(undefined, numbers.walls);
+			super(numbers.walls);
 			this.height = 26;
 		}
 		create() {
 			this.tiled();
 			this.size = [24, 40];
 			this.cell = [255 - this.pixel!.array[3], 0];
+			let tuple = sprites.dwallslimy;
+			if (this.hints?.type == 'metal')
+				tuple = sprites.dwallmetal1;
 			let shape = new sprite({
 				binded: this,
-				tuple: sprites.dwallsslimy,
+				tuple: tuple,
 				cell: this.cell,
 				order: .5,
 			});
@@ -300,7 +311,7 @@ namespace objects {
 	export class door extends objected {
 		cell: vec2
 		constructor() {
-			super(undefined, numbers.walls);
+			super(numbers.walls);
 			this.height = 26;
 			//this.cell = [1, 0];
 		}
@@ -324,7 +335,7 @@ namespace objects {
 
 	export class shrubs extends objected {
 		constructor() {
-			super(undefined, numbers.trees);
+			super(numbers.trees);
 		}
 		create() {
 			this.size = [24, 15];
