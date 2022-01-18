@@ -11,12 +11,11 @@ import hooks from "./hooks";
 
 // the view manages what it sees
 
-
 export class view {
 	zoom = 0.33
 	zoomIndex = 3
 	zooms = [1, 0.5, 0.33, 0.2, 0.1]
-	wpos: vec2 = [50, 43]
+	wpos: vec2 = [42, 45]
 	rpos: vec2 = [0, 0]
 	mpos: vec2 = [0, 0]
 	mwpos: vec2 = [0, 0]
@@ -154,7 +153,7 @@ export class view {
 		crunch += `walls: ${numbers.roofs[0]} / ${numbers.roofs[1]}<br />`;
 		crunch += '<br />';
 
-		crunch += `controls: WASD, RF to zoom, X to go fast, middlemouse to pan<br />`;
+		crunch += `controls: WASD to move, R, F, to zoom, middlemouse to pan<br />`;
 
 		let element = document.querySelectorAll('.stats')[0] as any
 		element.innerHTML = crunch;

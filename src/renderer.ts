@@ -47,9 +47,11 @@ namespace ren {
 		export var tiles: Group
 	}
 	export var scene: Scene
-	export var scenert: Scene
+	export var scene2: Scene
+
 	export var camera: PerspectiveCamera
 	export var camera2: OrthographicCamera
+	
 	export var target: WebGLRenderTarget
 	export var renderer: WebGLRenderer
 
@@ -102,7 +104,7 @@ namespace ren {
 
 		renderer.setRenderTarget(null);
 		renderer.clear();
-		renderer.render(scenert, camera2);
+		renderer.render(scene2, camera2);
 	}
 
 	export var plane
@@ -122,7 +124,7 @@ namespace ren {
 		scene.add(groups.axisSwap);
 		scene.background = new Color('#292929');
 
-		scenert = new Scene();
+		scene2 = new Scene();
 
 		ambientLight = new AmbientLight(0xffffff);
 		scene.add(ambientLight);
@@ -130,8 +132,7 @@ namespace ren {
 		if (DPI_UPSCALED_RT)
 			ndpi = window.devicePixelRatio;
 
-		target = new WebGLRenderTarget(
-			window.innerWidth, window.innerHeight,
+		target = new WebGLRenderTarget(1024, 1024,
 			{
 				minFilter: THREE.NearestFilter,
 				magFilter: THREE.NearestFilter,
@@ -160,7 +161,7 @@ namespace ren {
 		quadPost = new Mesh(plane, materialPost);
 		//quadPost.position.z = -100;
 
-		scenert.add(quadPost);
+		scene2.add(quadPost);
 
 		(window as any).ren = ren;
 	}
@@ -184,11 +185,16 @@ namespace ren {
 		console.log(`
 		window inner ${pts.to_string(screen)}\n
 		      new is ${pts.to_string(screenCorrected)}`);
+
 		target.setSize(screenCorrected[0], screenCorrected[1]);
+
 		plane = new PlaneBufferGeometry(screenCorrected[0], screenCorrected[1]);
+
 		if (quadPost)
 			quadPost.geometry = plane;
+
 		const cameraMode = 0;
+
 		if (cameraMode) {
 			camera = new PerspectiveCamera(
 				70, window.innerWidth / window.innerHeight, 1, 3000);

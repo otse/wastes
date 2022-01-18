@@ -13,6 +13,8 @@ export namespace tiles {
 
 	const mapSize = 100
 
+	export var started = false;
+
 	var arrays: tiles.tile[][] = []
 
 	export var mpos4: vec2
@@ -43,12 +45,18 @@ export namespace tiles {
 
 	export function start() {
 
+		started = true;
+
 		console.log(' tiles start ');
 
 		lod.ggalaxy.at(lod.ggalaxy.big(wastes.gview.wpos));
 	}
 
 	export function tick() {
+
+		if (!started)
+			return;
+			
 		let mpos0 = lod.unproject(pts.add(wastes.gview.mrpos, [0, 0]));
 		mpos0 = pts.floor(mpos0);
 		mpos4 = lod.unproject(pts.add(wastes.gview.mrpos, [0, -4]));

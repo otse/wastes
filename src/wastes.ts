@@ -79,6 +79,7 @@ export namespace wastes {
 			modeler.start();
 		}
 		else {
+			gview = view.make();
 			objects.register();
 			tiles.register();
 			sprites.start();
@@ -92,12 +93,11 @@ export namespace wastes {
 			return;
 		started = true;
 		console.log(' wastes starting ');
-		gview = view.make();
 		starts();
 	}
 
 	export function init() {
-		console.log(' wests init ');
+		console.log(' wastes init ');
 		time = new Date().getTime();
 		resourced('RC_UNDEFINED');
 		resourced('POPULAR_ASSETS');
@@ -110,12 +110,13 @@ export namespace wastes {
 			reasonable_waiter()
 			return
 		}
-		gview.tick();
+		gview?.tick();
 		if (!testing_chamber.started) {
 			tiles.tick();
 			tests.tick();
 		}
 		testing_chamber.tick();
+		modeler.tick();
 		//lands.tick();
 	}
 
