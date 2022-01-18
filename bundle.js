@@ -774,8 +774,8 @@ void main() {
         sprites.dwall = [[96, 40], [24, 40], 0, 'tex/dwalls'];
         sprites.ddeck = [[72, 17], [24, 17], 0, 'tex/ddeck'];
         sprites.droof = [[72, 17], [24, 17], 0, 'tex/droof'];
-        sprites.dwallmetal1 = [[288, 40], [24, 40], 0, 'tex/dwallmetal1'];
-        sprites.dwallslimy = [[288, 40], [24, 40], 0, 'tex/dwallslimy'];
+        sprites.drustywalls = [[288, 40], [24, 40], 0, 'tex/drustywalls'];
+        sprites.dwoodenwalls = [[288, 40], [24, 40], 0, 'tex/dwoodenwalls'];
         sprites.ddoorwood = [[96, 40], [24, 40], 0, 'tex/ddoor'];
         sprites.dacidbarrel = [[24, 35], [24, 35], 0, 'tex/dacidbarrel'];
         sprites.dfalsefronts = [[192, 40], [24, 40], 0, 'tex/dfalsefronts'];
@@ -1483,10 +1483,10 @@ void main() {
                 var _a;
                 this.tiled();
                 this.size = [24, 40];
-                this.cell = [255 - this.pixel.array[3], 0];
-                let tuple = sprites$1.dwallslimy;
+                //this.cell = [255 - this.pixel!.array[3], 0];
+                let tuple = sprites$1.dwoodenwalls;
                 if (((_a = this.hints) === null || _a === void 0 ? void 0 : _a.type) == 'metal')
-                    tuple = sprites$1.dwallmetal1;
+                    tuple = sprites$1.drustywalls;
                 new sprite({
                     binded: this,
                     tuple: tuple,
@@ -6087,13 +6087,28 @@ void main() {
                 group.rotation.set(Math.PI / 6, Math.PI / 4, 0);
                 group.position.set(wastes.size, 0, 0);
                 group.add(elf);
+                console.log(elf);
+                function fix(material) {
+                    //material.color = new THREE.Color('red');
+                    material.minFilter = material.magFilter = THREE__default["default"].LinearFilter;
+                }
+                function traversal(object) {
+                    if (object.material) {
+                        if (!object.material.length)
+                            fix(object.material);
+                        else
+                            for (let material of object.material)
+                                fix(material);
+                    }
+                }
+                elf.traverse(traversal);
                 //group.add(new AxesHelper(300));
                 console.log(elf.scale);
-                elf.scale.multiplyScalar(wastes.size);
+                elf.scale.multiplyScalar(22);
                 elf.rotation.set(-Math.PI / 2, 0, 0);
                 elf.position.set(1, 0, 0);
                 ren$1.scene.add(group);
-                let sun = new THREE.DirectionalLight(0xffffff, 0.5);
+                let sun = new THREE.DirectionalLight(0xffffff, 0.35);
                 sun.position.set(-wastes.size, wastes.size * 2, wastes.size / 2);
                 //sun.add(new AxesHelper(100));
                 group.add(sun);

@@ -289,10 +289,10 @@ namespace objects {
 		create() {
 			this.tiled();
 			this.size = [24, 40];
-			this.cell = [255 - this.pixel!.array[3], 0];
-			let tuple = sprites.dwallslimy;
+			//this.cell = [255 - this.pixel!.array[3], 0];
+			let tuple = sprites.dwoodenwalls;
 			if (this.hints?.type == 'metal')
-				tuple = sprites.dwallmetal1;
+				tuple = sprites.drustywalls;
 			let shape = new sprite({
 				binded: this,
 				tuple: tuple,
