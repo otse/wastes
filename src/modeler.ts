@@ -8,6 +8,8 @@ namespace modeler {
 
 	export var started = false;
 
+	const textures = 'tex/stock/metalrooftiles.jpg'
+
 	var gmesh;
 	var ggroup;
 	var rotation: 0 | 1 | 2 | 3 = 1;
@@ -59,10 +61,10 @@ namespace modeler {
 
 				let alignments = [
 					undefined,
-					new Matrix3().setUvTransform(0, 0, 1, 1, rotation * Math.PI / 2, 0, 1),
-					new Matrix3().setUvTransform(0, 0, 1, 1, rotation * Math.PI / 2, 0, 1),
+					new Matrix3().setUvTransform(0, 0, 1, 1, rotation * Math.PI / 2, 0, 1), // left
+					new Matrix3().setUvTransform(0, 0, 0.5, 1, rotation * Math.PI / 2, 0, 1),  // top
 					undefined,
-					new Matrix3().setUvTransform(0, 0, 1, 1, rotation * Math.PI / 2, 0, 1),
+					new Matrix3().setUvTransform(0, 0, 1, 1, rotation * Math.PI / 2, 0, 1), // right
 				]
 
 				for (let i of [1, 2, 4]) {
@@ -106,6 +108,11 @@ namespace modeler {
 		if (app.key('e') == 1) {
 			rotation += 1;
 			rebuild = true;
+		}
+
+		if (app.key('arrowright') == 1) {
+			console.log('switch tex');
+			
 		}
 
 		rotation = rotation < 0 ? 3 : rotation > 3 ? 0 : rotation;

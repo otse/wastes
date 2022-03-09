@@ -20,11 +20,19 @@ namespace objects {
 	const color_wooden_door_and_deck: vec3 = [24, 93, 61];
 	const color_slimy_wall: vec3 = [20, 78, 54];
 	const color_deck: vec3 = [114, 128, 124];
-	const color_slimy_wall_and_deck: vec3 = [20, 78, 51];
-	const color_metal_wall_and_deck: vec3 = [20, 84, 87];
+	const color_rusty_wall_and_deck: vec3 = [20, 84, 87];
 	const color_acid_barrel: vec3 = [61, 118, 48];
 
 	const color_false_front: vec3 = [255, 255, 255];
+
+	export function factory<type extends objected>(type: { new(): type }, pixel, pos, hints = {}) {
+		let obj = new type;
+		obj.hints = hints;
+		obj.pixel = pixel;
+		obj.wpos = pos;
+		lod.add(obj);
+		return obj;
+	}
 
 	export function register() {
 
@@ -39,15 +47,7 @@ namespace objects {
 
 		const treeTreshold = 50;
 
-		function factory<type extends objected>(type: { new(): type }, pixel, pos, hints = {}) {
-			let obj = new type;
-			obj.hints = hints;
-			obj.pixel = pixel;
-			obj.wpos = pos;
-			lod.add(obj);
-			return obj;
-		}
-
+		
 		hooks.register('sectorCreate', (sector: lod.sector) => {
 			pts.func(sector.small, (pos) => {
 				let pixel = wastes.objectmap.pixel(pos);
@@ -77,14 +77,9 @@ namespace objects {
 					factory(objects.wall, pixel, pos, { type: 'slimy' });
 					//factory(objects.roof, pixel, pos);
 				}
-				else if (pixel.is_color(color_slimy_wall_and_deck)) {
+				else if (pixel.is_color(color_rusty_wall_and_deck)) {
 					factory(objects.deck, pixel, pos);
-					factory(objects.wall, pixel, pos);
-					//factory(objects.roof, pixel, pos);
-				}
-				else if (pixel.is_color(color_metal_wall_and_deck)) {
-					factory(objects.deck, pixel, pos);
-					factory(objects.wall, pixel, pos, { type: 'metal' });
+					factory(objects.wall, pixel, pos, { type: 'rusty' });
 					//factory(objects.roof, pixel, pos);
 				}
 				else if (pixel.is_color(color_deck)) {
@@ -212,21 +207,31 @@ namespace objects {
 			(this.shape as sprite).z = this.z;
 		}
 	}
-	export class roof extends objected {
+	export class wall extends objected {
 		constructor() {
-			super(numbers.roofs);
-			this.height = 4;
+			super(numbers.walls);
+			this.height = 24;
 		}
 		create() {
 			this.tiled();
-			this.size = [24, 17];
+			this.size = [24, 40];
+			this.cell = [255 - this.pixel!.array[3], 0];
+			let tuple = sprites.dwoodenwalls;
+			if (this.hints?.type == 'rusty')
+				tuple = sprites.drustywalls;
 			let shape = new sprite({
 				binded: this,
-				tuple: sprites.droof,
+				tuple: tuple,
+				cell: this.cell,
 				order: .6,
 			});
-			this.z = shape.z = 3 + 30;
+			this.stack();
 		}
+		adapt() {
+			// change sprite to surrounding walls
+		}
+		//tick() {
+		//}
 	}
 	export class deck extends objected {
 		constructor() {
@@ -245,6 +250,22 @@ namespace objects {
 				order: .4,
 			});
 			this.stack();
+		}
+	}
+	export class roof extends objected {
+		constructor() {
+			super(numbers.roofs);
+			this.height = 4;
+		}
+		create() {
+			this.tiled();
+			this.size = [24, 17];
+			let shape = new sprite({
+				binded: this,
+				tuple: sprites.droof,
+				order: .6,
+			});
+			this.z = shape.z = 3 + 30;
 		}
 	}
 	export class acidbarrel extends objected {
@@ -276,43 +297,16 @@ namespace objects {
 				binded: this,
 				tuple: sprites.dfalsefronts,
 				cell: this.cell,
-				order: .6,
+				order: .7,
 			});
 			this.stack();
 		}
 	}
-	export class wall extends objected {
-		constructor() {
-			super(numbers.walls);
-			this.height = 26;
-		}
-		create() {
-			this.tiled();
-			this.size = [24, 40];
-			//this.cell = [255 - this.pixel!.array[3], 0];
-			let tuple = sprites.dwoodenwalls;
-			if (this.hints?.type == 'metal')
-				tuple = sprites.drustywalls;
-			let shape = new sprite({
-				binded: this,
-				tuple: tuple,
-				cell: this.cell,
-				order: .5,
-			});
-			this.stack();
-		}
-		adapt() {
-			// change sprite to surrounding walls
-		}
-		//tick() {
-		//}
-	}
-
 	export class door extends objected {
 		cell: vec2
 		constructor() {
 			super(numbers.walls);
-			this.height = 26;
+			this.height = 24;
 			//this.cell = [1, 0];
 		}
 		create() {

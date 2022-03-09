@@ -6,6 +6,7 @@
         "start": "serve public"
     },
     "dependencies": {
+        "rollup": "^2.70.0",
         "three": "^0.134.0"
     }
 }

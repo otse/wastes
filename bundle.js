@@ -775,7 +775,7 @@ void main() {
         sprites.ddeck = [[72, 17], [24, 17], 0, 'tex/ddeck'];
         sprites.droof = [[72, 17], [24, 17], 0, 'tex/droof'];
         sprites.drustywalls = [[288, 40], [24, 40], 0, 'tex/drustywalls'];
-        sprites.dwoodenwalls = [[288, 40], [24, 40], 0, 'tex/dwoodenwalls'];
+        sprites.dwoodenwalls = [[288, 40], [24, 40], 0, 'tex/dslimywalls'];
         sprites.ddoorwood = [[96, 40], [24, 40], 0, 'tex/ddoor'];
         sprites.dacidbarrel = [[24, 35], [24, 35], 0, 'tex/dacidbarrel'];
         sprites.dfalsefronts = [[192, 40], [24, 40], 0, 'tex/dfalsefronts'];
@@ -1234,10 +1234,18 @@ void main() {
         const color_wooden_door_and_deck = [24, 93, 61];
         const color_slimy_wall = [20, 78, 54];
         const color_deck = [114, 128, 124];
-        const color_slimy_wall_and_deck = [20, 78, 51];
-        const color_metal_wall_and_deck = [20, 84, 87];
+        const color_rusty_wall_and_deck = [20, 84, 87];
         const color_acid_barrel = [61, 118, 48];
         const color_false_front = [255, 255, 255];
+        function factory(type, pixel, pos, hints = {}) {
+            let obj = new type;
+            obj.hints = hints;
+            obj.pixel = pixel;
+            obj.wpos = pos;
+            lod$1.add(obj);
+            return obj;
+        }
+        objects.factory = factory;
         function register() {
             console.log(' objects register ');
             wastes.heightmap = new colormap('heightmap');
@@ -1246,14 +1254,6 @@ void main() {
             wastes.roofmap = new colormap('roofmap');
             wastes.treemap = new colormap('treemap');
             wastes.colormap = new colormap('colormap');
-            function factory(type, pixel, pos, hints = {}) {
-                let obj = new type;
-                obj.hints = hints;
-                obj.pixel = pixel;
-                obj.wpos = pos;
-                lod$1.add(obj);
-                return obj;
-            }
             hooks.register('sectorCreate', (sector) => {
                 pts.func(sector.small, (pos) => {
                     let pixel = wastes.objectmap.pixel(pos);
@@ -1279,14 +1279,9 @@ void main() {
                         factory(objects.wall, pixel, pos, { type: 'slimy' });
                         //factory(objects.roof, pixel, pos);
                     }
-                    else if (pixel.is_color(color_slimy_wall_and_deck)) {
+                    else if (pixel.is_color(color_rusty_wall_and_deck)) {
                         factory(objects.deck, pixel, pos);
-                        factory(objects.wall, pixel, pos);
-                        //factory(objects.roof, pixel, pos);
-                    }
-                    else if (pixel.is_color(color_metal_wall_and_deck)) {
-                        factory(objects.deck, pixel, pos);
-                        factory(objects.wall, pixel, pos, { type: 'metal' });
+                        factory(objects.wall, pixel, pos, { type: 'rusty' });
                         //factory(objects.roof, pixel, pos);
                     }
                     else if (pixel.is_color(color_deck)) {
@@ -1405,23 +1400,32 @@ void main() {
             }
         }
         objects.objected = objected;
-        class roof extends objected {
+        class wall extends objected {
             constructor() {
-                super(numbers.roofs);
-                this.height = 4;
+                super(numbers.walls);
+                this.height = 24;
             }
             create() {
+                var _a;
                 this.tiled();
-                this.size = [24, 17];
-                let shape = new sprite({
+                this.size = [24, 40];
+                this.cell = [255 - this.pixel.array[3], 0];
+                let tuple = sprites$1.dwoodenwalls;
+                if (((_a = this.hints) === null || _a === void 0 ? void 0 : _a.type) == 'rusty')
+                    tuple = sprites$1.drustywalls;
+                new sprite({
                     binded: this,
-                    tuple: sprites$1.droof,
+                    tuple: tuple,
+                    cell: this.cell,
                     order: .6,
                 });
-                this.z = shape.z = 3 + 30;
+                this.stack();
+            }
+            adapt() {
+                // change sprite to surrounding walls
             }
         }
-        objects.roof = roof;
+        objects.wall = wall;
         class deck extends objected {
             constructor() {
                 super(numbers.floors);
@@ -1442,6 +1446,23 @@ void main() {
             }
         }
         objects.deck = deck;
+        class roof extends objected {
+            constructor() {
+                super(numbers.roofs);
+                this.height = 4;
+            }
+            create() {
+                this.tiled();
+                this.size = [24, 17];
+                let shape = new sprite({
+                    binded: this,
+                    tuple: sprites$1.droof,
+                    order: .6,
+                });
+                this.z = shape.z = 3 + 30;
+            }
+        }
+        objects.roof = roof;
         class acidbarrel extends objected {
             constructor() {
                 super(numbers.floors);
@@ -1472,42 +1493,16 @@ void main() {
                     binded: this,
                     tuple: sprites$1.dfalsefronts,
                     cell: this.cell,
-                    order: .6,
+                    order: .7,
                 });
                 this.stack();
             }
         }
         objects.falsefront = falsefront;
-        class wall extends objected {
-            constructor() {
-                super(numbers.walls);
-                this.height = 26;
-            }
-            create() {
-                var _a;
-                this.tiled();
-                this.size = [24, 40];
-                //this.cell = [255 - this.pixel!.array[3], 0];
-                let tuple = sprites$1.dwoodenwalls;
-                if (((_a = this.hints) === null || _a === void 0 ? void 0 : _a.type) == 'metal')
-                    tuple = sprites$1.drustywalls;
-                new sprite({
-                    binded: this,
-                    tuple: tuple,
-                    cell: this.cell,
-                    order: .5,
-                });
-                this.stack();
-            }
-            adapt() {
-                // change sprite to surrounding walls
-            }
-        }
-        objects.wall = wall;
         class door extends objected {
             constructor() {
                 super(numbers.walls);
-                this.height = 26;
+                this.height = 24;
                 //this.cell = [1, 0];
             }
             create() {
@@ -1581,9 +1576,9 @@ void main() {
                 let alignments = [
                     undefined,
                     new THREE.Matrix3().setUvTransform(0, 0, 1, 1, rotation * Math.PI / 2, 0, 1),
-                    new THREE.Matrix3().setUvTransform(0, 0, 1, 1, rotation * Math.PI / 2, 0, 1),
+                    new THREE.Matrix3().setUvTransform(0, 0, 0.5, 1, rotation * Math.PI / 2, 0, 1),
                     undefined,
-                    new THREE.Matrix3().setUvTransform(0, 0, 1, 1, rotation * Math.PI / 2, 0, 1),
+                    new THREE.Matrix3().setUvTransform(0, 0, 1, 1, rotation * Math.PI / 2, 0, 1), // right
                 ];
                 for (let i of [1, 2, 4]) {
                     materials[i] = myboxmaterial({
@@ -1614,6 +1609,9 @@ void main() {
             if (app$1.key('e') == 1) {
                 rotation += 1;
                 rebuild = true;
+            }
+            if (app$1.key('arrowright') == 1) {
+                console.log('switch tex');
             }
             rotation = rotation < 0 ? 3 : rotation > 3 ? 0 : rotation;
             if (rebuild && gmesh) {
