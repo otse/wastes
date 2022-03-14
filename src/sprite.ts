@@ -20,7 +20,7 @@ export namespace sprite {
 };
 
 export class sprite extends lod.shape {
-	z = 0
+	rup = 0
 	mesh: Mesh
 	material: MeshBasicMaterial
 	geometry: PlaneBufferGeometry
@@ -38,12 +38,12 @@ export class sprite extends lod.shape {
 	update() {
 		if (!this.mesh)
 			return;
-		this.mesh.rotation.z = this.vars.binded.rz;
+		this.mesh.rotation.z = this.vars.binded.ro;
 		const obj = this.vars.binded;
-
-		let rpos = pts.add(obj.rpos, pts.divide(obj.size, 2));
-		rpos = pts.add(rpos, pts.add(this.roffset, [0, this.z]));
-		this.mesh?.position.fromArray([...rpos, 0]);
+		let rposCalc;
+		rposCalc = pts.add(obj.rpos, pts.divide(obj.size, 2));
+		rposCalc = pts.add(rposCalc, [0, this.rup]);
+		this.mesh?.position.fromArray([...rposCalc, 0]);
 		this.mesh?.updateMatrix();
 	}
 	dispose() {

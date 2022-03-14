@@ -177,6 +177,13 @@ var wastes = (function (exports, THREE) {
             KEY[KEY["AGAIN"] = 3] = "AGAIN";
             KEY[KEY["UP"] = 4] = "UP";
         })(KEY = app.KEY || (app.KEY = {}));
+        let MOUSE;
+        (function (MOUSE) {
+            MOUSE[MOUSE["UP"] = -1] = "UP";
+            MOUSE[MOUSE["OFF"] = 0] = "OFF";
+            MOUSE[MOUSE["DOWN"] = 1] = "DOWN";
+            MOUSE[MOUSE["STILL"] = 2] = "STILL";
+        })(MOUSE = app.MOUSE || (app.MOUSE = {}));
         var keys = {};
         var buttons = {};
         var pos = [0, 0];
@@ -208,7 +215,7 @@ var wastes = (function (exports, THREE) {
             app.salt = version;
             function onmousemove(e) { pos[0] = e.clientX; pos[1] = e.clientY; }
             function onmousedown(e) { buttons[e.button] = 1; }
-            function onmouseup(e) { buttons[e.button] = -1; }
+            function onmouseup(e) { buttons[e.button] = MOUSE.UP; }
             function onwheel(e) { app.wheel = e.deltaY < 0 ? 1 : -1; }
             function onerror(message) { document.querySelectorAll('.stats')[0].innerHTML = message; }
             document.onkeydown = document.onkeyup = onkeys;
@@ -222,27 +229,29 @@ var wastes = (function (exports, THREE) {
             loop();
         }
         app.boot = boot;
-        function delay() {
+        function process_keys() {
             for (let i in keys) {
-                if (KEY.PRESS == keys[i])
+                if (keys[i] == KEY.PRESS)
                     keys[i] = KEY.WAIT;
-                else if (KEY.UP == keys[i])
+                else if (keys[i] == KEY.UP)
                     keys[i] = KEY.OFF;
             }
         }
-        app.delay = delay;
+        function process_mouse_buttons() {
+            for (let b of [0, 1, 2])
+                if (buttons[b] == MOUSE.DOWN)
+                    buttons[b] = MOUSE.STILL;
+                else if (buttons[b] == MOUSE.UP)
+                    buttons[b] = MOUSE.OFF;
+        }
         function loop(timestamp) {
             requestAnimationFrame(loop);
             ren$1.update();
             exports.wastes.tick();
             ren$1.render();
             app.wheel = 0;
-            for (let b of [0, 1, 2])
-                if (buttons[b] == 1)
-                    buttons[b] = 2;
-                else if (buttons[b] == -1)
-                    buttons[b] = 0;
-            delay();
+            process_keys();
+            process_mouse_buttons();
         }
         app.loop = loop;
         function sethtml(selector, html) {
@@ -672,7 +681,7 @@ void main() {
                 this.wpos = [0, 0];
                 this.rpos = [0, 0];
                 this.size = [100, 100];
-                this.rz = 0;
+                this.ro = 0;
                 this.z = 0;
                 this.height = 0;
                 this.counts[1]++;
@@ -772,6 +781,7 @@ void main() {
         sprites.shrubs = [[24, 15], [24, 15], 0, 'tex/shrubs'];
         sprites.dtile = [[24, 12], [24, 12], 0, 'tex/dtile'];
         sprites.dtile4 = [[24, 17], [24, 17], 0, 'tex/dtileup4'];
+        sprites.dswamptiles = [[96, 30], [24, 30], 0, 'tex/dswamptiles'];
         sprites.dtilesand = [[24, 17], [24, 17], 0, 'tex/dtilesand'];
         sprites.dwall = [[96, 40], [24, 40], 0, 'tex/dwalls'];
         sprites.ddeck = [[72, 17], [24, 17], 0, 'tex/ddeck'];
@@ -798,7 +808,7 @@ void main() {
         constructor(vars) {
             super(vars.binded, numbers.sprites);
             this.vars = vars;
-            this.z = 0;
+            this.rup = 0;
             this.roffset = [0, 0];
             if (!this.vars.cell)
                 this.vars.cell = [0, 0];
@@ -809,11 +819,12 @@ void main() {
             var _a, _b;
             if (!this.mesh)
                 return;
-            this.mesh.rotation.z = this.vars.binded.rz;
+            this.mesh.rotation.z = this.vars.binded.ro;
             const obj = this.vars.binded;
-            let rpos = pts.add(obj.rpos, pts.divide(obj.size, 2));
-            rpos = pts.add(rpos, pts.add(this.roffset, [0, this.z]));
-            (_a = this.mesh) === null || _a === void 0 ? void 0 : _a.position.fromArray([...rpos, 0]);
+            let rposCalc;
+            rposCalc = pts.add(obj.rpos, pts.divide(obj.size, 2));
+            rposCalc = pts.add(rposCalc, [0, this.rup]);
+            (_a = this.mesh) === null || _a === void 0 ? void 0 : _a.position.fromArray([...rposCalc, 0]);
             (_b = this.mesh) === null || _b === void 0 ? void 0 : _b.updateMatrix();
         }
         dispose() {
@@ -930,7 +941,7 @@ void main() {
                 var _a;
                 this.wpos[0] += this.float[0];
                 this.wpos[1] -= this.float[1];
-                this.rz += this.rate;
+                this.ro += this.rate;
                 super.update();
                 (_a = this.sector) === null || _a === void 0 ? void 0 : _a.swap(this);
             }
@@ -1052,8 +1063,8 @@ void main() {
             }
         }
         chase() {
-            pts.inv(this.rpos);
-            //ren.groups.axisSwap.position.set(inv[0], inv[1], 0);
+            // let inv = pts.inv(this.rpos);
+            // ren.groups.axisSwap.position.set(inv[0], inv[1], 0);
             ren$1.camera.position.set(this.rpos[0], this.rpos[1], 0);
         }
         mouse() {
@@ -1168,11 +1179,16 @@ void main() {
                 return;
             let mpos0 = lod$1.unproject(pts.add(wastes.gview.mrpos, [0, 0]));
             mpos0 = pts.floor(mpos0);
-            tiles.mpos4 = lod$1.unproject(pts.add(wastes.gview.mrpos, [0, -4]));
-            tiles.mpos4 = pts.floor(tiles.mpos4);
-            const tile4 = get(tiles.mpos4);
-            if (tile4 && tile4.z == 4)
-                tile4 === null || tile4 === void 0 ? void 0 : tile4.hover();
+            tiles.four = lod$1.unproject(pts.add(wastes.gview.mrpos, [0, -4]));
+            tiles.four = pts.floor(tiles.four);
+            tiles.six = lod$1.unproject(pts.add(wastes.gview.mrpos, [0, -6]));
+            tiles.six = pts.floor(tiles.six);
+            const heightOne = get(tiles.four);
+            const heightTwo = get(tiles.six);
+            if (heightTwo && heightTwo.z == 8)
+                heightTwo === null || heightTwo === void 0 ? void 0 : heightTwo.hover();
+            else if (heightOne && heightOne.z == 4)
+                heightOne === null || heightOne === void 0 ? void 0 : heightOne.hover();
             const tile0 = get(mpos0);
             if (tile0 && tile0.z == 0)
                 tile0 === null || tile0 === void 0 ? void 0 : tile0.hover();
@@ -1182,18 +1198,36 @@ void main() {
         class tile extends lod$1.obj {
             constructor(wpos) {
                 super(numbers.tiles);
-                this.z = 0;
-                this.objs = [];
-                this.tuple = sprites$1.dtile;
                 this.wpos = wpos;
                 this.size = [24, 12];
+                this.tuple = sprites$1.dtile;
                 this.color = color_purple_water;
-                let pixel = wastes.colormap.pixel(this.wpos);
-                if (!pixel.is_black()) {
+                let colormapPixel = wastes.colormap.pixel(this.wpos);
+                wastes.heightmap.pixel(this.wpos);
+                if (!colormapPixel.is_black()) {
                     this.z = this.height = 4;
-                    this.tuple = sprites$1.dtilesand;
-                    this.size = [24, 17];
+                    this.tuple = sprites$1.dswamptiles;
+                    this.cell = [1, 0];
+                    this.size = [24, 30];
                     this.color = wastes.colormap.pixel(this.wpos).array;
+                    //let heightmapPixel = wastes.heightmap.pixel(this.wpos);			
+                    //shape.rup = heightmapPixel.array[0];
+                    // Choose one of five heights
+                    /*
+                    const div = 1;
+                    const treshold = heightmapPixel.array[0] / 255;
+
+                    if (treshold > 0.05) {
+                        this.z = this.height = 8;
+                        console.log('high tile', treshold);
+
+                        this.cell = [1, 0];
+                        // this.color = [255, 0, 0, 255];
+                    }*/
+                    //if (this.height >= 4) {
+                    let heightmapPixel = wastes.heightmap.pixel(this.wpos);
+                    this.z = this.height = heightmapPixel.array[0] / 2;
+                    //}
                 }
             }
             get_stack() {
@@ -1211,11 +1245,14 @@ void main() {
                     return this.objs.splice(i, 1).length;
             }*/
             create() {
-                new sprite({
+                let shape = new sprite({
                     binded: this,
                     tuple: this.tuple,
-                    color: this.color
+                    cell: this.cell,
+                    color: this.color,
+                    order: .3
                 });
+                shape.rup = this.height;
             }
             //update() {}
             delete() {
@@ -1224,7 +1261,7 @@ void main() {
                 let sprite = this.shape;
                 if (!(sprite === null || sprite === void 0 ? void 0 : sprite.mesh))
                     return;
-                // sprite.mesh.material.color.set('green');
+                sprite.mesh.material.color.set('green');
             }
             tick() {
             }
@@ -1402,7 +1439,7 @@ void main() {
                         break;
                     this.z += obj.height;
                 }
-                this.shape.z = this.z;
+                this.shape.rup = this.z;
             }
         }
         objects.objected = objected;
@@ -1465,7 +1502,7 @@ void main() {
                     tuple: sprites$1.droof,
                     order: .6,
                 });
-                this.z = shape.z = 3 + 30;
+                this.z = shape.rup = 3 + 27;
             }
         }
         objects.roof = roof;

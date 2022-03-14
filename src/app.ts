@@ -10,6 +10,12 @@ namespace app {
 		AGAIN,
 		UP
 	};
+	export enum MOUSE {
+		UP = - 1,
+		OFF = 0,
+		DOWN,
+		STILL
+	};
 	export var error;
 	var keys = {};
 	var buttons = {};
@@ -38,7 +44,7 @@ namespace app {
 		salt = version;
 		function onmousemove(e) { pos[0] = e.clientX; pos[1] = e.clientY; }
 		function onmousedown(e) { buttons[e.button] = 1; }
-		function onmouseup(e) { buttons[e.button] = -1; }
+		function onmouseup(e) { buttons[e.button] = MOUSE.UP; }
 		function onwheel(e) { wheel = e.deltaY < 0 ? 1 : -1; }
 		function onerror(message) { document.querySelectorAll('.stats')[0].innerHTML = message; }
 		document.onkeydown = document.onkeyup = onkeys;
@@ -51,13 +57,20 @@ namespace app {
 		wastes.init();
 		loop(0);
 	}
-	export function delay() {
+	function process_keys() {
 		for (let i in keys) {
-			if (KEY.PRESS == keys[i])
+			if (keys[i] == KEY.PRESS)
 				keys[i] = KEY.WAIT;
-			else if (KEY.UP == keys[i])
+			else if (keys[i] == KEY.UP)
 				keys[i] = KEY.OFF;
 		}
+	}
+	function process_mouse_buttons() {
+		for (let b of [0, 1, 2])
+			if (buttons[b] == MOUSE.DOWN)
+				buttons[b] = MOUSE.STILL;
+			else if (buttons[b] == MOUSE.UP)
+				buttons[b] = MOUSE.OFF;
 	}
 	export function loop(timestamp) {
 		requestAnimationFrame(loop);
@@ -65,12 +78,9 @@ namespace app {
 		wastes.tick();
 		ren.render();
 		wheel = 0;
-		for (let b of [0, 1, 2])
-			if (buttons[b] == 1)
-				buttons[b] = 2;
-			else if (buttons[b] == -1)
-				buttons[b] = 0;
-		delay();
+
+		process_keys();
+		process_mouse_buttons();
 	}
 	export function sethtml(selector, html) {
 		let element = document.querySelectorAll(selector)[0];

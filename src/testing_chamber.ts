@@ -74,7 +74,7 @@ namespace testing_chamber {
 		tick() {
 			this.wpos[0] += this.float[0];
 			this.wpos[1] -= this.float[1];
-			this.rz += this.rate;
+			this.ro += this.rate;
 			super.update();
 			this.sector?.swap(this);
 		}

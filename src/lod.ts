@@ -254,7 +254,7 @@ namespace lod {
 		size: vec2 = [100, 100]
 		shape: shape | null
 		sector: sector | null
-		rz = 0
+		ro = 0
 		z = 0
 		height = 0
 		constructor(

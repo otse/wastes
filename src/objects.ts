@@ -92,7 +92,7 @@ namespace objects {
 					//factory(objects.roof, pixel, pos);
 				}
 				else if (pixel.is_color(color_wooden_door_and_deck)) {
-					factory(objects.deck, pixel, pos);
+					factory(objects.deck, pixel, pos); 
 					factory(objects.door, pixel, pos);
 					//factory(objects.roof, pixel, pos);
 				}
@@ -204,7 +204,7 @@ namespace objects {
 					break;
 				this.z += obj.height;
 			}
-			(this.shape as sprite).z = this.z;
+			(this.shape as sprite).rup = this.z;
 		}
 	}
 	export class wall extends objected {
@@ -265,7 +265,7 @@ namespace objects {
 				tuple: sprites.droof,
 				order: .6,
 			});
-			this.z = shape.z = 3 + 30;
+			this.z = shape.rup = 3 + 27;
 		}
 	}
 	export class acidbarrel extends objected {

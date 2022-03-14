@@ -76,7 +76,6 @@ export class view {
 		}
 		else if (app.button(1) == -1) {
 			console.log('woo');
-
 			this.rpos = pts.floor(this.rpos);
 		}
 	}
@@ -85,8 +84,8 @@ export class view {
 		if (smooth) {
 			this.rpos = pts.floor(this.rpos);
 		}
-		let inv = pts.inv(this.rpos);
-		//ren.groups.axisSwap.position.set(inv[0], inv[1], 0);
+		// let inv = pts.inv(this.rpos);
+		// ren.groups.axisSwap.position.set(inv[0], inv[1], 0);
 		ren.camera.position.set(this.rpos[0], this.rpos[1], 0);
 	}
 	mouse() {

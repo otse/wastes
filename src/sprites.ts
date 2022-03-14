@@ -14,6 +14,7 @@ export namespace sprites {
 	export const shrubs: tuple = [[24, 15], [24, 15], 0, 'tex/shrubs']
 	export const dtile: tuple = [[24, 12], [24, 12], 0, 'tex/dtile']
 	export const dtile4: tuple = [[24, 17], [24, 17], 0, 'tex/dtileup4']
+	export const dswamptiles: tuple = [[96, 30], [24, 30], 0, 'tex/dswamptiles']
 	export const dtilesand: tuple = [[24, 17], [24, 17], 0, 'tex/dtilesand']
 	export const dwall: tuple = [[96, 40], [24, 40], 0, 'tex/dwalls']
 	export const ddeck: tuple = [[72, 17], [24, 17], 0, 'tex/ddeck']

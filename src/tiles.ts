@@ -17,7 +17,8 @@ export namespace tiles {
 
 	var arrays: tiles.tile[][] = []
 
-	export var mpos4: vec2
+	export var four: vec2
+	export var six: vec2
 
 	export function get(pos: vec2) {
 		if (arrays[pos[1]])
@@ -56,15 +57,23 @@ export namespace tiles {
 
 		if (!started)
 			return;
-			
+
 		let mpos0 = lod.unproject(pts.add(wastes.gview.mrpos, [0, 0]));
 		mpos0 = pts.floor(mpos0);
-		mpos4 = lod.unproject(pts.add(wastes.gview.mrpos, [0, -4]));
-		mpos4 = pts.floor(mpos4);
 
-		const tile4 = get(mpos4);
-		if (tile4 && tile4.z == 4)
-			tile4?.hover();
+		four = lod.unproject(pts.add(wastes.gview.mrpos, [0, -4]));
+		four = pts.floor(four);
+
+		six = lod.unproject(pts.add(wastes.gview.mrpos, [0, -6]));
+		six = pts.floor(six);
+
+		const heightOne = get(four);
+		const heightTwo = get(six);
+
+		if (heightTwo && heightTwo.z == 8)
+			heightTwo?.hover();
+		else if (heightOne && heightOne.z == 4)
+			heightOne?.hover();
 
 		const tile0 = get(mpos0);
 		if (tile0 && tile0.z == 0)
@@ -74,22 +83,43 @@ export namespace tiles {
 	const color_purple_water: vec4 = [66, 66, 110, 255];
 
 	export class tile extends lod.obj {
-		z: number = 0
 		tuple: sprites.tuple
-		objs: lod.obj[] = []
+		cell: vec2
+		// objs: lod.obj[] = []
 		color: vec4
 		constructor(wpos: vec2) {
 			super(numbers.tiles);
-			this.tuple = sprites.dtile;
 			this.wpos = wpos;
 			this.size = [24, 12];
+			this.tuple = sprites.dtile;
 			this.color = color_purple_water;
-			let pixel = wastes.colormap.pixel(this.wpos);			
-			if (!pixel.is_black()) {
+			let colormapPixel = wastes.colormap.pixel(this.wpos);
+			let heightmapPixel = wastes.heightmap.pixel(this.wpos);
+			if (!colormapPixel.is_black()) {
 				this.z = this.height = 4;
-				this.tuple = sprites.dtilesand;
-				this.size = [24, 17];
+				this.tuple = sprites.dswamptiles;
+				this.cell = [1, 0];
+				this.size = [24, 30];
 				this.color = wastes.colormap.pixel(this.wpos).array;
+
+				//let heightmapPixel = wastes.heightmap.pixel(this.wpos);			
+				//shape.rup = heightmapPixel.array[0];
+				// Choose one of five heights
+				/*
+				const div = 1;
+				const treshold = heightmapPixel.array[0] / 255;
+
+				if (treshold > 0.05) {
+					this.z = this.height = 8;
+					console.log('high tile', treshold);
+
+					this.cell = [1, 0];
+					// this.color = [255, 0, 0, 255];
+				}*/
+				//if (this.height >= 4) {
+					let heightmapPixel = wastes.heightmap.pixel(this.wpos);
+					this.z = this.height = heightmapPixel.array[0] / 2;
+				//}
 			}
 		}
 		get_stack() {
@@ -109,8 +139,12 @@ export namespace tiles {
 			let shape = new sprite({
 				binded: this,
 				tuple: this.tuple,
-				color: this.color
+				cell: this.cell,
+				color: this.color,
+				order: .3
 			});
+			shape.rup = this.height;
+			
 		}
 		//update() {}
 		delete() {
@@ -119,7 +153,7 @@ export namespace tiles {
 			let sprite = this.shape as sprite;
 			if (!sprite?.mesh)
 				return;
-			// sprite.mesh.material.color.set('green');
+			sprite.mesh.material.color.set('green');
 		}
 		tick() {
 		}
