@@ -47,7 +47,7 @@ export class view {
 	begin: vec2 = [0, 0]
 	before: vec2 = [0, 0]
 	pan() {
-		let continousMode = false;
+		let continousMode = true;
 		const panDivisor = -1;
 		const continuousSpeed = -100;
 		if (app.button(1) == 1) {
@@ -62,22 +62,32 @@ export class view {
 			let dif = pts.subtract(this.begin, mouse);
 			if (continousMode) {
 				dif = pts.divide(dif, continuousSpeed);
-				this.rpos = pts.add(this.rpos, pts.inv(dif));
+				this.rpos = pts.add(this.rpos, dif);
 			}
-			else
-			{
+			else {
 				dif = pts.divide(dif, panDivisor);
+				// necessary mods
 				dif = pts.mult(dif, ren.ndpi);
 				dif = pts.mult(dif, this.zoom);
 				dif = pts.subtract(dif, this.before);
 				this.rpos = pts.inv(dif);
+				//this.rpos = pts.floor(this.rpos); // floor 
 			}
+		}
+		else if (app.button(1) == -1) {
+			console.log('woo');
+
+			this.rpos = pts.floor(this.rpos);
 		}
 	}
 	chase() {
-		this.rpos = pts.floor(this.rpos);
+		const smooth = false;
+		if (smooth) {
+			this.rpos = pts.floor(this.rpos);
+		}
 		let inv = pts.inv(this.rpos);
-		ren.groups.axisSwap.position.set(inv[0], inv[1], 0);
+		//ren.groups.axisSwap.position.set(inv[0], inv[1], 0);
+		ren.camera.position.set(this.rpos[0], this.rpos[1], 0);
 	}
 	mouse() {
 		let mouse = app.mouse();
@@ -95,24 +105,27 @@ export class view {
 		}
 	}
 	move() {
-		let pan = 5;
+		let pan = 10;
 		const zoomFactor = 1 / 10;
 		if (app.key('x'))
 			pan *= 2;
+		let add: vec2 = [0, 0];
 		if (app.key('w'))
-			this.rpos = pts.add(this.rpos, [0, pan]);
+			add = pts.add(add, [0, pan]);
 		if (app.key('s'))
-			this.rpos = pts.add(this.rpos, [0, -pan]);
+			add = pts.add(add, [0, -pan]);
 		if (app.key('a'))
-			this.rpos = pts.add(this.rpos, [-pan, 0]);
+			add = pts.add(add, [-pan, 0]);
 		if (app.key('d'))
-			this.rpos = pts.add(this.rpos, [pan, 0]);
+			add = pts.add(add, [pan, 0]);
 		if (app.key('f') == 1 && this.zoomIndex > 0)
 			this.zoomIndex -= 1;
 		if (app.key('r') == 1 && this.zoomIndex < this.zooms.length - 1)
 			this.zoomIndex += 1;
-		//this.rpos = lod.galaxy.project(this.wpos);
 		this.zoom = this.zooms[this.zoomIndex];
+		add = pts.mult(add, this.zoom);
+		add = pts.floor(add);
+		this.rpos = pts.add(this.rpos, add);
 	}
 	show = true
 	stats() {

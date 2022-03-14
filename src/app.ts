@@ -38,7 +38,7 @@ namespace app {
 		salt = version;
 		function onmousemove(e) { pos[0] = e.clientX; pos[1] = e.clientY; }
 		function onmousedown(e) { buttons[e.button] = 1; }
-		function onmouseup(e) { buttons[e.button] = 0; }
+		function onmouseup(e) { buttons[e.button] = -1; }
 		function onwheel(e) { wheel = e.deltaY < 0 ? 1 : -1; }
 		function onerror(message) { document.querySelectorAll('.stats')[0].innerHTML = message; }
 		document.onkeydown = document.onkeyup = onkeys;
@@ -68,6 +68,8 @@ namespace app {
 		for (let b of [0, 1, 2])
 			if (buttons[b] == 1)
 				buttons[b] = 2;
+			else if (buttons[b] == -1)
+				buttons[b] = 0;
 		delay();
 	}
 	export function sethtml(selector, html) {

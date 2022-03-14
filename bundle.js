@@ -208,7 +208,7 @@ var wastes = (function (exports, THREE) {
             app.salt = version;
             function onmousemove(e) { pos[0] = e.clientX; pos[1] = e.clientY; }
             function onmousedown(e) { buttons[e.button] = 1; }
-            function onmouseup(e) { buttons[e.button] = 0; }
+            function onmouseup(e) { buttons[e.button] = -1; }
             function onwheel(e) { app.wheel = e.deltaY < 0 ? 1 : -1; }
             function onerror(message) { document.querySelectorAll('.stats')[0].innerHTML = message; }
             document.onkeydown = document.onkeyup = onkeys;
@@ -240,6 +240,8 @@ var wastes = (function (exports, THREE) {
             for (let b of [0, 1, 2])
                 if (buttons[b] == 1)
                     buttons[b] = 2;
+                else if (buttons[b] == -1)
+                    buttons[b] = 0;
             delay();
         }
         app.loop = loop;
@@ -1028,7 +1030,7 @@ void main() {
             ren$1.camera.updateProjectionMatrix();
         }
         pan() {
-            const panDivisor = -1;
+            const continuousSpeed = -100;
             if (app$1.button(1) == 1) {
                 let mouse = app$1.mouse();
                 mouse[1] = -mouse[1];
@@ -1040,18 +1042,19 @@ void main() {
                 mouse[1] = -mouse[1];
                 let dif = pts.subtract(this.begin, mouse);
                 {
-                    dif = pts.divide(dif, panDivisor);
-                    dif = pts.mult(dif, ren$1.ndpi);
-                    dif = pts.mult(dif, this.zoom);
-                    dif = pts.subtract(dif, this.before);
-                    this.rpos = pts.inv(dif);
+                    dif = pts.divide(dif, continuousSpeed);
+                    this.rpos = pts.add(this.rpos, dif);
                 }
+            }
+            else if (app$1.button(1) == -1) {
+                console.log('woo');
+                this.rpos = pts.floor(this.rpos);
             }
         }
         chase() {
-            this.rpos = pts.floor(this.rpos);
-            let inv = pts.inv(this.rpos);
-            ren$1.groups.axisSwap.position.set(inv[0], inv[1], 0);
+            pts.inv(this.rpos);
+            //ren.groups.axisSwap.position.set(inv[0], inv[1], 0);
+            ren$1.camera.position.set(this.rpos[0], this.rpos[1], 0);
         }
         mouse() {
             let mouse = app$1.mouse();
@@ -1069,23 +1072,26 @@ void main() {
             }
         }
         move() {
-            let pan = 5;
+            let pan = 10;
             if (app$1.key('x'))
                 pan *= 2;
+            let add = [0, 0];
             if (app$1.key('w'))
-                this.rpos = pts.add(this.rpos, [0, pan]);
+                add = pts.add(add, [0, pan]);
             if (app$1.key('s'))
-                this.rpos = pts.add(this.rpos, [0, -pan]);
+                add = pts.add(add, [0, -pan]);
             if (app$1.key('a'))
-                this.rpos = pts.add(this.rpos, [-pan, 0]);
+                add = pts.add(add, [-pan, 0]);
             if (app$1.key('d'))
-                this.rpos = pts.add(this.rpos, [pan, 0]);
+                add = pts.add(add, [pan, 0]);
             if (app$1.key('f') == 1 && this.zoomIndex > 0)
                 this.zoomIndex -= 1;
             if (app$1.key('r') == 1 && this.zoomIndex < this.zooms.length - 1)
                 this.zoomIndex += 1;
-            //this.rpos = lod.galaxy.project(this.wpos);
             this.zoom = this.zooms[this.zoomIndex];
+            add = pts.mult(add, this.zoom);
+            add = pts.floor(add);
+            this.rpos = pts.add(this.rpos, add);
         }
         stats() {
             if (app$1.key('h') == 1)
