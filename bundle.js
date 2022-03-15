@@ -1212,24 +1212,9 @@ void main() {
                     this.cell = [0, 0];
                     this.size = [24, 30];
                     this.color = wastes.colormap.pixel(this.wpos).array;
-                    //let heightmapPixel = wastes.heightmap.pixel(this.wpos);			
-                    //shape.rup = heightmapPixel.array[0];
-                    // Choose one of five heights
-                    /*
-                    const div = 1;
-                    const treshold = heightmapPixel.array[0] / 255;
-
-                    if (treshold > 0.05) {
-                        this.z = this.height = 8;
-                        console.log('high tile', treshold);
-
-                        this.cell = [1, 0];
-                        // this.color = [255, 0, 0, 255];
-                    }*/
-                    //if (this.height >= 4) {
-                    let heightmapPixel = wastes.heightmap.pixel(this.wpos);
-                    this.z = Math.floor(heightmapPixel.array[0] / 2);
-                    //}
+                    const divisor = 2;
+                    let height = wastes.heightmap.pixel(this.wpos);
+                    this.z = Math.floor(height.array[0] / divisor);
                 }
             }
             get_stack() {
@@ -1254,7 +1239,7 @@ void main() {
                     color: this.color,
                     order: .3
                 });
-                shape.rup = this.z; // ?
+                shape.rup = this.z;
             }
             //update() {}
             delete() {
@@ -1434,7 +1419,6 @@ void main() {
             //	super.update();
             //}
             stack() {
-                //this.z = 0;
                 let calc = 0;
                 let stack = this.sector.allat(this.wpos);
                 for (let obj of stack) {

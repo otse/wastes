@@ -197,7 +197,6 @@ namespace objects {
 		//	super.update();
 		//}
 		stack() {
-			//this.z = 0;
 			let calc = 0;
 			let stack = this.sector!.allat(this.wpos);
 			for (let obj of stack) {
