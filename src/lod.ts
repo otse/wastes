@@ -141,7 +141,7 @@ namespace lod {
 					obj.show();
 			}
 		}
-		allat(wpos: vec2) {
+		stacked(wpos: vec2) {
 			let stack: obj[] = [];
 			for (let obj of this.objs)
 				if (pts.equals(wpos, obj.wpos))

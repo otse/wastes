@@ -575,7 +575,7 @@ void main() {
                         obj.show();
                 }
             }
-            allat(wpos) {
+            stacked(wpos) {
                 let stack = [];
                 for (let obj of this.objs)
                     if (pts.equals(wpos, obj.wpos))
@@ -1184,8 +1184,10 @@ void main() {
                 pos = pts.floor(pos);
                 const tile = get(pos);
                 if (tile && tile.z + tile.height + tile.heightAdd == i) {
-                    tile === null || tile === void 0 ? void 0 : tile.hover();
-                    break;
+                    if (tile.sector.isActive()) {
+                        tile.hover();
+                        break;
+                    }
                 }
             }
         }
@@ -1206,7 +1208,7 @@ void main() {
                     this.cell = [1, 0];
                     this.size = [24, 30];
                     this.color = wastes.colormap.pixel(this.wpos).array;
-                    const divisor = 1.5;
+                    const divisor = 1;
                     let height = wastes.heightmap.pixel(this.wpos);
                     this.z = Math.floor(height.array[0] / divisor);
                     this.z -= 3;
@@ -1236,7 +1238,7 @@ void main() {
                 });
                 // if we have a deck, add it to heightAdd
                 let sector = lod$1.ggalaxy.at(lod$1.ggalaxy.big(this.wpos));
-                let at = sector.allat(this.wpos);
+                let at = sector.stacked(this.wpos);
                 for (let obj of at) {
                     if (obj.type == 'deck')
                         this.heightAdd = obj.height;
@@ -1250,7 +1252,13 @@ void main() {
                 let sprite = this.shape;
                 if (!(sprite === null || sprite === void 0 ? void 0 : sprite.mesh))
                     return;
+                const last = tile.lastHover;
+                if (last && last != this && last.sector.isActive()) {
+                    last.hide();
+                    last.show();
+                }
                 sprite.mesh.material.color.set('green');
+                tile.lastHover = this;
             }
             tick() {
             }
@@ -1422,7 +1430,7 @@ void main() {
             //}
             stack() {
                 let calc = 0;
-                let stack = this.sector.allat(this.wpos);
+                let stack = this.sector.stacked(this.wpos);
                 for (let obj of stack) {
                     if (obj == this)
                         break;

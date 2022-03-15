@@ -64,7 +64,7 @@ namespace testing_chamber {
 			);
 			this.rate = (Math.random() - 0.5) / (Asteroid.slowness * 6);
 		}
-		create() {
+		override create() {
 			this.size = [200, 200];
 			let shape = new sprite({
 				binded: this,
@@ -88,7 +88,7 @@ namespace testing_chamber {
 			super(undefined);
 			console.log('square');
 		}
-		create() {
+		override create() {
 			console.log('create');
 			this.size = [100, 100];
 			let shape = new sprite({

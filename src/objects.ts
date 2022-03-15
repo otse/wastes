@@ -198,7 +198,7 @@ namespace objects {
 		//}
 		stack() {
 			let calc = 0;
-			let stack = this.sector!.allat(this.wpos);
+			let stack = this.sector!.stacked(this.wpos);
 			for (let obj of stack) {
 				if (obj == this)
 					break;
@@ -213,7 +213,7 @@ namespace objects {
 			this.type = 'wall';
 			this.height = 24;
 		}
-		create() {
+		override create() {
 			this.tiled();
 			this.size = [24, 40];
 			this.cell = [255 - this.pixel!.array[3], 0];
@@ -240,7 +240,7 @@ namespace objects {
 			this.type = 'deck'
 			this.height = 3;
 		}
-		create() {
+		override create() {
 			this.tiled();
 			this.size = [24, 17];
 			//if (this.pixel!.array[3] < 240)
@@ -260,7 +260,7 @@ namespace objects {
 			this.type = 'roof'
 			this.height = 4;
 		}
-		create() {
+		override create() {
 			this.tiled();
 			this.size = [24, 17];
 			let shape = new sprite({
@@ -277,7 +277,7 @@ namespace objects {
 			this.type = 'acidbarrel'
 			this.height = 4;
 		}
-		create() {
+		override create() {
 			this.tiled();
 			this.size = [24, 35];
 			let shape = new sprite({
@@ -294,7 +294,7 @@ namespace objects {
 			this.type = 'falsefront'
 			this.height = 10;
 		}
-		create() {
+		override create() {
 			this.tiled();
 			this.cell = [255 - this.pixel!.array[3], 0];
 			this.size = [24, 40];
@@ -315,7 +315,7 @@ namespace objects {
 			this.height = 24;
 			//this.cell = [1, 0];
 		}
-		create() {
+		override create() {
 			this.tiled();
 			this.size = [24, 40];
 			let shape = new sprite({
@@ -338,7 +338,7 @@ namespace objects {
 			super(numbers.trees);
 			this.type = 'shrubs'
 		}
-		create() {
+		override create() {
 			this.size = [24, 15];
 			let shape = new sprite({
 				binded: this,

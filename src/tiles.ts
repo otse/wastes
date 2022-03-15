@@ -60,8 +60,10 @@ export namespace tiles {
 			pos = pts.floor(pos);
 			const tile = get(pos);
 			if (tile && tile.z + tile.height + tile.heightAdd == i) {
-				tile?.hover();
-				break;
+				if (tile.sector!.isActive()) {
+					tile.hover();
+					break;
+				}
 			}
 		}
 
@@ -70,10 +72,12 @@ export namespace tiles {
 	const color_purple_water: vec4 = [66, 66, 110, 255];
 
 	export class tile extends lod.obj {
+		static lastHover?: tile
 		tuple: sprites.tuple
 		cell: vec2
 		// objs: lod.obj[] = []
 		color: vec4
+		colorPrev
 		constructor(wpos: vec2) {
 			super(numbers.tiles);
 			this.wpos = wpos;
@@ -88,8 +92,8 @@ export namespace tiles {
 				this.cell = [1, 0];
 				this.size = [24, 30];
 				this.color = wastes.colormap.pixel(this.wpos).array;
-				
-				const divisor = 1.5;
+
+				const divisor = 1;
 				let height = wastes.heightmap.pixel(this.wpos);
 				this.z = Math.floor(height.array[0] / divisor);
 				this.z -= 3;
@@ -108,7 +112,7 @@ export namespace tiles {
 			if (i > -1)
 				return this.objs.splice(i, 1).length;
 		}*/
-		create() {
+		override create() {
 			let shape = new sprite({
 				binded: this,
 				tuple: this.tuple,
@@ -118,7 +122,7 @@ export namespace tiles {
 			});
 			// if we have a deck, add it to heightAdd
 			let sector = lod.ggalaxy.at(lod.ggalaxy.big(this.wpos));
-			let at = sector.allat(this.wpos);
+			let at = sector.stacked(this.wpos);
 			for (let obj of at) {
 				if (obj.type == 'deck')
 					this.heightAdd = obj.height;
@@ -133,7 +137,13 @@ export namespace tiles {
 			let sprite = this.shape as sprite;
 			if (!sprite?.mesh)
 				return;
+			const last = tile.lastHover
+			if (last && last != this && last.sector!.isActive()) {
+				last.hide();
+				last.show();
+			}
 			sprite.mesh.material.color.set('green');
+			tile.lastHover = this;
 		}
 		tick() {
 		}
