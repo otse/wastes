@@ -17,9 +17,6 @@ export namespace tiles {
 
 	var arrays: tiles.tile[][] = []
 
-	export var four: vec2
-	export var six: vec2
-
 	export function get(pos: vec2) {
 		if (arrays[pos[1]])
 			return arrays[pos[1]][pos[0]];
@@ -58,26 +55,25 @@ export namespace tiles {
 		if (!started)
 			return;
 
-		let mpos0 = lod.unproject(pts.add(wastes.gview.mrpos, [0, 0]));
-		mpos0 = pts.floor(mpos0);
+		const touchWater = false;
 
-		four = lod.unproject(pts.add(wastes.gview.mrpos, [0, -4]));
-		four = pts.floor(four);
+		if (touchWater) {
+			let mpos = lod.unproject(pts.add(wastes.gview.mrpos, [0, 0]));
+			mpos = pts.floor(mpos);
+			const tile = get(mpos);
+			tile?.hover();
+		}
 
-		six = lod.unproject(pts.add(wastes.gview.mrpos, [0, -6]));
-		six = pts.floor(six);
+		for (let i = 20; i >= 0; i--) {
+			let pos = lod.unproject(pts.add(wastes.gview.mrpos, [0, -i]));
+			pos = pts.floor(pos);
+			const tile = get(pos);
+			if (tile && tile.z + tile.height == i) {
+				tile?.hover();
+				break;
+			}
+		}
 
-		const heightOne = get(four);
-		const heightTwo = get(six);
-
-		if (heightTwo && heightTwo.z == 8)
-			heightTwo?.hover();
-		else if (heightOne && heightOne.z == 4)
-			heightOne?.hover();
-
-		const tile0 = get(mpos0);
-		if (tile0 && tile0.z == 0)
-			tile0?.hover();
 	}
 
 	const color_purple_water: vec4 = [66, 66, 110, 255];
@@ -103,7 +99,7 @@ export namespace tiles {
 				this.size = [24, 30];
 				this.color = wastes.colormap.pixel(this.wpos).array;
 
-				const divisor = 2;
+				const divisor = 1.5;
 				let height = wastes.heightmap.pixel(this.wpos);
 				this.z = Math.floor(height.array[0] / divisor);
 			}
@@ -130,7 +126,7 @@ export namespace tiles {
 				order: .3
 			});
 			shape.rup = this.z;
-			
+
 		}
 		//update() {}
 		delete() {
@@ -139,6 +135,10 @@ export namespace tiles {
 			let sprite = this.shape as sprite;
 			if (!sprite?.mesh)
 				return;
+			/*let pos = lod.unproject(pts.add(wastes.gview.mrpos, [0, -this.z - this.height]));
+			pos = pts.floor(pos);
+			if (pts.equals(this.wpos, pos))
+				sprite.mesh.material.color.set('green');*/
 			sprite.mesh.material.color.set('green');
 		}
 		tick() {

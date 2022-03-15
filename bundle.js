@@ -683,7 +683,6 @@ void main() {
                 this.size = [100, 100];
                 this.ro = 0;
                 this.z = 0;
-                this.calcz = 0;
                 this.height = 0;
                 this.counts[1]++;
             }
@@ -1178,21 +1177,15 @@ void main() {
         function tick() {
             if (!tiles.started)
                 return;
-            let mpos0 = lod$1.unproject(pts.add(wastes.gview.mrpos, [0, 0]));
-            mpos0 = pts.floor(mpos0);
-            tiles.four = lod$1.unproject(pts.add(wastes.gview.mrpos, [0, -4]));
-            tiles.four = pts.floor(tiles.four);
-            tiles.six = lod$1.unproject(pts.add(wastes.gview.mrpos, [0, -6]));
-            tiles.six = pts.floor(tiles.six);
-            const heightOne = get(tiles.four);
-            const heightTwo = get(tiles.six);
-            if (heightTwo && heightTwo.z == 8)
-                heightTwo === null || heightTwo === void 0 ? void 0 : heightTwo.hover();
-            else if (heightOne && heightOne.z == 4)
-                heightOne === null || heightOne === void 0 ? void 0 : heightOne.hover();
-            const tile0 = get(mpos0);
-            if (tile0 && tile0.z == 0)
-                tile0 === null || tile0 === void 0 ? void 0 : tile0.hover();
+            for (let i = 20; i >= 0; i--) {
+                let pos = lod$1.unproject(pts.add(wastes.gview.mrpos, [0, -i]));
+                pos = pts.floor(pos);
+                const tile = get(pos);
+                if (tile && tile.z + tile.height == i) {
+                    tile === null || tile === void 0 ? void 0 : tile.hover();
+                    break;
+                }
+            }
         }
         tiles.tick = tick;
         const color_purple_water = [66, 66, 110, 255];
@@ -1212,7 +1205,7 @@ void main() {
                     this.cell = [0, 0];
                     this.size = [24, 30];
                     this.color = wastes.colormap.pixel(this.wpos).array;
-                    const divisor = 2;
+                    const divisor = 1.5;
                     let height = wastes.heightmap.pixel(this.wpos);
                     this.z = Math.floor(height.array[0] / divisor);
                 }
@@ -1248,6 +1241,10 @@ void main() {
                 let sprite = this.shape;
                 if (!(sprite === null || sprite === void 0 ? void 0 : sprite.mesh))
                     return;
+                /*let pos = lod.unproject(pts.add(wastes.gview.mrpos, [0, -this.z - this.height]));
+                pos = pts.floor(pos);
+                if (pts.equals(this.wpos, pos))
+                    sprite.mesh.material.color.set('green');*/
                 sprite.mesh.material.color.set('green');
             }
             tick() {
