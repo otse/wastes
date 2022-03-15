@@ -55,20 +55,11 @@ export namespace tiles {
 		if (!started)
 			return;
 
-		const touchWater = false;
-
-		if (touchWater) {
-			let mpos = lod.unproject(pts.add(wastes.gview.mrpos, [0, 0]));
-			mpos = pts.floor(mpos);
-			const tile = get(mpos);
-			tile?.hover();
-		}
-
-		for (let i = 20; i >= 0; i--) {
+		for (let i = 40; i >= 0; i--) {
 			let pos = lod.unproject(pts.add(wastes.gview.mrpos, [0, -i]));
 			pos = pts.floor(pos);
 			const tile = get(pos);
-			if (tile && tile.z + tile.height == i) {
+			if (tile && tile.z + tile.height + tile.heightAdd == i) {
 				tile?.hover();
 				break;
 			}
@@ -92,16 +83,16 @@ export namespace tiles {
 			let colormapPixel = wastes.colormap.pixel(this.wpos);
 			let heightmapPixel = wastes.heightmap.pixel(this.wpos);
 			if (!colormapPixel.is_black()) {
-				this.z = 0;
-				this.height = 4;
+				this.height = 6;
 				this.tuple = sprites.dswamptiles;
-				this.cell = [0, 0];
+				this.cell = [1, 0];
 				this.size = [24, 30];
 				this.color = wastes.colormap.pixel(this.wpos).array;
-
+				
 				const divisor = 1.5;
 				let height = wastes.heightmap.pixel(this.wpos);
 				this.z = Math.floor(height.array[0] / divisor);
+				this.z -= 3;
 			}
 		}
 		get_stack() {
@@ -125,6 +116,13 @@ export namespace tiles {
 				color: this.color,
 				order: .3
 			});
+			// if we have a deck, add it to heightAdd
+			let sector = lod.ggalaxy.at(lod.ggalaxy.big(this.wpos));
+			let at = sector.allat(this.wpos);
+			for (let obj of at) {
+				if (obj.type == 'deck')
+					this.heightAdd = obj.height;
+			}
 			shape.rup = this.z;
 
 		}
@@ -135,10 +133,6 @@ export namespace tiles {
 			let sprite = this.shape as sprite;
 			if (!sprite?.mesh)
 				return;
-			/*let pos = lod.unproject(pts.add(wastes.gview.mrpos, [0, -this.z - this.height]));
-			pos = pts.floor(pos);
-			if (pts.equals(this.wpos, pos))
-				sprite.mesh.material.color.set('green');*/
 			sprite.mesh.material.color.set('green');
 		}
 		tick() {

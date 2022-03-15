@@ -248,6 +248,7 @@ namespace lod {
 	};
 
 	export class obj extends toggle {
+		type = 'an obj'
 		aabbScreen: aabb2
 		wpos: vec2 = [0, 0]
 		rpos: vec2 = [0, 0]
@@ -257,6 +258,7 @@ namespace lod {
 		ro = 0
 		z = 0
 		height = 0
+		heightAdd = 0
 		constructor(
 			public readonly counts: numbers.tally = numbers.objs) {
 			super();

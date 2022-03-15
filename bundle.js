@@ -678,12 +678,14 @@ void main() {
             constructor(counts = numbers.objs) {
                 super();
                 this.counts = counts;
+                this.type = 'an obj';
                 this.wpos = [0, 0];
                 this.rpos = [0, 0];
                 this.size = [100, 100];
                 this.ro = 0;
                 this.z = 0;
                 this.height = 0;
+                this.heightAdd = 0;
                 this.counts[1]++;
             }
             finalize() {
@@ -1177,11 +1179,11 @@ void main() {
         function tick() {
             if (!tiles.started)
                 return;
-            for (let i = 20; i >= 0; i--) {
+            for (let i = 40; i >= 0; i--) {
                 let pos = lod$1.unproject(pts.add(wastes.gview.mrpos, [0, -i]));
                 pos = pts.floor(pos);
                 const tile = get(pos);
-                if (tile && tile.z + tile.height == i) {
+                if (tile && tile.z + tile.height + tile.heightAdd == i) {
                     tile === null || tile === void 0 ? void 0 : tile.hover();
                     break;
                 }
@@ -1199,15 +1201,15 @@ void main() {
                 let colormapPixel = wastes.colormap.pixel(this.wpos);
                 wastes.heightmap.pixel(this.wpos);
                 if (!colormapPixel.is_black()) {
-                    this.z = 0;
-                    this.height = 4;
+                    this.height = 6;
                     this.tuple = sprites$1.dswamptiles;
-                    this.cell = [0, 0];
+                    this.cell = [1, 0];
                     this.size = [24, 30];
                     this.color = wastes.colormap.pixel(this.wpos).array;
                     const divisor = 1.5;
                     let height = wastes.heightmap.pixel(this.wpos);
                     this.z = Math.floor(height.array[0] / divisor);
+                    this.z -= 3;
                 }
             }
             get_stack() {
@@ -1232,6 +1234,13 @@ void main() {
                     color: this.color,
                     order: .3
                 });
+                // if we have a deck, add it to heightAdd
+                let sector = lod$1.ggalaxy.at(lod$1.ggalaxy.big(this.wpos));
+                let at = sector.allat(this.wpos);
+                for (let obj of at) {
+                    if (obj.type == 'deck')
+                        this.heightAdd = obj.height;
+                }
                 shape.rup = this.z;
             }
             //update() {}
@@ -1241,10 +1250,6 @@ void main() {
                 let sprite = this.shape;
                 if (!(sprite === null || sprite === void 0 ? void 0 : sprite.mesh))
                     return;
-                /*let pos = lod.unproject(pts.add(wastes.gview.mrpos, [0, -this.z - this.height]));
-                pos = pts.floor(pos);
-                if (pts.equals(this.wpos, pos))
-                    sprite.mesh.material.color.set('green');*/
                 sprite.mesh.material.color.set('green');
             }
             tick() {
@@ -1430,6 +1435,7 @@ void main() {
         class wall extends objected {
             constructor() {
                 super(numbers.walls);
+                this.type = 'wall';
                 this.height = 24;
             }
             create() {
@@ -1456,6 +1462,7 @@ void main() {
         class deck extends objected {
             constructor() {
                 super(numbers.floors);
+                this.type = 'deck';
                 this.height = 3;
             }
             create() {
@@ -1476,6 +1483,7 @@ void main() {
         class roof extends objected {
             constructor() {
                 super(numbers.roofs);
+                this.type = 'roof';
                 this.height = 4;
             }
             create() {
@@ -1493,6 +1501,7 @@ void main() {
         class acidbarrel extends objected {
             constructor() {
                 super(numbers.floors);
+                this.type = 'acidbarrel';
                 this.height = 4;
             }
             create() {
@@ -1510,6 +1519,7 @@ void main() {
         class falsefront extends objected {
             constructor() {
                 super(numbers.roofs);
+                this.type = 'falsefront';
                 this.height = 10;
             }
             create() {
@@ -1529,6 +1539,7 @@ void main() {
         class door extends objected {
             constructor() {
                 super(numbers.walls);
+                this.type = 'door';
                 this.height = 24;
                 //this.cell = [1, 0];
             }
@@ -1551,6 +1562,7 @@ void main() {
         class shrubs extends objected {
             constructor() {
                 super(numbers.trees);
+                this.type = 'shrubs';
             }
             create() {
                 this.size = [24, 15];

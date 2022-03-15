@@ -210,6 +210,7 @@ namespace objects {
 	export class wall extends objected {
 		constructor() {
 			super(numbers.walls);
+			this.type = 'wall';
 			this.height = 24;
 		}
 		create() {
@@ -236,6 +237,7 @@ namespace objects {
 	export class deck extends objected {
 		constructor() {
 			super(numbers.floors);
+			this.type = 'deck'
 			this.height = 3;
 		}
 		create() {
@@ -255,6 +257,7 @@ namespace objects {
 	export class roof extends objected {
 		constructor() {
 			super(numbers.roofs);
+			this.type = 'roof'
 			this.height = 4;
 		}
 		create() {
@@ -271,6 +274,7 @@ namespace objects {
 	export class acidbarrel extends objected {
 		constructor() {
 			super(numbers.floors);
+			this.type = 'acidbarrel'
 			this.height = 4;
 		}
 		create() {
@@ -287,6 +291,7 @@ namespace objects {
 	export class falsefront extends objected {
 		constructor() {
 			super(numbers.roofs);
+			this.type = 'falsefront'
 			this.height = 10;
 		}
 		create() {
@@ -306,6 +311,7 @@ namespace objects {
 		cell: vec2
 		constructor() {
 			super(numbers.walls);
+			this.type = 'door'
 			this.height = 24;
 			//this.cell = [1, 0];
 		}
@@ -330,6 +336,7 @@ namespace objects {
 	export class shrubs extends objected {
 		constructor() {
 			super(numbers.trees);
+			this.type = 'shrubs'
 		}
 		create() {
 			this.size = [24, 15];
