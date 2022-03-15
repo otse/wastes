@@ -1205,9 +1205,10 @@ void main() {
                 let colormapPixel = wastes.colormap.pixel(this.wpos);
                 wastes.heightmap.pixel(this.wpos);
                 if (!colormapPixel.is_black()) {
-                    this.z = this.height = 4;
+                    this.z = 0;
+                    this.height = 4;
                     this.tuple = sprites$1.dswamptiles;
-                    this.cell = [1, 0];
+                    this.cell = [0, 0];
                     this.size = [24, 30];
                     this.color = wastes.colormap.pixel(this.wpos).array;
                     //let heightmapPixel = wastes.heightmap.pixel(this.wpos);			
@@ -1226,7 +1227,7 @@ void main() {
                     }*/
                     //if (this.height >= 4) {
                     let heightmapPixel = wastes.heightmap.pixel(this.wpos);
-                    this.z = this.height = heightmapPixel.array[0] / 2;
+                    this.z = heightmapPixel.array[0] / 2;
                     //}
                 }
             }
@@ -1245,14 +1246,14 @@ void main() {
                     return this.objs.splice(i, 1).length;
             }*/
             create() {
-                let shape = new sprite({
+                new sprite({
                     binded: this,
                     tuple: this.tuple,
                     cell: this.cell,
                     color: this.color,
                     order: .3
                 });
-                shape.rup = this.height;
+                //shape.rup = this.height; // ?
             }
             //update() {}
             delete() {

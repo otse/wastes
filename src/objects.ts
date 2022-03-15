@@ -97,7 +97,7 @@ namespace objects {
 					//factory(objects.roof, pixel, pos);
 				}
 			})
-			return false;
+			return false;	
 		})
 	}
 

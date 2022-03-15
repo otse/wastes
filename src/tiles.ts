@@ -96,9 +96,10 @@ export namespace tiles {
 			let colormapPixel = wastes.colormap.pixel(this.wpos);
 			let heightmapPixel = wastes.heightmap.pixel(this.wpos);
 			if (!colormapPixel.is_black()) {
-				this.z = this.height = 4;
+				this.z = 0;
+				this.height = 4;
 				this.tuple = sprites.dswamptiles;
-				this.cell = [1, 0];
+				this.cell = [0, 0];
 				this.size = [24, 30];
 				this.color = wastes.colormap.pixel(this.wpos).array;
 
@@ -118,7 +119,7 @@ export namespace tiles {
 				}*/
 				//if (this.height >= 4) {
 					let heightmapPixel = wastes.heightmap.pixel(this.wpos);
-					this.z = this.height = heightmapPixel.array[0] / 2;
+					this.z = heightmapPixel.array[0] / 2;
 				//}
 			}
 		}
@@ -143,7 +144,7 @@ export namespace tiles {
 				color: this.color,
 				order: .3
 			});
-			shape.rup = this.height;
+			//shape.rup = this.height; // ?
 			
 		}
 		//update() {}
