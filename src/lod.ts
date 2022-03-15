@@ -256,6 +256,7 @@ namespace lod {
 		sector: sector | null
 		ro = 0
 		z = 0
+		calcz = 0
 		height = 0
 		constructor(
 			public readonly counts: numbers.tally = numbers.objs) {

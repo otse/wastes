@@ -683,6 +683,7 @@ void main() {
                 this.size = [100, 100];
                 this.ro = 0;
                 this.z = 0;
+                this.calcz = 0;
                 this.height = 0;
                 this.counts[1]++;
             }
@@ -1227,7 +1228,7 @@ void main() {
                     }*/
                     //if (this.height >= 4) {
                     let heightmapPixel = wastes.heightmap.pixel(this.wpos);
-                    this.z = heightmapPixel.array[0] / 2;
+                    this.z = Math.floor(heightmapPixel.array[0] / 2);
                     //}
                 }
             }
@@ -1246,14 +1247,14 @@ void main() {
                     return this.objs.splice(i, 1).length;
             }*/
             create() {
-                new sprite({
+                let shape = new sprite({
                     binded: this,
                     tuple: this.tuple,
                     cell: this.cell,
                     color: this.color,
                     order: .3
                 });
-                //shape.rup = this.height; // ?
+                shape.rup = this.z; // ?
             }
             //update() {}
             delete() {
@@ -1433,14 +1434,15 @@ void main() {
             //	super.update();
             //}
             stack() {
-                this.z = 0;
+                //this.z = 0;
+                let calc = 0;
                 let stack = this.sector.allat(this.wpos);
                 for (let obj of stack) {
                     if (obj == this)
                         break;
-                    this.z += obj.height;
+                    calc += obj.z + obj.height;
                 }
-                this.shape.rup = this.z;
+                this.shape.rup = calc;
             }
         }
         objects.objected = objected;

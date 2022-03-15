@@ -119,7 +119,7 @@ export namespace tiles {
 				}*/
 				//if (this.height >= 4) {
 					let heightmapPixel = wastes.heightmap.pixel(this.wpos);
-					this.z = heightmapPixel.array[0] / 2;
+					this.z = Math.floor(heightmapPixel.array[0] / 2);
 				//}
 			}
 		}
@@ -144,7 +144,7 @@ export namespace tiles {
 				color: this.color,
 				order: .3
 			});
-			//shape.rup = this.height; // ?
+			shape.rup = this.z; // ?
 			
 		}
 		//update() {}

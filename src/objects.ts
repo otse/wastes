@@ -197,14 +197,15 @@ namespace objects {
 		//	super.update();
 		//}
 		stack() {
-			this.z = 0;
+			//this.z = 0;
+			let calc = 0;
 			let stack = this.sector!.allat(this.wpos);
 			for (let obj of stack) {
 				if (obj == this)
 					break;
-				this.z += obj.height;
+				calc += obj.z + obj.height;
 			}
-			(this.shape as sprite).rup = this.z;
+			(this.shape as sprite).rup = calc;
 		}
 	}
 	export class wall extends objected {
