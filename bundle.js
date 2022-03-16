@@ -1164,6 +1164,7 @@ void main() {
         tiles.get = get;
         function register() {
             console.log(' tiles register ');
+            // this runs before the objects hooks
             hooks.register('sectorCreate', (sector) => {
                 pts.func(sector.small, (pos) => {
                     let x = pos[0];
@@ -1340,11 +1341,7 @@ void main() {
                         //factory(objects.roof, pixel, pos);
                     }
                     else if (pixel.is_color(color_treetrunk)) {
-                        let tree = factory(objects.treetrunk, pixel, pos);
-                        factory(objects.treeleaves, pixel, pos, { tree: tree });
-                        for (let y = -1; y < 2; y++)
-                            for (let x = -1; x < 2; x++)
-                                factory(objects.treeleaves, pixel, pts.add(pos, [x, y]), { tree: tree });
+                        factory(objects.treetrunk, pixel, pos);
                     }
                     else if (pixel.is_color(color_rusty_wall_and_deck)) {
                         factory(objects.deck, pixel, pos);
@@ -1447,6 +1444,7 @@ void main() {
             constructor(counts) {
                 super(counts);
                 this.cell = [0, 0];
+                this.calc = 0;
                 this.heightAdd = 0;
             }
             tiled() {
@@ -1464,8 +1462,9 @@ void main() {
                         break;
                     calc += obj.z + obj.height;
                 }
+                this.calc = calc;
                 if (this.shape)
-                    this.shape.rup = calc + this.heightAdd;
+                    this.shape.rup = this.calc + this.heightAdd;
             }
         }
         objects.objected = objected;
@@ -1522,6 +1521,7 @@ void main() {
         class treetrunk extends objected {
             constructor() {
                 super(numbers.floors);
+                this.flowered = false;
                 this.type = 'tree';
                 this.height = 29;
             }
@@ -1533,9 +1533,18 @@ void main() {
                 new sprite({
                     binded: this,
                     tuple: sprites$1.dtreetrunk,
-                    order: 0.3,
+                    order: 0.6,
                 });
                 this.stack();
+                if (!this.flowered) {
+                    this.flowered = true;
+                    for (let y = -1; y <= 1; y++)
+                        for (let x = -1; x <= 1; x++)
+                            if (!(x == 0 && y == 0) && Math.random() > .3)
+                                factory(objects.treeleaves, pixel, pts.add(this.wpos, [x, y]), { tree: this });
+                    factory(objects.treeleaves, pixel, pts.add(this.wpos, [0, 0]));
+                    factory(objects.treeleaves, pixel, pts.add(this.wpos, [0, 0]));
+                }
             }
         }
         objects.treetrunk = treetrunk;
@@ -1543,7 +1552,7 @@ void main() {
             constructor() {
                 super(numbers.floors);
                 this.type = 'tree leaves';
-                this.height = 32;
+                this.height = 14;
             }
             create() {
                 this.tiled();
@@ -1553,13 +1562,20 @@ void main() {
                 new sprite({
                     binded: this,
                     tuple: sprites$1.dtreeleaves,
-                    order: 0.3,
+                    order: 0.7,
                 });
-                this.special_leaves_stack();
+                if (this.hints.tree)
+                    this.special_leaves_stack();
+                else
+                    this.stack();
             }
             special_leaves_stack() {
-                if (this.shape)
-                    this.shape.rup = this.hints.tree.z + 31;
+                console.log('special stack');
+                const tree = this.hints.tree;
+                if (this.shape) {
+                    this.z = tree.calc + tree.height;
+                    this.shape.rup = this.z;
+                }
             }
         }
         objects.treeleaves = treeleaves;

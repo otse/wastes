@@ -29,6 +29,8 @@ export namespace tiles {
 
 		console.log(' tiles register ');
 
+		// this runs before the objects hooks
+
 		hooks.register('sectorCreate', (sector: lod.sector) => {
 			pts.func(sector.small, (pos) => {
 				let x = pos[0];
