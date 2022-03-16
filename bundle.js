@@ -329,7 +329,7 @@ void main() {
             ren.scene = new THREE.Scene();
             groups.axisSwap.add(groups.tiles);
             ren.scene.add(groups.axisSwap);
-            ren.scene.background = new THREE.Color('#292929');
+            ren.scene.background = new THREE.Color('#333');
             ren.scene2 = new THREE.Scene();
             ren.ambientLight = new THREE.AmbientLight(0xffffff);
             ren.scene.add(ren.ambientLight);
@@ -338,7 +338,7 @@ void main() {
             ren.target = new THREE.WebGLRenderTarget(1024, 1024, {
                 minFilter: THREE__default["default"].NearestFilter,
                 magFilter: THREE__default["default"].NearestFilter,
-                format: THREE__default["default"].RGBFormat
+                format: THREE__default["default"].RGBAFormat
             });
             ren.renderer = new THREE.WebGLRenderer({ antialias: false });
             ren.renderer.setPixelRatio(ren.ndpi);
@@ -783,13 +783,18 @@ void main() {
         sprites.shrubs = [[24, 15], [24, 15], 0, 'tex/shrubs'];
         sprites.dtile = [[24, 12], [24, 12], 0, 'tex/dtile'];
         sprites.dtile4 = [[24, 17], [24, 17], 0, 'tex/dtileup4'];
+        sprites.dtreetrunk = [[24, 50], [24, 50], 0, 'tex/dtreetrunk'];
+        sprites.dtreeleaves = [[24, 31], [24, 31], 0, 'tex/dtreeleaves'];
         sprites.dswamptiles = [[96, 30], [24, 30], 0, 'tex/dswamptiles'];
+        sprites.dgraveltiles = [[96, 30], [24, 30], 0, 'tex/dgraveltiles'];
         sprites.dtilesand = [[24, 17], [24, 17], 0, 'tex/dtilesand'];
         sprites.dwall = [[96, 40], [24, 40], 0, 'tex/dwalls'];
         sprites.ddeck = [[72, 17], [24, 17], 0, 'tex/ddeck'];
+        sprites.dtree1 = [[121, 147], [121, 147], 0, 'tex/dtree1b'];
         sprites.droof = [[72, 17], [24, 17], 0, 'tex/droof'];
         sprites.drustywalls = [[288, 40], [24, 40], 0, 'tex/drustywalls'];
         sprites.dwoodenwalls = [[288, 40], [24, 40], 0, 'tex/dslimywalls'];
+        sprites.druddywalls = [[288, 40], [24, 40], 0, 'tex/druddywalls'];
         sprites.ddoorwood = [[96, 40], [24, 40], 0, 'tex/ddoor'];
         sprites.dacidbarrel = [[24, 35], [24, 35], 0, 'tex/dacidbarrel'];
         sprites.dfalsefronts = [[192, 40], [24, 40], 0, 'tex/dfalsefronts'];
@@ -811,9 +816,12 @@ void main() {
             super(vars.binded, numbers.sprites);
             this.vars = vars;
             this.rup = 0;
+            this.rleft = 0;
             this.roffset = [0, 0];
             if (!this.vars.cell)
                 this.vars.cell = [0, 0];
+            if (!this.vars.order)
+                this.vars.order = 0;
             this.myUvTransform = new THREE.Matrix3;
             this.myUvTransform.setUvTransform(0, 0, 1, 1, 0, 0, 1);
         }
@@ -825,7 +833,7 @@ void main() {
             const obj = this.vars.binded;
             let rposCalc;
             rposCalc = pts.add(obj.rpos, pts.divide(obj.size, 2));
-            rposCalc = pts.add(rposCalc, [0, this.rup]);
+            rposCalc = pts.add(rposCalc, [this.rleft, this.rup]);
             (_a = this.mesh) === null || _a === void 0 ? void 0 : _a.position.fromArray([...rposCalc, 0]);
             (_b = this.mesh) === null || _b === void 0 ? void 0 : _b.updateMatrix();
         }
@@ -860,7 +868,7 @@ void main() {
             this.mesh = new THREE.Mesh(this.geometry, this.material);
             this.mesh.frustumCulled = false;
             this.mesh.matrixAutoUpdate = false;
-            this.mesh.renderOrder = -obj.wpos[1] + obj.wpos[0] + (this.vars.order || 0);
+            this.mesh.renderOrder = -obj.wpos[1] + obj.wpos[0] + this.vars.order;
             this.update();
             (_a = this.vars.binded.sector) === null || _a === void 0 ? void 0 : _a.group.add(this.mesh);
             ren$1.groups.axisSwap.add(this.mesh);
@@ -1180,6 +1188,7 @@ void main() {
             if (!tiles.started)
                 return;
             for (let i = 40; i >= 0; i--) {
+                // pretention grid
                 let pos = lod$1.unproject(pts.add(wastes.gview.mrpos, [0, -i]));
                 pos = pts.floor(pos);
                 const tile = get(pos);
@@ -1197,17 +1206,22 @@ void main() {
             constructor(wpos) {
                 super(numbers.tiles);
                 this.wpos = wpos;
-                this.size = [24, 12];
-                this.tuple = sprites$1.dtile;
-                this.color = color_purple_water;
-                let colormapPixel = wastes.colormap.pixel(this.wpos);
-                wastes.heightmap.pixel(this.wpos);
-                if (!colormapPixel.is_black()) {
+                let colour = wastes.colormap.pixel(this.wpos);
+                if (colour.is_black()) {
+                    this.size = [24, 12];
+                    this.tuple = sprites$1.dtile;
+                    this.color = color_purple_water;
+                }
+                if (!colour.is_black()) {
                     this.height = 6;
                     this.tuple = sprites$1.dswamptiles;
                     this.cell = [1, 0];
                     this.size = [24, 30];
                     this.color = wastes.colormap.pixel(this.wpos).array;
+                    /*if (colour.is_color(color_gravel)) {
+                        this.tuple = sprites.dgraveltiles;
+                        console.log('gravel');
+                    }*/
                     const divisor = 1;
                     let height = wastes.heightmap.pixel(this.wpos);
                     this.z = Math.floor(height.array[0] / divisor);
@@ -1272,7 +1286,9 @@ void main() {
         const mapSpan = 100;
         const color_wooden_door = [210, 210, 210];
         const color_wooden_door_and_deck = [24, 93, 61];
-        const color_slimy_wall = [20, 78, 54];
+        const color_treetrunk = [20, 70, 20];
+        const color_slimy_wall = [20, 70, 50];
+        const color_slimy_wall_with_deck = [20, 78, 54];
         const color_deck = [114, 128, 124];
         const color_rusty_wall_and_deck = [20, 84, 87];
         const color_acid_barrel = [61, 118, 48];
@@ -1314,10 +1330,21 @@ void main() {
             hooks.register('sectorCreate', (sector) => {
                 pts.func(sector.small, (pos) => {
                     let pixel = wastes.buildingmap.pixel(pos);
-                    if (pixel.is_color(color_slimy_wall)) {
+                    if (pixel.is_color(color_slimy_wall_with_deck)) {
                         factory(objects.deck, pixel, pos);
                         factory(objects.wall, pixel, pos, { type: 'slimy' });
                         //factory(objects.roof, pixel, pos);
+                    }
+                    else if (pixel.is_color(color_slimy_wall)) {
+                        factory(objects.wall, pixel, pos, { type: 'slimy' });
+                        //factory(objects.roof, pixel, pos);
+                    }
+                    else if (pixel.is_color(color_treetrunk)) {
+                        let tree = factory(objects.treetrunk, pixel, pos);
+                        factory(objects.treeleaves, pixel, pos, { tree: tree });
+                        for (let y = -1; y < 2; y++)
+                            for (let x = -1; x < 2; x++)
+                                factory(objects.treeleaves, pixel, pts.add(pos, [x, y]), { tree: tree });
                     }
                     else if (pixel.is_color(color_rusty_wall_and_deck)) {
                         factory(objects.deck, pixel, pos);
@@ -1420,6 +1447,7 @@ void main() {
             constructor(counts) {
                 super(counts);
                 this.cell = [0, 0];
+                this.heightAdd = 0;
             }
             tiled() {
                 this.tile = tiles$1.get(this.wpos);
@@ -1436,7 +1464,8 @@ void main() {
                         break;
                     calc += obj.z + obj.height;
                 }
-                this.shape.rup = calc;
+                if (this.shape)
+                    this.shape.rup = calc + this.heightAdd;
             }
         }
         objects.objected = objected;
@@ -1447,13 +1476,15 @@ void main() {
                 this.height = 24;
             }
             create() {
-                var _a;
+                var _a, _b;
                 this.tiled();
                 this.size = [24, 40];
                 this.cell = [255 - this.pixel.array[3], 0];
                 let tuple = sprites$1.dwoodenwalls;
                 if (((_a = this.hints) === null || _a === void 0 ? void 0 : _a.type) == 'rusty')
                     tuple = sprites$1.drustywalls;
+                if (((_b = this.hints) === null || _b === void 0 ? void 0 : _b.type) == 'ruddy')
+                    tuple = sprites$1.druddywalls;
                 new sprite({
                     binded: this,
                     tuple: tuple,
@@ -1488,6 +1519,50 @@ void main() {
             }
         }
         objects.deck = deck;
+        class treetrunk extends objected {
+            constructor() {
+                super(numbers.floors);
+                this.type = 'tree';
+                this.height = 29;
+            }
+            create() {
+                this.tiled();
+                this.size = [24, 50];
+                //if (this.pixel!.array[3] < 240)
+                //	this.cell = [240 - this.pixel!.array[3], 0];
+                new sprite({
+                    binded: this,
+                    tuple: sprites$1.dtreetrunk,
+                    order: 0.3,
+                });
+                this.stack();
+            }
+        }
+        objects.treetrunk = treetrunk;
+        class treeleaves extends objected {
+            constructor() {
+                super(numbers.floors);
+                this.type = 'tree leaves';
+                this.height = 32;
+            }
+            create() {
+                this.tiled();
+                this.size = [24, 31];
+                //if (this.pixel!.array[3] < 240)
+                //	this.cell = [240 - this.pixel!.array[3], 0];
+                new sprite({
+                    binded: this,
+                    tuple: sprites$1.dtreeleaves,
+                    order: 0.3,
+                });
+                this.special_leaves_stack();
+            }
+            special_leaves_stack() {
+                if (this.shape)
+                    this.shape.rup = this.hints.tree.z + 31;
+            }
+        }
+        objects.treeleaves = treeleaves;
         class roof extends objected {
             constructor() {
                 super(numbers.roofs);
@@ -1588,32 +1663,45 @@ void main() {
     var modeler;
     (function (modeler) {
         modeler.started = false;
+        const textures = [
+            'tex/stock/metalrooftiles.jpg',
+            'tex/stock/concrete1.jpg',
+            'tex/stock/brick1.jpg',
+            'tex/stock/brick2.jpg',
+            'tex/stock/brick3.jpg',
+            'tex/stock/brick4.jpg',
+            'tex/stock/treebark1.jpg',
+            'tex/stock/leaves.png',
+        ];
+        let currentTex = 0;
         var gmesh;
         var ggroup;
         var rotation = 1;
+        let heightMod = 1;
         var zooms = [0, 1, [1, 0.33, 0.25, 0.1]];
         function register() {
         }
         modeler.register = register;
         function start() {
             modeler.started = true;
+            document.title = 'modeler';
             gmesh = createMesh();
             ggroup = new THREE.Group;
             ggroup.rotation.set(Math.PI / 6, Math.PI / 4, 0);
             ren$1.scene.add(ggroup);
-            let sun = new THREE.DirectionalLight(0xffffff, 0.35);
-            sun.position.set(-wastes.size, wastes.size * 2, wastes.size / 2);
+            let sun = new THREE.DirectionalLight(0xffffff, 0.5);
+            sun.position.set(-wastes.size, wastes.size * 2, wastes.size / 3);
             //sun.add(new AxesHelper(100));
             ggroup.add(sun);
             ggroup.add(sun.target);
         }
         modeler.start = start;
         function createMesh(size = wastes.size) {
-            const width = size, height = size * 2;
-            let box = new THREE.BoxGeometry(width, height, width, 1, 1, 1);
+            const width = 18, height = 18 * 2;
+            let box = new THREE.BoxGeometry(width, height * heightMod, width, 1, 1, 1);
             let materials = [];
             const loader = new THREE.TextureLoader();
-            loader.load('tex/stock/metalrooftiles.jpg', function (texture) {
+            loader.load(textures[currentTex], function (texture) {
                 console.log(texture.magFilter);
                 console.log(texture.minFilter);
                 //texture.magFilter = texture.minFilter = THREE.NearestFilter;
@@ -1635,6 +1723,7 @@ void main() {
                     });
                 }
                 gmesh = new THREE.Mesh(box, materials);
+                gmesh.position.set(3, 0, 0);
                 ggroup.add(gmesh);
             });
         }
@@ -1658,7 +1747,24 @@ void main() {
                 rebuild = true;
             }
             if (app$1.key('arrowright') == 1) {
+                rebuild = true;
                 console.log('switch tex');
+                if (currentTex < textures.length - 1)
+                    currentTex++;
+            }
+            if (app$1.key('arrowleft') == 1) {
+                rebuild = true;
+                console.log('switch tex');
+                if (currentTex > 0)
+                    currentTex--;
+            }
+            if (app$1.key('arrowup') == 1) {
+                heightMod += 0.1;
+                rebuild = true;
+            }
+            if (app$1.key('arrowdown') == 1) {
+                heightMod -= 0.1;
+                rebuild = true;
             }
             rotation = rotation < 0 ? 3 : rotation > 3 ? 0 : rotation;
             if (rebuild && gmesh) {
@@ -1707,6 +1813,173 @@ void main() {
         }
     })(modeler || (modeler = {}));
     var modeler$1 = modeler;
+
+    var tree;
+    (function (tree) {
+        tree.started = false;
+        var gStemMesh;
+        var gLeavesMesh;
+        var ggroup;
+        var rotation = 0;
+        var rotationLeaf = 0;
+        var zooms = [0, 1, [1, 0.33, 0.25, 0.1]];
+        function register() {
+        }
+        tree.register = register;
+        function start() {
+            tree.started = true;
+            document.title = 'tree';
+            gStemMesh = createMesh();
+            ggroup = new THREE.Group;
+            ggroup.rotation.set(Math.PI / 6, Math.PI / 4, 0);
+            ren$1.scene.add(ggroup);
+            ren$1.scene.remove(ren$1.ambientLight);
+            let am = new THREE.AmbientLight(0x777777);
+            ren$1.scene.add(am);
+            ren$1.scene.background = new THREE.Color('gray');
+            let sun = new THREE.DirectionalLight(0xffffff, 0.5);
+            sun.position.set(-wastes.size, wastes.size * 2, wastes.size / 6);
+            //sun.add(new AxesHelper(100));
+            ggroup.add(sun);
+            ggroup.add(sun.target);
+        }
+        tree.start = start;
+        function createMesh(size = wastes.size) {
+            let stemWidth = 18, stemHeight = 30;
+            let leavesHeight = size * 3;
+            //height = size * 3;
+            let stemGeometry = new THREE.BoxGeometry(stemWidth, stemHeight, stemWidth, 1, 1, 1);
+            let leavesGeometry = new THREE.BoxGeometry(leavesHeight, leavesHeight, leavesHeight, 1, 1, 1);
+            let materials1 = [];
+            let materials2 = [];
+            const loader = new THREE.TextureLoader();
+            loader.load('tex/stock/treebark1.jpg', function (texture) {
+                //texture.magFilter = texture.minFilter = THREE.NearestFilter;
+                texture.wrapS = texture.wrapT = THREE__default["default"].RepeatWrapping;
+                texture.generateMipmaps = true;
+                console.log('woo');
+                let alignments = [
+                    undefined,
+                    new THREE.Matrix3().setUvTransform(0, 0, 1, 1, rotation * Math.PI / 2, 0, 1),
+                    new THREE.Matrix3().setUvTransform(0, 0, 0.5, 1, rotation * Math.PI / 2, 0, 1),
+                    undefined,
+                    new THREE.Matrix3().setUvTransform(0, 0, 1, 1, rotation * Math.PI / 2, 0, 1), // right
+                ];
+                for (let i of [1, 2, 4]) {
+                    materials1[i] = myboxmaterial({
+                        map: texture
+                    }, {
+                        myUvTransform: alignments[i]
+                    });
+                }
+                gStemMesh = new THREE.Mesh(stemGeometry, materials1);
+                gStemMesh.position.set(1, 0, 0);
+                ggroup.add(gStemMesh);
+            });
+            const loader2 = new THREE.TextureLoader();
+            loader2.load('tex/stock/leaves.png', function (texture) {
+                //texture.magFilter = texture.minFilter = THREE.NearestFilter;
+                texture.wrapS = texture.wrapT = THREE__default["default"].RepeatWrapping;
+                texture.generateMipmaps = true;
+                console.log('woo2');
+                let alignments = [
+                    undefined,
+                    new THREE.Matrix3().setUvTransform(0, 0, 2, 2, rotationLeaf * Math.PI / 2, 0, 1),
+                    new THREE.Matrix3().setUvTransform(0, 0, 2, 2, rotationLeaf * Math.PI / 2, 0, 1),
+                    undefined,
+                    new THREE.Matrix3().setUvTransform(0, 0, 2, 2, rotationLeaf * Math.PI / 2, 0, 1), // right
+                ];
+                for (let i of [1, 2, 4]) {
+                    materials2[i] = myboxmaterial({
+                        map: texture,
+                        transparent: true
+                    }, {
+                        myUvTransform: alignments[i]
+                    });
+                }
+                gLeavesMesh = new THREE.Mesh(leavesGeometry, materials2);
+                gLeavesMesh.position.set(1, (stemHeight / 2) + (leavesHeight / 2), 0);
+                ggroup.add(gLeavesMesh);
+            });
+        }
+        let show = true;
+        function tick() {
+            if (!tree.started)
+                return;
+            if (app$1.wheel == -1 && zooms[0] > 0)
+                zooms[0] -= 1;
+            if (app$1.wheel == 1 && zooms[0] < zooms[2].length - 1)
+                zooms[0] += 1;
+            zooms[1] = zooms[2][zooms[0]];
+            ren$1.camera2.scale.set(zooms[1], zooms[1], zooms[1]);
+            let rebuild = false;
+            if (app$1.key('q') == 1) {
+                rotation -= 1;
+                rebuild = true;
+            }
+            if (app$1.key('e') == 1) {
+                rotation += 1;
+                rebuild = true;
+            }
+            if (app$1.key('a') == 1) {
+                rotationLeaf -= 1;
+                rebuild = true;
+            }
+            if (app$1.key('d') == 1) {
+                rotationLeaf += 1;
+                rebuild = true;
+            }
+            rotation = rotation < 0 ? 3 : rotation > 3 ? 0 : rotation;
+            function deleteMesh(mesh) {
+                mesh.geometry.dispose();
+                mesh.material[1].dispose();
+                mesh.material[2].dispose();
+                mesh.material[4].dispose();
+                mesh.parent.remove(mesh);
+                mesh = undefined;
+            }
+            if (rebuild && gStemMesh) {
+                deleteMesh(gStemMesh);
+                deleteMesh(gLeavesMesh);
+                createMesh();
+                //ggroup.add(gmesh);
+            }
+            if (app$1.key('h') == 1)
+                show = !show;
+            let crunch = ``;
+            crunch += `dpi: ${ren$1.ndpi}<br />`;
+            crunch += `fps: ${ren$1.fps} / ${ren$1.delta.toPrecision(3)}<br />`;
+            crunch += '<br />';
+            crunch += `zoom: ${zooms[1]}<br />`;
+            crunch += `rotation: ${rotation}<br />`;
+            crunch += `controls: mousewheel to zoom, Q, E to rotate texture<br />`;
+            let element = document.querySelectorAll('.stats')[0];
+            element.innerHTML = crunch;
+            element.style.visibility = show ? 'visible' : 'hidden';
+        }
+        tree.tick = tick;
+        function myboxmaterial(parameters, uniforms) {
+            let material = new THREE.MeshLambertMaterial(parameters);
+            material.customProgramCacheKey = function () {
+                return 'boxmaterial';
+            };
+            material.name = "boxmaterial";
+            material.onBeforeCompile = function (shader) {
+                shader.defines = {};
+                shader.uniforms.myUvTransform = { value: uniforms.myUvTransform };
+                shader.vertexShader = shader.vertexShader.replace(`#include <common>`, `#include <common>
+				uniform mat3 myUvTransform;
+				`);
+                shader.vertexShader = shader.vertexShader.replace(`#include <uv_vertex>`, `
+				#ifdef USE_UV
+				vUv = ( myUvTransform * vec3( uv, 1 ) ).xy;
+				#endif
+				`);
+            };
+            return material;
+        }
+    })(tree || (tree = {}));
+    var tree$1 = tree;
 
     exports.wastes = void 0;
     (function (wastes) {
@@ -1765,6 +2038,9 @@ void main() {
             else if (window.location.href.indexOf("#modeler") != -1) {
                 modeler$1.start();
             }
+            else if (window.location.href.indexOf("#tree") != -1) {
+                tree$1.start();
+            }
             else {
                 wastes.gview = view.make();
                 objects$1.register();
@@ -1802,6 +2078,7 @@ void main() {
             }
             testing_chamber$1.tick();
             modeler$1.tick();
+            tree$1.tick();
             //lands.tick();
         }
         wastes.tick = tick;

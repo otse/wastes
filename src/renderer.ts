@@ -122,7 +122,7 @@ namespace ren {
 		scene = new Scene();
 		groups.axisSwap.add(groups.tiles);
 		scene.add(groups.axisSwap);
-		scene.background = new Color('#292929');
+		scene.background = new Color('#333');
 
 		scene2 = new Scene();
 
@@ -136,7 +136,7 @@ namespace ren {
 			{
 				minFilter: THREE.NearestFilter,
 				magFilter: THREE.NearestFilter,
-				format: THREE.RGBFormat
+				format: THREE.RGBAFormat
 			});
 
 		renderer = new WebGLRenderer({ antialias: false });

@@ -21,6 +21,7 @@ export namespace sprite {
 
 export class sprite extends lod.shape {
 	rup = 0
+	rleft = 0
 	mesh: Mesh
 	material: MeshBasicMaterial
 	geometry: PlaneBufferGeometry
@@ -32,6 +33,8 @@ export class sprite extends lod.shape {
 		super(vars.binded, numbers.sprites);
 		if (!this.vars.cell)
 			this.vars.cell = [0, 0];
+		if (!this.vars.order)
+			this.vars.order = 0;
 		this.myUvTransform = new Matrix3;
 		this.myUvTransform.setUvTransform(0, 0, 1, 1, 0, 0, 1);
 	}
@@ -42,7 +45,7 @@ export class sprite extends lod.shape {
 		const obj = this.vars.binded;
 		let rposCalc;
 		rposCalc = pts.add(obj.rpos, pts.divide(obj.size, 2));
-		rposCalc = pts.add(rposCalc, [0, this.rup]);
+		rposCalc = pts.add(rposCalc, [this.rleft, this.rup]);
 		this.mesh?.position.fromArray([...rposCalc, 0]);
 		this.mesh?.updateMatrix();
 	}
@@ -77,7 +80,7 @@ export class sprite extends lod.shape {
 		this.mesh = new Mesh(this.geometry, this.material);
 		this.mesh.frustumCulled = false;
 		this.mesh.matrixAutoUpdate = false;
-		this.mesh.renderOrder = -obj.wpos[1] + obj.wpos[0] + (this.vars.order || 0);
+		this.mesh.renderOrder = -obj.wpos[1] + obj.wpos[0] + this.vars.order!;
 		this.update();
 		this.vars.binded.sector?.group.add(this.mesh);
 		ren.groups.axisSwap.add(this.mesh);

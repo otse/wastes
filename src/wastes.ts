@@ -6,6 +6,7 @@ import tiles from "./tiles";
 import objects from "./objects";
 import modeler from "./modeler";
 import { sprites } from "./sprites";
+import tree from "./tree";
 
 
 export namespace wastes {
@@ -78,6 +79,9 @@ export namespace wastes {
 		else if (window.location.href.indexOf("#modeler") != -1) {
 			modeler.start();
 		}
+		else if (window.location.href.indexOf("#tree") != -1) {
+			tree.start();
+		}
 		else {
 			gview = view.make();
 			objects.register();
@@ -117,6 +121,7 @@ export namespace wastes {
 		}
 		testing_chamber.tick();
 		modeler.tick();
+		tree.tick();
 		//lands.tick();
 	}
 

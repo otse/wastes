@@ -18,7 +18,9 @@ namespace objects {
 
 	const color_wooden_door: vec3 = [210, 210, 210];
 	const color_wooden_door_and_deck: vec3 = [24, 93, 61];
-	const color_slimy_wall: vec3 = [20, 78, 54];
+	const color_treetrunk: vec3 = [20, 70, 20];
+	const color_slimy_wall: vec3 = [20, 70, 50];
+	const color_slimy_wall_with_deck: vec3 = [20, 78, 54];
 	const color_deck: vec3 = [114, 128, 124];
 	const color_rusty_wall_and_deck: vec3 = [20, 84, 87];
 	const color_acid_barrel: vec3 = [61, 118, 48];
@@ -47,7 +49,7 @@ namespace objects {
 
 		const treeTreshold = 50;
 
-		
+
 		hooks.register('sectorCreate', (sector: lod.sector) => {
 			pts.func(sector.small, (pos) => {
 				let pixel = wastes.objectmap.pixel(pos);
@@ -72,10 +74,22 @@ namespace objects {
 		hooks.register('sectorCreate', (sector: lod.sector) => {
 			pts.func(sector.small, (pos) => {
 				let pixel = wastes.buildingmap.pixel(pos);
-				if (pixel.is_color(color_slimy_wall)) {
+				if (pixel.is_color(color_slimy_wall_with_deck)) {
 					factory(objects.deck, pixel, pos);
 					factory(objects.wall, pixel, pos, { type: 'slimy' });
 					//factory(objects.roof, pixel, pos);
+				}
+				else if (pixel.is_color(color_slimy_wall)) {
+					factory(objects.wall, pixel, pos, { type: 'slimy' });
+					//factory(objects.roof, pixel, pos);
+				}
+				else if (pixel.is_color(color_treetrunk)) {
+					let tree = factory(objects.treetrunk, pixel, pos);
+					factory(objects.treeleaves, pixel, pos, { tree: tree });
+					for (let y = -1; y < 2; y++)
+					for (let x = -1; x < 2; x++)
+					factory(objects.treeleaves, pixel, pts.add(pos, [x, y]), { tree: tree });
+			
 				}
 				else if (pixel.is_color(color_rusty_wall_and_deck)) {
 					factory(objects.deck, pixel, pos);
@@ -92,12 +106,12 @@ namespace objects {
 					//factory(objects.roof, pixel, pos);
 				}
 				else if (pixel.is_color(color_wooden_door_and_deck)) {
-					factory(objects.deck, pixel, pos); 
+					factory(objects.deck, pixel, pos);
 					factory(objects.door, pixel, pos);
 					//factory(objects.roof, pixel, pos);
 				}
 			})
-			return false;	
+			return false;
 		})
 	}
 
@@ -184,6 +198,7 @@ namespace objects {
 		pixel?: pixel
 		tile?: tiles.tile
 		cell: vec2 = [0, 0]
+		heightAdd = 0
 		hints?: any
 		constructor(counts: numbers.tally) {
 			super(counts);
@@ -204,7 +219,8 @@ namespace objects {
 					break;
 				calc += obj.z + obj.height;
 			}
-			(this.shape as sprite).rup = calc;
+			if (this.shape)
+				(this.shape as sprite).rup = calc + this.heightAdd;
 		}
 	}
 	export class wall extends objected {
@@ -220,6 +236,8 @@ namespace objects {
 			let tuple = sprites.dwoodenwalls;
 			if (this.hints?.type == 'rusty')
 				tuple = sprites.drustywalls;
+			if (this.hints?.type == 'ruddy')
+				tuple = sprites.druddywalls;
 			let shape = new sprite({
 				binded: this,
 				tuple: tuple,
@@ -252,6 +270,48 @@ namespace objects {
 				order: .4,
 			});
 			this.stack();
+		}
+	}
+	export class treetrunk extends objected {
+		constructor() {
+			super(numbers.floors);
+			this.type = 'tree'
+			this.height = 29;
+		}
+		override create() {
+			this.tiled();
+			this.size = [24, 50];
+			//if (this.pixel!.array[3] < 240)
+			//	this.cell = [240 - this.pixel!.array[3], 0];
+			let shape = new sprite({
+				binded: this,
+				tuple: sprites.dtreetrunk,
+				order: 0.3,
+			});
+			this.stack();
+		}
+	}
+	export class treeleaves extends objected {
+		constructor() {
+			super(numbers.floors);
+			this.type = 'tree leaves'
+			this.height = 32;
+		}
+		override create() {
+			this.tiled();
+			this.size = [24, 31];
+			//if (this.pixel!.array[3] < 240)
+			//	this.cell = [240 - this.pixel!.array[3], 0];
+			let shape = new sprite({
+				binded: this,
+				tuple: sprites.dtreeleaves,
+				order: 0.3,
+			});
+			this.special_leaves_stack();
+		}
+		special_leaves_stack() {
+			if (this.shape)
+				(this.shape as sprite).rup = this.hints.tree.z + 31;
 		}
 	}
 	export class roof extends objected {

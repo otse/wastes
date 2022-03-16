@@ -1,30 +1,20 @@
-import { default as THREE, LoadingManager, TextureLoader, Texture, Group, Mesh, Shader, Matrix3, AxesHelper, DirectionalLight, MeshLambertMaterial, MeshLambertMaterialParameters, BoxGeometry } from "three";
+import { default as THREE, TextureLoader, Texture, Group, Mesh, Color, Shader, Matrix3, AmbientLight, DirectionalLight, MeshLambertMaterial, MeshLambertMaterialParameters, BoxGeometry } from "three";
 import app from "./app";
 
 import ren from './renderer';
 import wastes from "./wastes";
 
-namespace modeler {
+namespace tree {
 
 	export var started = false;
 
-	const textures = [
-		'tex/stock/metalrooftiles.jpg',
-		'tex/stock/concrete1.jpg',
-		'tex/stock/brick1.jpg',
-		'tex/stock/brick2.jpg',
-		'tex/stock/brick3.jpg',
-		'tex/stock/brick4.jpg',
-		'tex/stock/treebark1.jpg',
-		'tex/stock/leaves.png',
-	]
-
-	let currentTex = 0;
-
-	var gmesh;
+	var gStemMesh;
+	var gLeavesMesh;
 	var ggroup;
-	var rotation: 0 | 1 | 2 | 3 = 1;
-	let heightMod = 1;
+
+	var rotation: 0 | 1 | 2 | 3 = 0;
+	var rotationLeaf: 0 | 1 | 2 | 3 = 0;
+
 	var zooms: [index: number, current: number, options: number[]] = [0, 1, [1, 0.33, 0.25, 0.1]]
 
 	export function register() {
@@ -34,17 +24,23 @@ namespace modeler {
 	export function start() {
 		started = true;
 
-		document.title = 'modeler'
+		document.title = 'tree'
 
-		gmesh = createMesh();
+		gStemMesh = createMesh();
 
 		ggroup = new Group;
 		ggroup.rotation.set(Math.PI / 6, Math.PI / 4, 0);
 
 		ren.scene.add(ggroup);
 
+		ren.scene.remove(ren.ambientLight);
+		let am = new AmbientLight(0x777777);
+		ren.scene.add(am);
+		ren.scene.background = new Color('gray');
+
+
 		let sun = new DirectionalLight(0xffffff, 0.5);
-		sun.position.set(-wastes.size, wastes.size * 2, wastes.size / 3);
+		sun.position.set(-wastes.size, wastes.size * 2, wastes.size / 6);
 		//sun.add(new AxesHelper(100));
 		ggroup.add(sun);
 		ggroup.add(sun.target);
@@ -52,21 +48,24 @@ namespace modeler {
 	}
 
 	function createMesh(size = wastes.size) {
-		const width = 18, height = 18 * 2;
+		let stemWidth = 18, stemHeight = 30;
+		let leavesWidth = size, leavesHeight = size * 3;
 
-		let box = new BoxGeometry(width, height * heightMod, width, 1, 1, 1);
+		//height = size * 3;
 
-		let materials: MeshLambertMaterial[] = [];
+		let stemGeometry = new BoxGeometry(stemWidth, stemHeight, stemWidth, 1, 1, 1);
+		let leavesGeometry = new BoxGeometry(leavesHeight, leavesHeight, leavesHeight, 1, 1, 1);
+
+		let materials1: MeshLambertMaterial[] = [];
+		let materials2: MeshLambertMaterial[] = [];
 		//let texture = ren.load_texture('tex/stock/metalrooftiles.jpg');
 
 		let twidth = 1, tlength = 1;
 
 		const loader = new TextureLoader();
 		loader.load(
-			textures[currentTex],
+			'tex/stock/treebark1.jpg',
 			function (texture: Texture) {
-				console.log(texture.magFilter);
-				console.log(texture.minFilter);
 				//texture.magFilter = texture.minFilter = THREE.NearestFilter;
 				texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
 				texture.generateMipmaps = true;
@@ -82,16 +81,48 @@ namespace modeler {
 				]
 
 				for (let i of [1, 2, 4]) {
-					materials[i] = myboxmaterial({
+					materials1[i] = myboxmaterial({
 						map: texture
 					}, {
 						myUvTransform: alignments[i]
 					});
 				}
 
-				gmesh = new Mesh(box, materials);
-				gmesh.position.set(3, 0, 0);
-				ggroup.add(gmesh);
+				gStemMesh = new Mesh(stemGeometry, materials1);
+				gStemMesh.position.set(1, 0, 0);
+				ggroup.add(gStemMesh);
+			});
+
+		const loader2 = new TextureLoader();
+		loader2.load(
+			'tex/stock/leaves.png',
+			function (texture: Texture) {
+				//texture.magFilter = texture.minFilter = THREE.NearestFilter;
+				texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+				texture.generateMipmaps = true;
+
+				console.log('woo2');
+
+				let alignments = [
+					undefined,
+					new Matrix3().setUvTransform(0, 0, 2, 2, rotationLeaf * Math.PI / 2, 0, 1), // left
+					new Matrix3().setUvTransform(0, 0, 2, 2, rotationLeaf * Math.PI / 2, 0, 1), // top
+					undefined,
+					new Matrix3().setUvTransform(0, 0, 2, 2, rotationLeaf * Math.PI / 2, 0, 1), // right
+				]
+
+				for (let i of [1, 2, 4]) {
+					materials2[i] = myboxmaterial({
+						map: texture,
+						transparent: true
+					}, {
+						myUvTransform: alignments[i]
+					});
+				}
+
+				gLeavesMesh = new Mesh(leavesGeometry, materials2);
+				gLeavesMesh.position.set(1, (stemHeight / 2) + (leavesHeight / 2), 0);
+				ggroup.add(gLeavesMesh);
 			}
 		);
 
@@ -125,38 +156,29 @@ namespace modeler {
 			rebuild = true;
 		}
 
-		if (app.key('arrowright') == 1) {
-			rebuild = true;
-			console.log('switch tex');
-			if (currentTex < textures.length - 1)
-				currentTex++;
-		}
-
-		if (app.key('arrowleft') == 1) {
-			rebuild = true;
-			console.log('switch tex');
-			if (currentTex > 0)
-				currentTex--;
-		}
-
-		if (app.key('arrowup') == 1) {
-			heightMod += 0.1;
+		if (app.key('a') == 1) {
+			rotationLeaf -= 1;
 			rebuild = true;
 		}
-		if (app.key('arrowdown') == 1) {
-			heightMod -= 0.1;
+		if (app.key('d') == 1) {
+			rotationLeaf += 1;
 			rebuild = true;
 		}
 
 		rotation = rotation < 0 ? 3 : rotation > 3 ? 0 : rotation;
 
-		if (rebuild && gmesh) {
-			gmesh.geometry.dispose();
-			gmesh.material[1].dispose();
-			gmesh.material[2].dispose();
-			gmesh.material[4].dispose();
-			gmesh.parent.remove(gmesh);
-			gmesh = undefined;
+		function deleteMesh(mesh) {
+			mesh.geometry.dispose();
+			mesh.material[1].dispose();
+			mesh.material[2].dispose();
+			mesh.material[4].dispose();
+			mesh.parent.remove(mesh);
+			mesh = undefined;
+		}
+
+		if (rebuild && gStemMesh) {
+			deleteMesh(gStemMesh);
+			deleteMesh(gLeavesMesh);
 			createMesh();
 			//ggroup.add(gmesh);
 		}
@@ -205,4 +227,4 @@ namespace modeler {
 	}
 }
 
-export default modeler;
+export default tree;

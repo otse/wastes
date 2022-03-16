@@ -17,6 +17,9 @@ export namespace tiles {
 
 	var arrays: tiles.tile[][] = []
 
+	const color_gravel: vec3 = [110, 122, 115];
+
+
 	export function get(pos: vec2) {
 		if (arrays[pos[1]])
 			return arrays[pos[1]][pos[0]];
@@ -56,6 +59,7 @@ export namespace tiles {
 			return;
 
 		for (let i = 40; i >= 0; i--) {
+			// pretention grid
 			let pos = lod.unproject(pts.add(wastes.gview.mrpos, [0, -i]));
 			pos = pts.floor(pos);
 			const tile = get(pos);
@@ -81,17 +85,23 @@ export namespace tiles {
 		constructor(wpos: vec2) {
 			super(numbers.tiles);
 			this.wpos = wpos;
-			this.size = [24, 12];
-			this.tuple = sprites.dtile;
-			this.color = color_purple_water;
-			let colormapPixel = wastes.colormap.pixel(this.wpos);
-			let heightmapPixel = wastes.heightmap.pixel(this.wpos);
-			if (!colormapPixel.is_black()) {
+			let colour = wastes.colormap.pixel(this.wpos);
+			if (colour.is_black()) {
+				this.size = [24, 12];
+				this.tuple = sprites.dtile;
+				this.color = color_purple_water;
+			}
+			if (!colour.is_black()) {
 				this.height = 6;
 				this.tuple = sprites.dswamptiles;
 				this.cell = [1, 0];
 				this.size = [24, 30];
 				this.color = wastes.colormap.pixel(this.wpos).array;
+
+				/*if (colour.is_color(color_gravel)) {
+					this.tuple = sprites.dgraveltiles;
+					console.log('gravel');
+				}*/
 
 				const divisor = 1;
 				let height = wastes.heightmap.pixel(this.wpos);
