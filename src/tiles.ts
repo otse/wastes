@@ -105,7 +105,7 @@ export namespace tiles {
 					console.log('gravel');
 				}*/
 
-				const divisor = 1;
+				const divisor = 5;
 				let height = wastes.heightmap.pixel(this.wpos);
 				this.z = Math.floor(height.array[0] / divisor);
 				this.z -= 3;

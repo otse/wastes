@@ -1223,7 +1223,7 @@ void main() {
                         this.tuple = sprites.dgraveltiles;
                         console.log('gravel');
                     }*/
-                    const divisor = 1;
+                    const divisor = 5;
                     let height = wastes.heightmap.pixel(this.wpos);
                     this.z = Math.floor(height.array[0] / divisor);
                     this.z -= 3;
@@ -1565,7 +1565,7 @@ void main() {
                     color = [
                         Math.floor(color[0] * 1.5),
                         Math.floor(color[1] * 1.5),
-                        Math.floor(color[2] * 1.5),
+                        Math.floor(color[2] * 1.8),
                         color[3],
                     ];
                 }
@@ -1691,6 +1691,8 @@ void main() {
     (function (modeler) {
         modeler.started = false;
         const textures = [
+            'tex/stock/beamed1.jpg',
+            'tex/stock/beamed2.jpg',
             'tex/stock/metalrooftiles.jpg',
             'tex/stock/concrete1.jpg',
             'tex/stock/brick1.jpg',

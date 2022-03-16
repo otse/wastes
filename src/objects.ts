@@ -316,7 +316,7 @@ namespace objects {
 				color = [
 					Math.floor(color[0] * 1.5),
 					Math.floor(color[1] * 1.5),
-					Math.floor(color[2] * 1.5),
+					Math.floor(color[2] * 1.8),
 					color[3],
 				]
 			}
