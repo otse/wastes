@@ -1341,7 +1341,7 @@ void main() {
                         //factory(objects.roof, pixel, pos);
                     }
                     else if (pixel.is_color(color_treetrunk)) {
-                        factory(objects.treetrunk, pixel, pos);
+                        factory(objects.decidtree, pixel, pos);
                     }
                     else if (pixel.is_color(color_rusty_wall_and_deck)) {
                         factory(objects.deck, pixel, pos);
@@ -1518,11 +1518,11 @@ void main() {
             }
         }
         objects.deck = deck;
-        class treetrunk extends objected {
+        class decidtree extends objected {
             constructor() {
                 super(numbers.floors);
                 this.flowered = false;
-                this.type = 'tree';
+                this.type = 'decid tree';
                 this.height = 29;
             }
             create() {
@@ -1536,18 +1536,19 @@ void main() {
                     order: 0.6,
                 });
                 this.stack();
+                const tile = tiles$1.get(this.wpos);
                 if (!this.flowered) {
                     this.flowered = true;
                     for (let y = -1; y <= 1; y++)
                         for (let x = -1; x <= 1; x++)
                             if (!(x == 0 && y == 0) && Math.random() > .3)
-                                factory(objects.treeleaves, pixel, pts.add(this.wpos, [x, y]), { tree: this });
-                    factory(objects.treeleaves, pixel, pts.add(this.wpos, [0, 0]));
-                    factory(objects.treeleaves, pixel, pts.add(this.wpos, [0, 0]));
+                                factory(objects.treeleaves, pixel, pts.add(this.wpos, [x, y]), { tree: this, color: tile.color });
+                    factory(objects.treeleaves, pixel, pts.add(this.wpos, [0, 0]), { color: tile.color });
+                    factory(objects.treeleaves, pixel, pts.add(this.wpos, [0, 0]), { color: tile.color });
                 }
             }
         }
-        objects.treetrunk = treetrunk;
+        objects.decidtree = decidtree;
         class treeleaves extends objected {
             constructor() {
                 super(numbers.floors);
@@ -1559,10 +1560,20 @@ void main() {
                 this.size = [24, 31];
                 //if (this.pixel!.array[3] < 240)
                 //	this.cell = [240 - this.pixel!.array[3], 0];
+                let color = this.hints.color || [255, 255, 255, 255];
+                if (this.hints.color) {
+                    color = [
+                        Math.floor(color[0] * 1.5),
+                        Math.floor(color[1] * 1.5),
+                        Math.floor(color[2] * 1.5),
+                        color[3],
+                    ];
+                }
                 new sprite({
                     binded: this,
                     tuple: sprites$1.dtreeleaves,
                     order: 0.7,
+                    color: color
                 });
                 if (this.hints.tree)
                     this.special_leaves_stack();
