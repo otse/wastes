@@ -18,7 +18,9 @@ namespace objects {
 
 	const color_wooden_door: vec3 = [210, 210, 210];
 	const color_wooden_door_and_deck: vec3 = [24, 93, 61];
-	const color_treetrunk: vec3 = [20, 70, 20];
+	const color_decidtree: vec3 = [20, 70, 20];
+	const color_grass: vec3 = [30, 120, 30];
+	const color_wheat: vec3 = [130, 130, 0];
 	const color_slimy_wall: vec3 = [20, 70, 50];
 	const color_slimy_wall_with_deck: vec3 = [20, 78, 54];
 	const color_deck: vec3 = [114, 128, 124];
@@ -65,7 +67,7 @@ namespace objects {
 				let pixel = wastes.roofmap.pixel(pos);
 				if (pixel.is_color(color_false_front)) {
 					//factory(objects.roof, pixel, pos);
-					factory(objects.falsefront, pixel, pos);
+					//factory(objects.falsefront, pixel, pos);
 				}
 			})
 			return false;
@@ -83,9 +85,15 @@ namespace objects {
 					factory(objects.wall, pixel, pos, { type: 'slimy' });
 					//factory(objects.roof, pixel, pos);
 				}
-				else if (pixel.is_color(color_treetrunk)) {
+				else if (pixel.is_color(color_decidtree)) {
 					factory(objects.decidtree, pixel, pos);
 
+				}
+				else if (pixel.is_color(color_grass)) {
+					//factory(objects.grass, pixel, pos);
+				}
+				else if (pixel.is_color(color_wheat)) {
+					factory(objects.wheat, pixel, pos);
 				}
 				else if (pixel.is_color(color_rusty_wall_and_deck)) {
 					factory(objects.deck, pixel, pos);
@@ -114,6 +122,12 @@ namespace objects {
 	export function start() {
 
 		console.log(' objects start ');
+
+	}
+
+	export function tick() {
+
+
 
 	}
 
@@ -231,7 +245,7 @@ namespace objects {
 			this.tiled();
 			this.size = [24, 40];
 			this.cell = [255 - this.pixel!.array[3], 0];
-			let tuple = sprites.dwoodenwalls;
+			let tuple = sprites.dscrappywalls;
 			if (this.hints?.type == 'rusty')
 				tuple = sprites.drustywalls;
 			if (this.hints?.type == 'ruddy')
@@ -284,7 +298,7 @@ namespace objects {
 			//	this.cell = [240 - this.pixel!.array[3], 0];
 			let shape = new sprite({
 				binded: this,
-				tuple: sprites.dtreetrunk,
+				tuple: sprites.ddecidtree,
 				order: 0.6,
 			});
 			this.stack();
@@ -338,6 +352,54 @@ namespace objects {
 				this.z = tree.calc + tree.height;
 				(this.shape as sprite).rup = this.z;
 			}
+		}
+	}
+	export class grass extends objected {
+		constructor() {
+			super(numbers.roofs);
+			this.type = 'roof'
+			this.height = 4;
+		}
+		override create() {
+			this.tiled();
+			this.size = [24, 30];
+			let color =  tiles.get(this.wpos)!.color;
+			color = [
+				Math.floor(color[0] * 1.5),
+				Math.floor(color[1] * 1.5),
+				Math.floor(color[2] * 2.0),
+				color[3],
+			]
+			this.cell = [255 - this.pixel!.array[3], 0];
+			let shape = new sprite({
+				binded: this,
+				tuple: sprites.dgrass,
+				cell: this.cell,
+				order: .6,
+				color: color
+			});
+			this.stack();
+		}
+	}
+	export class wheat extends objected {
+		constructor() {
+			super(numbers.roofs);
+			this.type = 'roof'
+			this.height = 4;
+		}
+		override create() {
+			this.tiled();
+			this.size = [24, 30];
+			//let color =  tiles.get(this.wpos)!.color;
+			//this.cell = [Math.floor(Math.random() * 2), 0];
+			let shape = new sprite({
+				binded: this,
+				tuple: sprites.dwheat,
+				cell: this.cell,
+				//color: color,
+				order: .6
+			});
+			this.stack();
 		}
 	}
 	export class roof extends objected {
@@ -399,7 +461,7 @@ namespace objects {
 			super(numbers.walls);
 			this.type = 'door'
 			this.height = 24;
-			//this.cell = [1, 0];
+			this.cell = [1, 0];
 		}
 		override create() {
 			this.tiled();

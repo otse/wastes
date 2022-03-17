@@ -1,5 +1,5 @@
 
-// inspired by gmod lua
+// inspired by gmod lua !
 
 type func = (any) => boolean
 

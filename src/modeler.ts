@@ -9,6 +9,11 @@ namespace modeler {
 	export var started = false;
 
 	const textures = [
+		'tex/stock/planks.jpg',
+		'tex/stock/planks1.jpg',
+		'tex/stock/planks2.jpg',
+		'tex/stock/planks3.jpg',
+		'tex/stock/planks4.jpg',
 		'tex/stock/beamed1.jpg',
 		'tex/stock/beamed2.jpg',
 		'tex/stock/metalrooftiles.jpg',
@@ -45,8 +50,8 @@ namespace modeler {
 
 		ren.scene.add(ggroup);
 
-		let sun = new DirectionalLight(0xffffff, 0.5);
-		sun.position.set(-wastes.size, wastes.size * 2, wastes.size / 3);
+		let sun = new DirectionalLight(0xffffff, 0.4);
+		sun.position.set(-wastes.size, wastes.size * 2, wastes.size / 4);
 		//sun.add(new AxesHelper(100));
 		ggroup.add(sun);
 		ggroup.add(sun.target);
@@ -85,7 +90,8 @@ namespace modeler {
 
 				for (let i of [1, 2, 4]) {
 					materials[i] = myboxmaterial({
-						map: texture
+						map: texture,
+						transparent: true
 					}, {
 						myUvTransform: alignments[i]
 					});
