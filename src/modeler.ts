@@ -41,7 +41,7 @@ namespace modeler {
 	export function start() {
 		started = true;
 
-		document.title = 'modeler'
+		document.title = 'modeler';
 
 		gmesh = createMesh();
 

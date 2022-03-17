@@ -8,6 +8,7 @@ import modeler from "./modeler";
 import { sprites } from "./sprites";
 import tree from "./tree";
 import shear from "./shear";
+import collada from "./collada";
 
 
 export namespace wastes {
@@ -83,6 +84,9 @@ export namespace wastes {
 		else if (window.location.href.indexOf("#shear") != -1) {
 			shear.start();
 		}
+		else if (window.location.href.indexOf("#collada") != -1) {
+			collada.start();
+		}
 		//else if (window.location.href.indexOf("#tree") != -1) {
 		//	tree.start();
 		//}
@@ -126,6 +130,7 @@ export namespace wastes {
 		testing_chamber.tick();
 		modeler.tick();
 		shear.tick();
+		collada.tick();
 		//tree.tick();
 		objects.tick();
 		//lands.tick();

@@ -93,7 +93,7 @@ namespace objects {
 					//factory(objects.grass, pixel, pos);
 				}
 				else if (pixel.is_color(color_wheat)) {
-					factory(objects.wheat, pixel, pos);
+					//factory(objects.wheat, pixel, pos);
 				}
 				else if (pixel.is_color(color_rusty_wall_and_deck)) {
 					factory(objects.deck, pixel, pos);
@@ -248,8 +248,12 @@ namespace objects {
 			let tuple = sprites.dscrappywalls;
 			if (this.hints?.type == 'rusty')
 				tuple = sprites.drustywalls;
-			if (this.hints?.type == 'ruddy')
+			else if (this.hints?.type == 'ruddy')
 				tuple = sprites.druddywalls;
+			else {
+				//if (Math.random() > .5)
+				//	tuple = sprites.dscrappywalls2;
+			}
 			let shape = new sprite({
 				binded: this,
 				tuple: tuple,

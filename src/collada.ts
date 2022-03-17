@@ -1,4 +1,3 @@
-/*
 import { default as THREE, LoadingManager, Group, AxesHelper, DirectionalLight, MeshLambertMaterial } from "three";
 
 import { ColladaLoader } from '../node_modules/three/examples/jsm/loaders/ColladaLoader.js';
@@ -6,7 +5,7 @@ import { ColladaLoader } from '../node_modules/three/examples/jsm/loaders/Collad
 import ren from './renderer';
 import wastes from "./wastes";
 
-namespace modeler {
+namespace collada {
 
 	export var started = false;
 
@@ -15,7 +14,10 @@ namespace modeler {
 	}
 
 	export function start() {
+
 		started = true;
+
+		document.title = 'collada'
 
 		var elf;
 
@@ -26,18 +28,17 @@ namespace modeler {
 		});
 
 		const loader = new ColladaLoader(loadingManager);
-		loader.load('./modeler/collada/diner.dae', function (collada) {
+		loader.load('collada/model.dae', function (collada) {
 
-			wastes.gview.zoomIndex = 0;
-
+			//wastes.gview.zoomIndex = 0;
 
 			elf = collada.scene;
 			let group = new Group;
-			group.rotation.set(Math.PI / 6, Math.PI / 4, 0);
+			group.rotation.set(0, -Math.PI / 2, 0);
 			group.position.set(wastes.size, 0, 0);
 			group.add(elf);
 
-			console.log(elf);
+			//console.log(elf);
 
 			function fix(material: MeshLambertMaterial) {
 				//material.color = new THREE.Color('red');
@@ -59,8 +60,8 @@ namespace modeler {
 			//group.add(new AxesHelper(300));
 			console.log(elf.scale);
 
-			elf.scale.multiplyScalar(22);
-			elf.rotation.set(-Math.PI / 2, 0, 0);
+			elf.scale.multiplyScalar(100);
+			//elf.rotation.set(-Math.PI / 2, 0, 0);
 			elf.position.set(1, 0, 0);
 
 			ren.scene.add(group);
@@ -84,5 +85,4 @@ namespace modeler {
 	}
 }
 
-export default modeler;
-*/
+export default collada;
