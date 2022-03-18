@@ -76,6 +76,7 @@ export namespace wastes {
 	function starts() {
 		lod.register();
 		if (window.location.href.indexOf("#testingchamber") != -1) {
+			gview = view.make();
 			testing_chamber.start();
 			tests.start();
 		}
@@ -126,17 +127,13 @@ export namespace wastes {
 			return
 		}
 		gview?.tick();
-		if (!testing_chamber.started) {
-			tiles.tick();
-			tests.tick();
-		}
+		tests.tick();
 		testing_chamber.tick();
 		modeler.tick();
+		tiles.tick();
 		shear.tick();
 		collada.tick();
-		//tree.tick();
 		objects.tick();
-		//lands.tick();
 	}
 
 }

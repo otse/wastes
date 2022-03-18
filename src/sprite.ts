@@ -20,6 +20,7 @@ export namespace sprite {
 };
 
 export class sprite extends lod.shape {
+	dime = true
 	rup = 0
 	rleft = 0
 	mesh: Mesh
@@ -41,13 +42,21 @@ export class sprite extends lod.shape {
 	update() {
 		if (!this.mesh)
 			return;
-		this.mesh.rotation.z = this.vars.binded.ro;
 		const obj = this.vars.binded;
-		let rposCalc;
-		rposCalc = pts.add(obj.rpos, pts.divide(obj.size, 2));
-		rposCalc = pts.add(rposCalc, [this.rleft, this.rup]);
-		this.mesh?.position.fromArray([...rposCalc, 0]);
-		this.mesh?.updateMatrix();
+		let calc = obj.rpos;
+		if (this.dime)
+			calc = pts.add(obj.rpos, pts.divide(obj.size, 2));
+		else
+			calc = pts.add(obj.rpos, [0, obj.size[1]]);
+
+		let wposf = pts.ceil(obj.wpos);
+		calc = pts.add(calc, [this.rleft, this.rup]);
+		if (this.mesh) {
+			this.mesh.position.fromArray([...calc, 0]);
+			this.mesh.updateMatrix();
+			this.mesh.renderOrder = -wposf[1] + wposf[0] + this.vars.order!;
+			this.mesh.rotation.z = this.vars.binded.ro;
+		}
 	}
 	dispose() {
 		if (!this.mesh)

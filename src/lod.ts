@@ -157,13 +157,15 @@ namespace lod {
 			}
 		}
 		swap(obj: obj) {
-			/*let newSector = this.galaxy.sectoratpixel(obj.rpos);
+			let newSector = this.galaxy.at(this.galaxy.big(obj.wpos));
 			if (obj.sector != newSector) {
 				obj.sector?.remove(obj);
 				newSector.add(obj);
+				if (!obj.isActive())
+					obj.show();
 				if (!newSector.isActive())
 					obj.hide();
-			}*/
+			}
 		}
 		tick() {
 			hooks.call('sectorTick', this);

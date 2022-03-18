@@ -60,7 +60,7 @@ namespace objects {
 					// factory(objects.acidbarrel, pixel, pos);
 				}
 				else if (pixel.is_color(color_wall_chest)) {
-					factory(objects.chest, pixel, pos);
+					factory(objects.crate, pixel, pos);
 				}
 			})
 			return false;
@@ -226,10 +226,12 @@ namespace objects {
 		//	this.tiled();
 		//	super.update();
 		//}
-		stack() {
+		stack(fallthru: string[] = []) {
 			let calc = 0;
-			let stack = this.sector!.stacked(this.wpos);
+			let stack = this.sector!.stacked(pts.round(this.wpos));
 			for (let obj of stack) {
+				if (fallthru.indexOf(obj.type) > -1)
+					continue;
 				if (obj == this)
 					break;
 				calc += obj.z + obj.height;
@@ -410,11 +412,11 @@ namespace objects {
 			this.stack();
 		}
 	}
-	export class chest extends objected {
+	export class crate extends objected {
 		constructor() {
 			super(numbers.roofs);
-			this.type = 'roof'
-			this.height = 4;
+			this.type = 'crate'
+			this.height = 17;
 		}
 		override create() {
 			this.tiled();

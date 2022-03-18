@@ -60,7 +60,7 @@ namespace collada {
 			//group.add(new AxesHelper(300));
 			console.log(elf.scale);
 
-			elf.scale.multiplyScalar(20);
+			elf.scale.multiplyScalar(30);
 			//elf.rotation.set(-Math.PI / 2, 0, 0);
 			elf.position.set(1, 0, 0);
 

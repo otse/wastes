@@ -15,6 +15,8 @@ namespace testing_chamber {
 		console.log('placing squares on game area that should take up 1:1 pixels on screen...');
 		console.log('...regardless of your os or browsers dpi setting');
 
+		document.title = 'testing chamber';
+
 		wastes.gview.zoom = 1;
 		wastes.gview.wpos = [0, 0];
 		wastes.gview.rpos = lod.unproject([0, 0]);
@@ -37,8 +39,8 @@ namespace testing_chamber {
 		lod.project = function(unit: vec2) { return pts.mult(unit, 100); }
 		lod.unproject = function(pixel: vec2) { return pts.divide(pixel, 100); }
 
-		for (let y = 0; y < 10; y++) {
-			for (let x = 0; x < 10; x++) {
+		for (let y = 0; y < 20; y++) {
+			for (let x = 0; x < 20; x++) {
 				let square = Square.make();
 				square.wpos = [x, y];
 				lod.add(square);
@@ -95,6 +97,7 @@ namespace testing_chamber {
 				binded: this,
 				tuple: sprites.test100
 			});
+			shape.dime = false;
 		}
 		tick() {
 			let shape = this.shape as sprite;

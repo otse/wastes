@@ -591,13 +591,16 @@ void main() {
                 }
             }
             swap(obj) {
-                /*let newSector = this.galaxy.sectoratpixel(obj.rpos);
+                var _a;
+                let newSector = this.galaxy.at(this.galaxy.big(obj.wpos));
                 if (obj.sector != newSector) {
-                    obj.sector?.remove(obj);
+                    (_a = obj.sector) === null || _a === void 0 ? void 0 : _a.remove(obj);
                     newSector.add(obj);
+                    if (!obj.isActive())
+                        obj.show();
                     if (!newSector.isActive())
                         obj.hide();
-                }*/
+                }
             }
             tick() {
                 hooks.call('sectorTick', this);
@@ -821,6 +824,7 @@ void main() {
         constructor(vars) {
             super(vars.binded, numbers.sprites);
             this.vars = vars;
+            this.dime = true;
             this.rup = 0;
             this.rleft = 0;
             this.roffset = [0, 0];
@@ -832,16 +836,22 @@ void main() {
             this.myUvTransform.setUvTransform(0, 0, 1, 1, 0, 0, 1);
         }
         update() {
-            var _a, _b;
             if (!this.mesh)
                 return;
-            this.mesh.rotation.z = this.vars.binded.ro;
             const obj = this.vars.binded;
-            let rposCalc;
-            rposCalc = pts.add(obj.rpos, pts.divide(obj.size, 2));
-            rposCalc = pts.add(rposCalc, [this.rleft, this.rup]);
-            (_a = this.mesh) === null || _a === void 0 ? void 0 : _a.position.fromArray([...rposCalc, 0]);
-            (_b = this.mesh) === null || _b === void 0 ? void 0 : _b.updateMatrix();
+            let calc = obj.rpos;
+            if (this.dime)
+                calc = pts.add(obj.rpos, pts.divide(obj.size, 2));
+            else
+                calc = pts.add(obj.rpos, [0, obj.size[1]]);
+            let wposf = pts.ceil(obj.wpos);
+            calc = pts.add(calc, [this.rleft, this.rup]);
+            if (this.mesh) {
+                this.mesh.position.fromArray([...calc, 0]);
+                this.mesh.updateMatrix();
+                this.mesh.renderOrder = -wposf[1] + wposf[0] + this.vars.order;
+                this.mesh.rotation.z = this.vars.binded.ro;
+            }
         }
         dispose() {
             var _a, _b, _c;
@@ -908,6 +918,7 @@ void main() {
             console.log(' start testing chamber ');
             console.log('placing squares on game area that should take up 1:1 pixels on screen...');
             console.log('...regardless of your os or browsers dpi setting');
+            document.title = 'testing chamber';
             wastes.gview.zoom = 1;
             wastes.gview.wpos = [0, 0];
             wastes.gview.rpos = lod$1.unproject([0, 0]);
@@ -926,8 +937,8 @@ void main() {
             lod$1.ggrid = new lod$1.grid(1, 1);
             lod$1.project = function (unit) { return pts.mult(unit, 100); };
             lod$1.unproject = function (pixel) { return pts.divide(pixel, 100); };
-            for (let y = 0; y < 10; y++) {
-                for (let x = 0; x < 10; x++) {
+            for (let y = 0; y < 20; y++) {
+                for (let x = 0; x < 20; x++) {
                     let square = Square.make();
                     square.wpos = [x, y];
                     lod$1.add(square);
@@ -975,10 +986,11 @@ void main() {
             create() {
                 console.log('create');
                 this.size = [100, 100];
-                new sprite({
+                let shape = new sprite({
                     binded: this,
                     tuple: sprites$1.test100
                 });
+                shape.dime = false;
             }
             tick() {
                 let shape = this.shape;
@@ -1076,15 +1088,17 @@ void main() {
                 this.wpos = wpos;
                 let colour = wastes.colormap.pixel(this.wpos);
                 if (colour.is_black()) {
+                    this.type = 'water';
                     this.size = [24, 12];
                     this.tuple = sprites$1.dtile;
                     this.color = color_purple_water;
                 }
                 if (!colour.is_black()) {
-                    this.height = 6;
-                    this.tuple = sprites$1.dswamptiles;
-                    this.cell = [1, 0];
+                    this.type = 'land';
                     this.size = [24, 30];
+                    this.tuple = sprites$1.dswamptiles;
+                    this.height = 6;
+                    this.cell = [1, 0];
                     this.color = wastes.colormap.pixel(this.wpos).array;
                     /*if (colour.is_color(color_gravel)) {
                         this.tuple = sprites.dgraveltiles;
@@ -1134,13 +1148,13 @@ void main() {
                 let sprite = this.shape;
                 if (!(sprite === null || sprite === void 0 ? void 0 : sprite.mesh))
                     return;
-                const last = tile.lastHover;
-                if (last && last != this && last.sector.isActive()) {
+                /*const last = tile.lastHover
+                if (last && last != this && last.sector!.isActive()) {
                     last.hide();
                     last.show();
                 }
                 sprite.mesh.material.color.set('green');
-                tile.lastHover = this;
+                tile.lastHover = this;*/
             }
             tick() {
             }
@@ -1328,7 +1342,7 @@ void main() {
                     let pixel = wastes.objectmap.pixel(pos);
                     if (pixel.is_color(color_acid_barrel)) ;
                     else if (pixel.is_color(color_wall_chest)) {
-                        factory(objects.chest, pixel, pos);
+                        factory(objects.crate, pixel, pos);
                     }
                 });
                 return false;
@@ -1471,10 +1485,12 @@ void main() {
             //	this.tiled();
             //	super.update();
             //}
-            stack() {
+            stack(fallthru = []) {
                 let calc = 0;
-                let stack = this.sector.stacked(this.wpos);
+                let stack = this.sector.stacked(pts.round(this.wpos));
                 for (let obj of stack) {
+                    if (fallthru.indexOf(obj.type) > -1)
+                        continue;
                     if (obj == this)
                         break;
                     calc += obj.z + obj.height;
@@ -1658,11 +1674,11 @@ void main() {
             }
         }
         objects.wheat = wheat;
-        class chest extends objected {
+        class crate extends objected {
             constructor() {
                 super(numbers.roofs);
-                this.type = 'roof';
-                this.height = 4;
+                this.type = 'crate';
+                this.height = 17;
             }
             create() {
                 this.tiled();
@@ -1679,7 +1695,7 @@ void main() {
                 this.stack();
             }
         }
-        objects.chest = chest;
+        objects.crate = crate;
         class roof extends objected {
             constructor() {
                 super(numbers.roofs);
@@ -6576,7 +6592,7 @@ void main() {
                 elf.traverse(traversal);
                 //group.add(new AxesHelper(300));
                 console.log(elf.scale);
-                elf.scale.multiplyScalar(20);
+                elf.scale.multiplyScalar(30);
                 //elf.rotation.set(-Math.PI / 2, 0, 0);
                 elf.position.set(1, 0, 0);
                 ren$1.scene.add(group);
@@ -6598,10 +6614,13 @@ void main() {
 
     var pawn;
     (function (pawn_1) {
+        pawn_1.you = undefined;
+        pawn_1.placeAtMouse = false;
         function make() {
             let pos = [38, 44];
             let paw = new pawn();
             paw.wpos = pos;
+            pawn_1.you = paw;
             lod$1.add(paw);
         }
         pawn_1.make = make;
@@ -6614,17 +6633,38 @@ void main() {
             create() {
                 this.tiled();
                 this.size = [24, 53];
-                sprites$1.ddecidtree;
+                let tuple = sprites$1.pchris;
                 new sprite({
                     binded: this,
-                    tuple: sprites$1.pchris,
+                    tuple: tuple,
                     cell: this.cell,
-                    order: .6,
+                    order: 1.5,
                 });
-                this.stack();
+            }
+            update() {
+                const speed = 0.05;
+                if (app$1.key('arrowup'))
+                    this.wpos = pts.add(this.wpos, [0, speed]);
+                if (app$1.key('arrowdown'))
+                    this.wpos = pts.add(this.wpos, [0, -speed]);
+                if (app$1.key('arrowleft'))
+                    this.wpos = pts.add(this.wpos, [-speed, 0]);
+                if (app$1.key('arrowright'))
+                    this.wpos = pts.add(this.wpos, [speed, 0]);
+                this.stack(['tree leaves', 'door']);
+                super.update();
             }
             adapt() {
                 // change sprite to surrounding walls
+            }
+            tick() {
+                var _a, _b;
+                //console.log('tt');
+                if (pawn_1.placeAtMouse)
+                    this.wpos = ((_a = tiles$1.hovering) === null || _a === void 0 ? void 0 : _a.wpos) || [38, 44];
+                (_b = this.sector) === null || _b === void 0 ? void 0 : _b.swap(this);
+                this.update();
+                //this.update();
             }
         }
         pawn_1.pawn = pawn;
@@ -6682,6 +6722,7 @@ void main() {
         function starts() {
             lod$1.register();
             if (window.location.href.indexOf("#testingchamber") != -1) {
+                wastes.gview = view.make();
                 testing_chamber$1.start();
                 tests$1.start();
             }
@@ -6729,17 +6770,13 @@ void main() {
                 return;
             }
             wastes.gview === null || wastes.gview === void 0 ? void 0 : wastes.gview.tick();
-            if (!testing_chamber$1.started) {
-                tiles$1.tick();
-                tests$1.tick();
-            }
+            tests$1.tick();
             testing_chamber$1.tick();
             modeler$1.tick();
+            tiles$1.tick();
             shear$1.tick();
             collada$1.tick();
-            //tree.tick();
             objects$1.tick();
-            //lands.tick();
         }
         wastes.tick = tick;
     })(exports.wastes || (exports.wastes = {}));

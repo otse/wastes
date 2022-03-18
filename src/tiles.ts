@@ -89,18 +89,23 @@ export namespace tiles {
 		colorPrev
 		constructor(wpos: vec2) {
 			super(numbers.tiles);
+
 			this.wpos = wpos;
+
 			let colour = wastes.colormap.pixel(this.wpos);
+
 			if (colour.is_black()) {
+				this.type = 'water';
 				this.size = [24, 12];
 				this.tuple = sprites.dtile;
 				this.color = color_purple_water;
 			}
 			if (!colour.is_black()) {
-				this.height = 6;
-				this.tuple = sprites.dswamptiles;
-				this.cell = [1, 0];
+				this.type = 'land';
 				this.size = [24, 30];
+				this.tuple = sprites.dswamptiles;
+				this.height = 6;
+				this.cell = [1, 0];
 				this.color = wastes.colormap.pixel(this.wpos).array;
 
 				/*if (colour.is_color(color_gravel)) {
@@ -152,13 +157,13 @@ export namespace tiles {
 			let sprite = this.shape as sprite;
 			if (!sprite?.mesh)
 				return;
-			const last = tile.lastHover
+			/*const last = tile.lastHover
 			if (last && last != this && last.sector!.isActive()) {
 				last.hide();
 				last.show();
 			}
 			sprite.mesh.material.color.set('green');
-			tile.lastHover = this;
+			tile.lastHover = this;*/
 		}
 		tick() {
 		}
