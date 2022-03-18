@@ -13,14 +13,14 @@ export namespace tiles {
 
 	const mapSize = 100
 
-	
+
 	export var started = false;
-	
+
 	var arrays: tiles.tile[][] = []
-	
+
 	const color_gravel: vec3 = [110, 122, 115];
-	
-	export var hovering: tile | undefined = undefined 
+
+	export var hovering: tile | undefined = undefined
 
 	export function get(pos: vec2) {
 		if (arrays[pos[1]])
@@ -154,7 +154,7 @@ export namespace tiles {
 		delete() {
 		}
 		hover() {
-			let sprite = this.shape as sprite;
+			const sprite = this.shape as sprite;
 			if (!sprite?.mesh)
 				return;
 			/*const last = tile.lastHover
@@ -164,6 +164,13 @@ export namespace tiles {
 			}
 			sprite.mesh.material.color.set('green');
 			tile.lastHover = this;*/
+		}
+		paint() {
+			const sprite = this.shape as sprite;
+			if (!sprite?.mesh)
+				return;
+			[Math.floor(Math.random() * 4)];
+			sprite.mesh.material.color.set('pink');
 		}
 		tick() {
 		}

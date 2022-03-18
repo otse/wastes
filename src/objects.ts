@@ -220,21 +220,28 @@ namespace objects {
 
 		}
 		tiled() {
-			this.tile = tiles.get(this.wpos);
+			this.tile = tiles.get(pts.round(this.wpos));
 		}
 		//update(): void {
 		//	this.tiled();
 		//	super.update();
 		//}
-		stack(fallthru: string[] = []) {
+		stack(fallthru: string[] = [], debug = false) {
 			let calc = 0;
 			let stack = this.sector!.stacked(pts.round(this.wpos));
+
+			if (debug)
+				console.log('round = ', pts.to_string(pts.round(this.wpos)));
+				
 			for (let obj of stack) {
 				if (fallthru.indexOf(obj.type) > -1)
 					continue;
 				if (obj == this)
 					break;
 				calc += obj.z + obj.height;
+				if (debug)
+					console.log('standing on', obj.type);
+					
 			}
 			this.calc = calc;
 			if (this.shape)

@@ -552,7 +552,7 @@ void main() {
                 this.big = big;
                 this.galaxy = galaxy;
                 this.objs = [];
-                // this.color = (['salmon', 'blue', 'cyan', 'purple'])[Math.floor(Math.random() * 4)];
+                this.color = (['lightsalmon', 'lightblue', 'beige', 'pink'])[Math.floor(Math.random() * 4)];
                 let min = pts.mult(this.big, lod.SectorSpan);
                 let max = pts.add(min, [lod.SectorSpan - 1, lod.SectorSpan - 1]);
                 this.small = new aabb2(max, min);
@@ -592,12 +592,10 @@ void main() {
             }
             swap(obj) {
                 var _a;
-                let newSector = this.galaxy.at(this.galaxy.big(obj.wpos));
+                let newSector = this.galaxy.at(this.galaxy.big(pts.round(obj.wpos)));
                 if (obj.sector != newSector) {
                     (_a = obj.sector) === null || _a === void 0 ? void 0 : _a.remove(obj);
                     newSector.add(obj);
-                    if (!obj.isActive())
-                        obj.show();
                     if (!newSector.isActive())
                         obj.hide();
                 }
@@ -844,7 +842,7 @@ void main() {
                 calc = pts.add(obj.rpos, pts.divide(obj.size, 2));
             else
                 calc = pts.add(obj.rpos, [0, obj.size[1]]);
-            let wposf = pts.ceil(obj.wpos);
+            let wposf = pts.round(obj.wpos);
             calc = pts.add(calc, [this.rleft, this.rup]);
             if (this.mesh) {
                 this.mesh.position.fromArray([...calc, 0]);
@@ -1145,7 +1143,7 @@ void main() {
             delete() {
             }
             hover() {
-                let sprite = this.shape;
+                const sprite = this.shape;
                 if (!(sprite === null || sprite === void 0 ? void 0 : sprite.mesh))
                     return;
                 /*const last = tile.lastHover
@@ -1155,6 +1153,12 @@ void main() {
                 }
                 sprite.mesh.material.color.set('green');
                 tile.lastHover = this;*/
+            }
+            paint() {
+                const sprite = this.shape;
+                if (!(sprite === null || sprite === void 0 ? void 0 : sprite.mesh))
+                    return;
+                sprite.mesh.material.color.set('pink');
             }
             tick() {
             }
@@ -1479,21 +1483,25 @@ void main() {
                 this.heightAdd = 0;
             }
             tiled() {
-                this.tile = tiles$1.get(this.wpos);
+                this.tile = tiles$1.get(pts.round(this.wpos));
             }
             //update(): void {
             //	this.tiled();
             //	super.update();
             //}
-            stack(fallthru = []) {
+            stack(fallthru = [], debug = false) {
                 let calc = 0;
                 let stack = this.sector.stacked(pts.round(this.wpos));
+                if (debug)
+                    console.log('round = ', pts.to_string(pts.round(this.wpos)));
                 for (let obj of stack) {
                     if (fallthru.indexOf(obj.type) > -1)
                         continue;
                     if (obj == this)
                         break;
                     calc += obj.z + obj.height;
+                    if (debug)
+                        console.log('standing on', obj.type);
                 }
                 this.calc = calc;
                 if (this.shape)
@@ -6641,7 +6649,8 @@ void main() {
                     order: 1.5,
                 });
             }
-            update() {
+            tick() {
+                var _a, _b, _c;
                 const speed = 0.05;
                 if (app$1.key('arrowup'))
                     this.wpos = pts.add(this.wpos, [0, speed]);
@@ -6651,20 +6660,13 @@ void main() {
                     this.wpos = pts.add(this.wpos, [-speed, 0]);
                 if (app$1.key('arrowright'))
                     this.wpos = pts.add(this.wpos, [speed, 0]);
-                this.stack(['tree leaves', 'door']);
-                super.update();
-            }
-            adapt() {
-                // change sprite to surrounding walls
-            }
-            tick() {
-                var _a, _b;
-                //console.log('tt');
                 if (pawn_1.placeAtMouse)
                     this.wpos = ((_a = tiles$1.hovering) === null || _a === void 0 ? void 0 : _a.wpos) || [38, 44];
-                (_b = this.sector) === null || _b === void 0 ? void 0 : _b.swap(this);
-                this.update();
-                //this.update();
+                this.tiled();
+                (_b = this.tile) === null || _b === void 0 ? void 0 : _b.paint();
+                (_c = this.sector) === null || _c === void 0 ? void 0 : _c.swap(this);
+                this.stack(['tree leaves', 'door'], true);
+                super.update();
             }
         }
         pawn_1.pawn = pawn;

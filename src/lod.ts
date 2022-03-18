@@ -116,7 +116,7 @@ namespace lod {
 			readonly galaxy: galaxy
 		) {
 			super();
-			// this.color = (['salmon', 'blue', 'cyan', 'purple'])[Math.floor(Math.random() * 4)];
+			this.color = (['lightsalmon', 'lightblue', 'beige', 'pink'])[Math.floor(Math.random() * 4)];
 			let min = pts.mult(this.big, SectorSpan);
 			let max = pts.add(min, [SectorSpan - 1, SectorSpan - 1]);
 			this.small = new aabb2(max, min);
@@ -157,12 +157,10 @@ namespace lod {
 			}
 		}
 		swap(obj: obj) {
-			let newSector = this.galaxy.at(this.galaxy.big(obj.wpos));
+			let newSector = this.galaxy.at(this.galaxy.big(pts.round(obj.wpos)));
 			if (obj.sector != newSector) {
 				obj.sector?.remove(obj);
 				newSector.add(obj);
-				if (!obj.isActive())
-					obj.show();
 				if (!newSector.isActive())
 					obj.hide();
 			}

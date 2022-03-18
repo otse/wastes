@@ -39,7 +39,7 @@ export namespace pawn {
 				order: 1.5,
 			});
 		}
-		override update() {
+		override tick() {
 			const speed = 0.05;
 
 			if (app.key('arrowup'))
@@ -51,19 +51,13 @@ export namespace pawn {
 			if (app.key('arrowright'))
 				this.wpos = pts.add(this.wpos, [speed, 0]);
 
-			this.stack(['tree leaves', 'door']);
-			super.update();
-		}
-		adapt() {
-			// change sprite to surrounding walls
-		}
-		override tick() {
-			//console.log('tt');
 			if (placeAtMouse)
 				this.wpos = tiles.hovering?.wpos || [38, 44];
+			this.tiled();
+			this.tile?.paint();
 			this.sector?.swap(this);
-			this.update();
-			//this.update();
+			this.stack(['tree leaves', 'door'], true);
+			super.update();
 		}
 		//tick() {
 		//}

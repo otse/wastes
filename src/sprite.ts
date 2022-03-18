@@ -49,7 +49,7 @@ export class sprite extends lod.shape {
 		else
 			calc = pts.add(obj.rpos, [0, obj.size[1]]);
 
-		let wposf = pts.ceil(obj.wpos);
+		let wposf = pts.round(obj.wpos);
 		calc = pts.add(calc, [this.rleft, this.rup]);
 		if (this.mesh) {
 			this.mesh.position.fromArray([...calc, 0]);
