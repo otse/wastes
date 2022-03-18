@@ -118,9 +118,9 @@ export class view {
 			add = pts.add(add, [-pan, 0]);
 		if (app.key('d'))
 			add = pts.add(add, [pan, 0]);
-		if (app.key('f') == 1 && this.zoomIndex > 0)
+		if ((app.key('f') == 1 || app.wheel == -1) && this.zoomIndex > 0)
 			this.zoomIndex -= 1;
-		if (app.key('r') == 1 && this.zoomIndex < this.zooms.length - 1)
+		if ((app.key('r') == 1 || app.wheel == 1) && this.zoomIndex < this.zooms.length - 1)
 			this.zoomIndex += 1;
 		this.zoom = this.zooms[this.zoomIndex];
 		add = pts.mult(add, this.zoom);

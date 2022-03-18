@@ -803,6 +803,7 @@ void main() {
         sprites.ddoorwood = [[96, 40], [24, 40], 0, 'tex/ddoor'];
         sprites.dacidbarrel = [[24, 35], [24, 35], 0, 'tex/dacidbarrel'];
         sprites.dfalsefronts = [[192, 40], [24, 40], 0, 'tex/dfalsefronts'];
+        sprites.pchris = [[24, 53], [24, 53], 0, 'tex/pawn/pchris'];
         function get_uv_transform(cell, tuple) {
             let divide = pts.divides(tuple[1], tuple[0]);
             let offset = pts.mults(divide, cell);
@@ -1241,9 +1242,9 @@ void main() {
                 add = pts.add(add, [-pan, 0]);
             if (app$1.key('d'))
                 add = pts.add(add, [pan, 0]);
-            if (app$1.key('f') == 1 && this.zoomIndex > 0)
+            if ((app$1.key('f') == 1 || app$1.wheel == -1) && this.zoomIndex > 0)
                 this.zoomIndex -= 1;
-            if (app$1.key('r') == 1 && this.zoomIndex < this.zooms.length - 1)
+            if ((app$1.key('r') == 1 || app$1.wheel == 1) && this.zoomIndex < this.zooms.length - 1)
                 this.zoomIndex += 1;
             this.zoom = this.zooms[this.zoomIndex];
             add = pts.mult(add, this.zoom);
@@ -6575,7 +6576,7 @@ void main() {
                 elf.traverse(traversal);
                 //group.add(new AxesHelper(300));
                 console.log(elf.scale);
-                elf.scale.multiplyScalar(100);
+                elf.scale.multiplyScalar(20);
                 //elf.rotation.set(-Math.PI / 2, 0, 0);
                 elf.position.set(1, 0, 0);
                 ren$1.scene.add(group);
@@ -6601,7 +6602,7 @@ void main() {
             let pos = [38, 44];
             let paw = new pawn();
             paw.wpos = pos;
-            //lod.add(paw);
+            lod$1.add(paw);
         }
         pawn_1.make = make;
         class pawn extends objects$1.objected {
@@ -6612,11 +6613,11 @@ void main() {
             }
             create() {
                 this.tiled();
-                this.size = [24, 50];
-                let tuple = sprites$1.ddecidtree;
+                this.size = [24, 53];
+                sprites$1.ddecidtree;
                 new sprite({
                     binded: this,
-                    tuple: tuple,
+                    tuple: sprites$1.pchris,
                     cell: this.cell,
                     order: .6,
                 });

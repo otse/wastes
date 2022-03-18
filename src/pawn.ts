@@ -11,7 +11,7 @@ export namespace pawn {
         let pos: vec2 = [38, 44];
         let paw = new pawn();
         paw.wpos = pos;
-		//lod.add(paw);
+		lod.add(paw);
     }
 
     export class pawn extends objects.objected {
@@ -22,11 +22,11 @@ export namespace pawn {
 		}
 		override create() {
 			this.tiled();
-			this.size = [24, 50];
+			this.size = [24, 53];
 			let tuple = sprites.ddecidtree;
 			let shape = new sprite({
 				binded: this,
-				tuple: tuple,
+				tuple: sprites.pchris,
 				cell: this.cell,
 				order: .6,
 			});

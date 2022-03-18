@@ -34,6 +34,8 @@ export namespace sprites {
 	export const dacidbarrel: tuple = [[24, 35], [24, 35], 0, 'tex/dacidbarrel']
 	export const dfalsefronts: tuple = [[192, 40], [24, 40], 0, 'tex/dfalsefronts']
 
+	export const pchris: tuple = [[24, 53], [24, 53], 0, 'tex/pawn/pchris']
+
 	export function get_uv_transform(cell: vec2, tuple: tuple) {
 		let divide = pts.divides(tuple[1], tuple[0]);
 		let offset = pts.mults(divide, cell);
