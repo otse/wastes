@@ -208,7 +208,21 @@ namespace objects {
 		}
 	}
 
+	export function is_solid(pos: vec2) {
+		const passable = ['land', 'deck', 'pawn', 'door'];
+		pos = pts.round(pos);
+		let sector = lod.ggalaxy.at(lod.ggalaxy.big(pos));
+		let at = sector.stacked(pos);
+		for (let obj of at) {
+			if (passable.indexOf(obj.type) == -1) { 
+				return true;
+			}
+		}
+		return false;
+	}
+
 	export class objected extends lod.obj {
+		solid = true
 		pixel?: pixel
 		tile?: tiles.tile
 		cell: vec2 = [0, 0]
@@ -226,21 +240,15 @@ namespace objects {
 		//	this.tiled();
 		//	super.update();
 		//}
-		stack(fallthru: string[] = [], debug = false) {
+		stack(fallthru: string[] = []) {
 			let calc = 0;
 			let stack = this.sector!.stacked(pts.round(this.wpos));
-
-			if (debug)
-				console.log('round = ', pts.to_string(pts.round(this.wpos)));
-				
 			for (let obj of stack) {
 				if (fallthru.indexOf(obj.type) > -1)
 					continue;
 				if (obj == this)
 					break;
 				calc += obj.z + obj.height;
-				if (debug)
-					console.log('standing on', obj.type);
 					
 			}
 			this.calc = calc;
@@ -376,6 +384,7 @@ namespace objects {
 			super(numbers.roofs);
 			this.type = 'roof'
 			this.height = 4;
+			this.solid = false;
 		}
 		override create() {
 			this.tiled();

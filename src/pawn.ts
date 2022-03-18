@@ -25,7 +25,7 @@ export namespace pawn {
 	export class pawn extends objects.objected {
 		constructor() {
 			super(numbers.pawns);
-			this.type = 'wall';
+			this.type = 'pawn';
 			this.height = 24;
 		}
 		override create() {
@@ -39,24 +39,30 @@ export namespace pawn {
 				order: 1.5,
 			});
 		}
+		try_move_to(pos: vec2) {
+			let venture = pts.add(this.wpos, pos);
+			if (!objects.is_solid(venture))
+				this.wpos = venture;
+
+		}
 		override tick() {
 			const speed = 0.05;
 
 			if (app.key('arrowup'))
-				this.wpos = pts.add(this.wpos, [0, speed]);
+				this.try_move_to([0, speed]);
 			if (app.key('arrowdown'))
-				this.wpos = pts.add(this.wpos, [0, -speed]);
+				this.try_move_to([0, -speed]);
 			if (app.key('arrowleft'))
-				this.wpos = pts.add(this.wpos, [-speed, 0]);
+				this.try_move_to([-speed, 0]);
 			if (app.key('arrowright'))
-				this.wpos = pts.add(this.wpos, [speed, 0]);
+				this.try_move_to([speed, 0]);
 
 			if (placeAtMouse)
 				this.wpos = tiles.hovering?.wpos || [38, 44];
 			this.tiled();
 			this.tile?.paint();
 			this.sector?.swap(this);
-			this.stack(['tree leaves', 'door'], true);
+			this.stack(['tree leaves', 'door']);
 			super.update();
 		}
 		//tick() {

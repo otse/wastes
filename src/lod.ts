@@ -47,6 +47,8 @@ class toggle {
 
 namespace lod {
 
+	const chunk_coloration = false;
+
 	const grid_crawl_makes_sectors = true;
 
 	export var ggalaxy: galaxy;
@@ -116,7 +118,8 @@ namespace lod {
 			readonly galaxy: galaxy
 		) {
 			super();
-			this.color = (['lightsalmon', 'lightblue', 'beige', 'pink'])[Math.floor(Math.random() * 4)];
+			if (chunk_coloration)
+				this.color = (['lightsalmon', 'lightblue', 'beige', 'pink'])[Math.floor(Math.random() * 4)];
 			let min = pts.mult(this.big, SectorSpan);
 			let max = pts.add(min, [SectorSpan - 1, SectorSpan - 1]);
 			this.small = new aabb2(max, min);

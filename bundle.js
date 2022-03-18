@@ -552,7 +552,6 @@ void main() {
                 this.big = big;
                 this.galaxy = galaxy;
                 this.objs = [];
-                this.color = (['lightsalmon', 'lightblue', 'beige', 'pink'])[Math.floor(Math.random() * 4)];
                 let min = pts.mult(this.big, lod.SectorSpan);
                 let max = pts.add(min, [lod.SectorSpan - 1, lod.SectorSpan - 1]);
                 this.small = new aabb2(max, min);
@@ -1475,9 +1474,23 @@ void main() {
             }
         }
         objects.colormap = colormap;
+        function is_solid(pos) {
+            const passable = ['land', 'deck', 'pawn', 'door'];
+            pos = pts.round(pos);
+            let sector = lod$1.ggalaxy.at(lod$1.ggalaxy.big(pos));
+            let at = sector.stacked(pos);
+            for (let obj of at) {
+                if (passable.indexOf(obj.type) == -1) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        objects.is_solid = is_solid;
         class objected extends lod$1.obj {
             constructor(counts) {
                 super(counts);
+                this.solid = true;
                 this.cell = [0, 0];
                 this.calc = 0;
                 this.heightAdd = 0;
@@ -1489,19 +1502,15 @@ void main() {
             //	this.tiled();
             //	super.update();
             //}
-            stack(fallthru = [], debug = false) {
+            stack(fallthru = []) {
                 let calc = 0;
                 let stack = this.sector.stacked(pts.round(this.wpos));
-                if (debug)
-                    console.log('round = ', pts.to_string(pts.round(this.wpos)));
                 for (let obj of stack) {
                     if (fallthru.indexOf(obj.type) > -1)
                         continue;
                     if (obj == this)
                         break;
                     calc += obj.z + obj.height;
-                    if (debug)
-                        console.log('standing on', obj.type);
                 }
                 this.calc = calc;
                 if (this.shape)
@@ -1637,6 +1646,7 @@ void main() {
                 super(numbers.roofs);
                 this.type = 'roof';
                 this.height = 4;
+                this.solid = false;
             }
             create() {
                 this.tiled();
@@ -6635,7 +6645,7 @@ void main() {
         class pawn extends objects$1.objected {
             constructor() {
                 super(numbers.pawns);
-                this.type = 'wall';
+                this.type = 'pawn';
                 this.height = 24;
             }
             create() {
@@ -6649,23 +6659,28 @@ void main() {
                     order: 1.5,
                 });
             }
+            try_move_to(pos) {
+                let venture = pts.add(this.wpos, pos);
+                if (!objects$1.is_solid(venture))
+                    this.wpos = venture;
+            }
             tick() {
                 var _a, _b, _c;
                 const speed = 0.05;
                 if (app$1.key('arrowup'))
-                    this.wpos = pts.add(this.wpos, [0, speed]);
+                    this.try_move_to([0, speed]);
                 if (app$1.key('arrowdown'))
-                    this.wpos = pts.add(this.wpos, [0, -speed]);
+                    this.try_move_to([0, -speed]);
                 if (app$1.key('arrowleft'))
-                    this.wpos = pts.add(this.wpos, [-speed, 0]);
+                    this.try_move_to([-speed, 0]);
                 if (app$1.key('arrowright'))
-                    this.wpos = pts.add(this.wpos, [speed, 0]);
+                    this.try_move_to([speed, 0]);
                 if (pawn_1.placeAtMouse)
                     this.wpos = ((_a = tiles$1.hovering) === null || _a === void 0 ? void 0 : _a.wpos) || [38, 44];
                 this.tiled();
                 (_b = this.tile) === null || _b === void 0 ? void 0 : _b.paint();
                 (_c = this.sector) === null || _c === void 0 ? void 0 : _c.swap(this);
-                this.stack(['tree leaves', 'door'], true);
+                this.stack(['tree leaves', 'door']);
                 super.update();
             }
         }
