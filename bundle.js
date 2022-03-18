@@ -296,6 +296,7 @@ void main() {
             ren.delta = ren.clock.getDelta();
             if (ren.delta > 2)
                 ren.delta = 0.016;
+            ren.delta *= 60;
             //filmic.composer.render();
         }
         ren.update = update;
@@ -314,6 +315,10 @@ void main() {
         }
         ren.calc = calc;
         function render() {
+            /*alternate = ! alternate;
+            if (alternate) {
+                return;
+            }*/
             calc();
             ren.renderer.setRenderTarget(ren.target);
             ren.renderer.clear();
@@ -522,7 +527,7 @@ void main() {
             constructor(span) {
                 this.arrays = [];
                 lod.ggalaxy = this;
-                new grid(2, 2);
+                new grid(4, 4);
             }
             update(wpos) {
                 lod.ggrid.big = this.big(wpos);
@@ -800,7 +805,7 @@ void main() {
         sprites.droof = [[72, 17], [24, 17], 0, 'tex/droof'];
         sprites.dcrate = [[24, 40], [24, 40], 0, 'tex/dcrate'];
         sprites.drustywalls = [[288, 40], [24, 40], 0, 'tex/drustywalls'];
-        sprites.dscrappywalls = [[216, 40], [24, 40], 0, 'tex/dscrappywalls'];
+        sprites.dscrappywalls = [[264, 40], [24, 40], 0, 'tex/dscrappywalls'];
         sprites.dscrappywalls2 = [[216, 40], [24, 40], 0, 'tex/dscrappywalls2'];
         sprites.druddywalls = [[288, 40], [24, 40], 0, 'tex/druddywalls'];
         sprites.ddoorwood = [[96, 40], [24, 40], 0, 'tex/ddoor'];
@@ -1254,13 +1259,13 @@ void main() {
             if (app$1.key('x'))
                 pan *= 2;
             let add = [0, 0];
-            if (app$1.key('w'))
+            if (app$1.key('arrowup'))
                 add = pts.add(add, [0, pan]);
-            if (app$1.key('s'))
+            if (app$1.key('arrowdown'))
                 add = pts.add(add, [0, -pan]);
-            if (app$1.key('a'))
+            if (app$1.key('arrowleft'))
                 add = pts.add(add, [-pan, 0]);
-            if (app$1.key('d'))
+            if (app$1.key('arrowright'))
                 add = pts.add(add, [pan, 0]);
             if ((app$1.key('f') == 1 || app$1.wheel == -1) && this.zoomIndex > 0)
                 this.zoomIndex -= 1;
@@ -2000,7 +2005,7 @@ void main() {
             room.style.zoom = '3';
             room.style.display = 'block';
             canvas = document.createElement("canvas");
-            canvas.width = 24 * 9;
+            canvas.width = 24 * 11;
             canvas.height = 40;
             canvas.id = "shear";
             canvas.style.position = 'relative';
@@ -2012,21 +2017,22 @@ void main() {
             ctx.drawImage(walls, 0, 0);
             ctx.globalCompositeOperation = 'source-atop';
             ctx.drawImage(goal, 0, 0);
+            const negy = -3;
             ctx.drawImage(goal, 24, 0);
             ctx.drawImage(goal, 24 * 5, 0);
             ctx.drawImage(goal, 24 * 6, 0);
             spareCtx.drawImage(canvas, -24 * 5, 0);
-            ctx.drawImage(spare, 24 * 2 + 6, -3);
-            ctx.drawImage(spare, 24 * 3 + 6, -3);
-            ctx.drawImage(spare, 24 * 7 + 6, -3);
+            ctx.drawImage(spare, 24 * 2 + 6, negy);
+            ctx.drawImage(spare, 24 * 3 + 6, negy);
+            ctx.drawImage(spare, 24 * 7 + 6, negy);
             spareCtx.clearRect(0, 0, 24, 40);
             spareCtx.drawImage(canvas, -24 * 6, 0);
             ctx.drawImage(spare, 24 * 2, 0);
             spareCtx.clearRect(12 + 6, 0, 24, 40);
-            ctx.drawImage(spare, 24 * 3 - 6, -3);
+            ctx.drawImage(spare, 24 * 3 - 6, negy);
             spareCtx.drawImage(canvas, -24 * 6, 0);
-            ctx.drawImage(spare, 24 * 4 - 6, -3);
-            ctx.drawImage(spare, 24 * 8 - 6, -3);
+            ctx.drawImage(spare, 24 * 4 - 6, negy);
+            ctx.drawImage(spare, 24 * 8 - 6, negy);
             spareCtx.clearRect(0, 0, 24, 40);
             spareCtx.drawImage(canvas, -24 * 5, 0);
             ctx.drawImage(spare, 24 * 4, 0);
@@ -6667,54 +6673,30 @@ void main() {
                 if (!objects$1.is_solid(venture))
                     this.wpos = venture;
             }
+            update() {
+                this.tiled();
+                this.stack();
+                super.update();
+            }
             tick() {
                 var _a, _b;
-                /*if (!moveSideways) {
-                    const speed = 0.05;
-                    if (app.key('arrowup'))
-                        this.try_move_to([0, speed]);
-                    if (app.key('arrowdown'))
-                        this.try_move_to([0, -speed]);
-                    if (app.key('arrowleft'))
-                        this.try_move_to([-speed, 0]);
-                    if (app.key('arrowright'))
-                        this.try_move_to([speed, 0]);
-                }
-
-                if (moveSideways) {
-                    const vertSpeed = 0.05;
-                    const horzSpeed = 0.05;
-                    if (app.key('arrowup')) {
-                        this.try_move_to([-vertSpeed / 2, vertSpeed / 2]);
-                    }
-                    if (app.key('arrowdown')) {
-                        this.try_move_to([vertSpeed / 2, -vertSpeed / 2]);
-                    }
-                    if (app.key('arrowleft')) {
-                        this.try_move_to([-horzSpeed / 2, -horzSpeed / 2]);
-                    }
-                    if (app.key('arrowright')) {
-                        this.try_move_to([horzSpeed / 2, horzSpeed / 2]);
-                    }
-                }
-                */
                 {
-                    let speed = 0.038;
+                    let speed = 0.038 * ren$1.delta;
                     let x = 0;
                     let y = 0;
-                    if (app$1.key('arrowup')) {
+                    if (app$1.key('w')) {
                         x += -1;
                         y += -1;
                     }
-                    if (app$1.key('arrowdown')) {
+                    if (app$1.key('s')) {
                         x += 1;
                         y += 1;
                     }
-                    if (app$1.key('arrowleft')) {
+                    if (app$1.key('a')) {
                         x += -1;
                         y += 1;
                     }
-                    if (app$1.key('arrowright')) {
+                    if (app$1.key('d')) {
                         x += 1;
                         y += -1;
                     }

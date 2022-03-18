@@ -34,7 +34,7 @@ namespace shear {
 		room.style.display = 'block';
 
 		canvas = document.createElement("canvas") as HTMLCanvasElement;
-		canvas.width = 24 * 9;
+		canvas.width = 24 * 11;
 		canvas.height = 40;
 		canvas.id = "shear";
 		canvas.style.position = 'relative';
@@ -50,21 +50,24 @@ namespace shear {
 		ctx.globalCompositeOperation = 'source-atop';
 		ctx.drawImage(goal, 0, 0);
 
+		const negy = -3;
+		const negx = -6;
+
 		ctx.drawImage(goal, 24, 0);
 		ctx.drawImage(goal, 24 * 5, 0);
 		ctx.drawImage(goal, 24 * 6, 0);
 		spareCtx.drawImage(canvas, -24 * 5, 0);
-		ctx.drawImage(spare, 24 * 2 + 6, -3);
-		ctx.drawImage(spare, 24 * 3 + 6, -3);
-		ctx.drawImage(spare, 24 * 7 + 6, -3);
+		ctx.drawImage(spare, 24 * 2 + 6, negy);
+		ctx.drawImage(spare, 24 * 3 + 6, negy);
+		ctx.drawImage(spare, 24 * 7 + 6, negy);
 		spareCtx.clearRect(0, 0, 24, 40);
 		spareCtx.drawImage(canvas, -24 * 6, 0);
 		ctx.drawImage(spare, 24 * 2 , 0);
 		spareCtx.clearRect(12 + 6, 0, 24, 40);
-		ctx.drawImage(spare, 24 * 3 - 6, -3);
+		ctx.drawImage(spare, 24 * 3 - 6, negy);
 		spareCtx.drawImage(canvas, -24 * 6, 0);
-		ctx.drawImage(spare, 24 * 4 - 6, -3);
-		ctx.drawImage(spare, 24 * 8 - 6, -3);
+		ctx.drawImage(spare, 24 * 4 - 6, negy);
+		ctx.drawImage(spare, 24 * 8 - 6, negy);
 		spareCtx.clearRect(0, 0, 24, 40);
 		spareCtx.drawImage(canvas, -24 * 5, 0);
 		ctx.drawImage(spare, 24 * 4, 0);

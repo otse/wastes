@@ -73,6 +73,7 @@ namespace ren {
 		if (delta > 2)
 			delta = 0.016;
 
+		delta *= 60;
 		//filmic.composer.render();
 	}
 
@@ -94,8 +95,13 @@ namespace ren {
 
 		memory = (<any>window.performance).memory;
 	}
+	let alternate = true;
 	export function render() {
-
+		
+		/*alternate = ! alternate;
+		if (alternate) {
+			return;
+		}*/
 		calc();
 
 		renderer.setRenderTarget(target);

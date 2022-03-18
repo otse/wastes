@@ -3,6 +3,7 @@ import lod, { numbers } from "./lod";
 
 import objects from "./objects";
 import pts from "./pts";
+import ren from "./renderer";
 import sprite from "./sprite";
 import sprites from "./sprites";
 import tiles from "./tiles";
@@ -45,57 +46,33 @@ export namespace pawn {
 				this.wpos = venture;
 
 		}
+		override update() {
+			this.tiled();
+			this.stack();
+			super.update();
+		}
 		override tick() {
 
 			const moveSideways = true;
 			const moveMath = true;
 
-			/*if (!moveSideways) {
-				const speed = 0.05;
-				if (app.key('arrowup'))
-					this.try_move_to([0, speed]);
-				if (app.key('arrowdown'))
-					this.try_move_to([0, -speed]);
-				if (app.key('arrowleft'))
-					this.try_move_to([-speed, 0]);
-				if (app.key('arrowright'))
-					this.try_move_to([speed, 0]);
-			}
-
-			if (moveSideways) {
-				const vertSpeed = 0.05;
-				const horzSpeed = 0.05;
-				if (app.key('arrowup')) {
-					this.try_move_to([-vertSpeed / 2, vertSpeed / 2]);
-				}
-				if (app.key('arrowdown')) {
-					this.try_move_to([vertSpeed / 2, -vertSpeed / 2]);
-				}
-				if (app.key('arrowleft')) {
-					this.try_move_to([-horzSpeed / 2, -horzSpeed / 2]);
-				}
-				if (app.key('arrowright')) {
-					this.try_move_to([horzSpeed / 2, horzSpeed / 2]);
-				}
-			}
-			*/
 			if (moveMath) {
-				let speed = 0.038;
+				let speed = 0.038 * ren.delta;
 				let x = 0;
 				let y = 0;
-				if (app.key('arrowup')) {
+				if (app.key('w')) {
 					x += -1;
 					y += -1;
 				}
-				if (app.key('arrowdown')) {
+				if (app.key('s')) {
 					x += 1;
 					y += 1;
 				}
-				if (app.key('arrowleft')) {
+				if (app.key('a')) {
 					x += -1;
 					y += 1;
 				}
-				if (app.key('arrowright')) {
+				if (app.key('d')) {
 					x += 1;
 					y += -1;
 				}

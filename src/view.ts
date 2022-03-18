@@ -110,13 +110,13 @@ export class view {
 		if (app.key('x'))
 			pan *= 2;
 		let add: vec2 = [0, 0];
-		if (app.key('w'))
+		if (app.key('arrowup'))
 			add = pts.add(add, [0, pan]);
-		if (app.key('s'))
+		if (app.key('arrowdown'))
 			add = pts.add(add, [0, -pan]);
-		if (app.key('a'))
+		if (app.key('arrowleft'))
 			add = pts.add(add, [-pan, 0]);
-		if (app.key('d'))
+		if (app.key('arrowright'))
 			add = pts.add(add, [pan, 0]);
 		if ((app.key('f') == 1 || app.wheel == -1) && this.zoomIndex > 0)
 			this.zoomIndex -= 1;
