@@ -8,6 +8,7 @@ import ren from "./renderer";
 import lod, { numbers } from "./lod";
 import wastes from "./wastes";
 import hooks from "./hooks";
+import tiles from "./tiles";
 
 // the view manages what it sees
 
@@ -150,7 +151,7 @@ export class view {
 		crunch += '<br />';
 
 		crunch += `lod grid size: ${lod.ggrid.spread * 2 + 1} / ${lod.ggrid.outside * 2 + 1}<br />`;
-		crunch += `view wpos: ${pts.to_string(pts.floor(this.wpos))}<br />`;
+		crunch += `mouse tile: ${pts.to_string(tiles.hovering?.wpos || [0, 0])}<br />`;
 		crunch += `view bigpos: ${pts.to_string(lod.ggalaxy.big(this.wpos))}<br />`;
 		crunch += `view zoom: ${this.zoom}<br />`;
 		crunch += '<br />';

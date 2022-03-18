@@ -465,6 +465,7 @@ void main() {
         numbers.trees = [0, 0];
         numbers.walls = [0, 0];
         numbers.roofs = [0, 0];
+        numbers.pawns = [0, 0];
     })(numbers || (numbers = {}));
     class toggle {
         constructor() {
@@ -794,6 +795,7 @@ void main() {
         sprites.ddeck = [[72, 17], [24, 17], 0, 'tex/ddeck'];
         sprites.dtree1 = [[121, 147], [121, 147], 0, 'tex/dtree1b'];
         sprites.droof = [[72, 17], [24, 17], 0, 'tex/droof'];
+        sprites.dcrate = [[24, 40], [24, 40], 0, 'tex/dcrate'];
         sprites.drustywalls = [[288, 40], [24, 40], 0, 'tex/drustywalls'];
         sprites.dscrappywalls = [[216, 40], [24, 40], 0, 'tex/dscrappywalls'];
         sprites.dscrappywalls2 = [[216, 40], [24, 40], 0, 'tex/dscrappywalls2'];
@@ -1015,6 +1017,137 @@ void main() {
     })(tests || (tests = {}));
     var tests$1 = tests;
 
+    var tiles;
+    (function (tiles) {
+        tiles.started = false;
+        var arrays = [];
+        tiles.hovering = undefined;
+        function get(pos) {
+            if (arrays[pos[1]])
+                return arrays[pos[1]][pos[0]];
+        }
+        tiles.get = get;
+        function register() {
+            console.log(' tiles register ');
+            // this runs before the objects hooks
+            hooks.register('sectorCreate', (sector) => {
+                pts.func(sector.small, (pos) => {
+                    let x = pos[0];
+                    let y = pos[1];
+                    if (arrays[y] == undefined)
+                        arrays[y] = [];
+                    let tile = new tiles.tile([x, y]);
+                    arrays[y][x] = tile;
+                    lod$1.add(tile);
+                });
+                return false;
+            });
+        }
+        tiles.register = register;
+        function start() {
+            tiles.started = true;
+            console.log(' tiles start ');
+            lod$1.ggalaxy.at(lod$1.ggalaxy.big(wastes.gview.wpos));
+        }
+        tiles.start = start;
+        function tick() {
+            if (!tiles.started)
+                return;
+            for (let i = 40; i >= 0; i--) {
+                // pretention grid
+                let pos = lod$1.unproject(pts.add(wastes.gview.mrpos, [0, -i]));
+                pos = pts.floor(pos);
+                const tile = get(pos);
+                if (tile && tile.z + tile.height + tile.heightAdd == i) {
+                    if (tile.sector.isActive()) {
+                        tile.hover();
+                        tiles.hovering = tile;
+                        break;
+                    }
+                }
+            }
+        }
+        tiles.tick = tick;
+        const color_purple_water = [66, 66, 110, 255];
+        class tile extends lod$1.obj {
+            constructor(wpos) {
+                super(numbers.tiles);
+                this.wpos = wpos;
+                let colour = wastes.colormap.pixel(this.wpos);
+                if (colour.is_black()) {
+                    this.size = [24, 12];
+                    this.tuple = sprites$1.dtile;
+                    this.color = color_purple_water;
+                }
+                if (!colour.is_black()) {
+                    this.height = 6;
+                    this.tuple = sprites$1.dswamptiles;
+                    this.cell = [1, 0];
+                    this.size = [24, 30];
+                    this.color = wastes.colormap.pixel(this.wpos).array;
+                    /*if (colour.is_color(color_gravel)) {
+                        this.tuple = sprites.dgraveltiles;
+                        console.log('gravel');
+                    }*/
+                    const divisor = 5;
+                    let height = wastes.heightmap.pixel(this.wpos);
+                    this.z = Math.floor(height.array[0] / divisor);
+                    this.z -= 3;
+                }
+            }
+            get_stack() {
+                var _a;
+                (_a = this.sector) === null || _a === void 0 ? void 0 : _a.objsro();
+            }
+            /*stack(obj: lod.obj) {
+                let i = this.objs.indexOf(obj);
+                if (i == -1)
+                    this.objs.push(obj);
+            }
+            unstack(obj: lod.obj) {
+                let i = this.objs.indexOf(obj);
+                if (i > -1)
+                    return this.objs.splice(i, 1).length;
+            }*/
+            create() {
+                let shape = new sprite({
+                    binded: this,
+                    tuple: this.tuple,
+                    cell: this.cell,
+                    color: this.color,
+                    order: .3
+                });
+                // if we have a deck, add it to heightAdd
+                let sector = lod$1.ggalaxy.at(lod$1.ggalaxy.big(this.wpos));
+                let at = sector.stacked(this.wpos);
+                for (let obj of at) {
+                    if (obj.type == 'deck')
+                        this.heightAdd = obj.height;
+                }
+                shape.rup = this.z;
+            }
+            //update() {}
+            delete() {
+            }
+            hover() {
+                let sprite = this.shape;
+                if (!(sprite === null || sprite === void 0 ? void 0 : sprite.mesh))
+                    return;
+                const last = tile.lastHover;
+                if (last && last != this && last.sector.isActive()) {
+                    last.hide();
+                    last.show();
+                }
+                sprite.mesh.material.color.set('green');
+                tile.lastHover = this;
+            }
+            tick() {
+            }
+        }
+        tiles.tile = tile;
+    })(tiles || (tiles = {}));
+    var tiles$1 = tiles;
+
     // the view manages what it sees
     class view {
         constructor() {
@@ -1118,6 +1251,7 @@ void main() {
             this.rpos = pts.add(this.rpos, add);
         }
         stats() {
+            var _a;
             if (app$1.key('h') == 1)
                 this.show = !this.show;
             let crunch = ``;
@@ -1136,7 +1270,7 @@ void main() {
             crunch += `mrpos: ${pts.to_string(pts.floor(this.mrpos))}<br />`;
             crunch += '<br />';
             crunch += `lod grid size: ${lod$1.ggrid.spread * 2 + 1} / ${lod$1.ggrid.outside * 2 + 1}<br />`;
-            crunch += `view wpos: ${pts.to_string(pts.floor(this.wpos))}<br />`;
+            crunch += `mouse tile: ${pts.to_string(((_a = tiles$1.hovering) === null || _a === void 0 ? void 0 : _a.wpos) || [0, 0])}<br />`;
             crunch += `view bigpos: ${pts.to_string(lod$1.ggalaxy.big(this.wpos))}<br />`;
             crunch += `view zoom: ${this.zoom}<br />`;
             crunch += '<br />';
@@ -1156,135 +1290,6 @@ void main() {
         }
     }
 
-    var tiles;
-    (function (tiles) {
-        tiles.started = false;
-        var arrays = [];
-        function get(pos) {
-            if (arrays[pos[1]])
-                return arrays[pos[1]][pos[0]];
-        }
-        tiles.get = get;
-        function register() {
-            console.log(' tiles register ');
-            // this runs before the objects hooks
-            hooks.register('sectorCreate', (sector) => {
-                pts.func(sector.small, (pos) => {
-                    let x = pos[0];
-                    let y = pos[1];
-                    if (arrays[y] == undefined)
-                        arrays[y] = [];
-                    let tile = new tiles.tile([x, y]);
-                    arrays[y][x] = tile;
-                    lod$1.add(tile);
-                });
-                return false;
-            });
-        }
-        tiles.register = register;
-        function start() {
-            tiles.started = true;
-            console.log(' tiles start ');
-            lod$1.ggalaxy.at(lod$1.ggalaxy.big(wastes.gview.wpos));
-        }
-        tiles.start = start;
-        function tick() {
-            if (!tiles.started)
-                return;
-            for (let i = 40; i >= 0; i--) {
-                // pretention grid
-                let pos = lod$1.unproject(pts.add(wastes.gview.mrpos, [0, -i]));
-                pos = pts.floor(pos);
-                const tile = get(pos);
-                if (tile && tile.z + tile.height + tile.heightAdd == i) {
-                    if (tile.sector.isActive()) {
-                        tile.hover();
-                        break;
-                    }
-                }
-            }
-        }
-        tiles.tick = tick;
-        const color_purple_water = [66, 66, 110, 255];
-        class tile extends lod$1.obj {
-            constructor(wpos) {
-                super(numbers.tiles);
-                this.wpos = wpos;
-                let colour = wastes.colormap.pixel(this.wpos);
-                if (colour.is_black()) {
-                    this.size = [24, 12];
-                    this.tuple = sprites$1.dtile;
-                    this.color = color_purple_water;
-                }
-                if (!colour.is_black()) {
-                    this.height = 6;
-                    this.tuple = sprites$1.dswamptiles;
-                    this.cell = [1, 0];
-                    this.size = [24, 30];
-                    this.color = wastes.colormap.pixel(this.wpos).array;
-                    /*if (colour.is_color(color_gravel)) {
-                        this.tuple = sprites.dgraveltiles;
-                        console.log('gravel');
-                    }*/
-                    const divisor = 5;
-                    let height = wastes.heightmap.pixel(this.wpos);
-                    this.z = Math.floor(height.array[0] / divisor);
-                    this.z -= 3;
-                }
-            }
-            get_stack() {
-                var _a;
-                (_a = this.sector) === null || _a === void 0 ? void 0 : _a.objsro();
-            }
-            /*stack(obj: lod.obj) {
-                let i = this.objs.indexOf(obj);
-                if (i == -1)
-                    this.objs.push(obj);
-            }
-            unstack(obj: lod.obj) {
-                let i = this.objs.indexOf(obj);
-                if (i > -1)
-                    return this.objs.splice(i, 1).length;
-            }*/
-            create() {
-                let shape = new sprite({
-                    binded: this,
-                    tuple: this.tuple,
-                    cell: this.cell,
-                    color: this.color,
-                    order: .3
-                });
-                // if we have a deck, add it to heightAdd
-                let sector = lod$1.ggalaxy.at(lod$1.ggalaxy.big(this.wpos));
-                let at = sector.stacked(this.wpos);
-                for (let obj of at) {
-                    if (obj.type == 'deck')
-                        this.heightAdd = obj.height;
-                }
-                shape.rup = this.z;
-            }
-            //update() {}
-            delete() {
-            }
-            hover() {
-                let sprite = this.shape;
-                if (!(sprite === null || sprite === void 0 ? void 0 : sprite.mesh))
-                    return;
-                const last = tile.lastHover;
-                if (last && last != this && last.sector.isActive()) {
-                    last.hide();
-                    last.show();
-                }
-                sprite.mesh.material.color.set('green');
-                tile.lastHover = this;
-            }
-            tick() {
-            }
-        }
-        tiles.tile = tile;
-    })(tiles || (tiles = {}));
-    var tiles$1 = tiles;
-
     var objects;
     (function (objects) {
         const mapSpan = 100;
@@ -1297,8 +1302,9 @@ void main() {
         const color_slimy_wall_with_deck = [20, 78, 54];
         const color_deck = [114, 128, 124];
         const color_rusty_wall_and_deck = [20, 84, 87];
-        const color_acid_barrel = [61, 118, 48];
         const color_false_front = [255, 255, 255];
+        const color_acid_barrel = [61, 118, 48];
+        const color_wall_chest = [130, 100, 50];
         function factory(type, pixel, pos, hints = {}) {
             let obj = new type;
             obj.hints = hints;
@@ -1320,6 +1326,9 @@ void main() {
                 pts.func(sector.small, (pos) => {
                     let pixel = wastes.objectmap.pixel(pos);
                     if (pixel.is_color(color_acid_barrel)) ;
+                    else if (pixel.is_color(color_wall_chest)) {
+                        factory(objects.chest, pixel, pos);
+                    }
                 });
                 return false;
             });
@@ -1648,6 +1657,28 @@ void main() {
             }
         }
         objects.wheat = wheat;
+        class chest extends objected {
+            constructor() {
+                super(numbers.roofs);
+                this.type = 'roof';
+                this.height = 4;
+            }
+            create() {
+                this.tiled();
+                this.size = [24, 40];
+                //let color =  tiles.get(this.wpos)!.color;
+                //this.cell = [Math.floor(Math.random() * 2), 0];
+                new sprite({
+                    binded: this,
+                    tuple: sprites$1.dcrate,
+                    cell: this.cell,
+                    //color: color,
+                    order: .6
+                });
+                this.stack();
+            }
+        }
+        objects.chest = chest;
         class roof extends objected {
             constructor() {
                 super(numbers.roofs);
@@ -6564,6 +6595,41 @@ void main() {
     })(collada || (collada = {}));
     var collada$1 = collada;
 
+    var pawn;
+    (function (pawn_1) {
+        function make() {
+            let pos = [38, 44];
+            let paw = new pawn();
+            paw.wpos = pos;
+            //lod.add(paw);
+        }
+        pawn_1.make = make;
+        class pawn extends objects$1.objected {
+            constructor() {
+                super(numbers.pawns);
+                this.type = 'wall';
+                this.height = 24;
+            }
+            create() {
+                this.tiled();
+                this.size = [24, 50];
+                let tuple = sprites$1.ddecidtree;
+                new sprite({
+                    binded: this,
+                    tuple: tuple,
+                    cell: this.cell,
+                    order: .6,
+                });
+                this.stack();
+            }
+            adapt() {
+                // change sprite to surrounding walls
+            }
+        }
+        pawn_1.pawn = pawn;
+    })(pawn || (pawn = {}));
+    var pawn$1 = pawn;
+
     exports.wastes = void 0;
     (function (wastes) {
         wastes.size = 24;
@@ -6637,6 +6703,7 @@ void main() {
                 sprites.start();
                 tiles$1.start();
                 objects$1.start();
+                pawn$1.make();
             }
         }
         function start() {

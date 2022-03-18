@@ -13,12 +13,14 @@ export namespace tiles {
 
 	const mapSize = 100
 
+	
 	export var started = false;
-
+	
 	var arrays: tiles.tile[][] = []
-
+	
 	const color_gravel: vec3 = [110, 122, 115];
-
+	
+	export var hovering: tile | undefined = undefined 
 
 	export function get(pos: vec2) {
 		if (arrays[pos[1]])
@@ -68,6 +70,7 @@ export namespace tiles {
 			if (tile && tile.z + tile.height + tile.heightAdd == i) {
 				if (tile.sector!.isActive()) {
 					tile.hover();
+					hovering = tile;
 					break;
 				}
 			}

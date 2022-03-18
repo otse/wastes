@@ -25,9 +25,10 @@ namespace objects {
 	const color_slimy_wall_with_deck: vec3 = [20, 78, 54];
 	const color_deck: vec3 = [114, 128, 124];
 	const color_rusty_wall_and_deck: vec3 = [20, 84, 87];
-	const color_acid_barrel: vec3 = [61, 118, 48];
-
 	const color_false_front: vec3 = [255, 255, 255];
+
+	const color_acid_barrel: vec3 = [61, 118, 48];
+	const color_wall_chest: vec3 = [130, 100, 50];
 
 	export function factory<type extends objected>(type: { new(): type }, pixel, pos, hints = {}) {
 		let obj = new type;
@@ -57,6 +58,9 @@ namespace objects {
 				let pixel = wastes.objectmap.pixel(pos);
 				if (pixel.is_color(color_acid_barrel)) {
 					// factory(objects.acidbarrel, pixel, pos);
+				}
+				else if (pixel.is_color(color_wall_chest)) {
+					factory(objects.chest, pixel, pos);
 				}
 			})
 			return false;
@@ -399,6 +403,27 @@ namespace objects {
 			let shape = new sprite({
 				binded: this,
 				tuple: sprites.dwheat,
+				cell: this.cell,
+				//color: color,
+				order: .6
+			});
+			this.stack();
+		}
+	}
+	export class chest extends objected {
+		constructor() {
+			super(numbers.roofs);
+			this.type = 'roof'
+			this.height = 4;
+		}
+		override create() {
+			this.tiled();
+			this.size = [24, 40];
+			//let color =  tiles.get(this.wpos)!.color;
+			//this.cell = [Math.floor(Math.random() * 2), 0];
+			let shape = new sprite({
+				binded: this,
+				tuple: sprites.dcrate,
 				cell: this.cell,
 				//color: color,
 				order: .6

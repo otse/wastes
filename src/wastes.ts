@@ -9,6 +9,7 @@ import { sprites } from "./sprites";
 import tree from "./tree";
 import shear from "./shear";
 import collada from "./collada";
+import pawn from "./pawn";
 
 
 export namespace wastes {
@@ -97,6 +98,8 @@ export namespace wastes {
 			sprites.start();
 			tiles.start();
 			objects.start();
+			
+			pawn.make();
 		}
 	}
 
