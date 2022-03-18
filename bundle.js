@@ -2012,30 +2012,51 @@ void main() {
             canvas.style.margin = '0px auto';
             canvas.style.zoom = '3';
             ctx = canvas.getContext('2d');
-            var walls = document.getElementById('walls');
+            let style = document.location.href.split('shear=')[1];
+            console.log(style);
+            var walls = document.getElementById(style);
             var goal = document.getElementById('goal');
             ctx.drawImage(walls, 0, 0);
             ctx.globalCompositeOperation = 'source-atop';
             ctx.drawImage(goal, 0, 0);
-            const negy = -3;
+            // -4, 8 for thin
+            // -3, 6 for thick
+            let x, y, x2, y2;
+            if (style == 'thin') {
+                y = -4;
+                x = 8;
+                y2 = 2;
+                x2 = -4;
+            }
+            else if (style == 'thick') {
+                y = -3;
+                x = 6;
+                y2 = 1;
+                x2 = -2;
+            }
+            // half
             ctx.drawImage(goal, 24, 0);
             ctx.drawImage(goal, 24 * 5, 0);
             ctx.drawImage(goal, 24 * 6, 0);
             spareCtx.drawImage(canvas, -24 * 5, 0);
-            ctx.drawImage(spare, 24 * 2 + 6, negy);
-            ctx.drawImage(spare, 24 * 3 + 6, negy);
-            ctx.drawImage(spare, 24 * 7 + 6, negy);
+            ctx.drawImage(spare, 24 * 2 + x, y);
+            ctx.drawImage(spare, 24 * 3 + x, y);
+            ctx.drawImage(spare, 24 * 7 + x, y);
             spareCtx.clearRect(0, 0, 24, 40);
             spareCtx.drawImage(canvas, -24 * 6, 0);
             ctx.drawImage(spare, 24 * 2, 0);
-            spareCtx.clearRect(12 + 6, 0, 24, 40);
-            ctx.drawImage(spare, 24 * 3 - 6, negy);
+            spareCtx.clearRect(12 + x, 0, 24, 40);
+            ctx.drawImage(spare, 24 * 3 - x, y);
             spareCtx.drawImage(canvas, -24 * 6, 0);
-            ctx.drawImage(spare, 24 * 4 - 6, negy);
-            ctx.drawImage(spare, 24 * 8 - 6, negy);
+            ctx.drawImage(spare, 24 * 4 - x, y);
+            ctx.drawImage(spare, 24 * 8 - x, y);
             spareCtx.clearRect(0, 0, 24, 40);
             spareCtx.drawImage(canvas, -24 * 5, 0);
             ctx.drawImage(spare, 24 * 4, 0);
+            ctx.drawImage(spare, 24 * 9 - x2, -y2);
+            spareCtx.clearRect(0, 0, 24, 40);
+            spareCtx.drawImage(canvas, -24 * 6, 0);
+            ctx.drawImage(spare, 24 * 10 + x2, -y2);
             document.body.append(canvas);
             document.body.append(spare);
             document.body.append(room);
