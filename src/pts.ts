@@ -134,6 +134,12 @@ class pts {
 		}
 		return b;
 	}
+	
+	static angle(a: vec2, b: vec2) {
+		return -Math.atan2(
+			a[0] - b[0],
+			a[1] - b[1])
+	}
 
 	// https://vorg.github.io/pex/docs/pex-geom/Vec2.html
 

@@ -112,6 +112,9 @@ var wastes = (function (exports, THREE) {
             }
             return b;
         }
+        static angle(a, b) {
+            return -Math.atan2(a[0] - b[0], a[1] - b[1]);
+        }
         // https://vorg.github.io/pex/docs/pex-geom/Vec2.html
         //static dist(a: vec2, b: vec2): number {
         //	let dx = b[0] - a[0];
@@ -1301,7 +1304,7 @@ void main() {
             crunch += `walls: ${numbers.walls[0]} / ${numbers.walls[1]}<br />`;
             crunch += `walls: ${numbers.roofs[0]} / ${numbers.roofs[1]}<br />`;
             crunch += '<br />';
-            crunch += `controls: WASD to move, RF to zoom, hold middlemouse to pan, h to hide<br />`;
+            crunch += `controls: WASD to move, RF to zoom, hold middlemouse to pan, h to hide, arrowkeys for pawn<br />`;
             let element = document.querySelectorAll('.stats')[0];
             element.innerHTML = crunch;
             element.style.visibility = this.show ? 'visible' : 'hidden';
@@ -1475,7 +1478,7 @@ void main() {
         }
         objects.colormap = colormap;
         function is_solid(pos) {
-            const passable = ['land', 'deck', 'pawn', 'door'];
+            const passable = ['land', 'deck', 'pawn', 'door', 'leaves'];
             pos = pts.round(pos);
             let sector = lod$1.ggalaxy.at(lod$1.ggalaxy.big(pos));
             let at = sector.stacked(pos);
@@ -1603,7 +1606,7 @@ void main() {
         class treeleaves extends objected {
             constructor() {
                 super(numbers.floors);
-                this.type = 'tree leaves';
+                this.type = 'leaves';
                 this.height = 14;
             }
             create() {
@@ -6635,7 +6638,7 @@ void main() {
         pawn_1.you = undefined;
         pawn_1.placeAtMouse = false;
         function make() {
-            let pos = [38, 44];
+            let pos = [44, 44];
             let paw = new pawn();
             paw.wpos = pos;
             pawn_1.you = paw;
@@ -6665,22 +6668,69 @@ void main() {
                     this.wpos = venture;
             }
             tick() {
-                var _a, _b, _c;
-                const speed = 0.05;
-                if (app$1.key('arrowup'))
-                    this.try_move_to([0, speed]);
-                if (app$1.key('arrowdown'))
-                    this.try_move_to([0, -speed]);
-                if (app$1.key('arrowleft'))
-                    this.try_move_to([-speed, 0]);
-                if (app$1.key('arrowright'))
-                    this.try_move_to([speed, 0]);
+                var _a, _b;
+                /*if (!moveSideways) {
+                    const speed = 0.05;
+                    if (app.key('arrowup'))
+                        this.try_move_to([0, speed]);
+                    if (app.key('arrowdown'))
+                        this.try_move_to([0, -speed]);
+                    if (app.key('arrowleft'))
+                        this.try_move_to([-speed, 0]);
+                    if (app.key('arrowright'))
+                        this.try_move_to([speed, 0]);
+                }
+
+                if (moveSideways) {
+                    const vertSpeed = 0.05;
+                    const horzSpeed = 0.05;
+                    if (app.key('arrowup')) {
+                        this.try_move_to([-vertSpeed / 2, vertSpeed / 2]);
+                    }
+                    if (app.key('arrowdown')) {
+                        this.try_move_to([vertSpeed / 2, -vertSpeed / 2]);
+                    }
+                    if (app.key('arrowleft')) {
+                        this.try_move_to([-horzSpeed / 2, -horzSpeed / 2]);
+                    }
+                    if (app.key('arrowright')) {
+                        this.try_move_to([horzSpeed / 2, horzSpeed / 2]);
+                    }
+                }
+                */
+                {
+                    let speed = 0.038;
+                    let x = 0;
+                    let y = 0;
+                    if (app$1.key('arrowup')) {
+                        x += -1;
+                        y += -1;
+                    }
+                    if (app$1.key('arrowdown')) {
+                        x += 1;
+                        y += 1;
+                    }
+                    if (app$1.key('arrowleft')) {
+                        x += -1;
+                        y += 1;
+                    }
+                    if (app$1.key('arrowright')) {
+                        x += 1;
+                        y += -1;
+                    }
+                    if (x || y) {
+                        let angle = pts.angle([0, 0], [x, y]);
+                        x = speed * Math.sin(angle);
+                        y = speed * Math.cos(angle);
+                        this.try_move_to([x, y]);
+                    }
+                }
                 if (pawn_1.placeAtMouse)
                     this.wpos = ((_a = tiles$1.hovering) === null || _a === void 0 ? void 0 : _a.wpos) || [38, 44];
                 this.tiled();
-                (_b = this.tile) === null || _b === void 0 ? void 0 : _b.paint();
-                (_c = this.sector) === null || _c === void 0 ? void 0 : _c.swap(this);
-                this.stack(['tree leaves', 'door']);
+                //this.tile?.paint();
+                (_b = this.sector) === null || _b === void 0 ? void 0 : _b.swap(this);
+                this.stack(['leaves', 'door']);
                 super.update();
             }
         }

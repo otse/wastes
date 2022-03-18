@@ -209,7 +209,7 @@ namespace objects {
 	}
 
 	export function is_solid(pos: vec2) {
-		const passable = ['land', 'deck', 'pawn', 'door'];
+		const passable = ['land', 'deck', 'pawn', 'door', 'leaves'];
 		pos = pts.round(pos);
 		let sector = lod.ggalaxy.at(lod.ggalaxy.big(pos));
 		let at = sector.stacked(pos);
@@ -342,7 +342,7 @@ namespace objects {
 	export class treeleaves extends objected {
 		constructor() {
 			super(numbers.floors);
-			this.type = 'tree leaves'
+			this.type = 'leaves'
 			this.height = 14;
 		}
 		override create() {
