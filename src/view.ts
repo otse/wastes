@@ -166,7 +166,7 @@ export class view {
 		crunch += `walls: ${numbers.roofs[0]} / ${numbers.roofs[1]}<br />`;
 		crunch += '<br />';
 
-		crunch += `controls: WASD to move, RF to zoom, hold middlemouse to pan, h to hide, arrowkeys for pawn<br />`;
+		crunch += `controls: WASD to move, RF to zoom, hold middlemouse to pan, h to hide debug, arrowkeys for pawn, spacebar to hide roofs<br />`;
 
 		let element = document.querySelectorAll('.stats')[0] as any;
 		element.innerHTML = crunch;

@@ -483,7 +483,7 @@ void main() {
         ;
         on() {
             if (this.active) {
-                console.warn(' (lod) already on ');
+                console.warn(' (toggle) already on ');
                 return true;
                 // it was on before
             }
@@ -493,7 +493,7 @@ void main() {
         }
         off() {
             if (!this.active) {
-                console.warn(' (lod) already off ');
+                console.warn(' (toggle) already off ');
                 return true;
             }
             this.active = false;
@@ -728,7 +728,7 @@ void main() {
                 console.warn(' (lod) obj.create ');
             }
             delete() {
-                console.warn(' (lod) obj.delete ');
+                // console.warn(' (lod) obj.delete ');
             }
             update() {
                 var _a;
@@ -811,7 +811,7 @@ void main() {
         sprites.ddoorwood = [[96, 40], [24, 40], 0, 'tex/ddoor'];
         sprites.dacidbarrel = [[24, 35], [24, 35], 0, 'tex/dacidbarrel'];
         sprites.dfalsefronts = [[192, 40], [24, 40], 0, 'tex/dfalsefronts'];
-        sprites.pchris = [[24, 53], [24, 53], 0, 'tex/pawn/pchris'];
+        sprites.pchris = [[24, 53], [24, 53], 0, 'tex/pawn/pchris_hires'];
         function get_uv_transform(cell, tuple) {
             let divide = pts.divides(tuple[1], tuple[0]);
             let offset = pts.mults(divide, cell);
@@ -1309,7 +1309,7 @@ void main() {
             crunch += `walls: ${numbers.walls[0]} / ${numbers.walls[1]}<br />`;
             crunch += `walls: ${numbers.roofs[0]} / ${numbers.roofs[1]}<br />`;
             crunch += '<br />';
-            crunch += `controls: WASD to move, RF to zoom, hold middlemouse to pan, h to hide, arrowkeys for pawn<br />`;
+            crunch += `controls: WASD to move, RF to zoom, hold middlemouse to pan, h to hide debug, arrowkeys for pawn, spacebar to hide roofs<br />`;
             let element = document.querySelectorAll('.stats')[0];
             element.innerHTML = crunch;
             element.style.visibility = this.show ? 'visible' : 'hidden';
@@ -1328,7 +1328,6 @@ void main() {
         const color_slimy_wall_with_deck = [20, 78, 54];
         const color_deck = [114, 128, 124];
         const color_rusty_wall_and_deck = [20, 84, 87];
-        const color_false_front = [255, 255, 255];
         const color_acid_barrel = [61, 118, 48];
         const color_wall_chest = [130, 100, 50];
         function factory(type, pixel, pos, hints = {}) {
@@ -1345,7 +1344,7 @@ void main() {
             wastes.heightmap = new colormap('heightmap');
             wastes.objectmap = new colormap('objectmap');
             wastes.buildingmap = new colormap('buildingmap');
-            wastes.roofmap = new colormap('roofmap');
+            wastes.roommap = new colormap('roommap');
             wastes.treemap = new colormap('treemap');
             wastes.colormap = new colormap('colormap');
             hooks.register('sectorCreate', (sector) => {
@@ -1358,20 +1357,23 @@ void main() {
                 });
                 return false;
             });
-            hooks.register('sectorCreate', (sector) => {
+            /*hooks.register('sectorCreate', (sector: lod.sector) => {
                 pts.func(sector.small, (pos) => {
-                    let pixel = wastes.roofmap.pixel(pos);
-                    if (pixel.is_color(color_false_front)) ;
-                });
+                    let pixel = wastes.roommap.pixel(pos);
+                    if (pixel.is_color(color_false_front)) {
+                        //factory(objects.roof, pixel, pos);
+                        //factory(objects.falsefront, pixel, pos);
+                    }
+                })
                 return false;
-            });
+            })*/
             hooks.register('sectorCreate', (sector) => {
                 pts.func(sector.small, (pos) => {
                     let pixel = wastes.buildingmap.pixel(pos);
                     if (pixel.is_color(color_slimy_wall_with_deck)) {
                         factory(objects.deck, pixel, pos);
                         factory(objects.wall, pixel, pos, { type: 'slimy' });
-                        //factory(objects.roof, pixel, pos);
+                        factory(objects.roof, pixel, pos);
                     }
                     else if (pixel.is_color(color_slimy_wall)) {
                         factory(objects.wall, pixel, pos, { type: 'slimy' });
@@ -1385,16 +1387,16 @@ void main() {
                     else if (pixel.is_color(color_rusty_wall_and_deck)) {
                         factory(objects.deck, pixel, pos);
                         factory(objects.wall, pixel, pos, { type: 'rusty' });
-                        //factory(objects.roof, pixel, pos);
+                        factory(objects.roof, pixel, pos);
                     }
                     else if (pixel.is_color(color_deck)) {
                         factory(objects.deck, pixel, pos);
-                        //factory(objects.roof, pixel, pos);
+                        factory(objects.roof, pixel, pos);
                     }
                     else if (pixel.is_color(color_wooden_door)) {
                         factory(objects.deck, pixel, pos);
                         factory(objects.door, pixel, pos);
-                        //factory(objects.roof, pixel, pos);
+                        factory(objects.roof, pixel, pos);
                     }
                     else if (pixel.is_color(color_wooden_door_and_deck)) {
                         factory(objects.deck, pixel, pos);
@@ -1411,6 +1413,10 @@ void main() {
         }
         objects.start = start;
         function tick() {
+            if (app$1.key(' ') == 1) {
+                wastes.HIDE_ROOFS = !wastes.HIDE_ROOFS;
+                console.log('hide roofs', wastes.HIDE_ROOFS);
+            }
         }
         objects.tick = tick;
         class pixel {
@@ -1483,7 +1489,7 @@ void main() {
         }
         objects.colormap = colormap;
         function is_solid(pos) {
-            const passable = ['land', 'deck', 'pawn', 'door', 'leaves'];
+            const passable = ['land', 'deck', 'pawn', 'door', 'leaves', 'roof'];
             pos = pts.round(pos);
             let sector = lod$1.ggalaxy.at(lod$1.ggalaxy.big(pos));
             let at = sector.stacked(pos);
@@ -1652,7 +1658,7 @@ void main() {
         class grass extends objected {
             constructor() {
                 super(numbers.roofs);
-                this.type = 'roof';
+                this.type = 'grass';
                 this.height = 4;
                 this.solid = false;
             }
@@ -1681,7 +1687,7 @@ void main() {
         class wheat extends objected {
             constructor() {
                 super(numbers.roofs);
-                this.type = 'roof';
+                this.type = 'wheat';
                 this.height = 4;
             }
             create() {
@@ -1718,7 +1724,7 @@ void main() {
                     //color: color,
                     order: .6
                 });
-                this.stack();
+                this.stack(['roof']);
             }
         }
         objects.crate = crate;
@@ -1736,7 +1742,16 @@ void main() {
                     tuple: sprites$1.droof,
                     order: .6,
                 });
-                this.z = shape.rup = 3 + 27;
+                this.z = shape.rup = 3 + 26;
+            }
+            tick() {
+                const sprite = this.shape;
+                if (!sprite)
+                    return;
+                if (wastes.HIDE_ROOFS)
+                    sprite.mesh.visible = false;
+                else if (!wastes.HIDE_ROOFS)
+                    sprite.mesh.visible = true;
             }
         }
         objects.roof = roof;
@@ -6733,7 +6748,7 @@ void main() {
                 this.tiled();
                 //this.tile?.paint();
                 (_b = this.sector) === null || _b === void 0 ? void 0 : _b.swap(this);
-                this.stack(['leaves', 'door']);
+                this.stack(['leaves', 'door', 'roof']);
                 super.update();
             }
         }
@@ -6741,10 +6756,42 @@ void main() {
     })(pawn || (pawn = {}));
     var pawn$1 = pawn;
 
+    var win95;
+    (function (win95) {
+        win95.started = false;
+        function start() {
+            win95.started = true;
+        }
+        win95.start = start;
+        function tick() {
+            if (!win95.started)
+                return;
+        }
+        win95.tick = tick;
+    })(win95 || (win95 = {}));
+    var win95$1 = win95;
+
+    var rooms;
+    (function (rooms) {
+        new aabb2([41, 42], [30, 30]);
+        rooms.started = false;
+        function start() {
+            rooms.started = true;
+        }
+        rooms.start = start;
+        function tick() {
+            if (!rooms.started)
+                return;
+        }
+        rooms.tick = tick;
+    })(rooms || (rooms = {}));
+    var rooms$1 = rooms;
+
     exports.wastes = void 0;
     (function (wastes) {
         wastes.size = 24;
         wastes.SOME_OTHER_SETTING = false;
+        wastes.HIDE_ROOFS = false;
         var started = false;
         function sample(a) {
             return a[Math.floor(Math.random() * a.length)];
@@ -6815,6 +6862,8 @@ void main() {
                 sprites.start();
                 tiles$1.start();
                 objects$1.start();
+                rooms$1.start();
+                win95$1.start();
                 pawn$1.make();
             }
         }
@@ -6847,6 +6896,8 @@ void main() {
             shear$1.tick();
             collada$1.tick();
             objects$1.tick();
+            rooms$1.tick();
+            win95$1.tick();
         }
         wastes.tick = tick;
     })(exports.wastes || (exports.wastes = {}));

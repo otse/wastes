@@ -27,7 +27,7 @@ namespace app {
 		if ('keydown' == event.type)
 			keys[key] = keys[key] ? KEY.AGAIN : KEY.PRESS;
 		else if ('keyup' == event.type)
-			keys[key] = KEY.UP;
+			keys[key] = KEY.UP;		
 		if (event.keyCode == 114)
 			event.preventDefault();
 	}

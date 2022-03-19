@@ -27,7 +27,7 @@ class toggle {
 	isActive() { return this.active };
 	on() {
 		if (this.active) {
-			console.warn(' (lod) already on ');
+			console.warn(' (toggle) already on ');
 			return true;
 			// it was on before
 		}
@@ -37,7 +37,7 @@ class toggle {
 	}
 	off() {
 		if (!this.active) {
-			console.warn(' (lod) already off ');
+			console.warn(' (toggle) already off ');
 			return true;
 		}
 		this.active = false;
@@ -297,7 +297,7 @@ namespace lod {
 			console.warn(' (lod) obj.create ');
 		}
 		delete() { // implement me
-			console.warn(' (lod) obj.delete ');
+			// console.warn(' (lod) obj.delete ');
 		}
 		update() {
 			this.wtorpos();

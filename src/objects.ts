@@ -11,6 +11,7 @@ import tiles from "./tiles";
 import hooks from "./hooks";
 import sprite from "./sprite";
 import sprites from "./sprites";
+import app from "./app";
 
 namespace objects {
 
@@ -46,7 +47,7 @@ namespace objects {
 		wastes.heightmap = new colormap('heightmap');
 		wastes.objectmap = new colormap('objectmap');
 		wastes.buildingmap = new colormap('buildingmap');
-		wastes.roofmap = new colormap('roofmap');
+		wastes.roommap = new colormap('roommap');
 		wastes.treemap = new colormap('treemap');
 		wastes.colormap = new colormap('colormap');
 
@@ -66,16 +67,16 @@ namespace objects {
 			return false;
 		})
 
-		hooks.register('sectorCreate', (sector: lod.sector) => {
+		/*hooks.register('sectorCreate', (sector: lod.sector) => {
 			pts.func(sector.small, (pos) => {
-				let pixel = wastes.roofmap.pixel(pos);
+				let pixel = wastes.roommap.pixel(pos);
 				if (pixel.is_color(color_false_front)) {
 					//factory(objects.roof, pixel, pos);
 					//factory(objects.falsefront, pixel, pos);
 				}
 			})
 			return false;
-		})
+		})*/
 
 		hooks.register('sectorCreate', (sector: lod.sector) => {
 			pts.func(sector.small, (pos) => {
@@ -83,7 +84,7 @@ namespace objects {
 				if (pixel.is_color(color_slimy_wall_with_deck)) {
 					factory(objects.deck, pixel, pos);
 					factory(objects.wall, pixel, pos, { type: 'slimy' });
-					//factory(objects.roof, pixel, pos);
+					factory(objects.roof, pixel, pos);
 				}
 				else if (pixel.is_color(color_slimy_wall)) {
 					factory(objects.wall, pixel, pos, { type: 'slimy' });
@@ -102,16 +103,16 @@ namespace objects {
 				else if (pixel.is_color(color_rusty_wall_and_deck)) {
 					factory(objects.deck, pixel, pos);
 					factory(objects.wall, pixel, pos, { type: 'rusty' });
-					//factory(objects.roof, pixel, pos);
+					factory(objects.roof, pixel, pos);
 				}
 				else if (pixel.is_color(color_deck)) {
 					factory(objects.deck, pixel, pos);
-					//factory(objects.roof, pixel, pos);
+					factory(objects.roof, pixel, pos);
 				}
 				else if (pixel.is_color(color_wooden_door)) {
 					factory(objects.deck, pixel, pos);
 					factory(objects.door, pixel, pos);
-					//factory(objects.roof, pixel, pos);
+					factory(objects.roof, pixel, pos);
 				}
 				else if (pixel.is_color(color_wooden_door_and_deck)) {
 					factory(objects.deck, pixel, pos);
@@ -131,8 +132,10 @@ namespace objects {
 
 	export function tick() {
 
-
-
+		if (app.key(' ') == 1) {
+			wastes.HIDE_ROOFS = !wastes.HIDE_ROOFS;
+			console.log('hide roofs', wastes.HIDE_ROOFS);
+		}
 	}
 
 	const zeroes: vec4 = [0, 0, 0, 0]
@@ -209,12 +212,12 @@ namespace objects {
 	}
 
 	export function is_solid(pos: vec2) {
-		const passable = ['land', 'deck', 'pawn', 'door', 'leaves'];
+		const passable = ['land', 'deck', 'pawn', 'door', 'leaves', 'roof'];
 		pos = pts.round(pos);
 		let sector = lod.ggalaxy.at(lod.ggalaxy.big(pos));
 		let at = sector.stacked(pos);
 		for (let obj of at) {
-			if (passable.indexOf(obj.type) == -1) { 
+			if (passable.indexOf(obj.type) == -1) {
 				return true;
 			}
 		}
@@ -249,7 +252,7 @@ namespace objects {
 				if (obj == this)
 					break;
 				calc += obj.z + obj.height;
-					
+
 			}
 			this.calc = calc;
 			if (this.shape)
@@ -331,9 +334,9 @@ namespace objects {
 			if (!this.flowered) {
 				this.flowered = true;
 				for (let y = -1; y <= 1; y++)
-				for (let x = -1; x <= 1; x++)
-				if (!(x == 0 && y == 0) && Math.random() > .3)
-				factory(objects.treeleaves, pixel, pts.add(this.wpos, [x, y]), { tree: this, color: tile.color });
+					for (let x = -1; x <= 1; x++)
+						if (!(x == 0 && y == 0) && Math.random() > .3)
+							factory(objects.treeleaves, pixel, pts.add(this.wpos, [x, y]), { tree: this, color: tile.color });
 				factory(objects.treeleaves, pixel, pts.add(this.wpos, [0, 0]), { color: tile.color });
 				factory(objects.treeleaves, pixel, pts.add(this.wpos, [0, 0]), { color: tile.color });
 			}
@@ -382,14 +385,14 @@ namespace objects {
 	export class grass extends objected {
 		constructor() {
 			super(numbers.roofs);
-			this.type = 'roof'
+			this.type = 'grass';
 			this.height = 4;
 			this.solid = false;
 		}
 		override create() {
 			this.tiled();
 			this.size = [24, 30];
-			let color =  tiles.get(this.wpos)!.color;
+			let color = tiles.get(this.wpos)!.color;
 			color = [
 				Math.floor(color[0] * 1.5),
 				Math.floor(color[1] * 1.5),
@@ -410,7 +413,7 @@ namespace objects {
 	export class wheat extends objected {
 		constructor() {
 			super(numbers.roofs);
-			this.type = 'roof'
+			this.type = 'wheat';
 			this.height = 4;
 		}
 		override create() {
@@ -446,13 +449,13 @@ namespace objects {
 				//color: color,
 				order: .6
 			});
-			this.stack();
+			this.stack(['roof']);
 		}
 	}
 	export class roof extends objected {
 		constructor() {
 			super(numbers.roofs);
-			this.type = 'roof'
+			this.type = 'roof';
 			this.height = 4;
 		}
 		override create() {
@@ -463,7 +466,16 @@ namespace objects {
 				tuple: sprites.droof,
 				order: .6,
 			});
-			this.z = shape.rup = 3 + 27;
+			this.z = shape.rup = 3 + 26;
+		}
+		override tick() {
+			const sprite = this.shape as sprite;
+			if (!sprite)
+				return;
+			if (wastes.HIDE_ROOFS)
+				sprite.mesh.visible = false;
+			else if (!wastes.HIDE_ROOFS)
+				sprite.mesh.visible = true;
 		}
 	}
 	export class acidbarrel extends objected {

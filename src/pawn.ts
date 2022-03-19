@@ -53,7 +53,6 @@ export namespace pawn {
 		}
 		override tick() {
 
-			const moveSideways = true;
 			const moveMath = true;
 
 			if (moveMath) {
@@ -89,7 +88,7 @@ export namespace pawn {
 			this.tiled();
 			//this.tile?.paint();
 			this.sector?.swap(this);
-			this.stack(['leaves', 'door']);
+			this.stack(['leaves', 'door', 'roof']);
 			super.update();
 		}
 		//tick() {

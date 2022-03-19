@@ -10,6 +10,8 @@ import tree from "./tree";
 import shear from "./shear";
 import collada from "./collada";
 import pawn from "./pawn";
+import win95 from "./ux";
+import rooms from "./rooms";
 
 
 export namespace wastes {
@@ -19,13 +21,14 @@ export namespace wastes {
 	export var gview: view;
 
 	export var SOME_OTHER_SETTING = false;
+	export var HIDE_ROOFS = false;
 
 	var started = false;
 
 	export var heightmap: objects.colormap
 	export var objectmap: objects.colormap
 	export var buildingmap: objects.colormap
-	export var roofmap: objects.colormap
+	export var roommap: objects.colormap
 	export var treemap: objects.colormap
 	export var colormap: objects.colormap
 
@@ -99,6 +102,8 @@ export namespace wastes {
 			sprites.start();
 			tiles.start();
 			objects.start();
+			rooms.start();
+			win95.start();
 			
 			pawn.make();
 		}
@@ -134,6 +139,8 @@ export namespace wastes {
 		shear.tick();
 		collada.tick();
 		objects.tick();
+		rooms.tick();
+		win95.tick();
 	}
 
 }
