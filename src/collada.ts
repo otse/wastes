@@ -19,7 +19,7 @@ namespace collada {
 
 		document.title = 'collada'
 
-		var elf;
+		var myScene;
 
 		const loadingManager = new LoadingManager(function () {
 
@@ -32,11 +32,11 @@ namespace collada {
 
 			//wastes.gview.zoomIndex = 0;
 
-			elf = collada.scene;
+			myScene = collada.scene;
 			let group = new Group;
 			group.rotation.set(0, -Math.PI / 2, 0);
 			group.position.set(wastes.size, 0, 0);
-			group.add(elf);
+			group.add(myScene);
 
 			//console.log(elf);
 
@@ -55,14 +55,15 @@ namespace collada {
 				}
 			}
 
-			elf.traverse(traversal);
+			myScene.traverse(traversal);
 
 			//group.add(new AxesHelper(300));
-			console.log(elf.scale);
+			console.log(myScene.scale);
 
-			elf.scale.multiplyScalar(60);
+			const zoom = 30; // 60 hires, 30 lowres
+			myScene.scale.multiplyScalar(zoom);
 			//elf.rotation.set(-Math.PI / 2, 0, 0);
-			elf.position.set(1, 0, 0);
+			myScene.position.set(1, 0, 0);
 
 			ren.scene.add(group);
 
@@ -73,7 +74,7 @@ namespace collada {
 			group.add(sun.target);
 
 			window['group'] = group;
-			window['elf'] = elf;
+			window['elf'] = myScene;
 
 
 		});

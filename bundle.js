@@ -804,7 +804,7 @@ void main() {
         sprites.dtree1 = [[121, 147], [121, 147], 0, 'tex/dtree1b'];
         sprites.droof = [[72, 17], [24, 17], 0, 'tex/droof'];
         sprites.dcrate = [[24, 40], [24, 40], 0, 'tex/dcrate'];
-        sprites.drustywalls = [[264, 40], [24, 40], 0, 'tex/drustywalls2'];
+        sprites.drustywalls = [[264, 40], [24, 40], 0, 'tex/drustywalls'];
         sprites.dscrappywalls = [[264, 40], [24, 40], 0, 'tex/dscrappywalls'];
         //export const dscrappywalls2: tuple = [[216, 40], [24, 40], 0, 'tex/dscrappywalls2']
         sprites.druddywalls = [[288, 40], [24, 40], 0, 'tex/druddywalls'];
@@ -812,6 +812,7 @@ void main() {
         sprites.dacidbarrel = [[24, 35], [24, 35], 0, 'tex/dacidbarrel'];
         sprites.dfalsefronts = [[192, 40], [24, 40], 0, 'tex/dfalsefronts'];
         sprites.pchris = [[40, 90], [40, 90], 0, 'tex/pawn/pwaster_hires'];
+        sprites.pchris_lowres = [[19, 41], [19, 41], 0, 'tex/pawn/pwaster'];
         function get_uv_transform(cell, tuple) {
             let divide = pts.divides(tuple[1], tuple[0]);
             let offset = pts.mults(divide, cell);
@@ -1882,9 +1883,6 @@ void main() {
             'tex/stock/crate1.jpg',
             'tex/stock/planks.jpg',
             'tex/stock/planks1.jpg',
-            'tex/stock/planks2.jpg',
-            'tex/stock/planks3.jpg',
-            'tex/stock/planks4.jpg',
             'tex/stock/planks5.jpg',
             'tex/stock/beamed1.jpg',
             'tex/stock/beamed2.jpg',
@@ -6669,18 +6667,18 @@ void main() {
         function start() {
             collada_1.started = true;
             document.title = 'collada';
-            var elf;
+            var myScene;
             const loadingManager = new THREE.LoadingManager(function () {
                 //ren.scene.add(elf);
             });
             const loader = new ColladaLoader(loadingManager);
             loader.load('collada/model.dae', function (collada) {
                 //wastes.gview.zoomIndex = 0;
-                elf = collada.scene;
+                myScene = collada.scene;
                 let group = new THREE.Group;
                 group.rotation.set(0, -Math.PI / 2, 0);
                 group.position.set(wastes.size, 0, 0);
-                group.add(elf);
+                group.add(myScene);
                 //console.log(elf);
                 function fix(material) {
                     //material.color = new THREE.Color('red');
@@ -6695,12 +6693,13 @@ void main() {
                                 fix(material);
                     }
                 }
-                elf.traverse(traversal);
+                myScene.traverse(traversal);
                 //group.add(new AxesHelper(300));
-                console.log(elf.scale);
-                elf.scale.multiplyScalar(60);
+                console.log(myScene.scale);
+                const zoom = 30; // 60 hires, 30 lowres
+                myScene.scale.multiplyScalar(zoom);
                 //elf.rotation.set(-Math.PI / 2, 0, 0);
-                elf.position.set(1, 0, 0);
+                myScene.position.set(1, 0, 0);
                 ren$1.scene.add(group);
                 let sun = new THREE.DirectionalLight(0xffffff, 0.35);
                 sun.position.set(-wastes.size, wastes.size * 2, wastes.size / 2);
@@ -6708,7 +6707,7 @@ void main() {
                 group.add(sun);
                 group.add(sun.target);
                 window['group'] = group;
-                window['elf'] = elf;
+                window['elf'] = myScene;
             });
         }
         collada_1.start = start;
@@ -6739,8 +6738,8 @@ void main() {
             }
             create() {
                 this.tiled();
-                this.size = pts.divide([40, 90], 2);
-                let tuple = sprites$1.pchris;
+                this.size = pts.divide([19, 41], 1);
+                let tuple = sprites$1.pchris_lowres;
                 new sprite({
                     binded: this,
                     tuple: tuple,
