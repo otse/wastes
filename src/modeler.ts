@@ -9,11 +9,13 @@ namespace modeler {
 	export var started = false;
 
 	const textures = [
+		'tex/stock/crate1.jpg',
 		'tex/stock/planks.jpg',
 		'tex/stock/planks1.jpg',
 		'tex/stock/planks2.jpg',
 		'tex/stock/planks3.jpg',
 		'tex/stock/planks4.jpg',
+		'tex/stock/planks5.jpg',
 		'tex/stock/beamed1.jpg',
 		'tex/stock/beamed2.jpg',
 		'tex/stock/metalrooftiles.jpg',

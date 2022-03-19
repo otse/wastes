@@ -138,7 +138,7 @@ export namespace tiles {
 				tuple: this.tuple,
 				cell: this.cell,
 				color: this.color,
-				order: .3
+				order: -.5
 			});
 			// if we have a deck, add it to heightAdd
 			let sector = lod.ggalaxy.at(lod.ggalaxy.big(this.wpos));

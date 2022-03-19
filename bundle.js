@@ -804,14 +804,14 @@ void main() {
         sprites.dtree1 = [[121, 147], [121, 147], 0, 'tex/dtree1b'];
         sprites.droof = [[72, 17], [24, 17], 0, 'tex/droof'];
         sprites.dcrate = [[24, 40], [24, 40], 0, 'tex/dcrate'];
-        sprites.drustywalls = [[288, 40], [24, 40], 0, 'tex/drustywalls'];
+        sprites.drustywalls = [[264, 40], [24, 40], 0, 'tex/drustywalls2'];
         sprites.dscrappywalls = [[264, 40], [24, 40], 0, 'tex/dscrappywalls'];
-        sprites.dscrappywalls2 = [[216, 40], [24, 40], 0, 'tex/dscrappywalls2'];
+        //export const dscrappywalls2: tuple = [[216, 40], [24, 40], 0, 'tex/dscrappywalls2']
         sprites.druddywalls = [[288, 40], [24, 40], 0, 'tex/druddywalls'];
         sprites.ddoor = [[192, 40], [24, 40], 0, 'tex/ddoor'];
         sprites.dacidbarrel = [[24, 35], [24, 35], 0, 'tex/dacidbarrel'];
         sprites.dfalsefronts = [[192, 40], [24, 40], 0, 'tex/dfalsefronts'];
-        sprites.pchris = [[24, 53], [24, 53], 0, 'tex/pawn/pchris_hires'];
+        sprites.pchris = [[40, 90], [40, 90], 0, 'tex/pawn/pwaster_hires'];
         function get_uv_transform(cell, tuple) {
             let divide = pts.divides(tuple[1], tuple[0]);
             let offset = pts.mults(divide, cell);
@@ -1138,7 +1138,7 @@ void main() {
                     tuple: this.tuple,
                     cell: this.cell,
                     color: this.color,
-                    order: .3
+                    order: -.5
                 });
                 // if we have a deck, add it to heightAdd
                 let sector = lod$1.ggalaxy.at(lod$1.ggalaxy.big(this.wpos));
@@ -1313,7 +1313,7 @@ void main() {
             crunch += `walls: ${numbers.walls[0]} / ${numbers.walls[1]}<br />`;
             crunch += `walls: ${numbers.roofs[0]} / ${numbers.roofs[1]}<br />`;
             crunch += '<br />';
-            crunch += `controls: WASD to move, RF to zoom, hold middlemouse to pan, h to hide debug, arrowkeys for pawn, spacebar to hide roofs<br />`;
+            crunch += `controls: WASD to move, RF to zoom, hold middlemouse to pan, h to hide debug, arrowkeys for view, spacebar to toggle roofs<br />`;
             let element = document.querySelectorAll('.stats')[0];
             element.innerHTML = crunch;
             element.style.visibility = this.show ? 'visible' : 'hidden';
@@ -1879,11 +1879,13 @@ void main() {
     (function (modeler) {
         modeler.started = false;
         const textures = [
+            'tex/stock/crate1.jpg',
             'tex/stock/planks.jpg',
             'tex/stock/planks1.jpg',
             'tex/stock/planks2.jpg',
             'tex/stock/planks3.jpg',
             'tex/stock/planks4.jpg',
+            'tex/stock/planks5.jpg',
             'tex/stock/beamed1.jpg',
             'tex/stock/beamed2.jpg',
             'tex/stock/metalrooftiles.jpg',
@@ -6696,7 +6698,7 @@ void main() {
                 elf.traverse(traversal);
                 //group.add(new AxesHelper(300));
                 console.log(elf.scale);
-                elf.scale.multiplyScalar(30);
+                elf.scale.multiplyScalar(60);
                 //elf.rotation.set(-Math.PI / 2, 0, 0);
                 elf.position.set(1, 0, 0);
                 ren$1.scene.add(group);
@@ -6737,7 +6739,7 @@ void main() {
             }
             create() {
                 this.tiled();
-                this.size = [24, 53];
+                this.size = pts.divide([40, 90], 2);
                 let tuple = sprites$1.pchris;
                 new sprite({
                     binded: this,

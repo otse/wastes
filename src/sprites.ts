@@ -26,15 +26,15 @@ export namespace sprites {
 	export const dtree1: tuple = [[121, 147], [121, 147], 0, 'tex/dtree1b']
 	export const droof: tuple = [[72, 17], [24, 17], 0, 'tex/droof']
 	export const dcrate: tuple = [[24, 40], [24, 40], 0, 'tex/dcrate']
-	export const drustywalls: tuple = [[288, 40], [24, 40], 0, 'tex/drustywalls']
+	export const drustywalls: tuple = [[264, 40], [24, 40], 0, 'tex/drustywalls2']
 	export const dscrappywalls: tuple = [[264, 40], [24, 40], 0, 'tex/dscrappywalls']
-	export const dscrappywalls2: tuple = [[216, 40], [24, 40], 0, 'tex/dscrappywalls2']
+	//export const dscrappywalls2: tuple = [[216, 40], [24, 40], 0, 'tex/dscrappywalls2']
 	export const druddywalls: tuple = [[288, 40], [24, 40], 0, 'tex/druddywalls']
 	export const ddoor: tuple = [[192, 40], [24, 40], 0, 'tex/ddoor']
 	export const dacidbarrel: tuple = [[24, 35], [24, 35], 0, 'tex/dacidbarrel']
 	export const dfalsefronts: tuple = [[192, 40], [24, 40], 0, 'tex/dfalsefronts']
 
-	export const pchris: tuple = [[24, 53], [24, 53], 0, 'tex/pawn/pchris_hires']
+	export const pchris: tuple = [[40, 90], [40, 90], 0, 'tex/pawn/pwaster_hires']
 
 	export function get_uv_transform(cell: vec2, tuple: tuple) {
 		let divide = pts.divides(tuple[1], tuple[0]);

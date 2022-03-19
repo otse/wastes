@@ -32,7 +32,7 @@ export namespace pawn {
 		}
 		override create() {
 			this.tiled();
-			this.size = [24, 53];
+			this.size = pts.divide([40, 90], 2);
 			let tuple = sprites.pchris;
 			let shape = new sprite({
 				binded: this,
