@@ -296,7 +296,7 @@ void main() {
             ren.delta = ren.clock.getDelta();
             if (ren.delta > 2)
                 ren.delta = 0.016;
-            ren.delta *= 60;
+            ren.delta *= 60.0;
             //filmic.composer.render();
         }
         ren.update = update;
@@ -586,7 +586,7 @@ void main() {
             stacked(wpos) {
                 let stack = [];
                 for (let obj of this.objs)
-                    if (pts.equals(wpos, obj.wpos))
+                    if (pts.equals(wpos, pts.round(obj.wpos)))
                         stack.push(obj);
                 return stack;
             }
@@ -808,7 +808,7 @@ void main() {
         sprites.dscrappywalls = [[264, 40], [24, 40], 0, 'tex/dscrappywalls'];
         sprites.dscrappywalls2 = [[216, 40], [24, 40], 0, 'tex/dscrappywalls2'];
         sprites.druddywalls = [[288, 40], [24, 40], 0, 'tex/druddywalls'];
-        sprites.ddoorwood = [[96, 40], [24, 40], 0, 'tex/ddoor'];
+        sprites.ddoor = [[192, 40], [24, 40], 0, 'tex/ddoor'];
         sprites.dacidbarrel = [[24, 35], [24, 35], 0, 'tex/dacidbarrel'];
         sprites.dfalsefronts = [[192, 40], [24, 40], 0, 'tex/dfalsefronts'];
         sprites.pchris = [[24, 53], [24, 53], 0, 'tex/pawn/pchris_hires'];
@@ -849,12 +849,13 @@ void main() {
                 calc = pts.add(obj.rpos, pts.divide(obj.size, 2));
             else
                 calc = pts.add(obj.rpos, [0, obj.size[1]]);
-            let wposf = pts.round(obj.wpos);
+            let pos = pts.round(obj.wpos);
             calc = pts.add(calc, [this.rleft, this.rup]);
             if (this.mesh) {
+                this.retransform();
                 this.mesh.position.fromArray([...calc, 0]);
                 this.mesh.updateMatrix();
-                this.mesh.renderOrder = -wposf[1] + wposf[0] + this.vars.order;
+                this.mesh.renderOrder = -pos[1] + pos[0] + this.vars.order;
                 this.mesh.rotation.z = this.vars.binded.ro;
             }
         }
@@ -866,10 +867,13 @@ void main() {
             (_b = this.material) === null || _b === void 0 ? void 0 : _b.dispose();
             (_c = this.mesh.parent) === null || _c === void 0 ? void 0 : _c.remove(this.mesh);
         }
+        retransform() {
+            this.myUvTransform.copy(sprites$1.get_uv_transform(this.vars.cell, this.vars.tuple));
+        }
         create() {
             var _a;
-            const obj = this.vars.binded;
-            this.myUvTransform = sprites$1.get_uv_transform(this.vars.cell, this.vars.tuple);
+            this.vars.binded;
+            this.retransform();
             this.geometry = new THREE.PlaneBufferGeometry(this.vars.binded.size[0], this.vars.binded.size[1]);
             let color;
             if (this.vars.binded.sector.color) {
@@ -889,7 +893,6 @@ void main() {
             this.mesh = new THREE.Mesh(this.geometry, this.material);
             this.mesh.frustumCulled = false;
             this.mesh.matrixAutoUpdate = false;
-            this.mesh.renderOrder = -obj.wpos[1] + obj.wpos[0] + this.vars.order;
             this.update();
             (_a = this.vars.binded.sector) === null || _a === void 0 ? void 0 : _a.group.add(this.mesh);
             ren$1.groups.axisSwap.add(this.mesh);
@@ -1284,7 +1287,8 @@ void main() {
             crunch += `DPI_UPSCALED_RT: ${ren$1.DPI_UPSCALED_RT}<br />`;
             crunch += '<br />';
             crunch += `dpi: ${ren$1.ndpi}<br />`;
-            crunch += `fps: ${ren$1.fps} / ${ren$1.delta.toPrecision(3)}<br />`;
+            crunch += `fps: ${ren$1.fps}<br />`;
+            crunch += `delta: ${ren$1.delta.toPrecision(6)}<br />`;
             crunch += '<br />';
             crunch += `textures: ${ren$1.renderer.info.memory.textures}<br />`;
             crunch += `programs: ${ren$1.renderer.info.programs.length}<br />`;
@@ -1319,7 +1323,7 @@ void main() {
     var objects;
     (function (objects) {
         const mapSpan = 100;
-        const color_wooden_door = [210, 210, 210];
+        const color_door = [210, 210, 210];
         const color_wooden_door_and_deck = [24, 93, 61];
         const color_decidtree = [20, 70, 20];
         const color_grass = [30, 120, 30];
@@ -1393,7 +1397,7 @@ void main() {
                         factory(objects.deck, pixel, pos);
                         factory(objects.roof, pixel, pos);
                     }
-                    else if (pixel.is_color(color_wooden_door)) {
+                    else if (pixel.is_color(color_door)) {
                         factory(objects.deck, pixel, pos);
                         factory(objects.door, pixel, pos);
                         factory(objects.roof, pixel, pos);
@@ -1489,7 +1493,7 @@ void main() {
         }
         objects.colormap = colormap;
         function is_solid(pos) {
-            const passable = ['land', 'deck', 'pawn', 'door', 'leaves', 'roof'];
+            const passable = ['land', 'deck', 'pawn', 'you', 'door', 'leaves', 'roof'];
             pos = pts.round(pos);
             let sector = lod$1.ggalaxy.at(lod$1.ggalaxy.big(pos));
             let at = sector.stacked(pos);
@@ -1581,7 +1585,19 @@ void main() {
                 });
                 this.stack();
             }
+            tick() {
+                let pos = this.wpos;
+                let sector = lod$1.ggalaxy.at(lod$1.ggalaxy.big(pos));
+                let at = sector.stacked(pos);
+                for (let obj of at) {
+                    if (obj.type == 'you') {
+                        wastes.HIDE_ROOFS = true;
+                        break;
+                    }
+                }
+            }
         }
+        deck.timer = 0;
         objects.deck = deck;
         class decidtree extends objected {
             constructor() {
@@ -1740,7 +1756,7 @@ void main() {
                 let shape = new sprite({
                     binded: this,
                     tuple: sprites$1.droof,
-                    order: .6,
+                    order: .7,
                 });
                 this.z = shape.rup = 3 + 26;
             }
@@ -1796,25 +1812,50 @@ void main() {
         class door extends objected {
             constructor() {
                 super(numbers.walls);
+                this.open = false;
                 this.type = 'door';
                 this.height = 24;
-                this.cell = [1, 0];
             }
             create() {
                 this.tiled();
                 this.size = [24, 40];
+                this.cell = [255 - this.pixel.array[3], 0];
                 new sprite({
                     binded: this,
-                    tuple: sprites$1.ddoorwood,
+                    tuple: sprites$1.ddoor,
                     cell: this.cell,
-                    order: .5,
+                    order: door.order,
                 });
                 this.stack();
             }
-            adapt() {
-                // change sprite to surrounding walls
+            tick() {
+                let pos = this.wpos;
+                let sector = lod$1.ggalaxy.at(lod$1.ggalaxy.big(pos));
+                let at = sector.stacked(pos);
+                let pawning = false;
+                for (let obj of at) {
+                    if (['pawn', 'you'].indexOf(obj.type) != -1) {
+                        pawning = true;
+                        let sprite = this.shape;
+                        sprite.vars.cell = pts.subtract(this.cell, [1, 0]);
+                        sprite.vars.order = 1.55;
+                        sprite.retransform();
+                        sprite.update();
+                        this.open = true;
+                        break;
+                    }
+                }
+                if (!pawning) {
+                    let sprite = this.shape;
+                    sprite.vars.cell = this.cell;
+                    sprite.vars.order = door.order;
+                    sprite.retransform();
+                    sprite.update();
+                    this.open = false;
+                }
             }
         }
+        door.order = .7;
         objects.door = door;
         class shrubs extends objected {
             constructor() {
@@ -6682,6 +6723,7 @@ void main() {
         function make() {
             let pos = [44, 44];
             let paw = new pawn();
+            paw.type = 'you';
             paw.wpos = pos;
             pawn_1.you = paw;
             lod$1.add(paw);

@@ -17,7 +17,7 @@ namespace objects {
 
 	const mapSpan = 100;
 
-	const color_wooden_door: vec3 = [210, 210, 210];
+	const color_door: vec3 = [210, 210, 210];
 	const color_wooden_door_and_deck: vec3 = [24, 93, 61];
 	const color_decidtree: vec3 = [20, 70, 20];
 	const color_grass: vec3 = [30, 120, 30];
@@ -109,7 +109,7 @@ namespace objects {
 					factory(objects.deck, pixel, pos);
 					factory(objects.roof, pixel, pos);
 				}
-				else if (pixel.is_color(color_wooden_door)) {
+				else if (pixel.is_color(color_door)) {
 					factory(objects.deck, pixel, pos);
 					factory(objects.door, pixel, pos);
 					factory(objects.roof, pixel, pos);
@@ -212,7 +212,7 @@ namespace objects {
 	}
 
 	export function is_solid(pos: vec2) {
-		const passable = ['land', 'deck', 'pawn', 'door', 'leaves', 'roof'];
+		const passable = ['land', 'deck', 'pawn', 'you', 'door', 'leaves', 'roof'];
 		pos = pts.round(pos);
 		let sector = lod.ggalaxy.at(lod.ggalaxy.big(pos));
 		let at = sector.stacked(pos);
@@ -293,6 +293,7 @@ namespace objects {
 		//}
 	}
 	export class deck extends objected {
+		static timer = 0;
 		constructor() {
 			super(numbers.floors);
 			this.type = 'deck'
@@ -310,6 +311,17 @@ namespace objects {
 				order: .4,
 			});
 			this.stack();
+		}
+		override tick() {
+			let pos = this.wpos;
+			let sector = lod.ggalaxy.at(lod.ggalaxy.big(pos));
+			let at = sector.stacked(pos);
+			for (let obj of at) {
+				if (obj.type == 'you') {
+					wastes.HIDE_ROOFS = true;
+					break;
+				}
+			}
 		}
 	}
 	export class decidtree extends objected {
@@ -464,7 +476,7 @@ namespace objects {
 			let shape = new sprite({
 				binded: this,
 				tuple: sprites.droof,
-				order: .6,
+				order: .7,
 			});
 			this.z = shape.rup = 3 + 26;
 		}
@@ -515,29 +527,52 @@ namespace objects {
 		}
 	}
 	export class door extends objected {
+		static order = .7;
+		open = false
 		cell: vec2
 		constructor() {
 			super(numbers.walls);
 			this.type = 'door'
 			this.height = 24;
-			this.cell = [1, 0];
 		}
 		override create() {
 			this.tiled();
 			this.size = [24, 40];
+			this.cell = [255 - this.pixel!.array[3], 0];
 			let shape = new sprite({
 				binded: this,
-				tuple: sprites.ddoorwood,
+				tuple: sprites.ddoor,
 				cell: this.cell,
-				order: .5,
+				order: door.order,
 			});
 			this.stack();
 		}
-		adapt() {
-			// change sprite to surrounding walls
+		override tick() {
+			let pos = this.wpos;
+			let sector = lod.ggalaxy.at(lod.ggalaxy.big(pos));
+			let at = sector.stacked(pos);
+			let pawning = false;
+			for (let obj of at) {
+				if (['pawn', 'you'].indexOf(obj.type) != -1 ) {
+					pawning = true;
+					let sprite = this.shape as sprite;
+					sprite.vars.cell = pts.subtract(this.cell, [1, 0]);
+					sprite.vars.order = 1.55;
+					sprite.retransform();
+					sprite.update();
+					this.open = true;
+					break;
+				}
+			}
+			if (!pawning) {
+				let sprite = this.shape as sprite;
+				sprite.vars.cell = this.cell;
+				sprite.vars.order = door.order;
+				sprite.retransform();
+				sprite.update();
+				this.open = false;
+			}
 		}
-		//tick() {
-		//}
 	}
 
 	export class shrubs extends objected {

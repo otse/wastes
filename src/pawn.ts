@@ -18,6 +18,7 @@ export namespace pawn {
 	export function make() {
 		let pos: vec2 = [44, 44];
 		let paw = new pawn();
+		paw.type = 'you';
 		paw.wpos = pos;
 		you = paw;
 		lod.add(paw);

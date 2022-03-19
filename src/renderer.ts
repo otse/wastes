@@ -73,7 +73,7 @@ namespace ren {
 		if (delta > 2)
 			delta = 0.016;
 
-		delta *= 60;
+		delta *= 60.0;
 		//filmic.composer.render();
 	}
 

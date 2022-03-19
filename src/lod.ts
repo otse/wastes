@@ -148,7 +148,7 @@ namespace lod {
 		stacked(wpos: vec2) {
 			let stack: obj[] = [];
 			for (let obj of this.objs)
-				if (pts.equals(wpos, obj.wpos))
+				if (pts.equals(wpos, pts.round(obj.wpos)))
 					stack.push(obj);
 			return stack;
 		}

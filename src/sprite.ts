@@ -49,12 +49,13 @@ export class sprite extends lod.shape {
 		else
 			calc = pts.add(obj.rpos, [0, obj.size[1]]);
 
-		let wposf = pts.round(obj.wpos);
+		let pos = pts.round(obj.wpos);
 		calc = pts.add(calc, [this.rleft, this.rup]);
 		if (this.mesh) {
+			this.retransform();
 			this.mesh.position.fromArray([...calc, 0]);
 			this.mesh.updateMatrix();
-			this.mesh.renderOrder = -wposf[1] + wposf[0] + this.vars.order!;
+			this.mesh.renderOrder = -pos[1] + pos[0] + this.vars.order!;
 			this.mesh.rotation.z = this.vars.binded.ro;
 		}
 	}
@@ -65,10 +66,13 @@ export class sprite extends lod.shape {
 		this.material?.dispose();
 		this.mesh.parent?.remove(this.mesh);
 	}
+	retransform() {
+		this.myUvTransform.copy(sprites.get_uv_transform(this.vars.cell!, this.vars.tuple));
+	}
 	create() {
 		const obj = this.vars.binded;
 
-		this.myUvTransform = sprites.get_uv_transform(this.vars.cell!, this.vars.tuple);
+		this.retransform();
 
 		this.geometry = new PlaneBufferGeometry(this.vars.binded.size[0], this.vars.binded.size[1]);
 		let color;
@@ -89,7 +93,6 @@ export class sprite extends lod.shape {
 		this.mesh = new Mesh(this.geometry, this.material);
 		this.mesh.frustumCulled = false;
 		this.mesh.matrixAutoUpdate = false;
-		this.mesh.renderOrder = -obj.wpos[1] + obj.wpos[0] + this.vars.order!;
 		this.update();
 		this.vars.binded.sector?.group.add(this.mesh);
 		ren.groups.axisSwap.add(this.mesh);

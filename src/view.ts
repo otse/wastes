@@ -136,7 +136,8 @@ export class view {
 		crunch += '<br />';
 
 		crunch += `dpi: ${ren.ndpi}<br />`;
-		crunch += `fps: ${ren.fps} / ${ren.delta.toPrecision(3)}<br />`;
+		crunch += `fps: ${ren.fps}<br />`;
+		crunch += `delta: ${ren.delta.toPrecision(6)}<br />`;
 		crunch += '<br />';
 
 		crunch += `textures: ${ren.renderer.info.memory.textures}<br />`;
