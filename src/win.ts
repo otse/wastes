@@ -93,6 +93,7 @@ namespace win {
 			if (container.toggle) {
 				if (!this.anchor) {
 					this.anchor = new lod.obj;
+					this.anchor.size = [24, 40];
 					this.anchor.wpos = [38, 49];
 				}
 				container.modal = new modal(name);
@@ -106,7 +107,10 @@ namespace win {
 		static tick() {
 			if (container.toggle) {
 				this.anchor.update();
-				let pos = this.anchor.rtospos([-.5, 1.5]);
+				//let pos = this.anchor.rtospos([-1.5, 2.5]);
+				let pos = this.anchor.rtospos();
+				pos = pts.add(pos, pts.divide(this.anchor.size, 2));
+				//pos = pts.add(pos, this.anchor.size);
 				//let pos = this.anchor.aabbScreen.center();
 				//let pos = lod.project(wastes.gview.mwpos);
 				pos = pts.subtract(pos, wastes.gview.rpos);
