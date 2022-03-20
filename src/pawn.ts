@@ -7,9 +7,11 @@ import ren from "./renderer";
 import sprite from "./sprite";
 import sprites from "./sprites";
 import tiles from "./tiles";
+import wastes from "./wastes";
+import win from "./win";
 
 
-export namespace pawn {
+export namespace pawns {
 
 	export var you: pawn | undefined = undefined;
 
@@ -52,7 +54,53 @@ export namespace pawn {
 			this.stack();
 			super.update();
 		}
+		mousing = false
+		containing: objects.objected
 		override tick() {
+
+			let posr = pts.round(this.wpos);
+
+			if (this.type == 'you') {
+				/*
+				if (this.mousedSquare(wastes.gview.mrpos) && !this.mousing) {
+					this.mousing = true;
+					//this.shape.mesh.material.color.set('green');
+					console.log('mover');
+					win.character.anchor = this;
+					win.character.toggle(this.mousing);
+				}
+				else if (!this.mousedSquare(wastes.gview.mrpos) && this.mousing)
+				{
+					this.mousing = false;
+					win.character.toggle(this.mousing);
+				}
+				*/
+				
+				let containers: objects.objected[] = [];
+				for (let y = -1; y <= 1; y++)
+				for (let x = -1; x <= 1; x++)
+				{
+					let pos = pts.add(posr, [x, y]);
+					let sector = lod.ggalaxy.at(lod.ggalaxy.big(pos));
+					let at = sector.stacked(pos);
+					for (let obj of at) {						
+						if (obj.type == 'crate')
+						{
+							containers.push(obj as objects.objected);
+						}
+					}
+				}
+
+				containers.sort((a, b) => pts.distsimple(this.wpos, a.wpos) < pts.distsimple(this.wpos, b.wpos) ? -1 : 1 )
+
+				if (containers.length) {
+					console.log(containers);
+					win.container.call(true, containers[0]);					
+				}
+				else
+					win.container.call(false);
+
+			}
 
 			const moveMath = true;
 
@@ -99,4 +147,4 @@ export namespace pawn {
 
 }
 
-export default pawn;
+export default pawns;

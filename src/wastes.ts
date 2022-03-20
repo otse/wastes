@@ -9,7 +9,7 @@ import { sprites } from "./sprites";
 import tree from "./tree";
 import shear from "./shear";
 import collada from "./collada";
-import pawn from "./pawn";
+import pawns from "./pawn";
 import win from "./win";
 import rooms from "./rooms";
 
@@ -105,7 +105,7 @@ export namespace wastes {
 			rooms.start();
 			win.start();
 			
-			pawn.make();
+			pawns.make();
 		}
 	}
 

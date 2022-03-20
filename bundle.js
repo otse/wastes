@@ -1319,7 +1319,7 @@ void main() {
             crunch += `walls: ${numbers.walls[0]} / ${numbers.walls[1]}<br />`;
             crunch += `walls: ${numbers.roofs[0]} / ${numbers.roofs[1]}<br />`;
             crunch += '<br />';
-            crunch += `controls: WASD to move, RF to zoom, hold middlemouse to pan, h to hide debug, arrowkeys for view, spacebar to toggle roofs, i for inventory<br />`;
+            crunch += `controls: WASD to move, RF to zoom, hold middlemouse to pan, h to hide debug, arrowkeys for view, spacebar to toggle roofs, c for character menu<br />`;
             let element = document.querySelectorAll('.stats')[0];
             element.innerHTML = crunch;
             element.style.visibility = this.show ? 'visible' : 'hidden';
@@ -6722,22 +6722,134 @@ void main() {
     })(collada || (collada = {}));
     var collada$1 = collada;
 
-    var pawn;
-    (function (pawn_1) {
-        pawn_1.you = undefined;
-        pawn_1.placeAtMouse = false;
+    var win;
+    (function (win_1) {
+        var win;
+        var toggle_character = false;
+        win_1.started = false;
+        function start() {
+            win_1.started = true;
+            win = document.getElementById('win');
+        }
+        win_1.start = start;
+        function tick() {
+            if (!win_1.started)
+                return;
+            if (app$1.key('c') == 1) {
+                toggle_character = !toggle_character;
+                character.toggle(toggle_character);
+            }
+            if (app$1.key('b') == 1) ;
+            character.tick();
+            container.tick();
+        }
+        win_1.tick = tick;
+        class modal {
+            constructor(name = 'modal') {
+                this.element = document.createElement('div');
+                this.element.className = 'modal';
+                //this.element.append('inventory')
+                this.title = document.createElement('div');
+                this.title.innerHTML = name;
+                this.element.append(this.title);
+                this.content = document.createElement('div');
+                this.content.innerHTML = 'content';
+                this.element.append(this.content);
+            }
+            reposition(pos = ['', '']) {
+                this.element.style.top = pos[1];
+                this.element.style.left = pos[0];
+            }
+            deletor() {
+                this.element.remove();
+            }
+            float(anchor, add = [0, 0]) {
+                //let pos = this.anchor.rtospos([-1.5, 2.5]);
+                let pos = anchor.rtospos();
+                pos = pts.add(pos, add);
+                pos = pts.add(pos, pts.divide(anchor.size, 2));
+                //pos = pts.add(pos, this.anchor.size);
+                //let pos = this.anchor.aabbScreen.center();
+                //let pos = lod.project(wastes.gview.mwpos);
+                pos = pts.subtract(pos, wastes.gview.rpos);
+                pos = pts.divide(pos, wastes.gview.zoom);
+                pos = pts.divide(pos, ren$1.ndpi);
+                //pos = pts.add(pos, pts.divide(ren.screenCorrected, 2));
+                //pos[1] -= ren.screenCorrected[1] / 2;
+                this.reposition([ren$1.screen[0] / 2 + pos[0] + '', ren$1.screen[1] / 2 - pos[1] + '']);
+            }
+        }
+        class character {
+            static toggle(open) {
+                this.open = open;
+                if (this.open) {
+                    this.modal = new modal('you');
+                    this.modal.reposition(['100px', '30%']);
+                    win.append(this.modal.element);
+                    this.modal.content.innerHTML = 'stats:<br />effectiveness: 100%';
+                }
+                else {
+                    this.modal.deletor();
+                }
+            }
+            static tick() {
+                if (this.open) {
+                    this.modal.float(pawns$1.you, [15, 20]);
+                }
+            }
+        }
+        character.open = false;
+        win_1.character = character;
+        class container {
+            static call(open, attach) {
+                //this.anchor = obj;
+                if (!this.anchor) {
+                    this.anchor = new lod$1.obj;
+                    this.anchor.size = [24, 40];
+                    this.anchor.wpos = [38, 49];
+                }
+                if (attach) {
+                    this.anchor = attach;
+                }
+                if (open && open != this.open) {
+                    this.open = open;
+                    this.modal = new modal(this.anchor.type);
+                    win.append(this.modal.element);
+                    this.modal.content.innerHTML = 'things r in here';
+                }
+                else if (!open && open != this.open) {
+                    this.open = open;
+                    container.modal.deletor();
+                }
+            }
+            static tick() {
+                if (this.open) {
+                    this.modal.float(this.anchor);
+                }
+            }
+        }
+        container.open = false;
+        win_1.container = container;
+    })(win || (win = {}));
+    var win$1 = win;
+
+    var pawns;
+    (function (pawns) {
+        pawns.you = undefined;
+        pawns.placeAtMouse = false;
         function make() {
             let pos = [44, 44];
             let paw = new pawn();
             paw.type = 'you';
             paw.wpos = pos;
-            pawn_1.you = paw;
+            pawns.you = paw;
             lod$1.add(paw);
         }
-        pawn_1.make = make;
+        pawns.make = make;
         class pawn extends objects$1.objected {
             constructor() {
                 super(numbers.pawns);
+                this.mousing = false;
                 this.type = 'pawn';
                 this.height = 24;
             }
@@ -6764,6 +6876,42 @@ void main() {
             }
             tick() {
                 var _a, _b;
+                let posr = pts.round(this.wpos);
+                if (this.type == 'you') {
+                    /*
+                    if (this.mousedSquare(wastes.gview.mrpos) && !this.mousing) {
+                        this.mousing = true;
+                        //this.shape.mesh.material.color.set('green');
+                        console.log('mover');
+                        win.character.anchor = this;
+                        win.character.toggle(this.mousing);
+                    }
+                    else if (!this.mousedSquare(wastes.gview.mrpos) && this.mousing)
+                    {
+                        this.mousing = false;
+                        win.character.toggle(this.mousing);
+                    }
+                    */
+                    let containers = [];
+                    for (let y = -1; y <= 1; y++)
+                        for (let x = -1; x <= 1; x++) {
+                            let pos = pts.add(posr, [x, y]);
+                            let sector = lod$1.ggalaxy.at(lod$1.ggalaxy.big(pos));
+                            let at = sector.stacked(pos);
+                            for (let obj of at) {
+                                if (obj.type == 'crate') {
+                                    containers.push(obj);
+                                }
+                            }
+                        }
+                    containers.sort((a, b) => pts.distsimple(this.wpos, a.wpos) < pts.distsimple(this.wpos, b.wpos) ? -1 : 1);
+                    if (containers.length) {
+                        console.log(containers);
+                        win$1.container.call(true, containers[0]);
+                    }
+                    else
+                        win$1.container.call(false);
+                }
                 {
                     let speed = 0.038 * ren$1.delta;
                     let x = 0;
@@ -6791,7 +6939,7 @@ void main() {
                         this.try_move_to([x, y]);
                     }
                 }
-                if (pawn_1.placeAtMouse)
+                if (pawns.placeAtMouse)
                     this.wpos = ((_a = tiles$1.hovering) === null || _a === void 0 ? void 0 : _a.wpos) || [38, 44];
                 this.tiled();
                 //this.tile?.paint();
@@ -6800,106 +6948,9 @@ void main() {
                 super.update();
             }
         }
-        pawn_1.pawn = pawn;
-    })(pawn || (pawn = {}));
-    var pawn$1 = pawn;
-
-    var win;
-    (function (win_1) {
-        var win;
-        win_1.started = false;
-        function start() {
-            win_1.started = true;
-            win = document.getElementById('win');
-        }
-        win_1.start = start;
-        function tick() {
-            if (!win_1.started)
-                return;
-            if (app$1.key('i') == 1) {
-                inventory.handle();
-            }
-            if (app$1.key('c') == 1) {
-                container.handle();
-            }
-            container.tick();
-        }
-        win_1.tick = tick;
-        class modal {
-            constructor(name = 'modal') {
-                this.element = document.createElement('div');
-                this.element.className = 'modal';
-                //this.element.append('inventory')
-                this.title = document.createElement('div');
-                this.title.innerHTML = name;
-                this.element.append(this.title);
-                this.content = document.createElement('div');
-                this.content.innerHTML = 'content';
-                this.element.append(this.content);
-            }
-            reposition(pos = ['', '']) {
-                this.element.style.top = pos[1];
-                this.element.style.left = pos[0];
-            }
-            deletor() {
-                this.element.remove();
-            }
-        }
-        class inventory {
-            static handle() {
-                inventory.toggle = !inventory.toggle;
-                if (inventory.toggle) {
-                    inventory.modal = new modal('inventory');
-                    inventory.modal.reposition(['100px', '30%']);
-                    win.append(inventory.modal.element);
-                    inventory.modal.content.innerHTML = 'things that u own';
-                }
-                else {
-                    inventory.modal.deletor();
-                }
-            }
-            static tick() {
-            }
-        }
-        inventory.toggle = false;
-        class container {
-            static handle(name = 'crate') {
-                container.toggle = !container.toggle;
-                if (container.toggle) {
-                    if (!this.anchor) {
-                        this.anchor = new lod$1.obj;
-                        this.anchor.size = [24, 40];
-                        this.anchor.wpos = [38, 49];
-                    }
-                    container.modal = new modal(name);
-                    win.append(container.modal.element);
-                    container.modal.content.innerHTML = 'things r in here';
-                }
-                else {
-                    container.modal.deletor();
-                }
-            }
-            static tick() {
-                if (container.toggle) {
-                    this.anchor.update();
-                    //let pos = this.anchor.rtospos([-1.5, 2.5]);
-                    let pos = this.anchor.rtospos();
-                    pos = pts.add(pos, pts.divide(this.anchor.size, 2));
-                    //pos = pts.add(pos, this.anchor.size);
-                    //let pos = this.anchor.aabbScreen.center();
-                    //let pos = lod.project(wastes.gview.mwpos);
-                    pos = pts.subtract(pos, wastes.gview.rpos);
-                    pos = pts.divide(pos, wastes.gview.zoom);
-                    pos = pts.divide(pos, ren$1.ndpi);
-                    //pos = pts.add(pos, pts.divide(ren.screenCorrected, 2));
-                    //pos[1] -= ren.screenCorrected[1] / 2;
-                    container.modal.reposition([ren$1.screen[0] / 2 + pos[0] + '', ren$1.screen[1] / 2 - pos[1] + '']);
-                }
-            }
-        }
-        container.toggle = false;
-    })(win || (win = {}));
-    var win$1 = win;
+        pawns.pawn = pawn;
+    })(pawns || (pawns = {}));
+    var pawns$1 = pawns;
 
     var rooms;
     (function (rooms) {
@@ -6994,7 +7045,7 @@ void main() {
                 objects$1.start();
                 rooms$1.start();
                 win$1.start();
-                pawn$1.make();
+                pawns$1.make();
             }
         }
         function start() {

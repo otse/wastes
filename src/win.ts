@@ -1,7 +1,9 @@
 import { default as THREE, BoxGeometry } from "three";
+
 import app from "./app";
 import lod from "./lod";
 import pts from "./pts";
+import pawns from "./pawn";
 
 import ren from './renderer';
 import wastes from "./wastes";
@@ -10,12 +12,15 @@ namespace win {
 
 	var win: HTMLElement;
 
+	var toggle_character = false;
+	var toggle_container = false;
+
 	export var started = false;
 
 	export function start() {
 		started = true;
 
-		win = document.getElementById('win') as HTMLElement;		
+		win = document.getElementById('win') as HTMLElement;
 
 	}
 
@@ -23,15 +28,17 @@ namespace win {
 		if (!started)
 			return;
 
-		if (app.key('i') == 1) {
-			inventory.handle();
-		}
-
 		if (app.key('c') == 1) {
-			container.handle();
+			toggle_character = !toggle_character;
+			character.toggle(toggle_character);
 		}
 
-		inventory.tick();
+		if (app.key('b') == 1) {
+			//toggle_container = !toggle_container;
+			//container.toggle(null, toggle_container);
+		}
+
+		character.tick();
 		container.tick();
 	}
 
@@ -47,7 +54,7 @@ namespace win {
 			this.title = document.createElement('div');
 			this.title.innerHTML = name;
 			this.element.append(this.title);
-			
+
 			this.content = document.createElement('div');
 			this.content.innerHTML = 'content';
 			this.element.append(this.content);
@@ -60,65 +67,75 @@ namespace win {
 		deletor() {
 			this.element.remove();
 		}
+		float(anchor: lod.obj, add: vec2 = [0, 0]) {
+
+			//let pos = this.anchor.rtospos([-1.5, 2.5]);
+			let pos = anchor.rtospos();
+			pos = pts.add(pos, add);
+			pos = pts.add(pos, pts.divide(anchor.size, 2));
+			//pos = pts.add(pos, this.anchor.size);
+			//let pos = this.anchor.aabbScreen.center();
+			//let pos = lod.project(wastes.gview.mwpos);
+			pos = pts.subtract(pos, wastes.gview.rpos);
+			pos = pts.divide(pos, wastes.gview.zoom);
+			pos = pts.divide(pos, ren.ndpi);
+			//pos = pts.add(pos, pts.divide(ren.screenCorrected, 2));
+			//pos[1] -= ren.screenCorrected[1] / 2;
+			this.reposition([ren.screen[0] / 2 + pos[0] + '', ren.screen[1] / 2 - pos[1] + '']);
+		}
 	}
 
-	class inventory {
-		static toggle = false
+	export class character {
+		static open = false
+		static anchor: lod.obj
 		static modal: modal
-		static handle() {
-			inventory.toggle = !inventory.toggle;
-			if (inventory.toggle) {
-				inventory.modal = new modal('inventory', );
-				inventory.modal.reposition(['100px', '30%']);
-				win.append(inventory.modal.element)
-				inventory.modal.content.innerHTML = 'things that u own';
+		static toggle(open) {
+			this.open = open;
+			if (this.open) {
+				this.modal = new modal('you',);
+				this.modal.reposition(['100px', '30%']);
+				win.append(this.modal.element)
+				this.modal.content.innerHTML = 'stats:<br />effectiveness: 100%';
 			}
 			else {
-				inventory.modal.deletor();
+				this.modal.deletor();
 			}
 		}
 		static tick() {
-			if (inventory.toggle) {
-
+			if (this.open) {
+				this.modal.float(pawns.you!, [15, 20]);
 			}
 		}
 	}
 
-	class container {
+	export class container {
+		static open = false
 		static anchor: lod.obj
-		static toggle = false
 		static modal: modal
-		static handle(name = 'crate') {
-			container.toggle = !container.toggle;
-			if (container.toggle) {
-				if (!this.anchor) {
-					this.anchor = new lod.obj;
-					this.anchor.size = [24, 40];
-					this.anchor.wpos = [38, 49];
-				}
-				container.modal = new modal(name);
-				win.append(container.modal.element)
-				container.modal.content.innerHTML = 'things r in here';
+		static call(open, attach?: lod.obj) {
+			//this.anchor = obj;
+			if (!this.anchor) {
+				this.anchor = new lod.obj;
+				this.anchor.size = [24, 40];
+				this.anchor.wpos = [38, 49];
 			}
-			else {
+			if (attach) {
+				this.anchor = attach;
+			}
+			if (open && open != this.open) {
+				this.open = open;
+				this.modal = new modal(this.anchor.type);
+				win.append(this.modal.element)
+				this.modal.content.innerHTML = 'things r in here';
+			}
+			else if (!open && open != this.open) {
+				this.open = open;
 				container.modal.deletor();
 			}
 		}
 		static tick() {
-			if (container.toggle) {
-				this.anchor.update();
-				//let pos = this.anchor.rtospos([-1.5, 2.5]);
-				let pos = this.anchor.rtospos();
-				pos = pts.add(pos, pts.divide(this.anchor.size, 2));
-				//pos = pts.add(pos, this.anchor.size);
-				//let pos = this.anchor.aabbScreen.center();
-				//let pos = lod.project(wastes.gview.mwpos);
-				pos = pts.subtract(pos, wastes.gview.rpos);
-				pos = pts.divide(pos, wastes.gview.zoom);
-				pos = pts.divide(pos, ren.ndpi);
-				//pos = pts.add(pos, pts.divide(ren.screenCorrected, 2));
-				//pos[1] -= ren.screenCorrected[1] / 2;
-				container.modal.reposition([ren.screen[0]/2+pos[0]+'', ren.screen[1]/2-pos[1]+'']);
+			if (this.open) {
+				this.modal.float(this.anchor);
 			}
 		}
 	}
