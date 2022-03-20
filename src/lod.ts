@@ -288,8 +288,12 @@ namespace lod {
 			this.shape?.hide();
 			// console.log(' obj.hide ');
 		}
-		wtorpos() {
-			this.rpos = lod.project(this.wpos);
+		wtorpos(add: vec2 = [0, 0]) {
+			this.rpos = lod.project(pts.add(this.wpos, add));
+		}
+		rtospos(add: vec2 = [0, 0]) {
+			this.wtorpos(add);
+			return pts.clone(this.rpos);
 		}
 		tick() { // implement me
 		}

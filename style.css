@@ -9,22 +9,27 @@
 }
 
 .modal {
-	position: absolute;
-	width: 300px;
-	color: gray;
-	border: 2px gray inset;
-	background: gainsboro;
+    position: absolute;
+    width: 250px;
+    color: black;
+    border: 2px gray inset;
+    background: darkgray;
+}
 
+.modal :first-child::before {
+	content: '';
 }
 
 .modal :first-child {
 	margin: 0px;
+	padding: 0 1ex;
 	color: gray;
 	border: 0px gray inset;
 	background: darkslategray;
+	background: midnightblue;
 }
 
 .modal :nth-child(2) {
-	background: gainsboro;
 	padding: 5px;
+	bbackground: gainsboro;
 }

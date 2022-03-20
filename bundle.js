@@ -217,7 +217,8 @@ var wastes = (function (exports, THREE) {
         function boot(version) {
             app.salt = version;
             function onmousemove(e) { pos[0] = e.clientX; pos[1] = e.clientY; }
-            function onmousedown(e) { buttons[e.button] = 1; }
+            function onmousedown(e) { buttons[e.button] = 1; if (e.button == 1)
+                return false; }
             function onmouseup(e) { buttons[e.button] = MOUSE.UP; }
             function onwheel(e) { app.wheel = e.deltaY < 0 ? 1 : -1; }
             function onerror(message) { document.querySelectorAll('.stats')[0].innerHTML = message; }
@@ -719,8 +720,12 @@ void main() {
                 (_a = this.shape) === null || _a === void 0 ? void 0 : _a.hide();
                 // console.log(' obj.hide ');
             }
-            wtorpos() {
-                this.rpos = lod.project(this.wpos);
+            wtorpos(add = [0, 0]) {
+                this.rpos = lod.project(pts.add(this.wpos, add));
+            }
+            rtospos(add = [0, 0]) {
+                this.wtorpos(add);
+                return pts.clone(this.rpos);
             }
             tick() {
             }
@@ -6814,32 +6819,40 @@ void main() {
             if (app$1.key('i') == 1) {
                 inventory.handle();
             }
+            if (app$1.key('c') == 1) {
+                container.handle();
+            }
+            container.tick();
         }
         win_1.tick = tick;
         class modal {
-            constructor(name = 'modal', position = [0, 0]) {
+            constructor(name = 'modal') {
                 this.element = document.createElement('div');
                 this.element.className = 'modal';
-                this.element.style.top = position[1];
-                this.element.style.left = position[0];
                 //this.element.append('inventory')
                 this.title = document.createElement('div');
                 this.title.innerHTML = name;
                 this.element.append(this.title);
                 this.content = document.createElement('div');
-                this.content.innerHTML = 'stuff';
+                this.content.innerHTML = 'content';
                 this.element.append(this.content);
             }
+            reposition(pos = ['', '']) {
+                this.element.style.top = pos[1];
+                this.element.style.left = pos[0];
+            }
             deletor() {
-                inventory.modal.element.remove();
+                this.element.remove();
             }
         }
         class inventory {
             static handle() {
                 inventory.toggle = !inventory.toggle;
                 if (inventory.toggle) {
-                    inventory.modal = new modal('inventory', [100, 200]);
+                    inventory.modal = new modal('inventory');
+                    inventory.modal.reposition(['100px', '30%']);
                     win.append(inventory.modal.element);
+                    inventory.modal.content.innerHTML = 'things that u own';
                 }
                 else {
                     inventory.modal.deletor();
@@ -6849,6 +6862,38 @@ void main() {
             }
         }
         inventory.toggle = false;
+        class container {
+            static handle(name = 'crate') {
+                container.toggle = !container.toggle;
+                if (container.toggle) {
+                    if (!this.anchor) {
+                        this.anchor = new lod$1.obj;
+                        this.anchor.wpos = [38, 49];
+                    }
+                    container.modal = new modal(name);
+                    win.append(container.modal.element);
+                    container.modal.content.innerHTML = 'things r in here';
+                }
+                else {
+                    container.modal.deletor();
+                }
+            }
+            static tick() {
+                if (container.toggle) {
+                    this.anchor.update();
+                    let pos = this.anchor.rtospos([-.5, 1.5]);
+                    //let pos = this.anchor.aabbScreen.center();
+                    //let pos = lod.project(wastes.gview.mwpos);
+                    pos = pts.subtract(pos, wastes.gview.rpos);
+                    pos = pts.divide(pos, wastes.gview.zoom);
+                    pos = pts.divide(pos, ren$1.ndpi);
+                    //pos = pts.add(pos, pts.divide(ren.screenCorrected, 2));
+                    //pos[1] -= ren.screenCorrected[1] / 2;
+                    container.modal.reposition([ren$1.screen[0] / 2 + pos[0] + '', ren$1.screen[1] / 2 - pos[1] + '']);
+                }
+            }
+        }
+        container.toggle = false;
     })(win || (win = {}));
     var win$1 = win;
 
