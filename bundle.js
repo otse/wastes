@@ -527,7 +527,7 @@ void main() {
             constructor(span) {
                 this.arrays = [];
                 lod.ggalaxy = this;
-                new grid(4, 4);
+                new grid(2, 2);
             }
             update(wpos) {
                 lod.ggrid.big = this.big(wpos);
@@ -1314,7 +1314,7 @@ void main() {
             crunch += `walls: ${numbers.walls[0]} / ${numbers.walls[1]}<br />`;
             crunch += `walls: ${numbers.roofs[0]} / ${numbers.roofs[1]}<br />`;
             crunch += '<br />';
-            crunch += `controls: WASD to move, RF to zoom, hold middlemouse to pan, h to hide debug, arrowkeys for view, spacebar to toggle roofs<br />`;
+            crunch += `controls: WASD to move, RF to zoom, hold middlemouse to pan, h to hide debug, arrowkeys for view, spacebar to toggle roofs, i for inventory<br />`;
             let element = document.querySelectorAll('.stats')[0];
             element.innerHTML = crunch;
             element.style.visibility = this.show ? 'visible' : 'hidden';
@@ -6799,20 +6799,58 @@ void main() {
     })(pawn || (pawn = {}));
     var pawn$1 = pawn;
 
-    var win95;
-    (function (win95) {
-        win95.started = false;
+    var win;
+    (function (win_1) {
+        var win;
+        win_1.started = false;
         function start() {
-            win95.started = true;
+            win_1.started = true;
+            win = document.getElementById('win');
         }
-        win95.start = start;
+        win_1.start = start;
         function tick() {
-            if (!win95.started)
+            if (!win_1.started)
                 return;
+            if (app$1.key('i') == 1) {
+                inventory.handle();
+            }
         }
-        win95.tick = tick;
-    })(win95 || (win95 = {}));
-    var win95$1 = win95;
+        win_1.tick = tick;
+        class modal {
+            constructor(name = 'modal', position = [0, 0]) {
+                this.element = document.createElement('div');
+                this.element.className = 'modal';
+                this.element.style.top = position[1];
+                this.element.style.left = position[0];
+                //this.element.append('inventory')
+                this.title = document.createElement('div');
+                this.title.innerHTML = name;
+                this.element.append(this.title);
+                this.content = document.createElement('div');
+                this.content.innerHTML = 'stuff';
+                this.element.append(this.content);
+            }
+            deletor() {
+                inventory.modal.element.remove();
+            }
+        }
+        class inventory {
+            static handle() {
+                inventory.toggle = !inventory.toggle;
+                if (inventory.toggle) {
+                    inventory.modal = new modal('inventory', [100, 200]);
+                    win.append(inventory.modal.element);
+                }
+                else {
+                    inventory.modal.deletor();
+                }
+            }
+            static tick() {
+            }
+        }
+        inventory.toggle = false;
+    })(win || (win = {}));
+    var win$1 = win;
 
     var rooms;
     (function (rooms) {
@@ -6906,7 +6944,7 @@ void main() {
                 tiles$1.start();
                 objects$1.start();
                 rooms$1.start();
-                win95$1.start();
+                win$1.start();
                 pawn$1.make();
             }
         }
@@ -6940,7 +6978,7 @@ void main() {
             collada$1.tick();
             objects$1.tick();
             rooms$1.tick();
-            win95$1.tick();
+            win$1.tick();
         }
         wastes.tick = tick;
     })(exports.wastes || (exports.wastes = {}));

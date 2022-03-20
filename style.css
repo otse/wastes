@@ -1,0 +1,30 @@
+#win {
+	z-index: 1;
+	display: block;
+	position: absolute;
+	font-family: 'Press Start 2P', cursive;
+	font-family: Courier;
+	width: 100%;
+	height: 100%;
+}
+
+.modal {
+	position: absolute;
+	width: 300px;
+	color: gray;
+	border: 2px gray inset;
+	background: gainsboro;
+
+}
+
+.modal :first-child {
+	margin: 0px;
+	color: gray;
+	border: 0px gray inset;
+	background: darkslategray;
+}
+
+.modal :nth-child(2) {
+	background: gainsboro;
+	padding: 5px;
+}

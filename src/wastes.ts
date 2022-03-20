@@ -10,7 +10,7 @@ import tree from "./tree";
 import shear from "./shear";
 import collada from "./collada";
 import pawn from "./pawn";
-import win95 from "./ux";
+import win from "./win";
 import rooms from "./rooms";
 
 
@@ -103,7 +103,7 @@ export namespace wastes {
 			tiles.start();
 			objects.start();
 			rooms.start();
-			win95.start();
+			win.start();
 			
 			pawn.make();
 		}
@@ -140,7 +140,7 @@ export namespace wastes {
 		collada.tick();
 		objects.tick();
 		rooms.tick();
-		win95.tick();
+		win.tick();
 	}
 
 }
