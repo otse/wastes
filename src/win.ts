@@ -7,6 +7,7 @@ import pawns from "./pawn";
 
 import ren from './renderer';
 import wastes from "./wastes";
+import objects from "./objects";
 
 namespace win {
 
@@ -126,7 +127,12 @@ namespace win {
 				this.open = open;
 				this.modal = new modal(this.anchor.type);
 				win.append(this.modal.element)
-				this.modal.content.innerHTML = 'things r in here';
+				this.modal.content.innerHTML = 'things:<br/>';
+
+				const cast = this.anchor as objects.container;
+				for (let item of cast.items) {
+					this.modal.content.innerHTML += item + '<br />';
+				}
 			}
 			else if (!open && open != this.open) {
 				this.open = open;

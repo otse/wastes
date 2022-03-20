@@ -103,15 +103,15 @@ export namespace tiles {
 			if (!colour.is_black()) {
 				this.type = 'land';
 				this.size = [24, 30];
-				this.tuple = sprites.dswamptiles;
+				this.tuple = sprites.dgraveltiles;
 				this.height = 6;
 				this.cell = [1, 0];
 				this.color = wastes.colormap.pixel(this.wpos).array;
-
-				/*if (colour.is_color(color_gravel)) {
-					this.tuple = sprites.dgraveltiles;
-					console.log('gravel');
-				}*/
+				
+				let biome = wastes.biomemap.pixel(this.wpos);
+				if (biome.array[0] > 70) {
+					this.tuple = sprites.dswamptiles;
+				}
 
 				const divisor = 5;
 				let height = wastes.heightmap.pixel(this.wpos);

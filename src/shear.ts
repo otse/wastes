@@ -24,14 +24,7 @@ namespace shear {
 		spare.style.position = 'relative';
 		spare.style.zoom = '3';
 		spare.style.display = 'block';
-
-		room = document.createElement("canvas") as HTMLCanvasElement;
-		roomCtx = room.getContext('2d')!;
-		room.width = 300;
-		room.height = 300;
-		room.style.position = 'relative';
-		room.style.zoom = '3';
-		room.style.display = 'block';
+		spare.style.zIndex = '2';
 
 		canvas = document.createElement("canvas") as HTMLCanvasElement;
 		canvas.width = 24 * 11;
@@ -40,6 +33,7 @@ namespace shear {
 		canvas.style.position = 'relative';
 		canvas.style.margin = '0px auto';
 		canvas.style.zoom = '3';
+		canvas.style.zIndex = '2';
 		ctx = canvas.getContext('2d')!;
 
 		let style = document.location.href.split('shear=')[1];
@@ -99,7 +93,6 @@ namespace shear {
 
 		document.body.append(canvas);
 		document.body.append(spare);
-		document.body.append(room);
 
 	}
 

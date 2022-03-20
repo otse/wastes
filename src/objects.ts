@@ -50,6 +50,7 @@ namespace objects {
 		wastes.roommap = new colormap('roommap');
 		wastes.treemap = new colormap('treemap');
 		wastes.colormap = new colormap('colormap');
+		wastes.biomemap = new colormap('biomemap');
 
 		const treeTreshold = 50;
 
@@ -166,8 +167,8 @@ namespace objects {
 		}
 		is_color_range(a: vec3, b: vec3) {
 			return this.array[0] >= a[0] && this.array[0] <= b[0] &&
-				this.array[1] >= a[1] && this.array[1] <= b[1] &&
-				this.array[2] >= a[2] && this.array[2] <= b[2]
+					this.array[1] >= a[1] && this.array[1] <= b[1] &&
+					this.array[2] >= a[2] && this.array[2] <= b[2]
 		}
 		is_black() {
 			return this.is_color([0, 0, 0]);
@@ -443,9 +444,17 @@ namespace objects {
 			this.stack();
 		}
 	}
-	export class crate extends objected {
+	export class container extends objected {
+		items = []
 		constructor() {
-			super(numbers.roofs);
+			super(numbers.objs);
+			this.type = 'container';
+		}
+
+	}
+	export class crate extends container {
+		constructor() {
+			super();
 			this.type = 'crate'
 			this.height = 17;
 		}
@@ -553,7 +562,7 @@ namespace objects {
 			let at = sector.stacked(pos);
 			let pawning = false;
 			for (let obj of at) {
-				if (['pawn', 'you'].indexOf(obj.type) != -1 ) {
+				if (['pawn', 'you'].indexOf(obj.type) != -1) {
 					pawning = true;
 					let sprite = this.shape as sprite;
 					sprite.vars.cell = pts.subtract(this.cell, [1, 0]);

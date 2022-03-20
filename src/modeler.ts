@@ -9,15 +9,17 @@ namespace modeler {
 	export var started = false;
 
 	const textures = [
+		'tex/stock/moonsand.jpg',
+		'tex/stock/soilrough.jpg',
+		'tex/stock/redverts.jpg',
+		'tex/stock/smudplanks.jpg',
+		'tex/stock/blueplanks.jpg',
 		'tex/stock/crate1.jpg',
 		'tex/stock/planks.jpg',
 		'tex/stock/planks1.jpg',
 		'tex/stock/planks5.jpg',
-		'tex/stock/beamed1.jpg',
-		'tex/stock/beamed2.jpg',
 		'tex/stock/metalrooftiles.jpg',
 		'tex/stock/concrete1.jpg',
-		'tex/stock/brick1.jpg',
 		'tex/stock/brick2.jpg',
 		'tex/stock/brick3.jpg',
 		'tex/stock/brick4.jpg',
@@ -29,7 +31,7 @@ namespace modeler {
 
 	var gmesh;
 	var ggroup;
-	var rotation: 0 | 1 | 2 | 3 = 1;
+	var rotation: 0 | 1 | 2 | 3 = 0;
 	let heightMod = 1;
 	var zooms: [index: number, current: number, options: number[]] = [0, 1, [1, 0.33, 0.25, 0.1]]
 
@@ -50,7 +52,7 @@ namespace modeler {
 		ren.scene.add(ggroup);
 
 		let sun = new DirectionalLight(0xffffff, 0.4);
-		sun.position.set(-wastes.size, wastes.size * 2, wastes.size / 4);
+		sun.position.set(-wastes.size, wastes.size * 2, wastes.size / 2);
 		//sun.add(new AxesHelper(100));
 		ggroup.add(sun);
 		ggroup.add(sun.target);

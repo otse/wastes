@@ -94,8 +94,7 @@ export namespace pawns {
 				containers.sort((a, b) => pts.distsimple(this.wpos, a.wpos) < pts.distsimple(this.wpos, b.wpos) ? -1 : 1 )
 
 				if (containers.length) {
-					console.log(containers);
-					win.container.call(true, containers[0]);					
+					win.container.call(true, containers[0]);
 				}
 				else
 					win.container.call(false);

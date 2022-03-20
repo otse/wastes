@@ -10,7 +10,7 @@
 
 .modal {
     position: absolute;
-    width: 250px;
+    width: 200px;
     color: black;
     border: 2px gray inset;
     background: darkgray;
@@ -22,7 +22,7 @@
 
 .modal :first-child {
 	margin: 0px;
-	padding: 0 1ex;
+	ppadding: 0 1ex;
 	color: gray;
 	border: 0px gray inset;
 	background: darkslategray;
@@ -30,6 +30,6 @@
 }
 
 .modal :nth-child(2) {
-	padding: 5px;
+	ppadding: 5px;
 	bbackground: gainsboro;
 }

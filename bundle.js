@@ -217,8 +217,7 @@ var wastes = (function (exports, THREE) {
         function boot(version) {
             app.salt = version;
             function onmousemove(e) { pos[0] = e.clientX; pos[1] = e.clientY; }
-            function onmousedown(e) { buttons[e.button] = 1; if (e.button == 1)
-                return false; }
+            function onmousedown(e) { buttons[e.button] = 1; /*if (e.button == 1) return false*/ }
             function onmouseup(e) { buttons[e.button] = MOUSE.UP; }
             function onwheel(e) { app.wheel = e.deltaY < 0 ? 1 : -1; }
             function onerror(message) { document.querySelectorAll('.stats')[0].innerHTML = message; }
@@ -528,7 +527,7 @@ void main() {
             constructor(span) {
                 this.arrays = [];
                 lod.ggalaxy = this;
-                new grid(2, 2);
+                new grid(3, 3);
             }
             update(wpos) {
                 lod.ggrid.big = this.big(wpos);
@@ -1110,14 +1109,14 @@ void main() {
                 if (!colour.is_black()) {
                     this.type = 'land';
                     this.size = [24, 30];
-                    this.tuple = sprites$1.dswamptiles;
+                    this.tuple = sprites$1.dgraveltiles;
                     this.height = 6;
                     this.cell = [1, 0];
                     this.color = wastes.colormap.pixel(this.wpos).array;
-                    /*if (colour.is_color(color_gravel)) {
-                        this.tuple = sprites.dgraveltiles;
-                        console.log('gravel');
-                    }*/
+                    let biome = wastes.biomemap.pixel(this.wpos);
+                    if (biome.array[0] > 70) {
+                        this.tuple = sprites$1.dswamptiles;
+                    }
                     const divisor = 5;
                     let height = wastes.heightmap.pixel(this.wpos);
                     this.z = Math.floor(height.array[0] / divisor);
@@ -1357,6 +1356,7 @@ void main() {
             wastes.roommap = new colormap('roommap');
             wastes.treemap = new colormap('treemap');
             wastes.colormap = new colormap('colormap');
+            wastes.biomemap = new colormap('biomemap');
             hooks.register('sectorCreate', (sector) => {
                 pts.func(sector.small, (pos) => {
                     let pixel = wastes.objectmap.pixel(pos);
@@ -1728,9 +1728,17 @@ void main() {
             }
         }
         objects.wheat = wheat;
-        class crate extends objected {
+        class container extends objected {
             constructor() {
-                super(numbers.roofs);
+                super(numbers.objs);
+                this.items = [];
+                this.type = 'container';
+            }
+        }
+        objects.container = container;
+        class crate extends container {
+            constructor() {
+                super();
                 this.type = 'crate';
                 this.height = 17;
             }
@@ -1885,15 +1893,17 @@ void main() {
     (function (modeler) {
         modeler.started = false;
         const textures = [
+            'tex/stock/moonsand.jpg',
+            'tex/stock/soilrough.jpg',
+            'tex/stock/redverts.jpg',
+            'tex/stock/smudplanks.jpg',
+            'tex/stock/blueplanks.jpg',
             'tex/stock/crate1.jpg',
             'tex/stock/planks.jpg',
             'tex/stock/planks1.jpg',
             'tex/stock/planks5.jpg',
-            'tex/stock/beamed1.jpg',
-            'tex/stock/beamed2.jpg',
             'tex/stock/metalrooftiles.jpg',
             'tex/stock/concrete1.jpg',
-            'tex/stock/brick1.jpg',
             'tex/stock/brick2.jpg',
             'tex/stock/brick3.jpg',
             'tex/stock/brick4.jpg',
@@ -1903,7 +1913,7 @@ void main() {
         let currentTex = 0;
         var gmesh;
         var ggroup;
-        var rotation = 1;
+        var rotation = 0;
         let heightMod = 1;
         var zooms = [0, 1, [1, 0.33, 0.25, 0.1]];
         function register() {
@@ -1917,7 +1927,7 @@ void main() {
             ggroup.rotation.set(Math.PI / 6, Math.PI / 4, 0);
             ren$1.scene.add(ggroup);
             let sun = new THREE.DirectionalLight(0xffffff, 0.4);
-            sun.position.set(-wastes.size, wastes.size * 2, wastes.size / 4);
+            sun.position.set(-wastes.size, wastes.size * 2, wastes.size / 2);
             //sun.add(new AxesHelper(100));
             ggroup.add(sun);
             ggroup.add(sun.target);
@@ -2047,7 +2057,6 @@ void main() {
         shear.started = false;
         var canvas, ctx;
         var spare, spareCtx;
-        var room;
         function start() {
             shear.started = true;
             document.title = 'shear';
@@ -2058,13 +2067,7 @@ void main() {
             spare.style.position = 'relative';
             spare.style.zoom = '3';
             spare.style.display = 'block';
-            room = document.createElement("canvas");
-            room.getContext('2d');
-            room.width = 300;
-            room.height = 300;
-            room.style.position = 'relative';
-            room.style.zoom = '3';
-            room.style.display = 'block';
+            spare.style.zIndex = '2';
             canvas = document.createElement("canvas");
             canvas.width = 24 * 11;
             canvas.height = 40;
@@ -2072,6 +2075,7 @@ void main() {
             canvas.style.position = 'relative';
             canvas.style.margin = '0px auto';
             canvas.style.zoom = '3';
+            canvas.style.zIndex = '2';
             ctx = canvas.getContext('2d');
             let style = document.location.href.split('shear=')[1];
             console.log(style);
@@ -2120,7 +2124,6 @@ void main() {
             ctx.drawImage(spare, 24 * 10 + x2, -y2);
             document.body.append(canvas);
             document.body.append(spare);
-            document.body.append(room);
         }
         shear.start = start;
         function tick() {
@@ -6815,7 +6818,11 @@ void main() {
                     this.open = open;
                     this.modal = new modal(this.anchor.type);
                     win.append(this.modal.element);
-                    this.modal.content.innerHTML = 'things r in here';
+                    this.modal.content.innerHTML = 'things:<br/>';
+                    const cast = this.anchor;
+                    for (let item of cast.items) {
+                        this.modal.content.innerHTML += item + '<br />';
+                    }
                 }
                 else if (!open && open != this.open) {
                     this.open = open;
@@ -6906,7 +6913,6 @@ void main() {
                         }
                     containers.sort((a, b) => pts.distsimple(this.wpos, a.wpos) < pts.distsimple(this.wpos, b.wpos) ? -1 : 1);
                     if (containers.length) {
-                        console.log(containers);
                         win$1.container.call(true, containers[0]);
                     }
                     else

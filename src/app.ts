@@ -43,7 +43,7 @@ namespace app {
 	export function boot(version: string) {
 		salt = version;
 		function onmousemove(e) { pos[0] = e.clientX; pos[1] = e.clientY; }
-		function onmousedown(e) { buttons[e.button] = 1; if (e.button == 1) return false }
+		function onmousedown(e) { buttons[e.button] = 1; /*if (e.button == 1) return false*/ }
 		function onmouseup(e) { buttons[e.button] = MOUSE.UP; }
 		function onwheel(e) { wheel = e.deltaY < 0 ? 1 : -1; }
 		function onerror(message) { document.querySelectorAll('.stats')[0].innerHTML = message; }
