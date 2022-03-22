@@ -93,17 +93,21 @@ export namespace pawns {
 				return;
 			this.made = true;
 
-			let boxHead = new BoxGeometry(10, 10, 10, 1, 1, 1);
+			const mult = 1;
+
+			const headSize = 10;
+
+			let boxHead = new BoxGeometry(headSize * mult, headSize * mult, headSize * mult, 1, 1, 1);
 			let materialHead = new MeshLambertMaterial({
 				color: '#c08e77'
 			});
 
-			let boxBody = new BoxGeometry(12, 24, 10, 1, 1, 1);
+			let boxBody = new BoxGeometry(14 * mult, 24 * mult, 8 * mult, 1, 1, 1);
 			let materialBody = new MeshLambertMaterial({
 				color: '#07aaa9'
 			});
 
-			let boxLegs = new BoxGeometry(6, 24, 6, 1, 1, 1);
+			let boxLegs = new BoxGeometry(6 * mult, 24 * mult, 6 * mult, 1, 1, 1);
 			let materialLegs = new MeshLambertMaterial({
 				color: '#433799'
 			});
@@ -130,14 +134,16 @@ export namespace pawns {
 			this.groups.body.add(this.groups.legr);
 			this.groups.ground.add(this.groups.body);
 
-			this.groups.head.position.set(0, 24 / 2 + 5, 0);
-			this.groups.body.position.set(0, 24, 0);
+			this.groups.head.position.set(0, 24 * mult / 2 + headSize / 2 * mult, 0);
+			this.groups.body.position.set(0, 24 * mult, 0);
 
-			this.groups.legl.position.set(-5, -12, 0);
-			this.meshes.legl.position.set(0, -12, 0);
+			this.groups.legl.position.set(-5 * mult, -12 * mult, 0);
+			this.meshes.legl.position.set(0, -12 * mult, 0);
 			
-			this.groups.legr.position.set(5, -12, 0);
-			this.meshes.legr.position.set(0, -12, 0);
+			this.groups.legr.position.set(5 * mult, -12 * mult, 0);
+			this.meshes.legr.position.set(0, -12 * mult, 0);
+			
+			this.groups.ground.position.set(-24, -24 * mult, 0);
 			//mesh.rotation.set(Math.PI / 2, 0, 0);
 
 			this.scene.add(this.groups.ground);
@@ -159,15 +165,18 @@ export namespace pawns {
 		containing: objects.objected
 		val0 = 0
 		val1 = 0
+		angle
 		override tick() {
-
+			
+			const swoopMod = 0.7;
 			this.render();
 
-			this.val0 += 0.005;
+			this.val0 += 0.01;
 			const swoop1 = Math.cos(Math.PI * this.val0);
 			const swoop2 = Math.cos(Math.PI * this.val0 - Math.PI );
-			this.groups.legl.rotation.x = swoop1;
-			this.groups.legr.rotation.x = swoop2;
+			this.groups.legl.rotation.x = swoop1 * swoopMod;
+			this.groups.legr.rotation.x = swoop2 * swoopMod;
+			this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
 
 			let posr = pts.round(this.wpos);
 
@@ -236,6 +245,7 @@ export namespace pawns {
 					let angle = pts.angle([0, 0], [x, y]);
 					x = speed * Math.sin(angle);
 					y = speed * Math.cos(angle);
+					this.angle = angle;
 					this.try_move_to([x, y]);
 				}
 			}
