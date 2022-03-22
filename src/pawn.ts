@@ -45,7 +45,7 @@ export namespace pawns {
 		}
 		override create() {
 			this.tiled();
-			this.size = pts.divide([100, 100], 1);
+			this.size = pts.divide([100, 100], 2);
 			let shape = new sprite({
 				binded: this,
 				tuple: sprites.test100,
@@ -55,11 +55,12 @@ export namespace pawns {
 
 			// make wee guy target
 			this.group = new THREE.Group
-			this.target = ren.make_render_target(100, 100);
-			this.camera = ren.ortographic_camera(100, 100);
+			let w = 100, h = 100;
+			this.target = ren.make_render_target(w, h);
+			this.camera = ren.ortographic_camera(w, h);
 			this.scene = new Scene()
 			this.scene.rotation.set(Math.PI / 6, Math.PI / 4, 0);
-			this.scene.background = new Color('salmon');
+			//this.scene.background = new Color('salmon');
 
 			let amb = new AmbientLight('white');
 			this.scene.add(amb);
@@ -163,10 +164,10 @@ export namespace pawns {
 			this.render();
 
 			this.val0 += 0.005;
-			const move1 = Math.cos(Math.PI * this.val0);
-			const move2 = Math.sin(Math.PI * this.val0);
-			this.groups.legl.rotation.x = move1;
-			this.groups.legr.rotation.x = move2;
+			const swoop1 = Math.cos(Math.PI * this.val0);
+			const swoop2 = Math.cos(Math.PI * this.val0 - Math.PI );
+			this.groups.legl.rotation.x = swoop1;
+			this.groups.legr.rotation.x = swoop2;
 
 			let posr = pts.round(this.wpos);
 

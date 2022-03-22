@@ -6871,7 +6871,7 @@ void main() {
             }
             create() {
                 this.tiled();
-                this.size = pts.divide([100, 100], 1);
+                this.size = pts.divide([100, 100], 2);
                 new sprite({
                     binded: this,
                     tuple: sprites$1.test100,
@@ -6880,11 +6880,12 @@ void main() {
                 });
                 // make wee guy target
                 this.group = new THREE__default["default"].Group;
-                this.target = ren$1.make_render_target(100, 100);
-                this.camera = ren$1.ortographic_camera(100, 100);
+                let w = 100, h = 100;
+                this.target = ren$1.make_render_target(w, h);
+                this.camera = ren$1.ortographic_camera(w, h);
                 this.scene = new THREE.Scene();
                 this.scene.rotation.set(Math.PI / 6, Math.PI / 4, 0);
-                this.scene.background = new THREE.Color('salmon');
+                //this.scene.background = new Color('salmon');
                 let amb = new THREE.AmbientLight('white');
                 this.scene.add(amb);
                 let sun = new THREE.DirectionalLight(0xffffff, 0.5);
@@ -6958,10 +6959,10 @@ void main() {
                 var _a, _b;
                 this.render();
                 this.val0 += 0.005;
-                const move1 = Math.cos(Math.PI * this.val0);
-                const move2 = Math.sin(Math.PI * this.val0);
-                this.groups.legl.rotation.x = move1;
-                this.groups.legr.rotation.x = move2;
+                const swoop1 = Math.cos(Math.PI * this.val0);
+                const swoop2 = Math.cos(Math.PI * this.val0 - Math.PI);
+                this.groups.legl.rotation.x = swoop1;
+                this.groups.legr.rotation.x = swoop2;
                 let posr = pts.round(this.wpos);
                 if (this.type == 'you') {
                     /*
