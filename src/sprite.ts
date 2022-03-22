@@ -59,17 +59,17 @@ export class sprite extends lod.shape {
 			this.mesh.rotation.z = this.vars.binded.ro;
 		}
 	}
-	dispose() {
+	retransform() {
+		this.myUvTransform.copy(sprites.get_uv_transform(this.vars.cell!, this.vars.tuple));
+	}
+	override dispose() {
 		if (!this.mesh)
 			return;
 		this.geometry?.dispose();
 		this.material?.dispose();
 		this.mesh.parent?.remove(this.mesh);
 	}
-	retransform() {
-		this.myUvTransform.copy(sprites.get_uv_transform(this.vars.cell!, this.vars.tuple));
-	}
-	create() {
+	override create() {
 		const obj = this.vars.binded;
 
 		this.retransform();

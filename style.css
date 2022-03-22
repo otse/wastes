@@ -13,7 +13,6 @@
     width: 200px;
     color: black;
     border: 2px gray inset;
-    background: darkgray;
 }
 
 .modal :first-child::before {
@@ -31,5 +30,5 @@
 
 .modal :nth-child(2) {
 	ppadding: 5px;
-	bbackground: gainsboro;
+	background: darkgray;
 }

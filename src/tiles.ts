@@ -108,7 +108,7 @@ export namespace tiles {
 				this.cell = [1, 0];
 				this.color = wastes.colormap.pixel(this.wpos).array;
 				
-				let biome = wastes.biomemap.pixel(this.wpos);
+				let biome = wastes.texturemap.pixel(this.wpos);
 				if (biome.array[0] > 70) {
 					this.tuple = sprites.dswamptiles;
 				}
@@ -157,13 +157,13 @@ export namespace tiles {
 			const sprite = this.shape as sprite;
 			if (!sprite?.mesh)
 				return;
-			/*const last = tile.lastHover
+			const last = tile.lastHover
 			if (last && last != this && last.sector!.isActive()) {
 				last.hide();
 				last.show();
 			}
 			sprite.mesh.material.color.set('green');
-			tile.lastHover = this;*/
+			tile.lastHover = this;
 		}
 		paint() {
 			const sprite = this.shape as sprite;

@@ -34,7 +34,7 @@ export namespace sprites {
 	export const dacidbarrel: tuple = [[24, 35], [24, 35], 0, 'tex/dacidbarrel']
 	export const dfalsefronts: tuple = [[192, 40], [24, 40], 0, 'tex/dfalsefronts']
 
-	export const pchris: tuple = [[40, 90], [40, 90], 0, 'tex/pawn/pwaster_hires']
+	export const pchris: tuple = [[90, 180], [90, 180], 0, 'tex/pawn/pwaster_quintuple']
 	export const pchris_lowres: tuple = [[19, 41], [19, 41], 0, 'tex/pawn/pwaster']
 
 	export function get_uv_transform(cell: vec2, tuple: tuple) {

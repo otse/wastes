@@ -60,7 +60,7 @@ namespace collada {
 			//group.add(new AxesHelper(300));
 			console.log(myScene.scale);
 
-			const zoom = 30; // 60 hires, 30 lowres
+			const zoom = 90; // 60 hires, 30 lowres
 			myScene.scale.multiplyScalar(zoom);
 			//elf.rotation.set(-Math.PI / 2, 0, 0);
 			myScene.position.set(1, 0, 0);

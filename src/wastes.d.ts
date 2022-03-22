@@ -17,3 +17,5 @@ declare interface Asset {
 	readonly area?: vec2
 	readonly offset?: vec2
 }
+
+declare const anExampleFunction: Function;

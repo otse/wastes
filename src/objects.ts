@@ -47,10 +47,9 @@ namespace objects {
 		wastes.heightmap = new colormap('heightmap');
 		wastes.objectmap = new colormap('objectmap');
 		wastes.buildingmap = new colormap('buildingmap');
-		wastes.roommap = new colormap('roommap');
-		wastes.treemap = new colormap('treemap');
 		wastes.colormap = new colormap('colormap');
-		wastes.biomemap = new colormap('biomemap');
+		wastes.texturemap = new colormap('texturemap');
+		wastes.roommap = new colormap('roommap');	
 
 		const treeTreshold = 50;
 
@@ -96,7 +95,7 @@ namespace objects {
 
 				}
 				else if (pixel.is_color(color_grass)) {
-					//factory(objects.grass, pixel, pos);
+					factory(objects.grass, pixel, pos);
 				}
 				else if (pixel.is_color(color_wheat)) {
 					//factory(objects.wheat, pixel, pos);

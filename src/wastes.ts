@@ -31,7 +31,7 @@ export namespace wastes {
 	export var roommap: objects.colormap
 	export var treemap: objects.colormap
 	export var colormap: objects.colormap
-	export var biomemap: objects.colormap
+	export var texturemap: objects.colormap
 
 	export function sample(a) {
 		return a[Math.floor(Math.random() * a.length)];

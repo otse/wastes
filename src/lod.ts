@@ -303,7 +303,7 @@ namespace lod {
 		delete() { // implement me
 			// console.warn(' (lod) obj.delete ');
 		}
-		update() {
+		update() { // implement me
 			this.wtorpos();
 			this.bound();
 			this.shape?.update();

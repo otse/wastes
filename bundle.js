@@ -815,7 +815,7 @@ void main() {
         sprites.ddoor = [[192, 40], [24, 40], 0, 'tex/ddoor'];
         sprites.dacidbarrel = [[24, 35], [24, 35], 0, 'tex/dacidbarrel'];
         sprites.dfalsefronts = [[192, 40], [24, 40], 0, 'tex/dfalsefronts'];
-        sprites.pchris = [[40, 90], [40, 90], 0, 'tex/pawn/pwaster_hires'];
+        sprites.pchris = [[90, 180], [90, 180], 0, 'tex/pawn/pwaster_quintuple'];
         sprites.pchris_lowres = [[19, 41], [19, 41], 0, 'tex/pawn/pwaster'];
         function get_uv_transform(cell, tuple) {
             let divide = pts.divides(tuple[1], tuple[0]);
@@ -864,6 +864,9 @@ void main() {
                 this.mesh.rotation.z = this.vars.binded.ro;
             }
         }
+        retransform() {
+            this.myUvTransform.copy(sprites$1.get_uv_transform(this.vars.cell, this.vars.tuple));
+        }
         dispose() {
             var _a, _b, _c;
             if (!this.mesh)
@@ -871,9 +874,6 @@ void main() {
             (_a = this.geometry) === null || _a === void 0 ? void 0 : _a.dispose();
             (_b = this.material) === null || _b === void 0 ? void 0 : _b.dispose();
             (_c = this.mesh.parent) === null || _c === void 0 ? void 0 : _c.remove(this.mesh);
-        }
-        retransform() {
-            this.myUvTransform.copy(sprites$1.get_uv_transform(this.vars.cell, this.vars.tuple));
         }
         create() {
             var _a;
@@ -1113,7 +1113,7 @@ void main() {
                     this.height = 6;
                     this.cell = [1, 0];
                     this.color = wastes.colormap.pixel(this.wpos).array;
-                    let biome = wastes.biomemap.pixel(this.wpos);
+                    let biome = wastes.texturemap.pixel(this.wpos);
                     if (biome.array[0] > 70) {
                         this.tuple = sprites$1.dswamptiles;
                     }
@@ -1161,13 +1161,13 @@ void main() {
                 const sprite = this.shape;
                 if (!(sprite === null || sprite === void 0 ? void 0 : sprite.mesh))
                     return;
-                /*const last = tile.lastHover
-                if (last && last != this && last.sector!.isActive()) {
+                const last = tile.lastHover;
+                if (last && last != this && last.sector.isActive()) {
                     last.hide();
                     last.show();
                 }
                 sprite.mesh.material.color.set('green');
-                tile.lastHover = this;*/
+                tile.lastHover = this;
             }
             paint() {
                 const sprite = this.shape;
@@ -1353,10 +1353,9 @@ void main() {
             wastes.heightmap = new colormap('heightmap');
             wastes.objectmap = new colormap('objectmap');
             wastes.buildingmap = new colormap('buildingmap');
-            wastes.roommap = new colormap('roommap');
-            wastes.treemap = new colormap('treemap');
             wastes.colormap = new colormap('colormap');
-            wastes.biomemap = new colormap('biomemap');
+            wastes.texturemap = new colormap('texturemap');
+            wastes.roommap = new colormap('roommap');
             hooks.register('sectorCreate', (sector) => {
                 pts.func(sector.small, (pos) => {
                     let pixel = wastes.objectmap.pixel(pos);
@@ -1392,7 +1391,9 @@ void main() {
                     else if (pixel.is_color(color_decidtree)) {
                         factory(objects.decidtree, pixel, pos);
                     }
-                    else if (pixel.is_color(color_grass)) ;
+                    else if (pixel.is_color(color_grass)) {
+                        factory(objects.grass, pixel, pos);
+                    }
                     else if (pixel.is_color(color_wheat)) ;
                     else if (pixel.is_color(color_rusty_wall_and_deck)) {
                         factory(objects.deck, pixel, pos);
@@ -6704,7 +6705,7 @@ void main() {
                 myScene.traverse(traversal);
                 //group.add(new AxesHelper(300));
                 console.log(myScene.scale);
-                const zoom = 30; // 60 hires, 30 lowres
+                const zoom = 90; // 60 hires, 30 lowres
                 myScene.scale.multiplyScalar(zoom);
                 //elf.rotation.set(-Math.PI / 2, 0, 0);
                 myScene.position.set(1, 0, 0);
@@ -6853,23 +6854,45 @@ void main() {
             lod$1.add(paw);
         }
         pawns.make = make;
+        function handle() {
+        }
+        pawns.handle = handle;
         class pawn extends objects$1.objected {
             constructor() {
                 super(numbers.pawns);
+                this.groups = {};
+                this.meshes = {};
+                this.made = false;
                 this.mousing = false;
+                this.val0 = 0;
+                this.val1 = 0;
                 this.type = 'pawn';
                 this.height = 24;
             }
             create() {
                 this.tiled();
-                this.size = pts.divide([19, 41], 1);
-                let tuple = sprites$1.pchris_lowres;
+                this.size = pts.divide([100, 100], 1);
                 new sprite({
                     binded: this,
-                    tuple: tuple,
+                    tuple: sprites$1.test100,
                     cell: this.cell,
                     order: 1.5,
                 });
+                // make wee guy target
+                this.group = new THREE__default["default"].Group;
+                this.target = ren$1.make_render_target(100, 100);
+                this.camera = ren$1.ortographic_camera(100, 100);
+                this.scene = new THREE.Scene();
+                this.scene.rotation.set(Math.PI / 6, Math.PI / 4, 0);
+                this.scene.background = new THREE.Color('salmon');
+                let amb = new THREE.AmbientLight('white');
+                this.scene.add(amb);
+                let sun = new THREE.DirectionalLight(0xffffff, 0.5);
+                // left up right
+                sun.position.set(-wastes.size, wastes.size * 1.5, wastes.size / 2);
+                //sun.add(new AxesHelper(100));
+                this.scene.add(sun);
+                this.scene.add(sun.target);
             }
             try_move_to(pos) {
                 let venture = pts.add(this.wpos, pos);
@@ -6881,8 +6904,64 @@ void main() {
                 this.stack();
                 super.update();
             }
+            make() {
+                if (this.made)
+                    return;
+                this.made = true;
+                let boxHead = new THREE.BoxGeometry(10, 10, 10, 1, 1, 1);
+                let materialHead = new THREE.MeshLambertMaterial({
+                    color: '#c08e77'
+                });
+                let boxBody = new THREE.BoxGeometry(12, 24, 10, 1, 1, 1);
+                let materialBody = new THREE.MeshLambertMaterial({
+                    color: '#07aaa9'
+                });
+                let boxLegs = new THREE.BoxGeometry(6, 24, 6, 1, 1, 1);
+                let materialLegs = new THREE.MeshLambertMaterial({
+                    color: '#433799'
+                });
+                this.meshes.head = new THREE.Mesh(boxHead, materialHead);
+                this.meshes.body = new THREE.Mesh(boxBody, materialBody);
+                this.meshes.legl = new THREE.Mesh(boxLegs, materialLegs);
+                this.meshes.legr = new THREE.Mesh(boxLegs, materialLegs);
+                this.groups.head = new THREE.Group;
+                this.groups.body = new THREE.Group;
+                this.groups.legl = new THREE.Group;
+                this.groups.legr = new THREE.Group;
+                this.groups.ground = new THREE.Group;
+                this.groups.head.add(this.meshes.head);
+                this.groups.body.add(this.meshes.body);
+                this.groups.legl.add(this.meshes.legl);
+                this.groups.legr.add(this.meshes.legr);
+                this.groups.body.add(this.groups.head);
+                this.groups.body.add(this.groups.legl);
+                this.groups.body.add(this.groups.legr);
+                this.groups.ground.add(this.groups.body);
+                this.groups.head.position.set(0, 24 / 2 + 5, 0);
+                this.groups.body.position.set(0, 24, 0);
+                this.groups.legl.position.set(-5, -12, 0);
+                this.meshes.legl.position.set(0, -12, 0);
+                this.groups.legr.position.set(5, -12, 0);
+                this.meshes.legr.position.set(0, -12, 0);
+                //mesh.rotation.set(Math.PI / 2, 0, 0);
+                this.scene.add(this.groups.ground);
+            }
+            render() {
+                this.make();
+                ren$1.renderer.setRenderTarget(this.target);
+                ren$1.renderer.clear();
+                ren$1.renderer.render(this.scene, this.camera);
+                const sprite = this.shape;
+                sprite.material.map = this.target.texture;
+            }
             tick() {
                 var _a, _b;
+                this.render();
+                this.val0 += 0.005;
+                const move1 = Math.cos(Math.PI * this.val0);
+                const move2 = Math.sin(Math.PI * this.val0);
+                this.groups.legl.rotation.x = move1;
+                this.groups.legr.rotation.x = move2;
                 let posr = pts.round(this.wpos);
                 if (this.type == 'you') {
                     /*
