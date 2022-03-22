@@ -6864,8 +6864,9 @@ void main() {
                 this.meshes = {};
                 this.made = false;
                 this.mousing = false;
-                this.val0 = 0;
-                this.val1 = 0;
+                this.swoop = 0;
+                this.angle = 0;
+                this.speed = 1;
                 this.type = 'pawn';
                 this.height = 24;
             }
@@ -6909,44 +6910,67 @@ void main() {
                 if (this.made)
                     return;
                 this.made = true;
-                const mult = 1;
                 const headSize = 10;
-                let boxHead = new THREE.BoxGeometry(headSize * mult, headSize * mult, headSize * mult, 1, 1, 1);
+                const legsSize = 7;
+                const legsHeight = 24;
+                const armsSize = 6;
+                const armsHeight = 24;
+                const bodyThick = 8;
+                const bodyWidth = 15;
+                const bodyHeight = 24;
+                let boxHead = new THREE.BoxGeometry(headSize, headSize, headSize, 1, 1, 1);
                 let materialHead = new THREE.MeshLambertMaterial({
                     color: '#c08e77'
                 });
-                let boxBody = new THREE.BoxGeometry(14 * mult, 24 * mult, 8 * mult, 1, 1, 1);
+                let boxBody = new THREE.BoxGeometry(bodyWidth, bodyHeight, bodyThick, 1, 1, 1);
                 let materialBody = new THREE.MeshLambertMaterial({
                     color: '#07aaa9'
                 });
-                let boxLegs = new THREE.BoxGeometry(6 * mult, 24 * mult, 6 * mult, 1, 1, 1);
+                let boxArms = new THREE.BoxGeometry(armsSize, armsHeight, armsSize, 1, 1, 1);
+                let materialArms = new THREE.MeshLambertMaterial({
+                    color: '#c08e77'
+                });
+                let boxLegs = new THREE.BoxGeometry(legsSize, legsHeight, legsSize, 1, 1, 1);
                 let materialLegs = new THREE.MeshLambertMaterial({
                     color: '#433799'
                 });
                 this.meshes.head = new THREE.Mesh(boxHead, materialHead);
                 this.meshes.body = new THREE.Mesh(boxBody, materialBody);
+                this.meshes.arml = new THREE.Mesh(boxArms, materialArms);
+                this.meshes.armr = new THREE.Mesh(boxArms, materialArms);
                 this.meshes.legl = new THREE.Mesh(boxLegs, materialLegs);
                 this.meshes.legr = new THREE.Mesh(boxLegs, materialLegs);
                 this.groups.head = new THREE.Group;
                 this.groups.body = new THREE.Group;
+                this.groups.arml = new THREE.Group;
+                this.groups.armr = new THREE.Group;
                 this.groups.legl = new THREE.Group;
                 this.groups.legr = new THREE.Group;
                 this.groups.ground = new THREE.Group;
                 this.groups.head.add(this.meshes.head);
                 this.groups.body.add(this.meshes.body);
+                this.groups.arml.add(this.meshes.arml);
+                this.groups.armr.add(this.meshes.armr);
                 this.groups.legl.add(this.meshes.legl);
                 this.groups.legr.add(this.meshes.legr);
                 this.groups.body.add(this.groups.head);
+                this.groups.body.add(this.groups.arml);
+                this.groups.body.add(this.groups.armr);
                 this.groups.body.add(this.groups.legl);
                 this.groups.body.add(this.groups.legr);
                 this.groups.ground.add(this.groups.body);
-                this.groups.head.position.set(0, 24 * mult / 2 + headSize / 2 * mult, 0);
-                this.groups.body.position.set(0, 24 * mult, 0);
-                this.groups.legl.position.set(-5 * mult, -12 * mult, 0);
-                this.meshes.legl.position.set(0, -12 * mult, 0);
-                this.groups.legr.position.set(5 * mult, -12 * mult, 0);
-                this.meshes.legr.position.set(0, -12 * mult, 0);
-                this.groups.ground.position.set(-24, -24 * mult, 0);
+                this.groups.head.position.set(0, bodyHeight / 2 + headSize / 2, 0);
+                this.groups.body.position.set(0, bodyHeight, 0);
+                this.groups.arml.position.set(-bodyWidth / 2 - armsSize / 2, bodyHeight / 2, 0);
+                this.meshes.arml.position.set(0, -bodyHeight / 2, 0);
+                this.meshes.arml.rotation.set(0, 0, 0);
+                this.groups.armr.position.set(bodyWidth / 2 + armsSize / 2, bodyHeight / 2, 0);
+                this.meshes.armr.position.set(0, -bodyHeight / 2, 0);
+                this.groups.legl.position.set(-legsSize / 2, -12, 0);
+                this.meshes.legl.position.set(0, -legsHeight / 2, 0);
+                this.groups.legr.position.set(legsSize / 2, -12, 0);
+                this.meshes.legr.position.set(0, -legsHeight / 2, 0);
+                this.groups.ground.position.set(-24, -24, 0);
                 //mesh.rotation.set(Math.PI / 2, 0, 0);
                 this.scene.add(this.groups.ground);
             }
@@ -6960,13 +6984,15 @@ void main() {
             }
             tick() {
                 var _a, _b;
-                const swoopMod = 0.7;
+                const swoopMod = 0.75;
                 this.render();
-                this.val0 += 0.01;
-                const swoop1 = Math.cos(Math.PI * this.val0);
-                const swoop2 = Math.cos(Math.PI * this.val0 - Math.PI);
-                this.groups.legl.rotation.x = swoop1 * swoopMod;
-                this.groups.legr.rotation.x = swoop2 * swoopMod;
+                this.swoop += 0.035;
+                const swoop1 = Math.cos(Math.PI * this.swoop);
+                const swoop2 = Math.cos(Math.PI * this.swoop - Math.PI);
+                this.groups.legl.rotation.x = swoop1 * swoopMod * this.speed;
+                this.groups.legr.rotation.x = swoop2 * swoopMod * this.speed;
+                this.groups.arml.rotation.x = swoop2 * swoopMod * this.speed;
+                this.groups.armr.rotation.x = swoop1 * swoopMod * this.speed;
                 this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
                 let posr = pts.round(this.wpos);
                 if (this.type == 'you') {
@@ -7024,11 +7050,21 @@ void main() {
                         y += -1;
                     }
                     if (x || y) {
+                        this.speed += 0.1;
                         let angle = pts.angle([0, 0], [x, y]);
                         x = speed * Math.sin(angle);
                         y = speed * Math.cos(angle);
                         this.angle = angle;
                         this.try_move_to([x, y]);
+                    }
+                    else {
+                        this.speed -= 0.1;
+                    }
+                    if (this.speed > 1)
+                        this.speed = 1;
+                    else if (this.speed < 0) {
+                        this.speed = 0;
+                        this.swoop = 0;
                     }
                 }
                 if (pawns.placeAtMouse)

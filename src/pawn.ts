@@ -96,18 +96,30 @@ export namespace pawns {
 			const mult = 1;
 
 			const headSize = 10;
+			const legsSize = 7;
+			const legsHeight = 24;
+			const armsSize = 6;
+			const armsHeight = 24;
+			const bodyThick = 8;
+			const bodyWidth = 15;
+			const bodyHeight = 24;
 
-			let boxHead = new BoxGeometry(headSize * mult, headSize * mult, headSize * mult, 1, 1, 1);
+			let boxHead = new BoxGeometry(headSize, headSize, headSize, 1, 1, 1);
 			let materialHead = new MeshLambertMaterial({
 				color: '#c08e77'
 			});
 
-			let boxBody = new BoxGeometry(14 * mult, 24 * mult, 8 * mult, 1, 1, 1);
+			let boxBody = new BoxGeometry(bodyWidth, bodyHeight, bodyThick, 1, 1, 1);
 			let materialBody = new MeshLambertMaterial({
 				color: '#07aaa9'
 			});
 
-			let boxLegs = new BoxGeometry(6 * mult, 24 * mult, 6 * mult, 1, 1, 1);
+			let boxArms = new BoxGeometry(armsSize, armsHeight, armsSize, 1, 1, 1);
+			let materialArms = new MeshLambertMaterial({
+				color: '#c08e77'
+			});
+
+			let boxLegs = new BoxGeometry(legsSize, legsHeight, legsSize, 1, 1, 1);
 			let materialLegs = new MeshLambertMaterial({
 				color: '#433799'
 			});
@@ -115,35 +127,51 @@ export namespace pawns {
 			this.meshes.head = new Mesh(boxHead, materialHead);
 			this.meshes.body = new Mesh(boxBody, materialBody);
 
+			this.meshes.arml = new Mesh(boxArms, materialArms);
+			this.meshes.armr = new Mesh(boxArms, materialArms);
+
 			this.meshes.legl = new Mesh(boxLegs, materialLegs);
 			this.meshes.legr = new Mesh(boxLegs, materialLegs);
 
 			this.groups.head = new Group;
 			this.groups.body = new Group;
+			this.groups.arml = new Group;
+			this.groups.armr = new Group;
 			this.groups.legl = new Group;
 			this.groups.legr = new Group;
 			this.groups.ground = new Group;
 
 			this.groups.head.add(this.meshes.head);
 			this.groups.body.add(this.meshes.body);
+			this.groups.arml.add(this.meshes.arml);
+			this.groups.armr.add(this.meshes.armr);
 			this.groups.legl.add(this.meshes.legl);
 			this.groups.legr.add(this.meshes.legr);
 
 			this.groups.body.add(this.groups.head);
+			this.groups.body.add(this.groups.arml);
+			this.groups.body.add(this.groups.armr);
 			this.groups.body.add(this.groups.legl);
 			this.groups.body.add(this.groups.legr);
 			this.groups.ground.add(this.groups.body);
 
-			this.groups.head.position.set(0, 24 * mult / 2 + headSize / 2 * mult, 0);
-			this.groups.body.position.set(0, 24 * mult, 0);
+			this.groups.head.position.set(0, bodyHeight / 2 + headSize / 2, 0);
+			this.groups.body.position.set(0, bodyHeight, 0);
+			
+			this.groups.arml.position.set(-bodyWidth / 2 - armsSize / 2, bodyHeight / 2, 0);
+			this.meshes.arml.position.set(0, -bodyHeight / 2, 0);
+			this.meshes.arml.rotation.set(0, 0, 0);
 
-			this.groups.legl.position.set(-5 * mult, -12 * mult, 0);
-			this.meshes.legl.position.set(0, -12 * mult, 0);
-			
-			this.groups.legr.position.set(5 * mult, -12 * mult, 0);
-			this.meshes.legr.position.set(0, -12 * mult, 0);
-			
-			this.groups.ground.position.set(-24, -24 * mult, 0);
+			this.groups.armr.position.set(bodyWidth / 2 + armsSize / 2, bodyHeight / 2, 0);
+			this.meshes.armr.position.set(0, -bodyHeight / 2, 0);
+
+			this.groups.legl.position.set(-legsSize / 2, -12, 0);
+			this.meshes.legl.position.set(0, -legsHeight / 2, 0);
+
+			this.groups.legr.position.set(legsSize / 2, -12, 0);
+			this.meshes.legr.position.set(0, -legsHeight / 2, 0);
+
+			this.groups.ground.position.set(-24, -24, 0);
 			//mesh.rotation.set(Math.PI / 2, 0, 0);
 
 			this.scene.add(this.groups.ground);
@@ -163,19 +191,21 @@ export namespace pawns {
 		}
 		mousing = false
 		containing: objects.objected
-		val0 = 0
-		val1 = 0
-		angle
+		swoop = 0
+		angle = 0
+		speed = 1
 		override tick() {
-			
-			const swoopMod = 0.7;
+
+			const swoopMod = 0.75;
 			this.render();
 
-			this.val0 += 0.01;
-			const swoop1 = Math.cos(Math.PI * this.val0);
-			const swoop2 = Math.cos(Math.PI * this.val0 - Math.PI );
-			this.groups.legl.rotation.x = swoop1 * swoopMod;
-			this.groups.legr.rotation.x = swoop2 * swoopMod;
+			this.swoop += 0.035;
+			const swoop1 = Math.cos(Math.PI * this.swoop);
+			const swoop2 = Math.cos(Math.PI * this.swoop - Math.PI);
+			this.groups.legl.rotation.x = swoop1 * swoopMod * this.speed;
+			this.groups.legr.rotation.x = swoop2 * swoopMod * this.speed;
+			this.groups.arml.rotation.x = swoop2 * swoopMod * this.speed;
+			this.groups.armr.rotation.x = swoop1 * swoopMod * this.speed;
 			this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
 
 			let posr = pts.round(this.wpos);
@@ -242,11 +272,21 @@ export namespace pawns {
 					y += -1;
 				}
 				if (x || y) {
+					this.speed += 0.1;
 					let angle = pts.angle([0, 0], [x, y]);
 					x = speed * Math.sin(angle);
 					y = speed * Math.cos(angle);
 					this.angle = angle;
 					this.try_move_to([x, y]);
+				}
+				else {
+					this.speed -= 0.1;
+				}
+				if (this.speed > 1)
+					this.speed = 1;
+				else if (this.speed < 0) {
+					this.speed = 0;
+					this.swoop = 0;
 				}
 			}
 
