@@ -31,7 +31,7 @@ namespace win {
 
 		if (app.key('c') == 1) {
 			toggle_character = !toggle_character;
-			character.toggle(toggle_character);
+			character.call(toggle_character);
 		}
 
 		if (app.key('b') == 1) {
@@ -54,12 +54,17 @@ namespace win {
 
 			this.title = document.createElement('div');
 			this.title.innerHTML = name;
+			this.title.className = 'title';
 			this.element.append(this.title);
 
 			this.content = document.createElement('div');
+			this.content.className = 'content';
 			this.content.innerHTML = 'content';
 			this.element.append(this.content);
 
+		}
+		update(name = 'modal') {
+			this.title.innerHTML = name;
 		}
 		reposition(pos = ['', '']) {
 			this.element.style.top = pos[1];
@@ -89,59 +94,90 @@ namespace win {
 	export class character {
 		static open = false
 		static anchor: lod.obj
-		static modal: modal
-		static toggle(open) {
+		static modal?: modal
+		static call(open: boolean) {
 			this.open = open;
-			if (this.open) {
+			if (open && !this.modal) {
 				this.modal = new modal('you',);
 				this.modal.reposition(['100px', '30%']);
 				win.append(this.modal.element)
-				this.modal.content.innerHTML = 'stats:<br />effectiveness: 100%';
+				this.modal.content.innerHTML = 'stats:<br />effectiveness: 100%<br /><hr>';
+				this.modal.content.innerHTML += 'inventory:<br />';
+				//inventory
+				const inventory = pawns.you?.inventory;
+				if (inventory) {
+					for (let tuple of inventory.tuples) {
+						let button = document.createElement('div');
+						button.innerHTML = tuple[0];
+						if (tuple[1] > 1) {
+							button.innerHTML += ` <span>×${tuple[1]}</span>`
+						}
+						button.className = 'item';
+						this.modal.content.append(button);
+					}
+				}
 			}
-			else {
-				this.modal.deletor();
+			else if (!open && this.modal) {
+				this.modal?.deletor();
+				this.modal = undefined;
 			}
 		}
 		static tick() {
 			if (this.open) {
-				this.modal.float(pawns.you!, [15, 20]);
+				this.modal?.float(pawns.you!, [15, 20]);
 			}
 		}
 	}
 
 	export class container {
-		static open = false
-		static anchor: lod.obj
-		static modal: modal
-		static call(open, attach?: lod.obj) {
+		static obj?: lod.obj
+		static modal?: modal
+		static call(open: boolean, obj?: lod.obj, refresh = false) {
 			//this.anchor = obj;
-			if (!this.anchor) {
-				this.anchor = new lod.obj;
-				this.anchor.size = [24, 40];
-				this.anchor.wpos = [38, 49];
+			if (!this.obj) {
+				this.obj = new lod.obj;
+				this.obj.size = [24, 40];
+				this.obj.wpos = [38, 49];
 			}
-			if (attach) {
-				this.anchor = attach;
-			}
-			if (open && open != this.open) {
-				this.open = open;
-				this.modal = new modal(this.anchor.type);
-				win.append(this.modal.element)
-				this.modal.content.innerHTML = 'things:<br/>';
 
-				const cast = this.anchor as objects.container;
-				for (let item of cast.items) {
-					this.modal.content.innerHTML += item + '<br />';
-				}
+			if (open && !this.modal) {
+				this.modal = new modal();
+				win.append(this.modal.element)
 			}
-			else if (!open && open != this.open) {
-				this.open = open;
-				container.modal.deletor();
+			else if (!open && this.modal) {
+				this.modal?.deletor();
+				this.obj = undefined;
+				this.modal = undefined;
+			}
+
+			if (this.modal && obj != this.obj) {
+				if (obj) {
+					this.obj = obj;
+					this.modal.update(obj.type + ' contents');
+				}
+				this.modal.content.innerHTML = ''
+
+				const cast = this.obj as objects.crate;
+				for (let tuple of cast.container.tuples) {
+					let button = document.createElement('div');
+					button.innerHTML = tuple[0];
+					button.className = 'item';
+					this.modal.content.append(button);
+
+					button.onclick = (e) => {
+						console.log('woo');
+						button.remove();
+						cast.container.remove(tuple);
+						pawns.you?.inventory.add(tuple[0]);
+					};
+
+					//this.modal.content.innerHTML += item + '<br />';
+				}
 			}
 		}
 		static tick() {
-			if (this.open) {
-				this.modal.float(this.anchor);
+			if (this.modal && this.obj) {
+				this.modal.float(this.obj);
 			}
 		}
 	}

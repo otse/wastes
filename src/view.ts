@@ -162,12 +162,14 @@ export class view {
 		crunch += `game objs: ${numbers.objs[0]} / ${numbers.objs[1]}<br />`;
 		crunch += `sprites: ${numbers.sprites[0]} / ${numbers.sprites[1]}<br />`;
 		crunch += `tiles: ${numbers.tiles[0]} / ${numbers.tiles[1]}<br />`;
+		crunch += `trees: ${numbers.trees[0]} / ${numbers.trees[1]}<br />`;
+		crunch += `leaves: ${numbers.leaves[0]} / ${numbers.leaves[1]}<br />`;
 		crunch += `floors: ${numbers.floors[0]} / ${numbers.floors[1]}<br />`;
 		crunch += `walls: ${numbers.walls[0]} / ${numbers.walls[1]}<br />`;
-		crunch += `walls: ${numbers.roofs[0]} / ${numbers.roofs[1]}<br />`;
+		crunch += `roofs: ${numbers.roofs[0]} / ${numbers.roofs[1]}<br />`;
 		crunch += '<br />';
 
-		crunch += `controls: WASD to move, RF to zoom, hold middlemouse to pan, h to hide debug, arrowkeys for view, spacebar to toggle roofs, c for character menu<br />`;
+		crunch += `controls: WASD-move, hold middlemouse-pan, scrollwheel-zoom, spacebar-toggle roofs, h-hide debug, c-character menu<br />`;
 
 		let element = document.querySelectorAll('.stats')[0] as any;
 		element.innerHTML = crunch;

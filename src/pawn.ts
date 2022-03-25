@@ -32,46 +32,60 @@ export namespace pawns {
 
 	}
 
+	const wasterSprite = false;
+
 	export class pawn extends objects.objected {
+		inventory: objects.container 
+		items: string[] = []
 		group
 		mesh
 		target
 		scene
 		camera
+		created = false
 		constructor() {
 			super(numbers.pawns);
 			this.type = 'pawn';
 			this.height = 24;
+			this.inventory = new objects.container;
+			this.inventory.add('money');
 		}
 		override create() {
+
 			this.tiled();
-			this.size = pts.divide([100, 100], 2);
+			if (wasterSprite)
+				this.size = pts.divide([90, 180], 5);
+			else
+				this.size = pts.divide([100, 100], 2);
 			let shape = new sprite({
 				binded: this,
-				tuple: sprites.test100,
+				tuple: wasterSprite ? sprites.pchris : sprites.test100,
 				cell: this.cell,
 				order: 1.5,
 			});
 
-			// make wee guy target
-			this.group = new THREE.Group
-			let w = 100, h = 100;
-			this.target = ren.make_render_target(w, h);
-			this.camera = ren.ortographic_camera(w, h);
-			this.scene = new Scene()
-			this.scene.rotation.set(Math.PI / 6, Math.PI / 4, 0);
-			//this.scene.background = new Color('salmon');
+			if (!this.created) {
+				this.created = true;
+				// make wee guy target
+				//this.group = new THREE.Group
+				let w = 100, h = 100;
+				this.target = ren.make_render_target(w, h);
+				this.camera = ren.ortographic_camera(w, h);
+				this.scene = new Scene()
+				this.scene.rotation.set(Math.PI / 6, Math.PI / 4, 0);
+				//this.scene.background = new Color('salmon');
 
-			let amb = new AmbientLight('white');
-			this.scene.add(amb);
+				let amb = new AmbientLight('white');
+				this.scene.add(amb);
 
-			let sun = new DirectionalLight(0xffffff, 0.5);
-			// left up right
-			sun.position.set(-wastes.size, wastes.size * 1.5, wastes.size / 2);
-			//sun.add(new AxesHelper(100));
+				let sun = new DirectionalLight(0xffffff, 0.5);
+				// left up right
+				sun.position.set(-wastes.size, wastes.size * 1.5, wastes.size / 2);
+				//sun.add(new AxesHelper(100));
 
-			this.scene.add(sun);
-			this.scene.add(sun.target);
+				this.scene.add(sun);
+				this.scene.add(sun.target);
+			}
 
 		}
 		try_move_to(pos: vec2) {
@@ -95,14 +109,15 @@ export namespace pawns {
 
 			const mult = 1;
 
-			const headSize = 10;
-			const legsSize = 7;
-			const legsHeight = 24;
-			const armsSize = 6;
-			const armsHeight = 24;
-			const bodyThick = 8;
-			const bodyWidth = 15;
-			const bodyHeight = 24;
+			const headSize = 10 * mult;
+			const legsSize = 7 * mult;
+			const legsHeight = 24 * mult;
+			const armsSize = 6 * mult;
+			const armsHeight = 22 * mult;
+			const armsAngle = .08;
+			const bodyThick = 8 * mult;
+			const bodyWidth = 15 * mult;
+			const bodyHeight = 24 * mult;
 
 			let boxHead = new BoxGeometry(headSize, headSize, headSize, 1, 1, 1);
 			let materialHead = new MeshLambertMaterial({
@@ -111,17 +126,17 @@ export namespace pawns {
 
 			let boxBody = new BoxGeometry(bodyWidth, bodyHeight, bodyThick, 1, 1, 1);
 			let materialBody = new MeshLambertMaterial({
-				color: '#07aaa9'
+				color: '#544f43'
 			});
 
 			let boxArms = new BoxGeometry(armsSize, armsHeight, armsSize, 1, 1, 1);
 			let materialArms = new MeshLambertMaterial({
-				color: '#c08e77'
+				color: '#544f43'
 			});
 
 			let boxLegs = new BoxGeometry(legsSize, legsHeight, legsSize, 1, 1, 1);
 			let materialLegs = new MeshLambertMaterial({
-				color: '#433799'
+				color: '#484c4c'
 			});
 
 			this.meshes.head = new Mesh(boxHead, materialHead);
@@ -157,21 +172,22 @@ export namespace pawns {
 
 			this.groups.head.position.set(0, bodyHeight / 2 + headSize / 2, 0);
 			this.groups.body.position.set(0, bodyHeight, 0);
-			
+
 			this.groups.arml.position.set(-bodyWidth / 2 - armsSize / 2, bodyHeight / 2, 0);
-			this.meshes.arml.position.set(0, -bodyHeight / 2, 0);
-			this.meshes.arml.rotation.set(0, 0, 0);
+			this.groups.arml.rotation.set(0, 0, -armsAngle);
+			this.meshes.arml.position.set(0, -armsHeight / 2, 0);
 
 			this.groups.armr.position.set(bodyWidth / 2 + armsSize / 2, bodyHeight / 2, 0);
-			this.meshes.armr.position.set(0, -bodyHeight / 2, 0);
+			this.groups.armr.rotation.set(0, 0, armsAngle);
+			this.meshes.armr.position.set(0, -armsHeight / 2, 0);
 
-			this.groups.legl.position.set(-legsSize / 2, -12, 0);
+			this.groups.legl.position.set(-legsSize / 2, -bodyHeight / 2, 0);
 			this.meshes.legl.position.set(0, -legsHeight / 2, 0);
 
-			this.groups.legr.position.set(legsSize / 2, -12, 0);
+			this.groups.legr.position.set(legsSize / 2, -bodyHeight / 2, 0);
 			this.meshes.legr.position.set(0, -legsHeight / 2, 0);
 
-			this.groups.ground.position.set(-24, -24, 0);
+			this.groups.ground.position.set(-bodyWidth * 2, -bodyHeight, 0);
 			//mesh.rotation.set(Math.PI / 2, 0, 0);
 
 			this.scene.add(this.groups.ground);
@@ -186,26 +202,27 @@ export namespace pawns {
 
 			const sprite = this.shape as sprite;
 
-			sprite.material.map = this.target.texture;
+			if (!wasterSprite)
+				sprite.material.map = this.target.texture;
 
 		}
 		mousing = false
-		containing: objects.objected
 		swoop = 0
 		angle = 0
 		speed = 1
 		override tick() {
 
-			const swoopMod = 0.75;
+			const legsSwoop = 0.6;
+			const armsSwoop = 0.5;
 			this.render();
 
-			this.swoop += 0.035;
+			this.swoop += 0.04;
 			const swoop1 = Math.cos(Math.PI * this.swoop);
 			const swoop2 = Math.cos(Math.PI * this.swoop - Math.PI);
-			this.groups.legl.rotation.x = swoop1 * swoopMod * this.speed;
-			this.groups.legr.rotation.x = swoop2 * swoopMod * this.speed;
-			this.groups.arml.rotation.x = swoop2 * swoopMod * this.speed;
-			this.groups.armr.rotation.x = swoop1 * swoopMod * this.speed;
+			this.groups.legl.rotation.x = swoop1 * legsSwoop * this.speed;
+			this.groups.legr.rotation.x = swoop2 * legsSwoop * this.speed;
+			this.groups.arml.rotation.x = swoop2 * armsSwoop * this.speed;
+			this.groups.armr.rotation.x = swoop1 * armsSwoop * this.speed;
 			this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
 
 			let posr = pts.round(this.wpos);

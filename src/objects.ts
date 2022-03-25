@@ -49,7 +49,7 @@ namespace objects {
 		wastes.buildingmap = new colormap('buildingmap');
 		wastes.colormap = new colormap('colormap');
 		wastes.texturemap = new colormap('texturemap');
-		wastes.roommap = new colormap('roommap');	
+		wastes.roommap = new colormap('roommap');
 
 		const treeTreshold = 50;
 
@@ -166,8 +166,8 @@ namespace objects {
 		}
 		is_color_range(a: vec3, b: vec3) {
 			return this.array[0] >= a[0] && this.array[0] <= b[0] &&
-					this.array[1] >= a[1] && this.array[1] <= b[1] &&
-					this.array[2] >= a[2] && this.array[2] <= b[2]
+				this.array[1] >= a[1] && this.array[1] <= b[1] &&
+				this.array[2] >= a[2] && this.array[2] <= b[2]
 		}
 		is_black() {
 			return this.is_color([0, 0, 0]);
@@ -327,7 +327,7 @@ namespace objects {
 	export class decidtree extends objected {
 		flowered = false
 		constructor() {
-			super(numbers.floors);
+			super(numbers.trees);
 			this.type = 'decid tree'
 			this.height = 29;
 		}
@@ -356,7 +356,7 @@ namespace objects {
 	}
 	export class treeleaves extends objected {
 		constructor() {
-			super(numbers.floors);
+			super(numbers.leaves);
 			this.type = 'leaves'
 			this.height = 14;
 		}
@@ -443,17 +443,41 @@ namespace objects {
 			this.stack();
 		}
 	}
-	export class container extends objected {
-		items = []
+	type item = [string: string, amount: number]
+	export class container {
+		tuples: [string: string, amount: number][] = []
+		constructor() {
+			if (Math.random() > .5)
+				this.add('beer');
+			if (Math.random() > .5)
+				this.add('string');
+			if (Math.random() > .5)
+				this.add('stone');
+		}
+		add(item: string) {
+			let found = false;
+			for (let tuple of this.tuples) {
+				if (tuple[0] == item) {
+					tuple[1] += 1;
+					found = true;
+					break;
+				}
+			}
+			if (!found) {
+				this.tuples.push([item, 1]);
+			}
+			this.tuples.sort();
+		}
+		remove(item: item) {
+			let i = this.tuples.indexOf(item);
+			if (i > -1)
+				this.tuples.splice(i, 1);
+		}
+	}
+	export class crate extends objected {
+		container: container = new container
 		constructor() {
 			super(numbers.objs);
-			this.type = 'container';
-		}
-
-	}
-	export class crate extends container {
-		constructor() {
-			super();
 			this.type = 'crate'
 			this.height = 17;
 		}
@@ -500,7 +524,7 @@ namespace objects {
 	}
 	export class acidbarrel extends objected {
 		constructor() {
-			super(numbers.floors);
+			super(numbers.objs);
 			this.type = 'acidbarrel'
 			this.height = 4;
 		}

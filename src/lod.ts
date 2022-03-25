@@ -17,6 +17,7 @@ export namespace numbers {
 	export var tiles: tally = [0, 0]
 	export var floors: tally = [0, 0]
 	export var trees: tally = [0, 0]
+	export var leaves: tally = [0, 0]
 	export var walls: tally = [0, 0]
 	export var roofs: tally = [0, 0]
 	export var pawns: tally = [0, 0]

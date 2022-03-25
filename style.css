@@ -19,16 +19,33 @@
 	content: '';
 }
 
-.modal :first-child {
-	margin: 0px;
-	ppadding: 0 1ex;
-	color: gray;
-	border: 0px gray inset;
-	background: darkslategray;
-	bbackground: midnightblue;
+.modal .title {
+    margin: 0px;
+    padding: 4px;
+    color: black;
+    border: 1px gray inset;
+    background: #8b8b8b;
+    bbackground: midnightblue;
 }
 
-.modal :nth-child(2) {
-	ppadding: 5px;
+.modal .content {
+	padding: 4px;
 	background: darkgray;
+}
+
+.modal .item {
+	display: inline-block;
+	margin-right: 1ex;
+	border: 1px gray inset;
+	padding: 1px;
+	color: #333;
+	cursor: pointer;
+}
+
+.modal .item > span {
+	display: inline-block;
+}
+
+.modal .item:hover {
+	color: purple;
 }
