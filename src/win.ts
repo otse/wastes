@@ -161,13 +161,16 @@ namespace win {
 				for (let tuple of cast.container.tuples) {
 					let button = document.createElement('div');
 					button.innerHTML = tuple[0];
+					if (tuple[1] > 1) {
+						button.innerHTML += ` <span>×${tuple[1]}</span>`
+					}
 					button.className = 'item';
 					this.modal.content.append(button);
 
 					button.onclick = (e) => {
 						console.log('woo');
 						button.remove();
-						cast.container.remove(tuple);
+						cast.container.remove(tuple[0]);
 						pawns.you?.inventory.add(tuple[0]);
 					};
 

@@ -89,8 +89,7 @@ namespace shear {
 		spareCtx.clearRect(0, 0, 24, 40);
 		spareCtx.drawImage(canvas, -24 * 6, 0);
 		ctx.drawImage(spare, 24 * 10 + x2, -y2);
-
-
+		
 		document.body.append(canvas);
 		document.body.append(spare);
 

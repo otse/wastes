@@ -114,9 +114,9 @@ export namespace pawns {
 			const legsHeight = 24 * mult;
 			const armsSize = 6 * mult;
 			const armsHeight = 22 * mult;
-			const armsAngle = .08;
+			const armsAngle = .0;
 			const bodyThick = 8 * mult;
-			const bodyWidth = 15 * mult;
+			const bodyWidth = 16 * mult;
 			const bodyHeight = 24 * mult;
 
 			let boxHead = new BoxGeometry(headSize, headSize, headSize, 1, 1, 1);

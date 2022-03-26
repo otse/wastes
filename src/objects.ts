@@ -26,6 +26,7 @@ namespace objects {
 	const color_slimy_wall_with_deck: vec3 = [20, 78, 54];
 	const color_deck: vec3 = [114, 128, 124];
 	const color_rusty_wall_and_deck: vec3 = [20, 84, 87];
+	const color_outer_wall: vec3 = [20, 90, 90];
 	const color_false_front: vec3 = [255, 255, 255];
 
 	const color_acid_barrel: vec3 = [61, 118, 48];
@@ -104,6 +105,9 @@ namespace objects {
 					factory(objects.deck, pixel, pos);
 					factory(objects.wall, pixel, pos, { type: 'rusty' });
 					factory(objects.roof, pixel, pos);
+				}
+				else if (pixel.is_color(color_outer_wall)) {
+					factory(objects.wall, pixel, pos, { type: 'medieval' });
 				}
 				else if (pixel.is_color(color_deck)) {
 					factory(objects.deck, pixel, pos);
@@ -272,6 +276,8 @@ namespace objects {
 			let tuple = sprites.dscrappywalls;
 			if (this.hints?.type == 'rusty')
 				tuple = sprites.drustywalls;
+			if (this.hints?.type == 'medieval')
+				tuple = sprites.dmedievalwalls;
 			else if (this.hints?.type == 'ruddy')
 				tuple = sprites.druddywalls;
 			else {
@@ -468,10 +474,16 @@ namespace objects {
 			}
 			this.tuples.sort();
 		}
-		remove(item: item) {
-			let i = this.tuples.indexOf(item);
-			if (i > -1)
-				this.tuples.splice(i, 1);
+		remove(name: string) {
+			for (let i = this.tuples.length - 1; i >= 0; i--) {
+				const tuple = this.tuples[i];
+				if (tuple[0] == name) {
+					tuple[1] -= 1;
+					if (tuple[1] <= 0)
+						this.tuples.splice(i, 1);
+					break;
+				}
+			}
 		}
 	}
 	export class crate extends objected {
