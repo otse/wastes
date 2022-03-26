@@ -19,3 +19,13 @@ declare interface Asset {
 }
 
 declare const anExampleFunction: Function;
+
+
+declare namespace astar {
+	function search(a, b, c): any;
+	
+}
+
+declare class Graph {
+	constructor(array, options);
+  }

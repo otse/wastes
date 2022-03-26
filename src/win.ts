@@ -14,7 +14,6 @@ namespace win {
 	var win: HTMLElement;
 
 	var toggle_character = false;
-	var toggle_container = false;
 
 	export var started = false;
 

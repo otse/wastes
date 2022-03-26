@@ -1336,10 +1336,10 @@ void main() {
         const color_door = [210, 210, 210];
         const color_wooden_door_and_deck = [24, 93, 61];
         const color_decidtree = [20, 70, 20];
-        const color_grass = [30, 120, 30];
+        const color_grass = [40, 90, 40];
         const color_wheat = [130, 130, 0];
-        const color_slimy_wall = [20, 70, 50];
-        const color_slimy_wall_with_deck = [20, 78, 54];
+        const color_scrappy_wall = [20, 70, 50];
+        const color_scrappy_wall_with_deck = [20, 78, 54];
         const color_deck = [114, 128, 124];
         const color_rusty_wall_and_deck = [20, 84, 87];
         const color_outer_wall = [20, 90, 90];
@@ -1385,13 +1385,13 @@ void main() {
             hooks.register('sectorCreate', (sector) => {
                 pts.func(sector.small, (pos) => {
                     let pixel = wastes.buildingmap.pixel(pos);
-                    if (pixel.is_color(color_slimy_wall_with_deck)) {
+                    if (pixel.is_color(color_scrappy_wall_with_deck)) {
                         factory(objects.deck, pixel, pos);
-                        factory(objects.wall, pixel, pos, { type: 'slimy' });
+                        factory(objects.wall, pixel, pos, { type: 'medieval' });
                         factory(objects.roof, pixel, pos);
                     }
-                    else if (pixel.is_color(color_slimy_wall)) {
-                        factory(objects.wall, pixel, pos, { type: 'slimy' });
+                    else if (pixel.is_color(color_scrappy_wall)) {
+                        factory(objects.wall, pixel, pos, { type: 'scrappy' });
                         //factory(objects.roof, pixel, pos);
                     }
                     else if (pixel.is_color(color_decidtree)) {
@@ -1403,7 +1403,7 @@ void main() {
                     else if (pixel.is_color(color_wheat)) ;
                     else if (pixel.is_color(color_rusty_wall_and_deck)) {
                         factory(objects.deck, pixel, pos);
-                        factory(objects.wall, pixel, pos, { type: 'rusty' });
+                        factory(objects.wall, pixel, pos, { type: 'medieval' });
                         factory(objects.roof, pixel, pos);
                     }
                     else if (pixel.is_color(color_outer_wall)) {
@@ -1807,14 +1807,7 @@ void main() {
                 this.height = 4;
             }
             create() {
-                this.tiled();
-                this.size = [24, 17];
-                let shape = new sprite({
-                    binded: this,
-                    tuple: sprites$1.droof,
-                    order: .7,
-                });
-                this.z = shape.rup = 3 + 26;
+                return;
             }
             tick() {
                 const sprite = this.shape;
