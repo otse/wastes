@@ -1116,10 +1116,6 @@ void main() {
                     this.height = 6;
                     this.cell = [1, 0];
                     this.color = wastes.colormap.pixel(this.wpos).array;
-                    let biome = wastes.texturemap.pixel(this.wpos);
-                    if (biome.array[0] > 70) {
-                        this.tuple = sprites$1.dswamptiles;
-                    }
                     const divisor = 5;
                     let height = wastes.heightmap.pixel(this.wpos);
                     this.z = Math.floor(height.array[0] / divisor);
@@ -1360,7 +1356,7 @@ void main() {
             wastes.objectmap = new colormap('objectmap');
             wastes.buildingmap = new colormap('buildingmap');
             wastes.colormap = new colormap('colormap');
-            wastes.texturemap = new colormap('texturemap');
+            wastes.roughmap = new colormap('roughmap');
             wastes.roommap = new colormap('roommap');
             hooks.register('sectorCreate', (sector) => {
                 pts.func(sector.small, (pos) => {
@@ -1387,7 +1383,7 @@ void main() {
                     let pixel = wastes.buildingmap.pixel(pos);
                     if (pixel.is_color(color_scrappy_wall_with_deck)) {
                         factory(objects.deck, pixel, pos);
-                        factory(objects.wall, pixel, pos, { type: 'medieval' });
+                        factory(objects.wall, pixel, pos, { type: 'scrappy' });
                         factory(objects.roof, pixel, pos);
                     }
                     else if (pixel.is_color(color_scrappy_wall)) {
@@ -1397,9 +1393,7 @@ void main() {
                     else if (pixel.is_color(color_decidtree)) {
                         factory(objects.decidtree, pixel, pos);
                     }
-                    else if (pixel.is_color(color_grass)) {
-                        factory(objects.grass, pixel, pos);
-                    }
+                    else if (pixel.is_color(color_grass)) ;
                     else if (pixel.is_color(color_wheat)) ;
                     else if (pixel.is_color(color_rusty_wall_and_deck)) {
                         factory(objects.deck, pixel, pos);
@@ -1807,7 +1801,15 @@ void main() {
                 this.height = 4;
             }
             create() {
-                return;
+                //return;
+                this.tiled();
+                this.size = [24, 17];
+                let shape = new sprite({
+                    binded: this,
+                    tuple: sprites$1.droof,
+                    order: .7,
+                });
+                this.z = shape.rup = 3 + 26;
             }
             tick() {
                 const sprite = this.shape;
@@ -6993,12 +6995,12 @@ void main() {
                 const mult = 1;
                 const headSize = 10 * mult;
                 const legsSize = 7 * mult;
-                const legsHeight = 24 * mult;
+                const legsHeight = 25 * mult;
                 const armsSize = 6 * mult;
                 const armsHeight = 22 * mult;
                 const armsAngle = .0;
-                const bodyThick = 8 * mult;
-                const bodyWidth = 16 * mult;
+                const bodyThick = 10 * mult;
+                const bodyWidth = 15 * mult;
                 const bodyHeight = 24 * mult;
                 let boxHead = new THREE.BoxGeometry(headSize, headSize, headSize, 1, 1, 1);
                 let materialHead = new THREE.MeshLambertMaterial({

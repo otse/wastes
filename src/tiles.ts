@@ -107,10 +107,14 @@ export namespace tiles {
 				this.height = 6;
 				this.cell = [1, 0];
 				this.color = wastes.colormap.pixel(this.wpos).array;
-				
-				let biome = wastes.texturemap.pixel(this.wpos);
-				if (biome.array[0] > 70) {
-					this.tuple = sprites.dswamptiles;
+
+				const useRoughMap = false;
+
+				if (useRoughMap) {
+					let biome = wastes.roughmap.pixel(this.wpos);
+					if (biome.array[0] > 70) {
+						this.tuple = sprites.dswamptiles;
+					}
 				}
 
 				const divisor = 5;

@@ -49,7 +49,7 @@ namespace objects {
 		wastes.objectmap = new colormap('objectmap');
 		wastes.buildingmap = new colormap('buildingmap');
 		wastes.colormap = new colormap('colormap');
-		wastes.texturemap = new colormap('texturemap');
+		wastes.roughmap = new colormap('roughmap');
 		wastes.roommap = new colormap('roommap');
 
 		const treeTreshold = 50;
@@ -84,7 +84,7 @@ namespace objects {
 				let pixel = wastes.buildingmap.pixel(pos);
 				if (pixel.is_color(color_scrappy_wall_with_deck)) {
 					factory(objects.deck, pixel, pos);
-					factory(objects.wall, pixel, pos, { type: 'medieval' });
+					factory(objects.wall, pixel, pos, { type: 'scrappy' });
 					factory(objects.roof, pixel, pos);
 				}
 				else if (pixel.is_color(color_scrappy_wall)) {
@@ -96,7 +96,7 @@ namespace objects {
 
 				}
 				else if (pixel.is_color(color_grass)) {
-					factory(objects.grass, pixel, pos);
+					//factory(objects.grass, pixel, pos);
 				}
 				else if (pixel.is_color(color_wheat)) {
 					//factory(objects.wheat, pixel, pos);
@@ -515,7 +515,7 @@ namespace objects {
 			this.height = 4;
 		}
 		override create() {
-			return;
+			//return;
 			this.tiled();
 			this.size = [24, 17];
 			let shape = new sprite({
