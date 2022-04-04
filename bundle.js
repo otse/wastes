@@ -694,7 +694,7 @@ void main() {
                 this.rpos = [0, 0];
                 this.size = [100, 100];
                 this.ro = 0;
-                this.z = 0;
+                this.z = 0; // z is only used by tiles
                 this.height = 0;
                 this.heightAdd = 0;
                 this.counts[1]++;
@@ -721,11 +721,11 @@ void main() {
                 (_a = this.shape) === null || _a === void 0 ? void 0 : _a.hide();
                 // console.log(' obj.hide ');
             }
-            wtorpos(add = [0, 0]) {
-                this.rpos = lod.project(pts.add(this.wpos, add));
+            wtorpos() {
+                this.rpos = lod.project(this.wpos);
             }
-            rtospos(add = [0, 0]) {
-                this.wtorpos(add);
+            rtospos() {
+                this.wtorpos();
                 return pts.clone(this.rpos);
             }
             tick() {
@@ -845,6 +845,8 @@ void main() {
                 this.vars.cell = [0, 0];
             if (!this.vars.order)
                 this.vars.order = 0;
+            if (!this.vars.opacity)
+                this.vars.opacity = 1;
             this.myUvTransform = new THREE.Matrix3;
             this.myUvTransform.setUvTransform(0, 0, 1, 1, 0, 0, 1);
         }
@@ -854,6 +856,7 @@ void main() {
             const obj = this.vars.binded;
             let calc = obj.rpos;
             if (this.dime)
+                // move bottom left corner
                 calc = pts.add(obj.rpos, pts.divide(obj.size, 2));
             else
                 calc = pts.add(obj.rpos, [0, obj.size[1]]);
@@ -894,7 +897,8 @@ void main() {
             this.material = SpriteMaterial({
                 map: ren$1.load_texture(`${this.vars.tuple[3]}.png`, 0),
                 transparent: true,
-                color: color
+                color: color,
+                opacity: this.vars.opacity
             }, {
                 myUvTransform: this.myUvTransform
             });
@@ -1097,16 +1101,18 @@ void main() {
             }
         }
         tiles.tick = tick;
-        const color_purple_water = [66, 66, 110, 255];
+        const color_purple_water = [40, 90, 130, 255];
         class tile extends lod$1.obj {
             constructor(wpos) {
                 super(numbers.tiles);
+                this.opacity = 1;
                 this.wpos = wpos;
                 let colour = wastes.colormap.pixel(this.wpos);
                 if (colour.is_black()) {
                     this.type = 'water';
                     this.size = [24, 12];
                     this.tuple = sprites$1.dtile;
+                    this.opacity = .5;
                     this.color = color_purple_water;
                 }
                 if (!colour.is_black()) {
@@ -1142,6 +1148,7 @@ void main() {
                     tuple: this.tuple,
                     cell: this.cell,
                     color: this.color,
+                    opacity: this.opacity,
                     order: -.5
                 });
                 // if we have a deck, add it to heightAdd
@@ -1339,6 +1346,7 @@ void main() {
         const color_deck = [114, 128, 124];
         const color_rusty_wall_and_deck = [20, 84, 87];
         const color_outer_wall = [20, 90, 90];
+        const color_false_front = [255, 255, 255];
         const color_acid_barrel = [61, 118, 48];
         const color_wall_chest = [130, 100, 50];
         function factory(type, pixel, pos, hints = {}) {
@@ -1357,7 +1365,7 @@ void main() {
             wastes.buildingmap = new colormap('buildingmap');
             wastes.colormap = new colormap('colormap');
             wastes.roughmap = new colormap('roughmap');
-            wastes.roommap = new colormap('roommap');
+            wastes.roofmap = new colormap('roofmap');
             hooks.register('sectorCreate', (sector) => {
                 pts.func(sector.small, (pos) => {
                     let pixel = wastes.objectmap.pixel(pos);
@@ -1368,16 +1376,16 @@ void main() {
                 });
                 return false;
             });
-            /*hooks.register('sectorCreate', (sector: lod.sector) => {
+            hooks.register('sectorCreate', (sector) => {
                 pts.func(sector.small, (pos) => {
-                    let pixel = wastes.roommap.pixel(pos);
+                    let pixel = wastes.roofmap.pixel(pos);
                     if (pixel.is_color(color_false_front)) {
                         //factory(objects.roof, pixel, pos);
-                        //factory(objects.falsefront, pixel, pos);
+                        factory(objects.falsefront, pixel, pos);
                     }
-                })
+                });
                 return false;
-            })*/
+            });
             hooks.register('sectorCreate', (sector) => {
                 pts.func(sector.small, (pos) => {
                     let pixel = wastes.buildingmap.pixel(pos);
@@ -1503,7 +1511,7 @@ void main() {
         }
         objects.colormap = colormap;
         function is_solid(pos) {
-            const passable = ['land', 'deck', 'pawn', 'you', 'door', 'leaves', 'roof'];
+            const passable = ['land', 'deck', 'pawn', 'you', 'door', 'leaves', 'roof', 'falsefront'];
             pos = pts.round(pos);
             let sector = lod$1.ggalaxy.at(lod$1.ggalaxy.big(pos));
             let at = sector.stacked(pos);
@@ -1520,8 +1528,8 @@ void main() {
                 super(counts);
                 this.solid = true;
                 this.cell = [0, 0];
-                this.calc = 0;
                 this.heightAdd = 0;
+                this.calc = 0; // used for tree leaves
             }
             tiled() {
                 this.tile = tiles$1.get(pts.round(this.wpos));
@@ -1542,7 +1550,7 @@ void main() {
                 }
                 this.calc = calc;
                 if (this.shape)
-                    this.shape.rup = this.calc + this.heightAdd;
+                    this.shape.rup = calc + this.heightAdd;
             }
         }
         objects.objected = objected;
@@ -1798,7 +1806,7 @@ void main() {
             constructor() {
                 super(numbers.roofs);
                 this.type = 'roof';
-                this.height = 4;
+                this.height = 2;
             }
             create() {
                 //return;
@@ -1809,7 +1817,7 @@ void main() {
                     tuple: sprites$1.droof,
                     order: .7,
                 });
-                this.z = shape.rup = 3 + 26;
+                shape.rup = 29;
             }
             tick() {
                 const sprite = this.shape;
@@ -1822,6 +1830,36 @@ void main() {
             }
         }
         objects.roof = roof;
+        class falsefront extends objected {
+            constructor() {
+                super(numbers.roofs);
+                this.type = 'falsefront';
+                this.height = 5;
+            }
+            create() {
+                this.tiled();
+                this.cell = [255 - this.pixel.array[3], 0];
+                this.size = [24, 40];
+                new sprite({
+                    binded: this,
+                    tuple: sprites$1.dfalsefronts,
+                    cell: this.cell,
+                    order: .7,
+                });
+                this.stack();
+                //this.z = 29+4;
+            }
+            tick() {
+                const sprite = this.shape;
+                if (!sprite)
+                    return;
+                if (wastes.HIDE_ROOFS)
+                    sprite.mesh.visible = false;
+                else if (!wastes.HIDE_ROOFS)
+                    sprite.mesh.visible = true;
+            }
+        }
+        objects.falsefront = falsefront;
         class acidbarrel extends objected {
             constructor() {
                 super(numbers.objs);
@@ -1840,26 +1878,6 @@ void main() {
             }
         }
         objects.acidbarrel = acidbarrel;
-        class falsefront extends objected {
-            constructor() {
-                super(numbers.roofs);
-                this.type = 'falsefront';
-                this.height = 10;
-            }
-            create() {
-                this.tiled();
-                this.cell = [255 - this.pixel.array[3], 0];
-                this.size = [24, 40];
-                new sprite({
-                    binded: this,
-                    tuple: sprites$1.dfalsefronts,
-                    cell: this.cell,
-                    order: .7,
-                });
-                this.stack();
-            }
-        }
-        objects.falsefront = falsefront;
         class door extends objected {
             constructor() {
                 super(numbers.walls);
@@ -1930,15 +1948,6 @@ void main() {
     (function (modeler) {
         modeler.started = false;
         const textures = [
-            'tex/stock/moonsand.jpg',
-            'tex/stock/soilrough.jpg',
-            'tex/stock/redverts.jpg',
-            'tex/stock/smudplanks.jpg',
-            'tex/stock/blueplanks.jpg',
-            'tex/stock/crate1.jpg',
-            'tex/stock/planks.jpg',
-            'tex/stock/planks1.jpg',
-            'tex/stock/planks5.jpg',
             'tex/stock/metalrooftiles.jpg',
             'tex/stock/concrete1.jpg',
             'tex/stock/brick2.jpg',
@@ -7158,7 +7167,7 @@ void main() {
                 this.tiled();
                 //this.tile?.paint();
                 (_b = this.sector) === null || _b === void 0 ? void 0 : _b.swap(this);
-                this.stack(['leaves', 'door', 'roof']);
+                this.stack(['leaves', 'door', 'roof', 'falsefront']);
                 super.update();
             }
         }

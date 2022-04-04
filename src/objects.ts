@@ -50,7 +50,7 @@ namespace objects {
 		wastes.buildingmap = new colormap('buildingmap');
 		wastes.colormap = new colormap('colormap');
 		wastes.roughmap = new colormap('roughmap');
-		wastes.roommap = new colormap('roommap');
+		wastes.roofmap = new colormap('roofmap');
 
 		const treeTreshold = 50;
 
@@ -68,16 +68,16 @@ namespace objects {
 			return false;
 		})
 
-		/*hooks.register('sectorCreate', (sector: lod.sector) => {
+		hooks.register('sectorCreate', (sector: lod.sector) => {
 			pts.func(sector.small, (pos) => {
-				let pixel = wastes.roommap.pixel(pos);
+				let pixel = wastes.roofmap.pixel(pos);
 				if (pixel.is_color(color_false_front)) {
 					//factory(objects.roof, pixel, pos);
-					//factory(objects.falsefront, pixel, pos);
+					factory(objects.falsefront, pixel, pos);
 				}
 			})
 			return false;
-		})*/
+		})
 
 		hooks.register('sectorCreate', (sector: lod.sector) => {
 			pts.func(sector.small, (pos) => {
@@ -216,7 +216,7 @@ namespace objects {
 	}
 
 	export function is_solid(pos: vec2) {
-		const passable = ['land', 'deck', 'pawn', 'you', 'door', 'leaves', 'roof'];
+		const passable = ['land', 'deck', 'pawn', 'you', 'door', 'leaves', 'roof', 'falsefront'];
 		pos = pts.round(pos);
 		let sector = lod.ggalaxy.at(lod.ggalaxy.big(pos));
 		let at = sector.stacked(pos);
@@ -233,9 +233,9 @@ namespace objects {
 		pixel?: pixel
 		tile?: tiles.tile
 		cell: vec2 = [0, 0]
-		calc = 0
 		heightAdd = 0
 		hints?: any
+		calc = 0 // used for tree leaves
 		constructor(counts: numbers.tally) {
 			super(counts);
 
@@ -256,11 +256,10 @@ namespace objects {
 				if (obj == this)
 					break;
 				calc += obj.z + obj.height;
-
 			}
 			this.calc = calc;
 			if (this.shape)
-				(this.shape as sprite).rup = this.calc + this.heightAdd;
+				(this.shape as sprite).rup = calc + this.heightAdd;
 		}
 	}
 	export class wall extends objected {
@@ -512,7 +511,7 @@ namespace objects {
 		constructor() {
 			super(numbers.roofs);
 			this.type = 'roof';
-			this.height = 4;
+			this.height = 2;
 		}
 		override create() {
 			//return;
@@ -523,7 +522,36 @@ namespace objects {
 				tuple: sprites.droof,
 				order: .7,
 			});
-			this.z = shape.rup = 3 + 26;
+			shape.rup = 29;
+		}
+		override tick() {
+			const sprite = this.shape as sprite;
+			if (!sprite)
+				return;
+			if (wastes.HIDE_ROOFS)
+				sprite.mesh.visible = false;
+			else if (!wastes.HIDE_ROOFS)
+				sprite.mesh.visible = true;
+		}
+	}
+	export class falsefront extends objected {
+		constructor() {
+			super(numbers.roofs);
+			this.type = 'falsefront'
+			this.height = 5;
+		}
+		override create() {
+			this.tiled();
+			this.cell = [255 - this.pixel!.array[3], 0];
+			this.size = [24, 40];
+			let shape = new sprite({
+				binded: this,
+				tuple: sprites.dfalsefronts,
+				cell: this.cell,
+				order: .7,
+			});
+			this.stack();
+			//this.z = 29+4;
 		}
 		override tick() {
 			const sprite = this.shape as sprite;
@@ -552,25 +580,7 @@ namespace objects {
 			this.stack();
 		}
 	}
-	export class falsefront extends objected {
-		constructor() {
-			super(numbers.roofs);
-			this.type = 'falsefront'
-			this.height = 10;
-		}
-		override create() {
-			this.tiled();
-			this.cell = [255 - this.pixel!.array[3], 0];
-			this.size = [24, 40];
-			let shape = new sprite({
-				binded: this,
-				tuple: sprites.dfalsefronts,
-				cell: this.cell,
-				order: .7,
-			});
-			this.stack();
-		}
-	}
+	
 	export class door extends objected {
 		static order = .7;
 		open = false

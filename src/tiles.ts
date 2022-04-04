@@ -78,7 +78,7 @@ export namespace tiles {
 
 	}
 
-	const color_purple_water: vec4 = [66, 66, 110, 255];
+	const color_purple_water: vec4 = [40, 90, 130, 255];
 
 	export class tile extends lod.obj {
 		static lastHover?: tile
@@ -86,6 +86,7 @@ export namespace tiles {
 		cell: vec2
 		// objs: lod.obj[] = []
 		color: vec4
+		opacity = 1
 		colorPrev
 		constructor(wpos: vec2) {
 			super(numbers.tiles);
@@ -98,6 +99,7 @@ export namespace tiles {
 				this.type = 'water';
 				this.size = [24, 12];
 				this.tuple = sprites.dtile;
+				this.opacity = .5;
 				this.color = color_purple_water;
 			}
 			if (!colour.is_black()) {
@@ -142,6 +144,7 @@ export namespace tiles {
 				tuple: this.tuple,
 				cell: this.cell,
 				color: this.color,
+				opacity: this.opacity,
 				order: -.5
 			});
 			// if we have a deck, add it to heightAdd

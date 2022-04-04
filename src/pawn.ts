@@ -313,7 +313,7 @@ export namespace pawns {
 			this.tiled();
 			//this.tile?.paint();
 			this.sector?.swap(this);
-			this.stack(['leaves', 'door', 'roof']);
+			this.stack(['leaves', 'door', 'roof', 'falsefront']);
 			super.update();
 		}
 		//tick() {

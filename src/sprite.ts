@@ -11,6 +11,7 @@ interface SpriteParameters {
 	tuple: sprites.tuple,
 	cell?: vec2,
 	color?: vec4,
+	opacity?: number
 	mask?: string,
 	order?: number
 };
@@ -36,6 +37,8 @@ export class sprite extends lod.shape {
 			this.vars.cell = [0, 0];
 		if (!this.vars.order)
 			this.vars.order = 0;
+		if (!this.vars.opacity)
+			this.vars.opacity = 1;
 		this.myUvTransform = new Matrix3;
 		this.myUvTransform.setUvTransform(0, 0, 1, 1, 0, 0, 1);
 	}
@@ -45,6 +48,7 @@ export class sprite extends lod.shape {
 		const obj = this.vars.binded;
 		let calc = obj.rpos;
 		if (this.dime)
+			// move bottom left corner
 			calc = pts.add(obj.rpos, pts.divide(obj.size, 2));
 		else
 			calc = pts.add(obj.rpos, [0, obj.size[1]]);
@@ -86,7 +90,8 @@ export class sprite extends lod.shape {
 		this.material = SpriteMaterial({
 			map: ren.load_texture(`${this.vars.tuple[3]}.png`, 0),
 			transparent: true,
-			color: color
+			color: color,
+			opacity: this.vars.opacity
 		}, {
 			myUvTransform: this.myUvTransform
 		});

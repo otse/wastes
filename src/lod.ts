@@ -261,7 +261,7 @@ namespace lod {
 		shape: shape | null
 		sector: sector | null
 		ro = 0
-		z = 0
+		z = 0 // z is only used by tiles
 		height = 0
 		heightAdd = 0
 		constructor(
@@ -289,11 +289,11 @@ namespace lod {
 			this.shape?.hide();
 			// console.log(' obj.hide ');
 		}
-		wtorpos(add: vec2 = [0, 0]) {
-			this.rpos = lod.project(pts.add(this.wpos, add));
+		wtorpos() {
+			this.rpos = lod.project(this.wpos);
 		}
-		rtospos(add: vec2 = [0, 0]) {
-			this.wtorpos(add);
+		rtospos() {
+			this.wtorpos();
 			return pts.clone(this.rpos);
 		}
 		tick() { // implement me
