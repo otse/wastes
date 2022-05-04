@@ -15,7 +15,7 @@ import tiles from "./tiles";
 export class view {
 	zoom = 0.33
 	zoomIndex = 3
-	zooms = [1, 0.5, 0.33, 0.2, 0.1]
+	zooms = [1, 0.5, 0.33, 0.2, 0.1, 0.05]
 	wpos: vec2 = [42, 45]
 	rpos: vec2 = [0, 0]
 	mpos: vec2 = [0, 0]

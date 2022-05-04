@@ -6,7 +6,7 @@ import lod, { numbers } from "./lod";
 import objects from "./objects";
 import pts from "./pts";
 import ren from "./renderer";
-import sprite from "./sprite";
+import sprite, { SpriteMaterial } from "./sprite";
 import sprites from "./sprites";
 import tiles from "./tiles";
 import wastes from "./wastes";
@@ -35,7 +35,7 @@ export namespace pawns {
 	const wasterSprite = false;
 
 	export class pawn extends objects.objected {
-		inventory: objects.container 
+		inventory: objects.container
 		items: string[] = []
 		group
 		mesh
@@ -53,10 +53,12 @@ export namespace pawns {
 		override create() {
 
 			this.tiled();
+
 			if (wasterSprite)
 				this.size = pts.divide([90, 180], 5);
 			else
 				this.size = pts.divide([100, 100], 2);
+
 			let shape = new sprite({
 				binded: this,
 				tuple: wasterSprite ? sprites.pchris : sprites.test100,
@@ -68,11 +70,13 @@ export namespace pawns {
 				this.created = true;
 				// make wee guy target
 				//this.group = new THREE.Group
-				let w = 100, h = 100;
+				let w = 50, h = 50;
 				this.target = ren.make_render_target(w, h);
 				this.camera = ren.ortographic_camera(w, h);
 				this.scene = new Scene()
 				this.scene.rotation.set(Math.PI / 6, Math.PI / 4, 0);
+				this.scene.position.set(0, 0, 0);
+				//this.scene.scale.set(.5, .5, .5);
 				//this.scene.background = new Color('salmon');
 
 				let amb = new AmbientLight('white');
@@ -107,18 +111,45 @@ export namespace pawns {
 				return;
 			this.made = true;
 
-			const mult = 1;
+			const mult = .5;
 
 			const headSize = 10 * mult;
-			const legsSize = 7 * mult;
+			const legsSize = 8 * mult;
 			const legsHeight = 25 * mult;
 			const legsUp = 5 * mult;
 			const armsSize = 6 * mult;
 			const armsHeight = 22 * mult;
 			const armsAngle = .0;
 			const bodyThick = 10 * mult;
-			const bodyWidth = 15 * mult;
+			const bodyWidth = 16 * mult;
 			const bodyHeight = 24 * mult;
+
+			const bodyTexture = [29, 12];
+			let materialsBody: any[] = [];
+			{
+				let mat = new Matrix3;
+
+				let transforms: any[] = [];
+				transforms.push(new Matrix3().setUvTransform( // left
+					bodyWidth * 2 / bodyTexture[0], 0, bodyThick / bodyTexture[0], 1, 0, 0, 1));
+				transforms.push(new Matrix3().setUvTransform( // right
+					bodyWidth * 2 / bodyTexture[0] + bodyThick / bodyTexture[0], 0, -bodyThick / bodyTexture[0], 1, 0, 0, 1));
+				transforms.push(new Matrix3().setUvTransform( // top
+				bodyWidth * 2 / bodyTexture[0] + bodyThick / bodyTexture[0], 0, bodyWidth / bodyTexture[0], bodyThick / bodyTexture[1], 0, 0, 1));
+				transforms.push(new Matrix3());
+				transforms.push(new Matrix3().setUvTransform( // front
+					0, 0, bodyWidth / bodyTexture[0], 1, 0, 0, 1));
+				transforms.push(new Matrix3().setUvTransform( // back
+					bodyWidth / bodyTexture[0], 0, bodyWidth / bodyTexture[0], 1, 0, 0, 1));
+
+				for (let i in transforms) {
+					materialsBody.push(SpriteMaterial({
+						map: ren.load_texture(`tex/pawn/body.png`, 0),
+					}, {
+						myUvTransform: transforms[i]
+					}));
+				}
+			}
 
 			let boxHead = new BoxGeometry(headSize, headSize, headSize, 1, 1, 1);
 			let materialHead = new MeshLambertMaterial({
@@ -126,9 +157,9 @@ export namespace pawns {
 			});
 
 			let boxBody = new BoxGeometry(bodyWidth, bodyHeight, bodyThick, 1, 1, 1);
-			let materialBody = new MeshLambertMaterial({
-				color: '#544f43'
-			});
+			//let materialBody = new MeshLambertMaterial({
+			//	color: '#544f43'
+			//});
 
 			let boxArms = new BoxGeometry(armsSize, armsHeight, armsSize, 1, 1, 1);
 			let materialArms = new MeshLambertMaterial({
@@ -141,7 +172,7 @@ export namespace pawns {
 			});
 
 			this.meshes.head = new Mesh(boxHead, materialHead);
-			this.meshes.body = new Mesh(boxBody, materialBody);
+			this.meshes.body = new Mesh(boxBody, materialsBody);
 
 			this.meshes.arml = new Mesh(boxArms, materialArms);
 			this.meshes.armr = new Mesh(boxArms, materialArms);
@@ -213,7 +244,7 @@ export namespace pawns {
 		speed = 1
 		override tick() {
 
-			const legsSwoop = 0.6;
+			const legsSwoop = 0.8;
 			const armsSwoop = 0.5;
 			this.render();
 

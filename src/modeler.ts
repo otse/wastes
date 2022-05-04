@@ -10,6 +10,7 @@ namespace modeler {
 
 	const textures = [
 		
+		'tex/stock/planks1.jpg',
 		'tex/stock/metalrooftiles.jpg',
 		'tex/stock/concrete1.jpg',
 		'tex/stock/brick2.jpg',

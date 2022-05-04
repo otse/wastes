@@ -529,7 +529,7 @@ void main() {
             constructor(span) {
                 this.arrays = [];
                 lod.ggalaxy = this;
-                new grid(3, 3);
+                new grid(4, 4);
             }
             update(wpos) {
                 lod.ggrid.big = this.big(wpos);
@@ -1193,7 +1193,7 @@ void main() {
         constructor() {
             this.zoom = 0.33;
             this.zoomIndex = 3;
-            this.zooms = [1, 0.5, 0.33, 0.2, 0.1];
+            this.zooms = [1, 0.5, 0.33, 0.2, 0.1, 0.05];
             this.wpos = [42, 45];
             this.rpos = [0, 0];
             this.mpos = [0, 0];
@@ -1346,7 +1346,6 @@ void main() {
         const color_deck = [114, 128, 124];
         const color_rusty_wall_and_deck = [20, 84, 87];
         const color_outer_wall = [20, 90, 90];
-        const color_false_front = [255, 255, 255];
         const color_acid_barrel = [61, 118, 48];
         const color_wall_chest = [130, 100, 50];
         function factory(type, pixel, pos, hints = {}) {
@@ -1376,16 +1375,16 @@ void main() {
                 });
                 return false;
             });
-            hooks.register('sectorCreate', (sector) => {
+            /*hooks.register('sectorCreate', (sector: lod.sector) => {
                 pts.func(sector.small, (pos) => {
                     let pixel = wastes.roofmap.pixel(pos);
                     if (pixel.is_color(color_false_front)) {
                         //factory(objects.roof, pixel, pos);
                         factory(objects.falsefront, pixel, pos);
                     }
-                });
+                })
                 return false;
-            });
+            })*/
             hooks.register('sectorCreate', (sector) => {
                 pts.func(sector.small, (pos) => {
                     let pixel = wastes.buildingmap.pixel(pos);
@@ -1402,10 +1401,12 @@ void main() {
                         factory(objects.decidtree, pixel, pos);
                     }
                     else if (pixel.is_color(color_grass)) ;
-                    else if (pixel.is_color(color_wheat)) ;
+                    else if (pixel.is_color(color_wheat)) {
+                        factory(objects.wheat, pixel, pos);
+                    }
                     else if (pixel.is_color(color_rusty_wall_and_deck)) {
                         factory(objects.deck, pixel, pos);
-                        factory(objects.wall, pixel, pos, { type: 'medieval' });
+                        factory(objects.wall, pixel, pos, { type: 'rusty' });
                         factory(objects.roof, pixel, pos);
                     }
                     else if (pixel.is_color(color_outer_wall)) {
@@ -1948,6 +1949,7 @@ void main() {
     (function (modeler) {
         modeler.started = false;
         const textures = [
+            'tex/stock/planks1.jpg',
             'tex/stock/metalrooftiles.jpg',
             'tex/stock/concrete1.jpg',
             'tex/stock/brick2.jpg',
@@ -6971,11 +6973,13 @@ void main() {
                     this.created = true;
                     // make wee guy target
                     //this.group = new THREE.Group
-                    let w = 100, h = 100;
+                    let w = 50, h = 50;
                     this.target = ren$1.make_render_target(w, h);
                     this.camera = ren$1.ortographic_camera(w, h);
                     this.scene = new THREE.Scene();
                     this.scene.rotation.set(Math.PI / 6, Math.PI / 4, 0);
+                    this.scene.position.set(0, 0, 0);
+                    //this.scene.scale.set(.5, .5, .5);
                     //this.scene.background = new Color('salmon');
                     let amb = new THREE.AmbientLight('white');
                     this.scene.add(amb);
@@ -7001,24 +7005,48 @@ void main() {
                 if (this.made)
                     return;
                 this.made = true;
-                const mult = 1;
+                const mult = .5;
                 const headSize = 10 * mult;
-                const legsSize = 7 * mult;
+                const legsSize = 8 * mult;
                 const legsHeight = 25 * mult;
                 const armsSize = 6 * mult;
                 const armsHeight = 22 * mult;
                 const armsAngle = .0;
                 const bodyThick = 10 * mult;
-                const bodyWidth = 15 * mult;
+                const bodyWidth = 16 * mult;
                 const bodyHeight = 24 * mult;
+                const bodyTexture = [29, 12];
+                let materialsBody = [];
+                {
+                    new THREE.Matrix3;
+                    let transforms = [];
+                    transforms.push(new THREE.Matrix3().setUvTransform(// left
+                    bodyWidth * 2 / bodyTexture[0], 0, bodyThick / bodyTexture[0], 1, 0, 0, 1));
+                    transforms.push(new THREE.Matrix3().setUvTransform(// right
+                    bodyWidth * 2 / bodyTexture[0] + bodyThick / bodyTexture[0], 0, -bodyThick / bodyTexture[0], 1, 0, 0, 1));
+                    transforms.push(new THREE.Matrix3().setUvTransform(// top
+                    bodyWidth * 2 / bodyTexture[0] + bodyThick / bodyTexture[0], 0, bodyWidth / bodyTexture[0], bodyThick / bodyTexture[1], 0, 0, 1));
+                    transforms.push(new THREE.Matrix3());
+                    transforms.push(new THREE.Matrix3().setUvTransform(// front
+                    0, 0, bodyWidth / bodyTexture[0], 1, 0, 0, 1));
+                    transforms.push(new THREE.Matrix3().setUvTransform(// back
+                    bodyWidth / bodyTexture[0], 0, bodyWidth / bodyTexture[0], 1, 0, 0, 1));
+                    for (let i in transforms) {
+                        materialsBody.push(SpriteMaterial({
+                            map: ren$1.load_texture(`tex/pawn/body.png`, 0),
+                        }, {
+                            myUvTransform: transforms[i]
+                        }));
+                    }
+                }
                 let boxHead = new THREE.BoxGeometry(headSize, headSize, headSize, 1, 1, 1);
                 let materialHead = new THREE.MeshLambertMaterial({
                     color: '#c08e77'
                 });
                 let boxBody = new THREE.BoxGeometry(bodyWidth, bodyHeight, bodyThick, 1, 1, 1);
-                let materialBody = new THREE.MeshLambertMaterial({
-                    color: '#544f43'
-                });
+                //let materialBody = new MeshLambertMaterial({
+                //	color: '#544f43'
+                //});
                 let boxArms = new THREE.BoxGeometry(armsSize, armsHeight, armsSize, 1, 1, 1);
                 let materialArms = new THREE.MeshLambertMaterial({
                     color: '#544f43'
@@ -7028,7 +7056,7 @@ void main() {
                     color: '#484c4c'
                 });
                 this.meshes.head = new THREE.Mesh(boxHead, materialHead);
-                this.meshes.body = new THREE.Mesh(boxBody, materialBody);
+                this.meshes.body = new THREE.Mesh(boxBody, materialsBody);
                 this.meshes.arml = new THREE.Mesh(boxArms, materialArms);
                 this.meshes.armr = new THREE.Mesh(boxArms, materialArms);
                 this.meshes.legl = new THREE.Mesh(boxLegs, materialLegs);
@@ -7078,7 +7106,7 @@ void main() {
             }
             tick() {
                 var _a, _b;
-                const legsSwoop = 0.6;
+                const legsSwoop = 0.8;
                 const armsSwoop = 0.5;
                 this.render();
                 this.swoop += 0.04;

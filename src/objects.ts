@@ -68,7 +68,7 @@ namespace objects {
 			return false;
 		})
 
-		hooks.register('sectorCreate', (sector: lod.sector) => {
+		/*hooks.register('sectorCreate', (sector: lod.sector) => {
 			pts.func(sector.small, (pos) => {
 				let pixel = wastes.roofmap.pixel(pos);
 				if (pixel.is_color(color_false_front)) {
@@ -77,7 +77,7 @@ namespace objects {
 				}
 			})
 			return false;
-		})
+		})*/
 
 		hooks.register('sectorCreate', (sector: lod.sector) => {
 			pts.func(sector.small, (pos) => {
@@ -99,11 +99,11 @@ namespace objects {
 					//factory(objects.grass, pixel, pos);
 				}
 				else if (pixel.is_color(color_wheat)) {
-					//factory(objects.wheat, pixel, pos);
+					factory(objects.wheat, pixel, pos);
 				}
 				else if (pixel.is_color(color_rusty_wall_and_deck)) {
 					factory(objects.deck, pixel, pos);
-					factory(objects.wall, pixel, pos, { type: 'medieval' });
+					factory(objects.wall, pixel, pos, { type: 'rusty' });
 					factory(objects.roof, pixel, pos);
 				}
 				else if (pixel.is_color(color_outer_wall)) {

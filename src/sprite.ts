@@ -104,7 +104,7 @@ export class sprite extends lod.shape {
 	}
 };
 
-function SpriteMaterial(parameters: MeshBasicMaterialParameters, uniforms: any) {
+export function SpriteMaterial(parameters: MeshBasicMaterialParameters, uniforms: any) {
 	let material = new MeshBasicMaterial(parameters)
 	material.customProgramCacheKey = function () {
 		return 'spritemat';
