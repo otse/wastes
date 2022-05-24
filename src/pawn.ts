@@ -136,7 +136,7 @@ export namespace pawns {
 					bodyWidth * 2 / bodyTexture[0] + bodyThick / bodyTexture[0], 0, -bodyThick / bodyTexture[0], 1, 0, 0, 1));
 				transforms.push(new Matrix3().setUvTransform( // top
 				bodyWidth * 2 / bodyTexture[0] + bodyThick / bodyTexture[0], 0, bodyWidth / bodyTexture[0], bodyThick / bodyTexture[1], 0, 0, 1));
-				transforms.push(new Matrix3());
+				transforms.push(new Matrix3()); // bottom ?
 				transforms.push(new Matrix3().setUvTransform( // front
 					0, 0, bodyWidth / bodyTexture[0], 1, 0, 0, 1));
 				transforms.push(new Matrix3().setUvTransform( // back

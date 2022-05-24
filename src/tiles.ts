@@ -116,13 +116,15 @@ export namespace tiles {
 					let biome = wastes.roughmap.pixel(this.wpos);
 					if (biome.array[0] > 70) {
 						this.tuple = sprites.dswamptiles;
+						//this.z -= 1;
 					}
 				}
 
 				const divisor = 5;
 				let height = wastes.heightmap.pixel(this.wpos);
-				this.z = Math.floor(height.array[0] / divisor);
-				this.z -= 3;
+				this.z += Math.floor(height.array[0] / divisor);
+				this.z -= 3; // so we dip the water
+				//this.z += Math.random() * 24;
 			}
 		}
 		get_stack() {

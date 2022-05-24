@@ -306,6 +306,7 @@ namespace objects {
 		}
 		override create() {
 			this.tiled();
+			//this.tile!.z -= 24;
 			this.size = [24, 17];
 			//if (this.pixel!.array[3] < 240)
 			//	this.cell = [240 - this.pixel!.array[3], 0];
@@ -343,7 +344,7 @@ namespace objects {
 			//	this.cell = [240 - this.pixel!.array[3], 0];
 			let shape = new sprite({
 				binded: this,
-				tuple: sprites.ddecidtree,
+				tuple: sprites.ddecidtreetrunk,
 				order: 0.6,
 			});
 			this.stack();
@@ -373,9 +374,9 @@ namespace objects {
 			let color = this.hints.color || [255, 255, 255, 255];
 			if (this.hints.color) {
 				color = [
-					Math.floor(color[0] * 1.5),
-					Math.floor(color[1] * 1.5),
-					Math.floor(color[2] * 1.8),
+					Math.floor(color[0] * 1.4),
+					Math.floor(color[1] * 1.4),
+					Math.floor(color[2] * 1.6),
 					color[3],
 				]
 			}

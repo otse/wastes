@@ -529,7 +529,7 @@ void main() {
             constructor(span) {
                 this.arrays = [];
                 lod.ggalaxy = this;
-                new grid(4, 4);
+                new grid(2, 2);
             }
             update(wpos) {
                 lod.ggrid.big = this.big(wpos);
@@ -798,26 +798,26 @@ void main() {
         sprites.shrubs = [[24, 15], [24, 15], 0, 'tex/shrubs'];
         sprites.dtile = [[24, 12], [24, 12], 0, 'tex/dtile'];
         sprites.dtile4 = [[24, 17], [24, 17], 0, 'tex/dtileup4'];
-        sprites.ddecidtree = [[24, 50], [24, 50], 0, 'tex/dtreetrunk'];
-        sprites.dtreeleaves = [[24, 31], [24, 31], 0, 'tex/dtreeleaves'];
         sprites.dgrass = [[96, 30], [24, 31], 0, 'tex/dgrass'];
         sprites.dwheat = [[96, 30], [24, 31], 0, 'tex/dwheat'];
         sprites.dswamptiles = [[96, 30], [24, 30], 0, 'tex/dswamptiles'];
-        sprites.dgraveltiles = [[96, 30], [24, 30], 0, 'tex/dgraveltiles'];
         sprites.dtilesand = [[24, 17], [24, 17], 0, 'tex/dtilesand'];
-        sprites.dwall = [[96, 40], [24, 40], 0, 'tex/dwalls'];
-        sprites.ddeck = [[72, 17], [24, 17], 0, 'tex/ddeck'];
-        sprites.dtree1 = [[121, 147], [121, 147], 0, 'tex/dtree1b'];
-        sprites.droof = [[72, 17], [24, 17], 0, 'tex/droof'];
-        sprites.dcrate = [[24, 40], [24, 40], 0, 'tex/dcrate'];
-        sprites.drustywalls = [[264, 40], [24, 40], 0, 'tex/drustywalls'];
+        sprites.dgraveltiles = [[96, 30], [24, 30], 0, 'tex/8bit/dgraveltiles'];
+        sprites.ddecidtreetrunk = [[24, 50], [24, 50], 0, 'tex/8bit/dtreetrunk'];
+        sprites.dtreeleaves = [[24, 31], [24, 31], 0, 'tex/8bit/dtreeleaves'];
+        //export const dwall: tuple = [[96, 40], [24, 40], 0, 'tex/dwalls']
+        sprites.ddeck = [[72, 17], [24, 17], 0, 'tex/8bit/ddeck'];
+        sprites.droof = [[72, 17], [24, 17], 0, 'tex/8bit/droof'];
+        sprites.dcrate = [[24, 40], [24, 40], 0, 'tex/8bit/dcrate'];
+        sprites.ddoor = [[192, 40], [24, 40], 0, 'tex/8bit/ddoor'];
+        sprites.drustywalls = [[264, 40], [24, 40], 0, 'tex/8bit/drustywalls'];
         sprites.dscrappywalls = [[264, 40], [24, 40], 0, 'tex/dscrappywalls'];
         sprites.dmedievalwalls = [[264, 40], [24, 40], 0, 'tex/dmedievalwalls'];
         //export const dscrappywalls2: tuple = [[216, 40], [24, 40], 0, 'tex/dscrappywalls2']
         sprites.druddywalls = [[288, 40], [24, 40], 0, 'tex/druddywalls'];
-        sprites.ddoor = [[192, 40], [24, 40], 0, 'tex/ddoor'];
         sprites.dacidbarrel = [[24, 35], [24, 35], 0, 'tex/dacidbarrel'];
         sprites.dfalsefronts = [[192, 40], [24, 40], 0, 'tex/dfalsefronts'];
+        sprites.dtree1 = [[121, 147], [121, 147], 0, 'tex/dtree1b'];
         sprites.pchris = [[90, 180], [90, 180], 0, 'tex/pawn/pwaster_quintuple'];
         sprites.pchris_lowres = [[19, 41], [19, 41], 0, 'tex/pawn/pwaster'];
         function get_uv_transform(cell, tuple) {
@@ -1124,8 +1124,9 @@ void main() {
                     this.color = wastes.colormap.pixel(this.wpos).array;
                     const divisor = 5;
                     let height = wastes.heightmap.pixel(this.wpos);
-                    this.z = Math.floor(height.array[0] / divisor);
-                    this.z -= 3;
+                    this.z += Math.floor(height.array[0] / divisor);
+                    this.z -= 3; // so we dip the water
+                    //this.z += Math.random() * 24;
                 }
             }
             get_stack() {
@@ -1192,7 +1193,7 @@ void main() {
     class view {
         constructor() {
             this.zoom = 0.33;
-            this.zoomIndex = 3;
+            this.zoomIndex = 4;
             this.zooms = [1, 0.5, 0.33, 0.2, 0.1, 0.05];
             this.wpos = [42, 45];
             this.rpos = [0, 0];
@@ -1595,6 +1596,7 @@ void main() {
             }
             create() {
                 this.tiled();
+                //this.tile!.z -= 24;
                 this.size = [24, 17];
                 //if (this.pixel!.array[3] < 240)
                 //	this.cell = [240 - this.pixel!.array[3], 0];
@@ -1634,7 +1636,7 @@ void main() {
                 //	this.cell = [240 - this.pixel!.array[3], 0];
                 new sprite({
                     binded: this,
-                    tuple: sprites$1.ddecidtree,
+                    tuple: sprites$1.ddecidtreetrunk,
                     order: 0.6,
                 });
                 this.stack();
@@ -1665,9 +1667,9 @@ void main() {
                 let color = this.hints.color || [255, 255, 255, 255];
                 if (this.hints.color) {
                     color = [
-                        Math.floor(color[0] * 1.5),
-                        Math.floor(color[1] * 1.5),
-                        Math.floor(color[2] * 1.8),
+                        Math.floor(color[0] * 1.4),
+                        Math.floor(color[1] * 1.4),
+                        Math.floor(color[2] * 1.6),
                         color[3],
                     ];
                 }
@@ -1949,12 +1951,10 @@ void main() {
     (function (modeler) {
         modeler.started = false;
         const textures = [
-            'tex/stock/planks1.jpg',
+            'tex/stock/bamboo.jpg',
+            'tex/stock/crate.jpg',
             'tex/stock/metalrooftiles.jpg',
             'tex/stock/concrete1.jpg',
-            'tex/stock/brick2.jpg',
-            'tex/stock/brick3.jpg',
-            'tex/stock/brick4.jpg',
             'tex/stock/treebark1.jpg',
             'tex/stock/leaves.png',
         ];
@@ -7026,7 +7026,7 @@ void main() {
                     bodyWidth * 2 / bodyTexture[0] + bodyThick / bodyTexture[0], 0, -bodyThick / bodyTexture[0], 1, 0, 0, 1));
                     transforms.push(new THREE.Matrix3().setUvTransform(// top
                     bodyWidth * 2 / bodyTexture[0] + bodyThick / bodyTexture[0], 0, bodyWidth / bodyTexture[0], bodyThick / bodyTexture[1], 0, 0, 1));
-                    transforms.push(new THREE.Matrix3());
+                    transforms.push(new THREE.Matrix3()); // bottom ?
                     transforms.push(new THREE.Matrix3().setUvTransform(// front
                     0, 0, bodyWidth / bodyTexture[0], 1, 0, 0, 1));
                     transforms.push(new THREE.Matrix3().setUvTransform(// back
