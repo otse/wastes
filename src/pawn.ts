@@ -70,13 +70,13 @@ export namespace pawns {
 				this.created = true;
 				// make wee guy target
 				//this.group = new THREE.Group
-				let w = 50, h = 50;
+				let w = 100, h = 100;
 				this.target = ren.make_render_target(w, h);
 				this.camera = ren.ortographic_camera(w, h);
 				this.scene = new Scene()
 				this.scene.rotation.set(Math.PI / 6, Math.PI / 4, 0);
 				this.scene.position.set(0, 0, 0);
-				//this.scene.scale.set(.5, .5, .5);
+				this.scene.scale.set(2, 2, 2);
 				//this.scene.background = new Color('salmon');
 
 				let amb = new AmbientLight('white');
@@ -135,7 +135,7 @@ export namespace pawns {
 				transforms.push(new Matrix3().setUvTransform( // right
 					bodyWidth * 2 / bodyTexture[0] + bodyThick / bodyTexture[0], 0, -bodyThick / bodyTexture[0], 1, 0, 0, 1));
 				transforms.push(new Matrix3().setUvTransform( // top
-				bodyWidth * 2 / bodyTexture[0] + bodyThick / bodyTexture[0], 0, bodyWidth / bodyTexture[0], bodyThick / bodyTexture[1], 0, 0, 1));
+					bodyWidth * 2 / bodyTexture[0] + bodyThick / bodyTexture[0], 0, bodyWidth / bodyTexture[0], bodyThick / bodyTexture[1], 0, 0, 1));
 				transforms.push(new Matrix3()); // bottom ?
 				transforms.push(new Matrix3().setUvTransform( // front
 					0, 0, bodyWidth / bodyTexture[0], 1, 0, 0, 1));
@@ -276,6 +276,7 @@ export namespace pawns {
 				*/
 
 				let containers: objects.objected[] = [];
+				let pawns: pawns.pawn[] = [];
 				for (let y = -1; y <= 1; y++)
 					for (let x = -1; x <= 1; x++) {
 						let pos = pts.add(posr, [x, y]);
@@ -284,6 +285,9 @@ export namespace pawns {
 						for (let obj of at) {
 							if (obj.type == 'crate') {
 								containers.push(obj as objects.objected);
+							}
+							if (obj.type == 'pawn') {
+								pawns.push(obj as pawns.pawn);
 							}
 						}
 					}
@@ -295,6 +299,12 @@ export namespace pawns {
 				}
 				else
 					win.container.call(false);
+				
+				if (pawns.length) {
+					win.dialogue.call(true, pawns[0]);
+				}
+				else
+					win.dialogue.call(false);
 
 			}
 
@@ -304,21 +314,23 @@ export namespace pawns {
 				let speed = 0.038 * ren.delta;
 				let x = 0;
 				let y = 0;
-				if (app.key('w')) {
-					x += -1;
-					y += -1;
-				}
-				if (app.key('s')) {
-					x += 1;
-					y += 1;
-				}
-				if (app.key('a')) {
-					x += -1;
-					y += 1;
-				}
-				if (app.key('d')) {
-					x += 1;
-					y += -1;
+				if (this.type == 'you') {
+					if (app.key('w')) {
+						x += -1;
+						y += -1;
+					}
+					if (app.key('s')) {
+						x += 1;
+						y += 1;
+					}
+					if (app.key('a')) {
+						x += -1;
+						y += 1;
+					}
+					if (app.key('d')) {
+						x += 1;
+						y += -1;
+					}
 				}
 				if (x || y) {
 					this.speed += 0.1;
@@ -344,7 +356,7 @@ export namespace pawns {
 			this.tiled();
 			//this.tile?.paint();
 			this.sector?.swap(this);
-			this.stack(['leaves', 'door', 'roof', 'falsefront']);
+			this.stack(['pawn', 'you', 'leaves', 'door', 'roof', 'falsefront']);
 			super.update();
 		}
 		//tick() {

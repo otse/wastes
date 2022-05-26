@@ -353,10 +353,10 @@ namespace objects {
 				this.flowered = true;
 				for (let y = -1; y <= 1; y++)
 					for (let x = -1; x <= 1; x++)
-						if (!(x == 0 && y == 0) && Math.random() > .3)
-							factory(objects.treeleaves, pixel, pts.add(this.wpos, [x, y]), { tree: this, color: tile.color });
-				factory(objects.treeleaves, pixel, pts.add(this.wpos, [0, 0]), { color: tile.color });
-				factory(objects.treeleaves, pixel, pts.add(this.wpos, [0, 0]), { color: tile.color });
+						if (!(x == 0 && y == 0) /*&& Math.random() > .3*/)
+							factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [x, y]), { tree: this, color: tile.color });
+				factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [0, 0]), { color: tile.color });
+				factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [0, 0]), { color: tile.color });
 			}
 		}
 	}
@@ -372,24 +372,29 @@ namespace objects {
 			//if (this.pixel!.array[3] < 240)
 			//	this.cell = [240 - this.pixel!.array[3], 0];
 			let color = this.hints.color || [255, 255, 255, 255];
-			if (this.hints.color) {
-				color = [
-					Math.floor(color[0] * 1.4),
-					Math.floor(color[1] * 1.4),
-					Math.floor(color[2] * 1.6),
-					color[3],
-				]
+
+			let color2 = wastes.colormap.pixel(this.wpos);
+
+			if (!(255 - color2.array[3])) {
+				if (this.hints.color) {
+					color = [
+						Math.floor(color[0] * 1.4),
+						Math.floor(color[1] * 1.4),
+						Math.floor(color[2] * 1.6),
+						color[3],
+					]
+				}
+				let shape = new sprite({
+					binded: this,
+					tuple: sprites.dtreeleaves,
+					order: 0.7,
+					color: color
+				});
+				if (this.hints.tree)
+					this.special_leaves_stack();
+				else
+					this.stack();
 			}
-			let shape = new sprite({
-				binded: this,
-				tuple: sprites.dtreeleaves,
-				order: 0.7,
-				color: color
-			});
-			if (this.hints.tree)
-				this.special_leaves_stack();
-			else
-				this.stack();
 		}
 		special_leaves_stack() {
 			console.log('special stack');
@@ -521,7 +526,7 @@ namespace objects {
 			let shape = new sprite({
 				binded: this,
 				tuple: sprites.droof,
-				order: .7,
+				order: 1.6,
 			});
 			shape.rup = 29;
 		}
@@ -581,7 +586,7 @@ namespace objects {
 			this.stack();
 		}
 	}
-	
+
 	export class door extends objected {
 		static order = .7;
 		open = false

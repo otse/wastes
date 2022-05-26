@@ -1195,7 +1195,7 @@ void main() {
             this.zoom = 0.33;
             this.zoomIndex = 4;
             this.zooms = [1, 0.5, 0.33, 0.2, 0.1, 0.05];
-            this.wpos = [42, 45];
+            this.wpos = [40, 48];
             this.rpos = [0, 0];
             this.mpos = [0, 0];
             this.mwpos = [0, 0];
@@ -1645,10 +1645,10 @@ void main() {
                     this.flowered = true;
                     for (let y = -1; y <= 1; y++)
                         for (let x = -1; x <= 1; x++)
-                            if (!(x == 0 && y == 0) && Math.random() > .3)
-                                factory(objects.treeleaves, pixel, pts.add(this.wpos, [x, y]), { tree: this, color: tile.color });
-                    factory(objects.treeleaves, pixel, pts.add(this.wpos, [0, 0]), { color: tile.color });
-                    factory(objects.treeleaves, pixel, pts.add(this.wpos, [0, 0]), { color: tile.color });
+                            if (!(x == 0 && y == 0) /*&& Math.random() > .3*/)
+                                factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [x, y]), { tree: this, color: tile.color });
+                    factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [0, 0]), { color: tile.color });
+                    factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [0, 0]), { color: tile.color });
                 }
             }
         }
@@ -1665,24 +1665,27 @@ void main() {
                 //if (this.pixel!.array[3] < 240)
                 //	this.cell = [240 - this.pixel!.array[3], 0];
                 let color = this.hints.color || [255, 255, 255, 255];
-                if (this.hints.color) {
-                    color = [
-                        Math.floor(color[0] * 1.4),
-                        Math.floor(color[1] * 1.4),
-                        Math.floor(color[2] * 1.6),
-                        color[3],
-                    ];
+                let color2 = wastes.colormap.pixel(this.wpos);
+                if (!(255 - color2.array[3])) {
+                    if (this.hints.color) {
+                        color = [
+                            Math.floor(color[0] * 1.4),
+                            Math.floor(color[1] * 1.4),
+                            Math.floor(color[2] * 1.6),
+                            color[3],
+                        ];
+                    }
+                    new sprite({
+                        binded: this,
+                        tuple: sprites$1.dtreeleaves,
+                        order: 0.7,
+                        color: color
+                    });
+                    if (this.hints.tree)
+                        this.special_leaves_stack();
+                    else
+                        this.stack();
                 }
-                new sprite({
-                    binded: this,
-                    tuple: sprites$1.dtreeleaves,
-                    order: 0.7,
-                    color: color
-                });
-                if (this.hints.tree)
-                    this.special_leaves_stack();
-                else
-                    this.stack();
             }
             special_leaves_stack() {
                 console.log('special stack');
@@ -1818,7 +1821,7 @@ void main() {
                 let shape = new sprite({
                     binded: this,
                     tuple: sprites$1.droof,
-                    order: .7,
+                    order: 1.6,
                 });
                 shape.rup = 29;
             }
@@ -6793,24 +6796,29 @@ void main() {
             if (app$1.key('b') == 1) ;
             character.tick();
             container.tick();
+            dialogue.tick();
         }
         win_1.tick = tick;
         class modal {
-            constructor(name = 'modal') {
+            constructor(title) {
                 this.element = document.createElement('div');
                 this.element.className = 'modal';
                 //this.element.append('inventory')
-                this.title = document.createElement('div');
-                this.title.innerHTML = name;
-                this.title.className = 'title';
-                this.element.append(this.title);
+                if (title) {
+                    this.title = document.createElement('div');
+                    this.title.innerHTML = title;
+                    this.title.className = 'title';
+                    this.element.append(this.title);
+                }
                 this.content = document.createElement('div');
                 this.content.className = 'content';
                 this.content.innerHTML = 'content';
                 this.element.append(this.content);
+                win.append(this.element);
             }
-            update(name = 'modal') {
-                this.title.innerHTML = name;
+            update(title) {
+                if (title)
+                    this.title.innerHTML = title;
             }
             reposition(pos = ['', '']) {
                 this.element.style.top = pos[1];
@@ -6842,7 +6850,6 @@ void main() {
                 if (open && !this.modal) {
                     this.modal = new modal('you');
                     this.modal.reposition(['100px', '30%']);
-                    win.append(this.modal.element);
                     this.modal.content.innerHTML = 'stats:<br />effectiveness: 100%<br /><hr>';
                     this.modal.content.innerHTML += 'inventory:<br />';
                     //inventory
@@ -6873,6 +6880,33 @@ void main() {
         }
         character.open = false;
         win_1.character = character;
+        class dialogue {
+            static call(open, obj, refresh = false) {
+                var _a;
+                if (open && !this.modal) {
+                    this.modal = new modal();
+                }
+                else if (!open && this.modal) {
+                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
+                    this.obj = undefined;
+                    this.modal = undefined;
+                }
+                if (this.modal && obj != this.obj) {
+                    if (obj) {
+                        this.obj = obj;
+                        //this.modal.update(obj.type + ' dialogue');
+                    }
+                    this.modal.content.innerHTML = `It can be lonely out here. But then there's visitors like you.`;
+                    this.obj;
+                }
+            }
+            static tick() {
+                if (this.modal && this.obj) {
+                    this.modal.float(this.obj, [0, 10]);
+                }
+            }
+        }
+        win_1.dialogue = dialogue;
         class container {
             static call(open, obj, refresh = false) {
                 var _a;
@@ -6883,8 +6917,7 @@ void main() {
                     this.obj.wpos = [38, 49];
                 }
                 if (open && !this.modal) {
-                    this.modal = new modal();
-                    win.append(this.modal.element);
+                    this.modal = new modal('container');
                 }
                 else if (!open && this.modal) {
                     (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
@@ -6928,21 +6961,21 @@ void main() {
     var win$1 = win;
 
     var pawns;
-    (function (pawns) {
-        pawns.you = undefined;
-        pawns.placeAtMouse = false;
+    (function (pawns_1) {
+        pawns_1.you = undefined;
+        pawns_1.placeAtMouse = false;
         function make() {
             let pos = [44, 44];
             let paw = new pawn();
             paw.type = 'you';
             paw.wpos = pos;
-            pawns.you = paw;
+            pawns_1.you = paw;
             lod$1.add(paw);
         }
-        pawns.make = make;
+        pawns_1.make = make;
         function handle() {
         }
-        pawns.handle = handle;
+        pawns_1.handle = handle;
         class pawn extends objects$1.objected {
             constructor() {
                 super(numbers.pawns);
@@ -6973,13 +7006,13 @@ void main() {
                     this.created = true;
                     // make wee guy target
                     //this.group = new THREE.Group
-                    let w = 50, h = 50;
+                    let w = 100, h = 100;
                     this.target = ren$1.make_render_target(w, h);
                     this.camera = ren$1.ortographic_camera(w, h);
                     this.scene = new THREE.Scene();
                     this.scene.rotation.set(Math.PI / 6, Math.PI / 4, 0);
                     this.scene.position.set(0, 0, 0);
-                    //this.scene.scale.set(.5, .5, .5);
+                    this.scene.scale.set(2, 2, 2);
                     //this.scene.background = new Color('salmon');
                     let amb = new THREE.AmbientLight('white');
                     this.scene.add(amb);
@@ -7134,6 +7167,7 @@ void main() {
                     }
                     */
                     let containers = [];
+                    let pawns = [];
                     for (let y = -1; y <= 1; y++)
                         for (let x = -1; x <= 1; x++) {
                             let pos = pts.add(posr, [x, y]);
@@ -7143,6 +7177,9 @@ void main() {
                                 if (obj.type == 'crate') {
                                     containers.push(obj);
                                 }
+                                if (obj.type == 'pawn') {
+                                    pawns.push(obj);
+                                }
                             }
                         }
                     containers.sort((a, b) => pts.distsimple(this.wpos, a.wpos) < pts.distsimple(this.wpos, b.wpos) ? -1 : 1);
@@ -7151,26 +7188,33 @@ void main() {
                     }
                     else
                         win$1.container.call(false);
+                    if (pawns.length) {
+                        win$1.dialogue.call(true, pawns[0]);
+                    }
+                    else
+                        win$1.dialogue.call(false);
                 }
                 {
                     let speed = 0.038 * ren$1.delta;
                     let x = 0;
                     let y = 0;
-                    if (app$1.key('w')) {
-                        x += -1;
-                        y += -1;
-                    }
-                    if (app$1.key('s')) {
-                        x += 1;
-                        y += 1;
-                    }
-                    if (app$1.key('a')) {
-                        x += -1;
-                        y += 1;
-                    }
-                    if (app$1.key('d')) {
-                        x += 1;
-                        y += -1;
+                    if (this.type == 'you') {
+                        if (app$1.key('w')) {
+                            x += -1;
+                            y += -1;
+                        }
+                        if (app$1.key('s')) {
+                            x += 1;
+                            y += 1;
+                        }
+                        if (app$1.key('a')) {
+                            x += -1;
+                            y += 1;
+                        }
+                        if (app$1.key('d')) {
+                            x += 1;
+                            y += -1;
+                        }
                     }
                     if (x || y) {
                         this.speed += 0.1;
@@ -7190,16 +7234,16 @@ void main() {
                         this.swoop = 0;
                     }
                 }
-                if (pawns.placeAtMouse)
+                if (pawns_1.placeAtMouse)
                     this.wpos = ((_a = tiles$1.hovering) === null || _a === void 0 ? void 0 : _a.wpos) || [38, 44];
                 this.tiled();
                 //this.tile?.paint();
                 (_b = this.sector) === null || _b === void 0 ? void 0 : _b.swap(this);
-                this.stack(['leaves', 'door', 'roof', 'falsefront']);
+                this.stack(['pawn', 'you', 'leaves', 'door', 'roof', 'falsefront']);
                 super.update();
             }
         }
-        pawns.pawn = pawn;
+        pawns_1.pawn = pawn;
     })(pawns || (pawns = {}));
     var pawns$1 = pawns;
 
@@ -7297,6 +7341,10 @@ void main() {
                 rooms$1.start();
                 win$1.start();
                 pawns$1.make();
+                let pos = [37.5, 48.5];
+                let vendor = new pawns$1.pawn();
+                vendor.wpos = pos;
+                lod$1.add(vendor);
             }
         }
         function start() {

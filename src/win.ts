@@ -40,30 +40,35 @@ namespace win {
 
 		character.tick();
 		container.tick();
+		dialogue.tick();
 	}
 
 	class modal {
 		element
 		title
 		content
-		constructor(name = 'modal') {
+		constructor(title?: string) {
 			this.element = document.createElement('div') as HTMLElement
 			this.element.className = 'modal';
 			//this.element.append('inventory')
 
-			this.title = document.createElement('div');
-			this.title.innerHTML = name;
-			this.title.className = 'title';
-			this.element.append(this.title);
-
+			if (title) {
+				this.title = document.createElement('div');
+				this.title.innerHTML = title;
+				this.title.className = 'title';
+				this.element.append(this.title);
+			}
 			this.content = document.createElement('div');
 			this.content.className = 'content';
 			this.content.innerHTML = 'content';
 			this.element.append(this.content);
 
+			win.append(this.element);
+
 		}
-		update(name = 'modal') {
-			this.title.innerHTML = name;
+		update(title?: string) {
+			if (title)
+				this.title.innerHTML = title;
 		}
 		reposition(pos = ['', '']) {
 			this.element.style.top = pos[1];
@@ -99,7 +104,7 @@ namespace win {
 			if (open && !this.modal) {
 				this.modal = new modal('you',);
 				this.modal.reposition(['100px', '30%']);
-				win.append(this.modal.element)
+
 				this.modal.content.innerHTML = 'stats:<br />effectiveness: 100%<br /><hr>';
 				this.modal.content.innerHTML += 'inventory:<br />';
 				//inventory
@@ -128,6 +133,37 @@ namespace win {
 		}
 	}
 
+	export class dialogue {
+		static obj?: lod.obj
+		static modal?: modal
+		static call(open: boolean, obj?: lod.obj, refresh = false) {
+
+			if (open && !this.modal) {
+				this.modal = new modal();
+			}
+			else if (!open && this.modal) {
+				this.modal?.deletor();
+				this.obj = undefined;
+				this.modal = undefined;
+			}
+
+			if (this.modal && obj != this.obj) {
+				if (obj) {
+					this.obj = obj;
+					//this.modal.update(obj.type + ' dialogue');
+				}
+				this.modal.content.innerHTML = `It can be lonely out here. But then there's visitors like you.`
+
+				const cast = this.obj as pawns.pawn;
+			}
+		}
+		static tick() {
+			if (this.modal && this.obj) {
+				this.modal.float(this.obj, [0, 10]);
+			}
+		}
+	}
+
 	export class container {
 		static obj?: lod.obj
 		static modal?: modal
@@ -140,8 +176,7 @@ namespace win {
 			}
 
 			if (open && !this.modal) {
-				this.modal = new modal();
-				win.append(this.modal.element)
+				this.modal = new modal('container');
 			}
 			else if (!open && this.modal) {
 				this.modal?.deletor();

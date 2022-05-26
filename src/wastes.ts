@@ -107,6 +107,11 @@ export namespace wastes {
 			win.start();
 			
 			pawns.make();
+
+			let pos: vec2 = [37.5, 48.5];
+			let vendor = new pawns.pawn();
+			vendor.wpos = pos;
+			lod.add(vendor);
 		}
 	}
 
