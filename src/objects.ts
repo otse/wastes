@@ -24,7 +24,8 @@ namespace objects {
 	const color_wheat: vec3 = [130, 130, 0];
 	const color_scrappy_wall: vec3 = [20, 70, 50];
 	const color_scrappy_wall_with_deck: vec3 = [20, 78, 54];
-	const color_deck: vec3 = [114, 128, 124];
+	const color_deck_and_roof: vec3 = [114, 128, 124];
+	const color_porch: vec3 = [110, 120, 120];
 	const color_rusty_wall_and_deck: vec3 = [20, 84, 87];
 	const color_outer_wall: vec3 = [20, 90, 90];
 	const color_false_front: vec3 = [255, 255, 255];
@@ -109,9 +110,12 @@ namespace objects {
 				else if (pixel.is_color(color_outer_wall)) {
 					factory(objects.wall, pixel, pos, { type: 'medieval' });
 				}
-				else if (pixel.is_color(color_deck)) {
+				else if (pixel.is_color(color_deck_and_roof)) {
 					factory(objects.deck, pixel, pos);
 					factory(objects.roof, pixel, pos);
+				}
+				else if (pixel.is_color(color_porch)) {
+					factory(objects.porch, pixel, pos);
 				}
 				else if (pixel.is_color(color_door)) {
 					factory(objects.deck, pixel, pos);
@@ -216,7 +220,7 @@ namespace objects {
 	}
 
 	export function is_solid(pos: vec2) {
-		const passable = ['land', 'deck', 'pawn', 'you', 'door', 'leaves', 'roof', 'falsefront'];
+		const passable = ['land', 'deck', 'porch', 'pawn', 'you', 'door', 'leaves', 'roof', 'falsefront'];
 		pos = pts.round(pos);
 		let sector = lod.ggalaxy.at(lod.ggalaxy.big(pos));
 		let at = sector.stacked(pos);
@@ -328,6 +332,30 @@ namespace objects {
 					break;
 				}
 			}
+		}
+	}
+	export class porch extends objected {
+		static timer = 0;
+		constructor() {
+			super(numbers.floors);
+			this.type = 'porch'
+			this.height = 3;
+		}
+		override create() {
+			this.tiled();
+			//this.tile!.z -= 24;
+			this.size = [24, 17];
+			//if (this.pixel!.array[3] < 240)
+			//	this.cell = [240 - this.pixel!.array[3], 0];
+			let shape = new sprite({
+				binded: this,
+				tuple: sprites.dporch,
+				cell: this.cell,
+				order: .4,
+			});
+			this.stack();
+		}
+		override tick() {
 		}
 	}
 	export class decidtree extends objected {

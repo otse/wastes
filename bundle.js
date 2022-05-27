@@ -806,6 +806,7 @@ void main() {
         sprites.ddecidtreetrunk = [[24, 50], [24, 50], 0, 'tex/8bit/dtreetrunk'];
         sprites.dtreeleaves = [[24, 31], [24, 31], 0, 'tex/8bit/dtreeleaves'];
         //export const dwall: tuple = [[96, 40], [24, 40], 0, 'tex/dwalls']
+        sprites.dporch = [[72, 17], [24, 17], 0, 'tex/8bit/dporch'];
         sprites.ddeck = [[72, 17], [24, 17], 0, 'tex/8bit/ddeck'];
         sprites.droof = [[72, 17], [24, 17], 0, 'tex/8bit/droof'];
         sprites.dcrate = [[24, 40], [24, 40], 0, 'tex/8bit/dcrate'];
@@ -1344,7 +1345,8 @@ void main() {
         const color_wheat = [130, 130, 0];
         const color_scrappy_wall = [20, 70, 50];
         const color_scrappy_wall_with_deck = [20, 78, 54];
-        const color_deck = [114, 128, 124];
+        const color_deck_and_roof = [114, 128, 124];
+        const color_porch = [110, 120, 120];
         const color_rusty_wall_and_deck = [20, 84, 87];
         const color_outer_wall = [20, 90, 90];
         const color_acid_barrel = [61, 118, 48];
@@ -1413,9 +1415,12 @@ void main() {
                     else if (pixel.is_color(color_outer_wall)) {
                         factory(objects.wall, pixel, pos, { type: 'medieval' });
                     }
-                    else if (pixel.is_color(color_deck)) {
+                    else if (pixel.is_color(color_deck_and_roof)) {
                         factory(objects.deck, pixel, pos);
                         factory(objects.roof, pixel, pos);
+                    }
+                    else if (pixel.is_color(color_porch)) {
+                        factory(objects.porch, pixel, pos);
                     }
                     else if (pixel.is_color(color_door)) {
                         factory(objects.deck, pixel, pos);
@@ -1513,7 +1518,7 @@ void main() {
         }
         objects.colormap = colormap;
         function is_solid(pos) {
-            const passable = ['land', 'deck', 'pawn', 'you', 'door', 'leaves', 'roof', 'falsefront'];
+            const passable = ['land', 'deck', 'porch', 'pawn', 'you', 'door', 'leaves', 'roof', 'falsefront'];
             pos = pts.round(pos);
             let sector = lod$1.ggalaxy.at(lod$1.ggalaxy.big(pos));
             let at = sector.stacked(pos);
@@ -1622,6 +1627,31 @@ void main() {
         }
         deck.timer = 0;
         objects.deck = deck;
+        class porch extends objected {
+            constructor() {
+                super(numbers.floors);
+                this.type = 'porch';
+                this.height = 3;
+            }
+            create() {
+                this.tiled();
+                //this.tile!.z -= 24;
+                this.size = [24, 17];
+                //if (this.pixel!.array[3] < 240)
+                //	this.cell = [240 - this.pixel!.array[3], 0];
+                new sprite({
+                    binded: this,
+                    tuple: sprites$1.dporch,
+                    cell: this.cell,
+                    order: .4,
+                });
+                this.stack();
+            }
+            tick() {
+            }
+        }
+        porch.timer = 0;
+        objects.porch = porch;
         class decidtree extends objected {
             constructor() {
                 super(numbers.trees);
@@ -7300,7 +7330,7 @@ void main() {
             if (count == RESOURCES.COUNT)
                 start();
         }
-        const MAX_WAIT = 500;
+        const MAX_WAIT = 250;
         function reasonable_waiter() {
             if (time + MAX_WAIT < new Date().getTime()) {
                 console.warn(` passed reasonable wait time for resources `);

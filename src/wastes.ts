@@ -64,7 +64,7 @@ export namespace wastes {
 			start();
 	}
 
-	const MAX_WAIT = 500;
+	const MAX_WAIT = 250;
 	function reasonable_waiter() {
 		if (time + MAX_WAIT < new Date().getTime()) {
 			console.warn(` passed reasonable wait time for resources `);
