@@ -812,8 +812,9 @@ void main() {
         sprites.dcrate = [[24, 40], [24, 40], 0, 'tex/8bit/dcrate'];
         sprites.ddoor = [[192, 40], [24, 40], 0, 'tex/8bit/ddoor'];
         sprites.drustywalls = [[264, 40], [24, 40], 0, 'tex/8bit/drustywalls'];
+        sprites.dwoodywalls = [[264, 40], [24, 40], 0, 'tex/8bit/dwoodywalls'];
+        sprites.dmedievalwalls = [[264, 40], [24, 40], 0, 'tex/8bit/dmedievalwalls'];
         sprites.dscrappywalls = [[264, 40], [24, 40], 0, 'tex/dscrappywalls'];
-        sprites.dmedievalwalls = [[264, 40], [24, 40], 0, 'tex/dmedievalwalls'];
         //export const dscrappywalls2: tuple = [[216, 40], [24, 40], 0, 'tex/dscrappywalls2']
         sprites.druddywalls = [[288, 40], [24, 40], 0, 'tex/druddywalls'];
         sprites.dacidbarrel = [[24, 35], [24, 35], 0, 'tex/dacidbarrel'];
@@ -1344,11 +1345,12 @@ void main() {
         const color_grass = [40, 90, 40];
         const color_wheat = [130, 130, 0];
         const color_scrappy_wall = [20, 70, 50];
+        const color_woody_wall = [87, 57, 20];
+        const color_medieval_wall = [128, 128, 128];
         const color_scrappy_wall_with_deck = [20, 78, 54];
         const color_deck_and_roof = [114, 128, 124];
         const color_porch = [110, 120, 120];
         const color_rusty_wall_and_deck = [20, 84, 87];
-        const color_outer_wall = [20, 90, 90];
         const color_acid_barrel = [61, 118, 48];
         const color_wall_chest = [130, 100, 50];
         function factory(type, pixel, pos, hints = {}) {
@@ -1396,6 +1398,14 @@ void main() {
                         factory(objects.wall, pixel, pos, { type: 'scrappy' });
                         factory(objects.roof, pixel, pos);
                     }
+                    if (pixel.is_color(color_woody_wall)) {
+                        factory(objects.deck, pixel, pos);
+                        factory(objects.wall, pixel, pos, { type: 'woody' });
+                        factory(objects.roof, pixel, pos);
+                    }
+                    if (pixel.is_color(color_medieval_wall)) {
+                        factory(objects.wall, pixel, pos, { type: 'medieval' });
+                    }
                     else if (pixel.is_color(color_scrappy_wall)) {
                         factory(objects.wall, pixel, pos, { type: 'scrappy' });
                         //factory(objects.roof, pixel, pos);
@@ -1412,7 +1422,7 @@ void main() {
                         factory(objects.wall, pixel, pos, { type: 'rusty' });
                         factory(objects.roof, pixel, pos);
                     }
-                    else if (pixel.is_color(color_outer_wall)) {
+                    else if (pixel.is_color(color_medieval_wall)) {
                         factory(objects.wall, pixel, pos, { type: 'medieval' });
                     }
                     else if (pixel.is_color(color_deck_and_roof)) {
@@ -1568,16 +1578,18 @@ void main() {
                 this.height = 24;
             }
             create() {
-                var _a, _b, _c;
+                var _a, _b, _c, _d;
                 this.tiled();
                 this.size = [24, 40];
                 this.cell = [255 - this.pixel.array[3], 0];
                 let tuple = sprites$1.dscrappywalls;
                 if (((_a = this.hints) === null || _a === void 0 ? void 0 : _a.type) == 'rusty')
                     tuple = sprites$1.drustywalls;
-                if (((_b = this.hints) === null || _b === void 0 ? void 0 : _b.type) == 'medieval')
+                if (((_b = this.hints) === null || _b === void 0 ? void 0 : _b.type) == 'woody')
+                    tuple = sprites$1.dwoodywalls;
+                if (((_c = this.hints) === null || _c === void 0 ? void 0 : _c.type) == 'medieval')
                     tuple = sprites$1.dmedievalwalls;
-                else if (((_c = this.hints) === null || _c === void 0 ? void 0 : _c.type) == 'ruddy')
+                else if (((_d = this.hints) === null || _d === void 0 ? void 0 : _d.type) == 'ruddy')
                     tuple = sprites$1.druddywalls;
                 else ;
                 new sprite({
@@ -1984,6 +1996,7 @@ void main() {
     (function (modeler) {
         modeler.started = false;
         const textures = [
+            'tex/stock/planks1.jpg',
             'tex/stock/bamboo.jpg',
             'tex/stock/crate.jpg',
             'tex/stock/metalrooftiles.jpg',

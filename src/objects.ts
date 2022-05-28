@@ -23,11 +23,13 @@ namespace objects {
 	const color_grass: vec3 = [40, 90, 40];
 	const color_wheat: vec3 = [130, 130, 0];
 	const color_scrappy_wall: vec3 = [20, 70, 50];
+	const color_woody_wall: vec3 = [87, 57, 20];
+	const color_medieval_wall: vec3 = [128, 128, 128];
 	const color_scrappy_wall_with_deck: vec3 = [20, 78, 54];
 	const color_deck_and_roof: vec3 = [114, 128, 124];
 	const color_porch: vec3 = [110, 120, 120];
 	const color_rusty_wall_and_deck: vec3 = [20, 84, 87];
-	const color_outer_wall: vec3 = [20, 90, 90];
+	
 	const color_false_front: vec3 = [255, 255, 255];
 
 	const color_acid_barrel: vec3 = [61, 118, 48];
@@ -88,6 +90,14 @@ namespace objects {
 					factory(objects.wall, pixel, pos, { type: 'scrappy' });
 					factory(objects.roof, pixel, pos);
 				}
+				if (pixel.is_color(color_woody_wall)) {
+					factory(objects.deck, pixel, pos);
+					factory(objects.wall, pixel, pos, { type: 'woody' });
+					factory(objects.roof, pixel, pos);
+				}
+				if (pixel.is_color(color_medieval_wall)) {
+					factory(objects.wall, pixel, pos, { type: 'medieval' });
+				}
 				else if (pixel.is_color(color_scrappy_wall)) {
 					factory(objects.wall, pixel, pos, { type: 'scrappy' });
 					//factory(objects.roof, pixel, pos);
@@ -107,7 +117,7 @@ namespace objects {
 					factory(objects.wall, pixel, pos, { type: 'rusty' });
 					factory(objects.roof, pixel, pos);
 				}
-				else if (pixel.is_color(color_outer_wall)) {
+				else if (pixel.is_color(color_medieval_wall)) {
 					factory(objects.wall, pixel, pos, { type: 'medieval' });
 				}
 				else if (pixel.is_color(color_deck_and_roof)) {
@@ -279,7 +289,9 @@ namespace objects {
 			let tuple = sprites.dscrappywalls;
 			if (this.hints?.type == 'rusty')
 				tuple = sprites.drustywalls;
-			if (this.hints?.type == 'medieval')
+			if (this.hints?.type == 'woody')
+				tuple = sprites.dwoodywalls;
+				if (this.hints?.type == 'medieval')
 				tuple = sprites.dmedievalwalls;
 			else if (this.hints?.type == 'ruddy')
 				tuple = sprites.druddywalls;
