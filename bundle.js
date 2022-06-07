@@ -811,7 +811,7 @@ void main() {
         sprites.droof = [[72, 17], [24, 17], 0, 'tex/8bit/droof'];
         sprites.dcrate = [[24, 40], [24, 40], 0, 'tex/8bit/dcrate'];
         sprites.ddoor = [[192, 40], [24, 40], 0, 'tex/8bit/ddoor'];
-        sprites.drustywalls = [[264, 40], [24, 40], 0, 'tex/8bit/drustywalls'];
+        sprites.drustywalls = [[264, 40], [24, 40], 0, 'tex/8bit/dcommonwalls'];
         sprites.dwoodywalls = [[264, 40], [24, 40], 0, 'tex/8bit/dwoodywalls'];
         sprites.dmedievalwalls = [[264, 40], [24, 40], 0, 'tex/8bit/dmedievalwalls'];
         sprites.dscrappywalls = [[264, 40], [24, 40], 0, 'tex/dscrappywalls'];
@@ -2151,6 +2151,7 @@ void main() {
         shear.started = false;
         var canvas, ctx;
         var spare, spareCtx;
+        var walls, goal, wallpapers, wallpaper;
         function start() {
             shear.started = true;
             document.title = 'shear';
@@ -2173,25 +2174,23 @@ void main() {
             ctx = canvas.getContext('2d');
             let style = document.location.href.split('shear=')[1];
             console.log(style);
-            var walls = document.getElementById(style);
-            var goal = document.getElementById('goal');
+            walls = document.getElementById(style);
+            goal = document.getElementById('goal');
+            wallpaper = document.getElementById('wallpaper');
+            wallpapers = document.getElementById('wallpapers');
             ctx.drawImage(walls, 0, 0);
             ctx.globalCompositeOperation = 'source-atop';
             ctx.drawImage(goal, 0, 0);
             // -4, 8 for thin
             // -3, 6 for thick
-            let x, y, x2, y2;
+            let x, y;
             if (style == 'thin') {
                 y = -4;
                 x = 8;
-                y2 = 2;
-                x2 = -4;
             }
             else if (style == 'thick') {
                 y = -3;
                 x = 6;
-                y2 = 1;
-                x2 = -2;
             }
             // half
             ctx.drawImage(goal, 24, 0);
@@ -2212,14 +2211,77 @@ void main() {
             spareCtx.clearRect(0, 0, 24, 40);
             spareCtx.drawImage(canvas, -24 * 5, 0);
             ctx.drawImage(spare, 24 * 4, 0);
-            ctx.drawImage(spare, 24 * 9 - x2, -y2);
+            //ctx.drawImage(spare, 24 * 9 - x2, -y2);
             spareCtx.clearRect(0, 0, 24, 40);
             spareCtx.drawImage(canvas, -24 * 6, 0);
-            ctx.drawImage(spare, 24 * 10 + x2, -y2);
+            //ctx.drawImage(spare, 24 * 10 + x2, -y2);
             document.body.append(canvas);
             document.body.append(spare);
+            start_wallpaper();
         }
         shear.start = start;
+        function start_wallpaper() {
+            let style = document.location.href.split('shear=')[1];
+            let x, y;
+            if (style == 'thin') {
+                y = -4;
+                x = 8;
+            }
+            else if (style == 'thick') {
+                y = -3;
+                x = 6;
+            }
+            let spare2Canvas, ctx2;
+            spare2Canvas = document.createElement("canvas");
+            ctx2 = spare2Canvas.getContext('2d');
+            spare2Canvas.width = 24 * 11;
+            spare2Canvas.height = 40;
+            spare2Canvas.style.position = 'relative';
+            spare2Canvas.style.zoom = '3';
+            spare2Canvas.style.display = 'block';
+            spare2Canvas.style.zIndex = '2';
+            ctx2.drawImage(wallpapers, 0, 0);
+            ctx2.globalCompositeOperation = 'source-atop';
+            let wallpaperCanvas;
+            wallpaperCanvas = document.createElement("canvas");
+            let ctx1 = wallpaperCanvas.getContext('2d');
+            wallpaperCanvas.width = 24 * 11;
+            wallpaperCanvas.height = 40;
+            wallpaperCanvas.style.position = 'relative';
+            wallpaperCanvas.style.zoom = '3';
+            wallpaperCanvas.style.display = 'block';
+            wallpaperCanvas.style.zIndex = '2';
+            ctx1.drawImage(walls, 0, 0);
+            ctx1.globalCompositeOperation = 'source-atop';
+            ctx1.drawImage(wallpaper, 0, 0);
+            ctx1.drawImage(wallpaper, 24, 0);
+            ctx1.drawImage(wallpaper, 24 * 5, 0);
+            ctx1.drawImage(wallpaper, 24 * 6, 0);
+            spareCtx.drawImage(wallpaperCanvas, -24 * 5, 0);
+            ctx1.drawImage(spare, 24 * 2 + x, y);
+            ctx1.drawImage(spare, 24 * 3 + x, y);
+            ctx1.drawImage(spare, 24 * 7 + x, y);
+            spareCtx.clearRect(0, 0, 24, 40);
+            spareCtx.drawImage(wallpaperCanvas, -24 * 6, 0);
+            ctx1.drawImage(spare, 24 * 2, 0);
+            spareCtx.clearRect(12 + x, 0, 24, 40);
+            ctx1.drawImage(spare, 24 * 3 - x, y);
+            spareCtx.drawImage(wallpaperCanvas, -24 * 6, 0);
+            ctx1.drawImage(spare, 24 * 4 - x, y);
+            ctx1.drawImage(spare, 24 * 8 - x, y);
+            spareCtx.clearRect(0, 0, 24, 40);
+            spareCtx.drawImage(wallpaperCanvas, -24 * 5, 0);
+            ctx1.drawImage(spare, 24 * 4, 0);
+            //ctx.drawImage(spare, 24 * 9 - x2, -y2);
+            spareCtx.clearRect(0, 0, 24, 40);
+            spareCtx.drawImage(wallpaperCanvas, -24 * 6, 0);
+            //ctx.drawImage(spare, 24 * 10 + x2, -y2);
+            ctx2.drawImage(wallpaperCanvas, 0, 0);
+            ctx.drawImage(spare2Canvas, 0, 0);
+            document.body.append(wallpaperCanvas);
+            document.body.append(spare2Canvas);
+        }
+        shear.start_wallpaper = start_wallpaper;
         function tick() {
             if (!shear.started)
                 return;
