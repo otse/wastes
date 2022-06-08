@@ -20,6 +20,7 @@ namespace objects {
 	const color_door: vec3 = [210, 210, 210];
 	const color_wooden_door_and_deck: vec3 = [24, 93, 61];
 	const color_decidtree: vec3 = [20, 70, 20];
+	const color_deadtree: vec3 = [60, 70, 60];
 	const color_grass: vec3 = [40, 90, 40];
 	const color_wheat: vec3 = [130, 130, 0];
 	const color_scrappy_wall: vec3 = [20, 70, 50];
@@ -114,7 +115,11 @@ namespace objects {
 					//factory(objects.roof, pixel, pos);
 				}
 				else if (pixel.is_color(color_decidtree)) {
-					factory(objects.decidtree, pixel, pos);
+					factory(objects.decidtree, pixel, pos, { type: 'decid' });
+
+				}
+				else if (pixel.is_color(color_deadtree)) {
+					factory(objects.deadtree, pixel, pos);
 
 				}
 				else if (pixel.is_color(color_grass)) {
@@ -410,12 +415,32 @@ namespace objects {
 		override tick() {
 		}
 	}
+	export class deadtree extends objected {
+		static timer = 0;
+		constructor() {
+			super(numbers.floors);
+			this.type = 'porch'
+			this.height = 3;
+		}
+		override create() {
+			this.tiled();
+			this.size = [24, 50];
+			let shape = new sprite({
+				binded: this,
+				tuple: sprites.ddeadtreetrunk,
+				order: .4,
+			});
+			this.stack();
+		}
+		override tick() {
+		}
+	}
 	export class decidtree extends objected {
 		flowered = false
 		constructor() {
 			super(numbers.trees);
 			this.type = 'decid tree'
-			this.height = 29;
+			this.height = 24;
 		}
 		override create() {
 			this.tiled();
@@ -434,9 +459,9 @@ namespace objects {
 				for (let y = -1; y <= 1; y++)
 					for (let x = -1; x <= 1; x++)
 						if (!(x == 0 && y == 0) /*&& Math.random() > .3*/)
-							factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [x, y]), { tree: this, color: tile.color });
-				factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [0, 0]), { color: tile.color });
-				factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [0, 0]), { color: tile.color });
+							factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [x, y]), { type: this.hints.type, tree: this, color: tile.color });
+				factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [0, 0]), { type: this.hints.type, color: tile.color });
+				factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [0, 0]), { type: this.hints.type, color: tile.color });
 			}
 		}
 	}
@@ -464,9 +489,10 @@ namespace objects {
 						color[3],
 					]
 				}
+				let tuple = sprites.dtreeleaves;
 				let shape = new sprite({
 					binded: this,
-					tuple: sprites.dtreeleaves,
+					tuple: tuple,
 					order: 0.7,
 					color: color
 				});

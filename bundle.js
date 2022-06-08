@@ -803,6 +803,7 @@ void main() {
         sprites.dswamptiles = [[96, 30], [24, 30], 0, 'tex/dswamptiles'];
         sprites.dtilesand = [[24, 17], [24, 17], 0, 'tex/dtilesand'];
         sprites.dgraveltiles = [[96, 30], [24, 30], 0, 'tex/8bit/dgraveltiles'];
+        sprites.ddeadtreetrunk = [[24, 50], [24, 50], 0, 'tex/8bit/dtreetrunkdead'];
         sprites.ddecidtreetrunk = [[24, 50], [24, 50], 0, 'tex/8bit/dtreetrunk'];
         sprites.dtreeleaves = [[24, 31], [24, 31], 0, 'tex/8bit/dtreeleaves'];
         //export const dwall: tuple = [[96, 40], [24, 40], 0, 'tex/dwalls']
@@ -1346,6 +1347,7 @@ void main() {
         const color_door = [210, 210, 210];
         const color_wooden_door_and_deck = [24, 93, 61];
         const color_decidtree = [20, 70, 20];
+        const color_deadtree = [60, 70, 60];
         const color_grass = [40, 90, 40];
         const color_wheat = [130, 130, 0];
         const color_scrappy_wall = [20, 70, 50];
@@ -1426,7 +1428,10 @@ void main() {
                         //factory(objects.roof, pixel, pos);
                     }
                     else if (pixel.is_color(color_decidtree)) {
-                        factory(objects.decidtree, pixel, pos);
+                        factory(objects.decidtree, pixel, pos, { type: 'decid' });
+                    }
+                    else if (pixel.is_color(color_deadtree)) {
+                        factory(objects.deadtree, pixel, pos);
                     }
                     else if (pixel.is_color(color_grass)) ;
                     else if (pixel.is_color(color_wheat)) {
@@ -1709,12 +1714,33 @@ void main() {
         }
         rails.timer = 0;
         objects.rails = rails;
+        class deadtree extends objected {
+            constructor() {
+                super(numbers.floors);
+                this.type = 'porch';
+                this.height = 3;
+            }
+            create() {
+                this.tiled();
+                this.size = [24, 50];
+                new sprite({
+                    binded: this,
+                    tuple: sprites$1.ddeadtreetrunk,
+                    order: .4,
+                });
+                this.stack();
+            }
+            tick() {
+            }
+        }
+        deadtree.timer = 0;
+        objects.deadtree = deadtree;
         class decidtree extends objected {
             constructor() {
                 super(numbers.trees);
                 this.flowered = false;
                 this.type = 'decid tree';
-                this.height = 29;
+                this.height = 24;
             }
             create() {
                 this.tiled();
@@ -1733,9 +1759,9 @@ void main() {
                     for (let y = -1; y <= 1; y++)
                         for (let x = -1; x <= 1; x++)
                             if (!(x == 0 && y == 0) /*&& Math.random() > .3*/)
-                                factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [x, y]), { tree: this, color: tile.color });
-                    factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [0, 0]), { color: tile.color });
-                    factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [0, 0]), { color: tile.color });
+                                factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [x, y]), { type: this.hints.type, tree: this, color: tile.color });
+                    factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [0, 0]), { type: this.hints.type, color: tile.color });
+                    factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [0, 0]), { type: this.hints.type, color: tile.color });
                 }
             }
         }
@@ -1762,9 +1788,10 @@ void main() {
                             color[3],
                         ];
                     }
+                    let tuple = sprites$1.dtreeleaves;
                     new sprite({
                         binded: this,
-                        tuple: sprites$1.dtreeleaves,
+                        tuple: tuple,
                         order: 0.7,
                         color: color
                     });
