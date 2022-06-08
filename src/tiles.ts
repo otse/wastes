@@ -153,7 +153,7 @@ export namespace tiles {
 			let sector = lod.ggalaxy.at(lod.ggalaxy.big(this.wpos));
 			let at = sector.stacked(this.wpos);
 			for (let obj of at) {
-				if (obj.type == 'deck')
+				if (obj.type == 'deck' || obj.type == 'porch')
 					this.heightAdd = obj.height;
 			}
 			shape.rup = this.z;

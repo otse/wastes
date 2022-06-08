@@ -1162,7 +1162,7 @@ void main() {
                 let sector = lod$1.ggalaxy.at(lod$1.ggalaxy.big(this.wpos));
                 let at = sector.stacked(this.wpos);
                 for (let obj of at) {
-                    if (obj.type == 'deck')
+                    if (obj.type == 'deck' || obj.type == 'porch')
                         this.heightAdd = obj.height;
                 }
                 shape.rup = this.z;
@@ -1905,16 +1905,8 @@ void main() {
             create() {
                 this.tiled();
                 this.size = [20, 31];
-                this.cell = [255 - this.pixel.array[3], 0];
-                let shape = new sprite({
-                    binded: this,
-                    tuple: sprites$1.dshelves,
-                    //cell: this.cell,
-                    order: 0
-                });
-                shape.rup2 = 9;
-                shape.rleft = 6;
-                this.stack(['roof']);
+                //this.cell = [255 - this.pixel!.array[3], 0];
+                return;
             }
         }
         objects.shelves = shelves;
@@ -2251,7 +2243,7 @@ void main() {
             // -4, 8 for thin
             // -3, 6 for thick
             let x, y;
-            if (style == 'thin') {
+            if (style == 'thin' || style == 'thinner') {
                 y = -4;
                 x = 8;
             }
@@ -2290,7 +2282,7 @@ void main() {
         function start_wallpaper() {
             let style = document.location.href.split('shear=')[1];
             let x, y;
-            if (style == 'thin') {
+            if (style == 'thin' || style == 'thinner') {
                 y = -4;
                 x = 8;
             }
@@ -7052,6 +7044,17 @@ void main() {
         }
         character.open = false;
         win_1.character = character;
+        const dialog = [1, 0];
+        const dialogues = [
+            [
+            //['I spent some of my time sewing suits for wasters.', 3]
+            ],
+            [
+                [`I'm only a local.`, 1],
+                [`It can be hazardous around here. Keep your wits about you.`, 2],
+                [`Stay clear from the irradiated areas, and funny looking trees.`, -1],
+            ]
+        ];
         class dialogue {
             static call(open, obj, refresh = false) {
                 var _a;
@@ -7062,14 +7065,31 @@ void main() {
                     (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
                     this.obj = undefined;
                     this.modal = undefined;
+                    dialog[1] = 0;
                 }
                 if (this.modal && obj != this.obj) {
                     if (obj) {
                         this.obj = obj;
                         //this.modal.update(obj.type + ' dialogue');
                     }
-                    this.modal.content.innerHTML = `It can be lonely out here. But then there's visitors like you.`;
                     this.obj;
+                    this.change();
+                }
+            }
+            static change() {
+                this.modal.content.innerHTML = dialogues[dialog[0]][dialog[1]][0];
+                const next = dialogues[dialog[0]][dialog[1]][1];
+                if (next != -1) {
+                    let button = document.createElement('div');
+                    button.innerHTML = ' >>';
+                    button.className = 'item';
+                    this.modal.content.append(button);
+                    button.onclick = (e) => {
+                        console.log('woo');
+                        dialog[1] = next;
+                        this.change();
+                        //button.remove();
+                    };
                 }
             }
             static tick() {

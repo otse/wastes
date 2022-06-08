@@ -52,19 +52,15 @@ namespace shear {
 
 		// -4, 8 for thin
 		// -3, 6 for thick
-		let x, y, x2, y2;
-		if (style == 'thin') {
+		let x, y
+		if (style == 'thin' || style == 'thinner') {
 			y = -4;
 			x = 8;
-			y2 = 2;
-			x2 = -4;
 		}
 		else if (style == 'thick')
 		{
 			y = -3;
 			x = 6;
-			y2 = 1;
-			x2 = -2;
 		}
 
 		// half
@@ -102,19 +98,15 @@ namespace shear {
 
 		let style = document.location.href.split('shear=')[1];
 
-		let x, y, x2, y2;
-		if (style == 'thin') {
+		let x, y;
+		if (style == 'thin' || style == 'thinner') {
 			y = -4;
 			x = 8;
-			y2 = 2;
-			x2 = -4;
 		}
 		else if (style == 'thick')
 		{
 			y = -3;
 			x = 6;
-			y2 = 1;
-			x2 = -2;
 		}
 
 		let spare2Canvas, ctx2;

@@ -603,7 +603,8 @@ namespace objects {
 		override create() {
 			this.tiled();
 			this.size = [20, 31];
-			this.cell = [255 - this.pixel!.array[3], 0];
+			//this.cell = [255 - this.pixel!.array[3], 0];
+			return
 			let shape = new sprite({
 				binded: this,
 				tuple: sprites.dshelves,

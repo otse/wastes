@@ -133,6 +133,21 @@ namespace win {
 		}
 	}
 
+	const dialog = [1, 0];
+
+	type speech = [text: string, follow: number]
+
+	const dialogues: speech[][] = [
+		[
+			//['I spent some of my time sewing suits for wasters.', 3]
+		],
+		[
+			[`I'm only a local.`, 1],
+			[`It can be hazardous around here. Keep your wits about you.`, 2],
+			[`Stay clear from the irradiated areas, and funny looking trees.`, -1],
+		]
+	]
+
 	export class dialogue {
 		static obj?: lod.obj
 		static modal?: modal
@@ -145,6 +160,7 @@ namespace win {
 				this.modal?.deletor();
 				this.obj = undefined;
 				this.modal = undefined;
+				dialog[1] = 0;
 			}
 
 			if (this.modal && obj != this.obj) {
@@ -152,9 +168,28 @@ namespace win {
 					this.obj = obj;
 					//this.modal.update(obj.type + ' dialogue');
 				}
-				this.modal.content.innerHTML = `It can be lonely out here. But then there's visitors like you.`
-
 				const cast = this.obj as pawns.pawn;
+
+				this.change();
+			}
+		}
+		static change() {
+			this.modal!.content.innerHTML = dialogues[dialog[0]][dialog[1]][0]
+
+			const next = dialogues[dialog[0]][dialog[1]][1];
+
+			if (next != -1) {
+				let button = document.createElement('div');
+				button.innerHTML = ' >>'
+				button.className = 'item';
+				this.modal!.content.append(button);
+
+				button.onclick = (e) => {
+					console.log('woo');
+					dialog[1] = next;
+					this.change();
+					//button.remove();
+				};
 			}
 		}
 		static tick() {
