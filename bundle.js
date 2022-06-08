@@ -807,12 +807,15 @@ void main() {
         sprites.dtreeleaves = [[24, 31], [24, 31], 0, 'tex/8bit/dtreeleaves'];
         //export const dwall: tuple = [[96, 40], [24, 40], 0, 'tex/dwalls']
         sprites.dporch = [[72, 17], [24, 17], 0, 'tex/8bit/dporch'];
+        sprites.drails = [[72, 17], [24, 17], 0, 'tex/8bit/drails'];
         sprites.ddeck = [[72, 17], [24, 17], 0, 'tex/8bit/ddeck'];
         sprites.droof = [[72, 17], [24, 17], 0, 'tex/8bit/droof'];
         sprites.dcrate = [[24, 40], [24, 40], 0, 'tex/8bit/dcrate'];
+        sprites.dshelves = [[20, 31], [20, 31], 0, 'tex/8bit/dshelves'];
         sprites.ddoor = [[192, 40], [24, 40], 0, 'tex/8bit/ddoor'];
         sprites.drustywalls = [[264, 40], [24, 40], 0, 'tex/8bit/dcommonwalls'];
         sprites.dwoodywalls = [[264, 40], [24, 40], 0, 'tex/8bit/dwoodywalls'];
+        sprites.dchurchwalls = [[264, 40], [24, 40], 0, 'tex/8bit/dchurchwalls'];
         sprites.dmedievalwalls = [[264, 40], [24, 40], 0, 'tex/8bit/dmedievalwalls'];
         sprites.dscrappywalls = [[264, 40], [24, 40], 0, 'tex/dscrappywalls'];
         //export const dscrappywalls2: tuple = [[216, 40], [24, 40], 0, 'tex/dscrappywalls2']
@@ -841,6 +844,7 @@ void main() {
             this.vars = vars;
             this.dime = true;
             this.rup = 0;
+            this.rup2 = 0;
             this.rleft = 0;
             this.roffset = [0, 0];
             if (!this.vars.cell)
@@ -863,7 +867,7 @@ void main() {
             else
                 calc = pts.add(obj.rpos, [0, obj.size[1]]);
             let pos = pts.round(obj.wpos);
-            calc = pts.add(calc, [this.rleft, this.rup]);
+            calc = pts.add(calc, [this.rleft, this.rup + this.rup2]);
             if (this.mesh) {
                 this.retransform();
                 this.mesh.position.fromArray([...calc, 0]);
@@ -1346,13 +1350,16 @@ void main() {
         const color_wheat = [130, 130, 0];
         const color_scrappy_wall = [20, 70, 50];
         const color_woody_wall = [87, 57, 20];
+        const color_church_wall = [105, 102, 35];
         const color_medieval_wall = [128, 128, 128];
         const color_scrappy_wall_with_deck = [20, 78, 54];
         const color_deck_and_roof = [114, 128, 124];
         const color_porch = [110, 120, 120];
+        const color_rails = [110, 100, 120];
         const color_rusty_wall_and_deck = [20, 84, 87];
         const color_acid_barrel = [61, 118, 48];
         const color_wall_chest = [130, 100, 50];
+        const color_shelves = [130, 80, 50];
         function factory(type, pixel, pos, hints = {}) {
             let obj = new type;
             obj.hints = hints;
@@ -1377,6 +1384,9 @@ void main() {
                     else if (pixel.is_color(color_wall_chest)) {
                         factory(objects.crate, pixel, pos);
                     }
+                    else if (pixel.is_color(color_shelves)) {
+                        factory(objects.shelves, pixel, pos);
+                    }
                 });
                 return false;
             });
@@ -1398,12 +1408,17 @@ void main() {
                         factory(objects.wall, pixel, pos, { type: 'scrappy' });
                         factory(objects.roof, pixel, pos);
                     }
-                    if (pixel.is_color(color_woody_wall)) {
+                    else if (pixel.is_color(color_woody_wall)) {
                         factory(objects.deck, pixel, pos);
                         factory(objects.wall, pixel, pos, { type: 'woody' });
                         factory(objects.roof, pixel, pos);
                     }
-                    if (pixel.is_color(color_medieval_wall)) {
+                    else if (pixel.is_color(color_church_wall)) {
+                        factory(objects.deck, pixel, pos);
+                        factory(objects.wall, pixel, pos, { type: 'church' });
+                        factory(objects.roof, pixel, pos);
+                    }
+                    else if (pixel.is_color(color_medieval_wall)) {
                         factory(objects.wall, pixel, pos, { type: 'medieval' });
                     }
                     else if (pixel.is_color(color_scrappy_wall)) {
@@ -1431,6 +1446,9 @@ void main() {
                     }
                     else if (pixel.is_color(color_porch)) {
                         factory(objects.porch, pixel, pos);
+                    }
+                    else if (pixel.is_color(color_rails)) {
+                        factory(objects.rails, pixel, pos);
                     }
                     else if (pixel.is_color(color_door)) {
                         factory(objects.deck, pixel, pos);
@@ -1528,7 +1546,7 @@ void main() {
         }
         objects.colormap = colormap;
         function is_solid(pos) {
-            const passable = ['land', 'deck', 'porch', 'pawn', 'you', 'door', 'leaves', 'roof', 'falsefront'];
+            const passable = ['land', 'deck', 'shelves', 'porch', 'pawn', 'you', 'door', 'leaves', 'roof', 'falsefront'];
             pos = pts.round(pos);
             let sector = lod$1.ggalaxy.at(lod$1.ggalaxy.big(pos));
             let at = sector.stacked(pos);
@@ -1578,7 +1596,7 @@ void main() {
                 this.height = 24;
             }
             create() {
-                var _a, _b, _c, _d;
+                var _a, _b, _c, _d, _e;
                 this.tiled();
                 this.size = [24, 40];
                 this.cell = [255 - this.pixel.array[3], 0];
@@ -1587,9 +1605,11 @@ void main() {
                     tuple = sprites$1.drustywalls;
                 if (((_b = this.hints) === null || _b === void 0 ? void 0 : _b.type) == 'woody')
                     tuple = sprites$1.dwoodywalls;
-                if (((_c = this.hints) === null || _c === void 0 ? void 0 : _c.type) == 'medieval')
+                if (((_c = this.hints) === null || _c === void 0 ? void 0 : _c.type) == 'church')
+                    tuple = sprites$1.dchurchwalls;
+                if (((_d = this.hints) === null || _d === void 0 ? void 0 : _d.type) == 'medieval')
                     tuple = sprites$1.dmedievalwalls;
-                else if (((_d = this.hints) === null || _d === void 0 ? void 0 : _d.type) == 'ruddy')
+                else if (((_e = this.hints) === null || _e === void 0 ? void 0 : _e.type) == 'ruddy')
                     tuple = sprites$1.druddywalls;
                 else ;
                 new sprite({
@@ -1664,6 +1684,31 @@ void main() {
         }
         porch.timer = 0;
         objects.porch = porch;
+        class rails extends objected {
+            constructor() {
+                super(numbers.floors);
+                this.type = 'porch';
+                this.height = 3;
+            }
+            create() {
+                this.tiled();
+                //this.tile!.z -= 24;
+                this.size = [24, 17];
+                //if (this.pixel!.array[3] < 240)
+                //	this.cell = [240 - this.pixel!.array[3], 0];
+                new sprite({
+                    binded: this,
+                    tuple: sprites$1.drails,
+                    cell: this.cell,
+                    order: .4,
+                });
+                this.stack();
+            }
+            tick() {
+            }
+        }
+        rails.timer = 0;
+        objects.rails = rails;
         class decidtree extends objected {
             constructor() {
                 super(numbers.trees);
@@ -1850,6 +1895,29 @@ void main() {
             }
         }
         objects.crate = crate;
+        class shelves extends objected {
+            constructor() {
+                super(numbers.objs);
+                this.container = new container;
+                this.type = 'shelves';
+                this.height = 0;
+            }
+            create() {
+                this.tiled();
+                this.size = [20, 31];
+                this.cell = [255 - this.pixel.array[3], 0];
+                let shape = new sprite({
+                    binded: this,
+                    tuple: sprites$1.dshelves,
+                    //cell: this.cell,
+                    order: 0
+                });
+                shape.rup2 = 9;
+                shape.rleft = 6;
+                this.stack(['roof']);
+            }
+        }
+        objects.shelves = shelves;
         class roof extends objected {
             constructor() {
                 super(numbers.roofs);
@@ -1996,9 +2064,8 @@ void main() {
     (function (modeler) {
         modeler.started = false;
         const textures = [
-            'tex/stock/planks1.jpg',
-            'tex/stock/bamboo.jpg',
-            'tex/stock/crate.jpg',
+            'tex/stock/whiteplanks.jpg',
+            'tex/stock/brick4.jpg',
             'tex/stock/metalrooftiles.jpg',
             'tex/stock/concrete1.jpg',
             'tex/stock/treebark1.jpg',

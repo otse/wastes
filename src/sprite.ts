@@ -23,6 +23,7 @@ export namespace sprite {
 export class sprite extends lod.shape {
 	dime = true
 	rup = 0
+	rup2 = 0
 	rleft = 0
 	mesh: Mesh
 	material: MeshBasicMaterial
@@ -54,7 +55,7 @@ export class sprite extends lod.shape {
 			calc = pts.add(obj.rpos, [0, obj.size[1]]);
 
 		let pos = pts.round(obj.wpos);
-		calc = pts.add(calc, [this.rleft, this.rup]);
+		calc = pts.add(calc, [this.rleft, this.rup + this.rup2]);
 		if (this.mesh) {
 			this.retransform();
 			this.mesh.position.fromArray([...calc, 0]);
