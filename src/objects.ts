@@ -25,13 +25,13 @@ namespace objects {
 	const color_wheat: vec3 = [130, 130, 0];
 	const color_scrappy_wall: vec3 = [20, 70, 50];
 	const color_woody_wall: vec3 = [87, 57, 20];
-	const color_church_wall: vec3 = [105, 102, 35];
+	const color_sideroom_wall: vec3 = [105, 102, 35];
 	const color_medieval_wall: vec3 = [128, 128, 128];
 	const color_scrappy_wall_with_deck: vec3 = [20, 78, 54];
 	const color_deck_and_roof: vec3 = [114, 128, 124];
 	const color_porch: vec3 = [110, 120, 120];
 	const color_rails: vec3 = [110, 100, 120];
-	const color_rusty_wall_and_deck: vec3 = [20, 84, 87];
+	const color_plywood_wall_and_deck: vec3 = [20, 84, 87];
 
 	const color_false_front: vec3 = [255, 255, 255];
 
@@ -93,18 +93,23 @@ namespace objects {
 			pts.func(sector.small, (pos) => {
 				let pixel = wastes.buildingmap.pixel(pos);
 				if (pixel.is_color(color_scrappy_wall_with_deck)) {
-					factory(objects.deck, pixel, pos);
-					factory(objects.wall, pixel, pos, { type: 'scrappy' });
-					factory(objects.roof, pixel, pos);
+					//factory(objects.deck, pixel, pos);
+					//factory(objects.wall, pixel, pos, { type: 'scrappy' });
+					//factory(objects.roof, pixel, pos);
 				}
 				else if (pixel.is_color(color_woody_wall)) {
+					//factory(objects.deck, pixel, pos);
+					//factory(objects.wall, pixel, pos, { type: 'woody' });
+					//factory(objects.roof, pixel, pos);
+				}
+				else if (pixel.is_color(color_plywood_wall_and_deck)) {
 					factory(objects.deck, pixel, pos);
-					factory(objects.wall, pixel, pos, { type: 'woody' });
+					factory(objects.wall, pixel, pos, { type: 'plywood' });
 					factory(objects.roof, pixel, pos);
 				}
-				else if (pixel.is_color(color_church_wall)) {
+				else if (pixel.is_color(color_sideroom_wall)) {
 					factory(objects.deck, pixel, pos);
-					factory(objects.wall, pixel, pos, { type: 'church' });
+					factory(objects.wall, pixel, pos, { type: 'sideroom' });
 					factory(objects.roof, pixel, pos);
 				}
 				else if (pixel.is_color(color_medieval_wall)) {
@@ -128,11 +133,7 @@ namespace objects {
 				else if (pixel.is_color(color_wheat)) {
 					factory(objects.wheat, pixel, pos);
 				}
-				else if (pixel.is_color(color_rusty_wall_and_deck)) {
-					factory(objects.deck, pixel, pos);
-					factory(objects.wall, pixel, pos, { type: 'rusty' });
-					factory(objects.roof, pixel, pos);
-				}
+
 				else if (pixel.is_color(color_medieval_wall)) {
 					factory(objects.wall, pixel, pos, { type: 'medieval' });
 				}
@@ -306,12 +307,12 @@ namespace objects {
 			this.size = [24, 40];
 			this.cell = [255 - this.pixel!.array[3], 0];
 			let tuple = sprites.dscrappywalls;
-			if (this.hints?.type == 'rusty')
-				tuple = sprites.drustywalls;
+			if (this.hints?.type == 'plywood')
+				tuple = sprites.dplywoodwalls;
+			if (this.hints?.type == 'sideroom')
+				tuple = sprites.dsideroomwalls;
 			if (this.hints?.type == 'woody')
 				tuple = sprites.dwoodywalls;
-			if (this.hints?.type == 'church')
-				tuple = sprites.dchurchwalls;
 			if (this.hints?.type == 'medieval')
 				tuple = sprites.dmedievalwalls;
 			else if (this.hints?.type == 'ruddy')
@@ -616,7 +617,7 @@ namespace objects {
 				//color: color,
 				order: .6
 			});
-			this.stack(['roof']);
+			this.stack(['roof', 'wall']);
 		}
 	}
 	export class shelves extends objected {
