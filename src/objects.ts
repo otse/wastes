@@ -561,6 +561,7 @@ namespace objects {
 			this.size = [24, 30];
 			//let color =  tiles.get(this.wpos)!.color;
 			//this.cell = [Math.floor(Math.random() * 2), 0];
+			return
 			let shape = new sprite({
 				binded: this,
 				tuple: sprites.dwheat,

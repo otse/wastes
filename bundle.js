@@ -1853,14 +1853,7 @@ void main() {
                 this.size = [24, 30];
                 //let color =  tiles.get(this.wpos)!.color;
                 //this.cell = [Math.floor(Math.random() * 2), 0];
-                new sprite({
-                    binded: this,
-                    tuple: sprites$1.dwheat,
-                    cell: this.cell,
-                    //color: color,
-                    order: .6
-                });
-                this.stack();
+                return;
             }
         }
         objects.wheat = wheat;
@@ -7080,9 +7073,9 @@ void main() {
             //['I spent some of my time sewing suits for wasters.', 3]
             ],
             [
-                [`I'm only a local.`, 1],
-                [`It can be hazardous around here. Keep your wits about you.`, 2],
-                [`Stay clear from the irradiated areas, and funny looking trees.`, -1],
+                [`I'm the trader. I sell, and I buy.`, 1],
+                [`It can be hazardous around here.`, 2],
+                [`Stay clear from the irradiated areas, marked by dead trees.`, -1],
             ],
             [
                 [`I'm a vendor of sifty town.`, 1],
@@ -7527,7 +7520,7 @@ void main() {
         areas_1.started = false;
         function start() {
             areas_1.started = true;
-            areas.push({ name: "Sift Town", bound: new aabb2([33, 39], [46, 54]) });
+            areas.push({ name: "Trashy Vendor", bound: new aabb2([33, 39], [46, 54]) });
         }
         areas_1.start = start;
         function tick() {

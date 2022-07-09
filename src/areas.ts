@@ -23,7 +23,7 @@ namespace areas {
 	export function start() {
 		started = true;
 
-		areas.push({ name: "Sift Town", bound: new aabb2([33, 39], [46, 54]) });
+		areas.push({ name: "Trashy Vendor", bound: new aabb2([33, 39], [46, 54]) });
 
 	}
 
