@@ -12,6 +12,7 @@ import collada from "./collada";
 import pawns from "./pawn";
 import win from "./win";
 import rooms from "./rooms";
+import areas from "./areas";
 
 
 export namespace wastes {
@@ -104,6 +105,7 @@ export namespace wastes {
 			tiles.start();
 			objects.start();
 			rooms.start();
+			areas.start();
 			win.start();
 			
 			pawns.make();
@@ -146,6 +148,7 @@ export namespace wastes {
 		collada.tick();
 		objects.tick();
 		rooms.tick();
+		areas.tick();
 		win.tick();
 	}
 

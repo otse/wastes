@@ -15,7 +15,7 @@ import win from "./win";
 
 export namespace pawns {
 
-	export var you: pawn | undefined = undefined;
+	export var you: pawn;
 
 	export const placeAtMouse = false;
 
@@ -294,13 +294,13 @@ export namespace pawns {
 
 				containers.sort((a, b) => pts.distsimple(this.wpos, a.wpos) < pts.distsimple(this.wpos, b.wpos) ? -1 : 1)
 
-				if (containers.length) {
+				if (containers.length && pts.distsimple(containers[0].wpos, this.wpos) < 1.0) {
 					win.container.call(true, containers[0]);
 				}
 				else
 					win.container.call(false);
 				
-				if (pawns.length) {
+				if (pawns.length && pts.distsimple(pawns[0].wpos, this.wpos) < 1.5) {
 					win.dialogue.call(true, pawns[0]);
 				}
 				else

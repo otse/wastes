@@ -8,6 +8,7 @@ import pawns from "./pawn";
 import ren from './renderer';
 import wastes from "./wastes";
 import objects from "./objects";
+import areas from "./areas";
 
 namespace win {
 
@@ -145,8 +146,26 @@ namespace win {
 			[`I'm only a local.`, 1],
 			[`It can be hazardous around here. Keep your wits about you.`, 2],
 			[`Stay clear from the irradiated areas, and funny looking trees.`, -1],
+		],
+		[
+			[`I'm a vendor of sifty town.`, 1],
+			[`I trade in most forms of scraps.`, 2],
+			[`.`, 3]
 		]
 	]
+
+	export class you {
+		static modal?: modal
+		static call(open: boolean) {
+			if (open && !this.modal) {
+				this.modal = new modal();
+			}
+			else if (!open && this.modal) {
+				this.modal?.deletor();
+				this.modal = undefined;
+			}
+		}
+	}
 
 	export class dialogue {
 		static obj?: lod.obj
@@ -174,6 +193,8 @@ namespace win {
 			}
 		}
 		static change() {
+			const which = 1;
+
 			this.modal!.content.innerHTML = dialogues[dialog[0]][dialog[1]][0]
 
 			const next = dialogues[dialog[0]][dialog[1]][1];
@@ -253,6 +274,26 @@ namespace win {
 			}
 		}
 	}
+
+	export class areatag {
+		static call(open: boolean, area?: areas.area, refresh = false) {
+			if (open) {
+				console.log('boo');
+				
+				let element = document.createElement('div');
+				element.className = 'area';
+				element.innerHTML = ` ${area?.name || ''} `;
+				win.append(element);
+				setTimeout(() => {
+					element.classList.add('fade');
+					setTimeout(() => {
+						element.remove();
+					}, 3000)
+				}, 1000)
+			}
+		}
+	}
+
 }
 
 export default win;

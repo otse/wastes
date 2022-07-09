@@ -49,3 +49,17 @@
 .modal .item:hover {
 	color: purple;
 }
+
+.area {
+    position: absolute;
+	color: white;
+	font-size: 2em;
+	right: 20%;
+    bottom: 20%;
+	transition: opacity 1s ease-in-out 2s;
+	opacity: 1;
+}
+
+.area.fade {
+	opacity: 0;
+}

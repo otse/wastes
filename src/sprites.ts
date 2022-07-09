@@ -31,16 +31,18 @@ export namespace sprites {
 	export const dcrate: tuple = [[24, 40], [24, 40], 0, 'tex/8bit/dcrate']
 	export const dshelves: tuple = [[20, 31], [20, 31], 0, 'tex/8bit/dshelves']
 	export const ddoor: tuple = [[192, 40], [24, 40], 0, 'tex/8bit/ddoor']
-	export const dplywoodwalls: tuple = [[264, 40], [24, 40], 0, 'tex/8bit/dcommonwalls']
+
 	export const dwoodywalls: tuple = [[264, 40], [24, 40], 0, 'tex/8bit/dwoodywalls']
-	export const dsideroomwalls: tuple = [[264, 40], [24, 40], 0, 'tex/8bit/dsideroomwalls']
+	export const dplywoodwalls: tuple = [[264, 40], [24, 40], 0, 'tex/8bit/dcommonwalls']
+	export const dovergrownwalls: tuple = [[264, 40], [24, 40], 0, 'tex/8bit/dovergrownwalls']
+	export const dderingerwalls: tuple = [[264, 40], [24, 40], 0, 'tex/8bit/dderingerwalls']
 	export const dmedievalwalls: tuple = [[264, 40], [24, 40], 0, 'tex/8bit/dmedievalwalls']
 
 	export const dscrappywalls: tuple = [[264, 40], [24, 40], 0, 'tex/dscrappywalls']
 	//export const dscrappywalls2: tuple = [[216, 40], [24, 40], 0, 'tex/dscrappywalls2']
 	export const druddywalls: tuple = [[288, 40], [24, 40], 0, 'tex/druddywalls']
 	export const dacidbarrel: tuple = [[24, 35], [24, 35], 0, 'tex/dacidbarrel']
-	export const dfalsefronts: tuple = [[192, 40], [24, 40], 0, 'tex/dfalsefronts']
+	export const dfalsefronts: tuple = [[192, 40], [24, 40], 0, 'tex/8bit/dfalsefronts']
 	
 	export const dtree1: tuple = [[121, 147], [121, 147], 0, 'tex/dtree1b']
 	export const pchris: tuple = [[90, 180], [90, 180], 0, 'tex/pawn/pwaster_quintuple']

@@ -25,13 +25,16 @@ namespace objects {
 	const color_wheat: vec3 = [130, 130, 0];
 	const color_scrappy_wall: vec3 = [20, 70, 50];
 	const color_woody_wall: vec3 = [87, 57, 20];
-	const color_sideroom_wall: vec3 = [105, 102, 35];
+
+	const color_plywood_wall: vec3 = [20, 84, 87];
+	const color_overgrown_wall: vec3 = [35, 105, 63];
+	const color_deringer_wall: vec3 = [80, 44, 27];
+
 	const color_medieval_wall: vec3 = [128, 128, 128];
 	const color_scrappy_wall_with_deck: vec3 = [20, 78, 54];
 	const color_deck_and_roof: vec3 = [114, 128, 124];
 	const color_porch: vec3 = [110, 120, 120];
 	const color_rails: vec3 = [110, 100, 120];
-	const color_plywood_wall_and_deck: vec3 = [20, 84, 87];
 
 	const color_false_front: vec3 = [255, 255, 255];
 
@@ -78,7 +81,7 @@ namespace objects {
 			return false;
 		})
 
-		/*hooks.register('sectorCreate', (sector: lod.sector) => {
+		hooks.register('sectorCreate', (sector: lod.sector) => {
 			pts.func(sector.small, (pos) => {
 				let pixel = wastes.roofmap.pixel(pos);
 				if (pixel.is_color(color_false_front)) {
@@ -87,7 +90,7 @@ namespace objects {
 				}
 			})
 			return false;
-		})*/
+		})
 
 		hooks.register('sectorCreate', (sector: lod.sector) => {
 			pts.func(sector.small, (pos) => {
@@ -102,12 +105,17 @@ namespace objects {
 					//factory(objects.wall, pixel, pos, { type: 'woody' });
 					//factory(objects.roof, pixel, pos);
 				}
-				else if (pixel.is_color(color_plywood_wall_and_deck)) {
+				else if (pixel.is_color(color_plywood_wall)) {
 					factory(objects.deck, pixel, pos);
 					factory(objects.wall, pixel, pos, { type: 'plywood' });
 					factory(objects.roof, pixel, pos);
 				}
-				else if (pixel.is_color(color_sideroom_wall)) {
+				else if (pixel.is_color(color_overgrown_wall)) {
+					factory(objects.deck, pixel, pos);
+					factory(objects.wall, pixel, pos, { type: 'overgrown' });
+					factory(objects.roof, pixel, pos);
+				}
+				else if (pixel.is_color(color_deringer_wall)) {
 					factory(objects.deck, pixel, pos);
 					factory(objects.wall, pixel, pos, { type: 'sideroom' });
 					factory(objects.roof, pixel, pos);
@@ -309,8 +317,10 @@ namespace objects {
 			let tuple = sprites.dscrappywalls;
 			if (this.hints?.type == 'plywood')
 				tuple = sprites.dplywoodwalls;
-			if (this.hints?.type == 'sideroom')
-				tuple = sprites.dsideroomwalls;
+			if (this.hints?.type == 'overgrown')
+				tuple = sprites.dovergrownwalls;
+			if (this.hints?.type == 'deringer')
+				tuple = sprites.dderingerwalls;
 			if (this.hints?.type == 'woody')
 				tuple = sprites.dwoodywalls;
 			if (this.hints?.type == 'medieval')
@@ -684,7 +694,7 @@ namespace objects {
 				binded: this,
 				tuple: sprites.dfalsefronts,
 				cell: this.cell,
-				order: .7,
+				order: 1.6,
 			});
 			this.stack();
 			//this.z = 29+4;

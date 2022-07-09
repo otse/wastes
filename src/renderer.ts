@@ -132,8 +132,8 @@ namespace ren {
 
 		scene2 = new Scene();
 
-		ambientLight = new AmbientLight(0xffffff);
-		scene.add(ambientLight);
+		//ambientLight = new AmbientLight(0xccffcc, 2);
+		//scene.add(ambientLight);
 
 		if (DPI_UPSCALED_RT)
 			ndpi = window.devicePixelRatio;

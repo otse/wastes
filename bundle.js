@@ -340,8 +340,8 @@ void main() {
             ren.scene.add(groups.axisSwap);
             ren.scene.background = new THREE.Color('#333');
             ren.scene2 = new THREE.Scene();
-            ren.ambientLight = new THREE.AmbientLight(0xffffff);
-            ren.scene.add(ren.ambientLight);
+            //ambientLight = new AmbientLight(0xccffcc, 2);
+            //scene.add(ambientLight);
             if (ren.DPI_UPSCALED_RT)
                 ren.ndpi = window.devicePixelRatio;
             ren.target = new THREE.WebGLRenderTarget(1024, 1024, {
@@ -529,7 +529,7 @@ void main() {
             constructor(span) {
                 this.arrays = [];
                 lod.ggalaxy = this;
-                new grid(2, 2);
+                new grid(3, 3);
             }
             update(wpos) {
                 lod.ggrid.big = this.big(wpos);
@@ -814,15 +814,16 @@ void main() {
         sprites.dcrate = [[24, 40], [24, 40], 0, 'tex/8bit/dcrate'];
         sprites.dshelves = [[20, 31], [20, 31], 0, 'tex/8bit/dshelves'];
         sprites.ddoor = [[192, 40], [24, 40], 0, 'tex/8bit/ddoor'];
-        sprites.dplywoodwalls = [[264, 40], [24, 40], 0, 'tex/8bit/dcommonwalls'];
         sprites.dwoodywalls = [[264, 40], [24, 40], 0, 'tex/8bit/dwoodywalls'];
-        sprites.dsideroomwalls = [[264, 40], [24, 40], 0, 'tex/8bit/dsideroomwalls'];
+        sprites.dplywoodwalls = [[264, 40], [24, 40], 0, 'tex/8bit/dcommonwalls'];
+        sprites.dovergrownwalls = [[264, 40], [24, 40], 0, 'tex/8bit/dovergrownwalls'];
+        sprites.dderingerwalls = [[264, 40], [24, 40], 0, 'tex/8bit/dderingerwalls'];
         sprites.dmedievalwalls = [[264, 40], [24, 40], 0, 'tex/8bit/dmedievalwalls'];
         sprites.dscrappywalls = [[264, 40], [24, 40], 0, 'tex/dscrappywalls'];
         //export const dscrappywalls2: tuple = [[216, 40], [24, 40], 0, 'tex/dscrappywalls2']
         sprites.druddywalls = [[288, 40], [24, 40], 0, 'tex/druddywalls'];
         sprites.dacidbarrel = [[24, 35], [24, 35], 0, 'tex/dacidbarrel'];
-        sprites.dfalsefronts = [[192, 40], [24, 40], 0, 'tex/dfalsefronts'];
+        sprites.dfalsefronts = [[192, 40], [24, 40], 0, 'tex/8bit/dfalsefronts'];
         sprites.dtree1 = [[121, 147], [121, 147], 0, 'tex/dtree1b'];
         sprites.pchris = [[90, 180], [90, 180], 0, 'tex/pawn/pwaster_quintuple'];
         sprites.pchris_lowres = [[19, 41], [19, 41], 0, 'tex/pawn/pwaster'];
@@ -1352,13 +1353,15 @@ void main() {
         const color_wheat = [130, 130, 0];
         const color_scrappy_wall = [20, 70, 50];
         const color_woody_wall = [87, 57, 20];
-        const color_sideroom_wall = [105, 102, 35];
+        const color_plywood_wall = [20, 84, 87];
+        const color_overgrown_wall = [35, 105, 63];
+        const color_deringer_wall = [80, 44, 27];
         const color_medieval_wall = [128, 128, 128];
         const color_scrappy_wall_with_deck = [20, 78, 54];
         const color_deck_and_roof = [114, 128, 124];
         const color_porch = [110, 120, 120];
         const color_rails = [110, 100, 120];
-        const color_plywood_wall_and_deck = [20, 84, 87];
+        const color_false_front = [255, 255, 255];
         const color_acid_barrel = [61, 118, 48];
         const color_wall_chest = [130, 100, 50];
         const color_shelves = [130, 80, 50];
@@ -1392,27 +1395,32 @@ void main() {
                 });
                 return false;
             });
-            /*hooks.register('sectorCreate', (sector: lod.sector) => {
+            hooks.register('sectorCreate', (sector) => {
                 pts.func(sector.small, (pos) => {
                     let pixel = wastes.roofmap.pixel(pos);
                     if (pixel.is_color(color_false_front)) {
                         //factory(objects.roof, pixel, pos);
                         factory(objects.falsefront, pixel, pos);
                     }
-                })
+                });
                 return false;
-            })*/
+            });
             hooks.register('sectorCreate', (sector) => {
                 pts.func(sector.small, (pos) => {
                     let pixel = wastes.buildingmap.pixel(pos);
                     if (pixel.is_color(color_scrappy_wall_with_deck)) ;
                     else if (pixel.is_color(color_woody_wall)) ;
-                    else if (pixel.is_color(color_plywood_wall_and_deck)) {
+                    else if (pixel.is_color(color_plywood_wall)) {
                         factory(objects.deck, pixel, pos);
                         factory(objects.wall, pixel, pos, { type: 'plywood' });
                         factory(objects.roof, pixel, pos);
                     }
-                    else if (pixel.is_color(color_sideroom_wall)) {
+                    else if (pixel.is_color(color_overgrown_wall)) {
+                        factory(objects.deck, pixel, pos);
+                        factory(objects.wall, pixel, pos, { type: 'overgrown' });
+                        factory(objects.roof, pixel, pos);
+                    }
+                    else if (pixel.is_color(color_deringer_wall)) {
                         factory(objects.deck, pixel, pos);
                         factory(objects.wall, pixel, pos, { type: 'sideroom' });
                         factory(objects.roof, pixel, pos);
@@ -1593,20 +1601,22 @@ void main() {
                 this.height = 24;
             }
             create() {
-                var _a, _b, _c, _d, _e;
+                var _a, _b, _c, _d, _e, _f;
                 this.tiled();
                 this.size = [24, 40];
                 this.cell = [255 - this.pixel.array[3], 0];
                 let tuple = sprites$1.dscrappywalls;
                 if (((_a = this.hints) === null || _a === void 0 ? void 0 : _a.type) == 'plywood')
                     tuple = sprites$1.dplywoodwalls;
-                if (((_b = this.hints) === null || _b === void 0 ? void 0 : _b.type) == 'sideroom')
-                    tuple = sprites$1.dsideroomwalls;
-                if (((_c = this.hints) === null || _c === void 0 ? void 0 : _c.type) == 'woody')
+                if (((_b = this.hints) === null || _b === void 0 ? void 0 : _b.type) == 'overgrown')
+                    tuple = sprites$1.dovergrownwalls;
+                if (((_c = this.hints) === null || _c === void 0 ? void 0 : _c.type) == 'deringer')
+                    tuple = sprites$1.dderingerwalls;
+                if (((_d = this.hints) === null || _d === void 0 ? void 0 : _d.type) == 'woody')
                     tuple = sprites$1.dwoodywalls;
-                if (((_d = this.hints) === null || _d === void 0 ? void 0 : _d.type) == 'medieval')
+                if (((_e = this.hints) === null || _e === void 0 ? void 0 : _e.type) == 'medieval')
                     tuple = sprites$1.dmedievalwalls;
-                else if (((_e = this.hints) === null || _e === void 0 ? void 0 : _e.type) == 'ruddy')
+                else if (((_f = this.hints) === null || _f === void 0 ? void 0 : _f.type) == 'ruddy')
                     tuple = sprites$1.druddywalls;
                 else ;
                 new sprite({
@@ -1971,7 +1981,7 @@ void main() {
                     binded: this,
                     tuple: sprites$1.dfalsefronts,
                     cell: this.cell,
-                    order: .7,
+                    order: 1.6,
                 });
                 this.stack();
                 //this.z = 29+4;
@@ -2075,7 +2085,7 @@ void main() {
     (function (modeler) {
         modeler.started = false;
         const textures = [
-            'tex/stock/bricks2.jpg',
+            'tex/stock/bricks3.jpg',
             'tex/stock/whiteplanks.jpg',
             'tex/stock/brick4.jpg',
             'tex/stock/metalrooftiles.jpg',
@@ -7073,8 +7083,26 @@ void main() {
                 [`I'm only a local.`, 1],
                 [`It can be hazardous around here. Keep your wits about you.`, 2],
                 [`Stay clear from the irradiated areas, and funny looking trees.`, -1],
+            ],
+            [
+                [`I'm a vendor of sifty town.`, 1],
+                [`I trade in most forms of scraps.`, 2],
+                [`.`, 3]
             ]
         ];
+        class you {
+            static call(open) {
+                var _a;
+                if (open && !this.modal) {
+                    this.modal = new modal();
+                }
+                else if (!open && this.modal) {
+                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
+                    this.modal = undefined;
+                }
+            }
+        }
+        win_1.you = you;
         class dialogue {
             static call(open, obj, refresh = false) {
                 var _a;
@@ -7169,12 +7197,29 @@ void main() {
             }
         }
         win_1.container = container;
+        class areatag {
+            static call(open, area, refresh = false) {
+                if (open) {
+                    console.log('boo');
+                    let element = document.createElement('div');
+                    element.className = 'area';
+                    element.innerHTML = ` ${(area === null || area === void 0 ? void 0 : area.name) || ''} `;
+                    win.append(element);
+                    setTimeout(() => {
+                        element.classList.add('fade');
+                        setTimeout(() => {
+                            element.remove();
+                        }, 3000);
+                    }, 1000);
+                }
+            }
+        }
+        win_1.areatag = areatag;
     })(win || (win = {}));
     var win$1 = win;
 
     var pawns;
     (function (pawns_1) {
-        pawns_1.you = undefined;
         pawns_1.placeAtMouse = false;
         function make() {
             let pos = [44, 44];
@@ -7395,12 +7440,12 @@ void main() {
                             }
                         }
                     containers.sort((a, b) => pts.distsimple(this.wpos, a.wpos) < pts.distsimple(this.wpos, b.wpos) ? -1 : 1);
-                    if (containers.length) {
+                    if (containers.length && pts.distsimple(containers[0].wpos, this.wpos) < 1.0) {
                         win$1.container.call(true, containers[0]);
                     }
                     else
                         win$1.container.call(false);
-                    if (pawns.length) {
+                    if (pawns.length && pts.distsimple(pawns[0].wpos, this.wpos) < 1.5) {
                         win$1.dialogue.call(true, pawns[0]);
                     }
                     else
@@ -7474,6 +7519,40 @@ void main() {
         rooms.tick = tick;
     })(rooms || (rooms = {}));
     var rooms$1 = rooms;
+
+    var areas;
+    (function (areas_1) {
+        let areas = [];
+        let currentArea;
+        areas_1.started = false;
+        function start() {
+            areas_1.started = true;
+            areas.push({ name: "Sift Town", bound: new aabb2([33, 39], [46, 54]) });
+        }
+        areas_1.start = start;
+        function tick() {
+            if (!areas_1.started)
+                return;
+            let here = new aabb2(pawns$1.you.wpos, pawns$1.you.wpos);
+            if (currentArea) {
+                if (currentArea && currentArea.bound.test(here) == aabb2.TEST.Outside) {
+                    currentArea = undefined;
+                    console.log('outside');
+                }
+            }
+            else {
+                for (let area of areas) {
+                    if (area.bound.test(here) == aabb2.TEST.Inside) {
+                        console.log('inside');
+                        currentArea = area;
+                        win$1.areatag.call(true, area);
+                    }
+                }
+            }
+        }
+        areas_1.tick = tick;
+    })(areas || (areas = {}));
+    var areas$1 = areas;
 
     exports.wastes = void 0;
     (function (wastes) {
@@ -7551,6 +7630,7 @@ void main() {
                 tiles$1.start();
                 objects$1.start();
                 rooms$1.start();
+                areas$1.start();
                 win$1.start();
                 pawns$1.make();
                 let pos = [37.5, 48.5];
@@ -7589,6 +7669,7 @@ void main() {
             collada$1.tick();
             objects$1.tick();
             rooms$1.tick();
+            areas$1.tick();
             win$1.tick();
         }
         wastes.tick = tick;
