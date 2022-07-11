@@ -340,8 +340,8 @@ void main() {
             ren.scene.add(groups.axisSwap);
             ren.scene.background = new THREE.Color('#333');
             ren.scene2 = new THREE.Scene();
-            //ambientLight = new AmbientLight(0xccffcc, 2);
-            //scene.add(ambientLight);
+            ren.ambientLight = new THREE.AmbientLight(0xffffff, 1);
+            ren.scene.add(ren.ambientLight);
             if (ren.DPI_UPSCALED_RT)
                 ren.ndpi = window.devicePixelRatio;
             ren.target = new THREE.WebGLRenderTarget(1024, 1024, {
@@ -751,6 +751,9 @@ void main() {
                 if ((_a = this.aabbScreen) === null || _a === void 0 ? void 0 : _a.test(new aabb2(mouse, mouse)))
                     return true;
             }
+            is_type(types) {
+                return types.indexOf(this.type) != -1;
+            }
         }
         lod.obj = obj;
         class shape extends toggle {
@@ -800,6 +803,7 @@ void main() {
         sprites.dtile4 = [[24, 17], [24, 17], 0, 'tex/dtileup4'];
         sprites.dgrass = [[96, 30], [24, 31], 0, 'tex/dgrass'];
         sprites.dwheat = [[96, 30], [24, 31], 0, 'tex/dwheat'];
+        sprites.dpanel = [[48, 10], [8, 10], 0, 'tex/dpanel'];
         sprites.dswamptiles = [[96, 30], [24, 30], 0, 'tex/dswamptiles'];
         sprites.dtilesand = [[24, 17], [24, 17], 0, 'tex/dtilesand'];
         sprites.dgraveltiles = [[96, 30], [24, 30], 0, 'tex/8bit/dgraveltiles'];
@@ -1365,6 +1369,7 @@ void main() {
         const color_acid_barrel = [61, 118, 48];
         const color_wall_chest = [130, 100, 50];
         const color_shelves = [130, 80, 50];
+        const color_panel = [78, 98, 98];
         function factory(type, pixel, pos, hints = {}) {
             let obj = new type;
             obj.hints = hints;
@@ -1391,6 +1396,9 @@ void main() {
                     }
                     else if (pixel.is_color(color_shelves)) {
                         factory(objects.shelves, pixel, pos);
+                    }
+                    else if (pixel.is_color(color_panel)) {
+                        factory(objects.panel, pixel, pos);
                     }
                 });
                 return false;
@@ -1551,12 +1559,12 @@ void main() {
         }
         objects.colormap = colormap;
         function is_solid(pos) {
-            const passable = ['land', 'deck', 'shelves', 'porch', 'pawn', 'you', 'door', 'leaves', 'roof', 'falsefront'];
+            const passable = ['land', 'deck', 'shelves', 'porch', 'pawn', 'you', 'door', 'leaves', 'roof', 'falsefront', 'panel'];
             pos = pts.round(pos);
             let sector = lod$1.ggalaxy.at(lod$1.ggalaxy.big(pos));
             let at = sector.stacked(pos);
             for (let obj of at) {
-                if (passable.indexOf(obj.type) == -1) {
+                if (!obj.is_type(passable)) {
                     return true;
                 }
             }
@@ -1582,7 +1590,7 @@ void main() {
                 let calc = 0;
                 let stack = this.sector.stacked(pts.round(this.wpos));
                 for (let obj of stack) {
-                    if (fallthru.indexOf(obj.type) > -1)
+                    if (obj.is_type(fallthru))
                         continue;
                     if (obj == this)
                         break;
@@ -1857,6 +1865,46 @@ void main() {
             }
         }
         objects.wheat = wheat;
+        class panel extends objected {
+            constructor() {
+                super(numbers.roofs);
+                this.ticker = 0;
+                this.type = 'panel';
+                this.height = 4;
+            }
+            create() {
+                this.tiled();
+                this.size = [8, 10];
+                //let color =  tiles.get(this.wpos)!.color;
+                //this.cell = [Math.floor(Math.random() * 2), 0];
+                let shape = new sprite({
+                    binded: this,
+                    tuple: sprites$1.dpanel,
+                    cell: [0, 0],
+                    //color: color,
+                    order: .6
+                });
+                shape.rup2 = 15;
+                shape.rleft = 2;
+                this.stack();
+            }
+            tick() {
+                let sprite = this.shape;
+                this.ticker += ren$1.delta / 60;
+                const cell = sprite.vars.cell;
+                if (this.ticker > 0.5) {
+                    if (cell[0] < 5)
+                        cell[0]++;
+                    else
+                        cell[0] = 0;
+                    this.ticker = 0;
+                }
+                //sprite.retransform();
+                sprite.update();
+                //console.log('boo');
+            }
+        }
+        objects.panel = panel;
         class container {
             constructor() {
                 this.tuples = [];
@@ -1928,7 +1976,16 @@ void main() {
                 this.tiled();
                 this.size = [20, 31];
                 //this.cell = [255 - this.pixel!.array[3], 0];
-                return;
+                //return
+                let shape = new sprite({
+                    binded: this,
+                    tuple: sprites$1.dshelves,
+                    //cell: this.cell,
+                    order: 0
+                });
+                shape.rup2 = 9;
+                shape.rleft = 6;
+                this.stack(['roof']);
             }
         }
         objects.shelves = shelves;
@@ -2033,7 +2090,7 @@ void main() {
                 let at = sector.stacked(pos);
                 let pawning = false;
                 for (let obj of at) {
-                    if (['pawn', 'you'].indexOf(obj.type) != -1) {
+                    if (obj.is_type(['pawn', 'you'])) {
                         pawning = true;
                         let sprite = this.shape;
                         sprite.vars.cell = pts.subtract(this.cell, [1, 0]);
@@ -6981,6 +7038,7 @@ void main() {
                 character.call(toggle_character);
             }
             if (app$1.key('b') == 1) ;
+            you.tick();
             character.tick();
             container.tick();
             dialogue.tick();
@@ -7087,11 +7145,23 @@ void main() {
             static call(open) {
                 var _a;
                 if (open && !this.modal) {
-                    this.modal = new modal();
+                    this.modal = new modal('you');
+                    this.modal.element.classList.add('you');
+                    this.modal.content.remove();
                 }
                 else if (!open && this.modal) {
                     (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
                     this.modal = undefined;
+                }
+            }
+            static tick() {
+                if (!pawns$1.you.isActive()) {
+                    this.call(true);
+                    this.modal.float(pawns$1.you, [-5, 5]);
+                    console.log('call and float');
+                }
+                else {
+                    this.call(false);
                 }
             }
         }

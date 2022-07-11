@@ -63,3 +63,12 @@
 .area.fade {
 	opacity: 0;
 }
+
+.modal.you {
+	width: auto;
+}
+
+.modal.you .title{
+	background: #7e6868;
+	background: #9e8e7a;
+}

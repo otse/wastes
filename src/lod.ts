@@ -317,6 +317,9 @@ namespace lod {
 			if (this.aabbScreen?.test(new aabb2(mouse, mouse)))
 				return true;
 		}
+		is_type(types: string[]) {
+			return types.indexOf(this.type) != -1;
+		}
 	}
 
 	export namespace shape {

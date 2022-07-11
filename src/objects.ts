@@ -41,6 +41,7 @@ namespace objects {
 	const color_acid_barrel: vec3 = [61, 118, 48];
 	const color_wall_chest: vec3 = [130, 100, 50];
 	const color_shelves: vec3 = [130, 80, 50];
+	const color_panel: vec3 = [78, 98, 98];
 
 	export function factory<type extends objected>(type: { new(): type }, pixel, pos, hints = {}) {
 		let obj = new type;
@@ -76,6 +77,9 @@ namespace objects {
 				}
 				else if (pixel.is_color(color_shelves)) {
 					factory(objects.shelves, pixel, pos);
+				}
+				else if (pixel.is_color(color_panel)) {
+					factory(objects.panel, pixel, pos);
 				}
 			})
 			return false;
@@ -258,12 +262,12 @@ namespace objects {
 	}
 
 	export function is_solid(pos: vec2) {
-		const passable = ['land', 'deck', 'shelves', 'porch', 'pawn', 'you', 'door', 'leaves', 'roof', 'falsefront'];
+		const passable = ['land', 'deck', 'shelves', 'porch', 'pawn', 'you', 'door', 'leaves', 'roof', 'falsefront', 'panel'];
 		pos = pts.round(pos);
 		let sector = lod.ggalaxy.at(lod.ggalaxy.big(pos));
 		let at = sector.stacked(pos);
 		for (let obj of at) {
-			if (passable.indexOf(obj.type) == -1) {
+			if (!obj.is_type(passable)) {
 				return true;
 			}
 		}
@@ -293,7 +297,7 @@ namespace objects {
 			let calc = 0;
 			let stack = this.sector!.stacked(pts.round(this.wpos));
 			for (let obj of stack) {
-				if (fallthru.indexOf(obj.type) > -1)
+				if (obj.is_type(fallthru))
 					continue;
 				if (obj == this)
 					break;
@@ -572,6 +576,46 @@ namespace objects {
 			this.stack();
 		}
 	}
+	export class panel extends objected {
+		ticker = 0
+		constructor() {
+			super(numbers.roofs);
+			this.type = 'panel';
+			this.height = 4;
+		}
+		override create() {
+			this.tiled();
+			this.size = [8, 10];
+			//let color =  tiles.get(this.wpos)!.color;
+			//this.cell = [Math.floor(Math.random() * 2), 0];
+			let shape = new sprite({
+				binded: this,
+				tuple: sprites.dpanel,
+				cell: [0, 0],
+				//color: color,
+				order: .6
+			});
+			shape.rup2 = 15;
+			shape.rleft = 2;
+			this.stack();
+		}
+		override tick() {
+			let sprite = this.shape as sprite;
+			this.ticker += ren.delta / 60;
+			const cell = sprite.vars.cell!;
+			if (this.ticker > 0.5) {
+				if (cell[0] < 5)
+					cell[0]++;
+				else
+					cell[0] = 0;
+				this.ticker = 0;
+			}
+			//sprite.retransform();
+			sprite.update();
+			//console.log('boo');
+
+		}
+	}
 	type item = [string: string, amount: number]
 	export class container {
 		tuples: [string: string, amount: number][] = []
@@ -642,7 +686,7 @@ namespace objects {
 			this.tiled();
 			this.size = [20, 31];
 			//this.cell = [255 - this.pixel!.array[3], 0];
-			return
+			//return
 			let shape = new sprite({
 				binded: this,
 				tuple: sprites.dshelves,
@@ -755,7 +799,7 @@ namespace objects {
 			let at = sector.stacked(pos);
 			let pawning = false;
 			for (let obj of at) {
-				if (['pawn', 'you'].indexOf(obj.type) != -1) {
+				if (obj.is_type(['pawn', 'you'])) {
 					pawning = true;
 					let sprite = this.shape as sprite;
 					sprite.vars.cell = pts.subtract(this.cell, [1, 0]);

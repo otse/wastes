@@ -39,6 +39,7 @@ namespace win {
 			//container.toggle(null, toggle_container);
 		}
 
+		you.tick();
 		character.tick();
 		container.tick();
 		dialogue.tick();
@@ -158,11 +159,25 @@ namespace win {
 		static modal?: modal
 		static call(open: boolean) {
 			if (open && !this.modal) {
-				this.modal = new modal();
+				this.modal = new modal('you');
+				this.modal.element.classList.add('you');
+				this.modal.content.remove();
 			}
 			else if (!open && this.modal) {
 				this.modal?.deletor();
 				this.modal = undefined;
+			}
+		}
+		static tick() {
+			if (!pawns.you.isActive()) {
+				this.call(true);
+				this.modal!.float(pawns.you, [-5, 5]);
+				console.log('call and float');
+				
+			}
+			else
+			{
+				this.call(false);
 			}
 		}
 	}
