@@ -67,16 +67,20 @@ export namespace pawns {
 			});
 
 			if (!this.created) {
+
+				// set scene scale to 1, 1, 1 and w h both to 50
+				// for a 1:1 pawn, otherwise set to 2, 2, 2 and 100
+
 				this.created = true;
 				// make wee guy target
 				//this.group = new THREE.Group
-				let w = 100, h = 100;
+				let w = 50, h = 50;
 				this.target = ren.make_render_target(w, h);
 				this.camera = ren.ortographic_camera(w, h);
 				this.scene = new Scene()
 				this.scene.rotation.set(Math.PI / 6, Math.PI / 4, 0);
 				this.scene.position.set(0, 0, 0);
-				this.scene.scale.set(2, 2, 2);
+				this.scene.scale.set(1, 1, 1);
 				//this.scene.background = new Color('salmon');
 
 				let amb = new AmbientLight('white');
@@ -356,7 +360,7 @@ export namespace pawns {
 			this.tiled();
 			//this.tile?.paint();
 			this.sector?.swap(this);
-			this.stack(['pawn', 'you', 'leaves', 'door', 'roof', 'falsefront']);
+			this.stack(['pawn', 'you', 'leaves', 'door', 'roof', 'falsefront', 'panel']);
 			super.update();
 		}
 		//tick() {

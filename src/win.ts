@@ -144,8 +144,8 @@ namespace win {
 			//['I spent some of my time sewing suits for wasters.', 3]
 		],
 		[
-			[`I'm the trader. I sell, and I buy.`, 1],
-			[`It can be hazardous around here.`, 2],
+			[`I'm a trader.`, 1],
+			[`It can be hazardous around here. The purple for example is contaminated soil.`, 2],
 			[`Stay clear from the irradiated areas, marked by dead trees.`, -1],
 		],
 		[

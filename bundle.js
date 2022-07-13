@@ -1356,12 +1356,10 @@ void main() {
         const color_grass = [40, 90, 40];
         const color_wheat = [130, 130, 0];
         const color_scrappy_wall = [20, 70, 50];
-        const color_woody_wall = [87, 57, 20];
         const color_plywood_wall = [20, 84, 87];
         const color_overgrown_wall = [35, 105, 63];
         const color_deringer_wall = [80, 44, 27];
         const color_medieval_wall = [128, 128, 128];
-        const color_scrappy_wall_with_deck = [20, 78, 54];
         const color_deck_and_roof = [114, 128, 124];
         const color_porch = [110, 120, 120];
         const color_rails = [110, 100, 120];
@@ -1416,9 +1414,7 @@ void main() {
             hooks.register('sectorCreate', (sector) => {
                 pts.func(sector.small, (pos) => {
                     let pixel = wastes.buildingmap.pixel(pos);
-                    if (pixel.is_color(color_scrappy_wall_with_deck)) ;
-                    else if (pixel.is_color(color_woody_wall)) ;
-                    else if (pixel.is_color(color_plywood_wall)) {
+                    if (pixel.is_color(color_plywood_wall)) {
                         factory(objects.deck, pixel, pos);
                         factory(objects.wall, pixel, pos, { type: 'plywood' });
                         factory(objects.roof, pixel, pos);
@@ -1870,7 +1866,7 @@ void main() {
                 super(numbers.roofs);
                 this.ticker = 0;
                 this.type = 'panel';
-                this.height = 4;
+                this.height = 10;
             }
             create() {
                 this.tiled();
@@ -1976,16 +1972,7 @@ void main() {
                 this.tiled();
                 this.size = [20, 31];
                 //this.cell = [255 - this.pixel!.array[3], 0];
-                //return
-                let shape = new sprite({
-                    binded: this,
-                    tuple: sprites$1.dshelves,
-                    //cell: this.cell,
-                    order: 0
-                });
-                shape.rup2 = 9;
-                shape.rleft = 6;
-                this.stack(['roof']);
+                return;
             }
         }
         objects.shelves = shelves;
@@ -1993,7 +1980,7 @@ void main() {
             constructor() {
                 super(numbers.roofs);
                 this.type = 'roof';
-                this.height = 2;
+                this.height = 3;
             }
             create() {
                 //return;
@@ -2070,7 +2057,7 @@ void main() {
                 super(numbers.walls);
                 this.open = false;
                 this.type = 'door';
-                this.height = 24;
+                this.height = 23;
             }
             create() {
                 this.tiled();
@@ -7131,8 +7118,8 @@ void main() {
             //['I spent some of my time sewing suits for wasters.', 3]
             ],
             [
-                [`I'm the trader. I sell, and I buy.`, 1],
-                [`It can be hazardous around here.`, 2],
+                [`I'm a trader.`, 1],
+                [`It can be hazardous around here. The purple for example is contaminated soil.`, 2],
                 [`Stay clear from the irradiated areas, marked by dead trees.`, -1],
             ],
             [
@@ -7323,16 +7310,18 @@ void main() {
                     order: 1.5,
                 });
                 if (!this.created) {
+                    // set scene scale to 1, 1, 1 and w h both to 50
+                    // for a 1:1 pawn, otherwise set to 2, 2, 2 and 100
                     this.created = true;
                     // make wee guy target
                     //this.group = new THREE.Group
-                    let w = 100, h = 100;
+                    let w = 50, h = 50;
                     this.target = ren$1.make_render_target(w, h);
                     this.camera = ren$1.ortographic_camera(w, h);
                     this.scene = new THREE.Scene();
                     this.scene.rotation.set(Math.PI / 6, Math.PI / 4, 0);
                     this.scene.position.set(0, 0, 0);
-                    this.scene.scale.set(2, 2, 2);
+                    this.scene.scale.set(1, 1, 1);
                     //this.scene.background = new Color('salmon');
                     let amb = new THREE.AmbientLight('white');
                     this.scene.add(amb);
@@ -7559,7 +7548,7 @@ void main() {
                 this.tiled();
                 //this.tile?.paint();
                 (_b = this.sector) === null || _b === void 0 ? void 0 : _b.swap(this);
-                this.stack(['pawn', 'you', 'leaves', 'door', 'roof', 'falsefront']);
+                this.stack(['pawn', 'you', 'leaves', 'door', 'roof', 'falsefront', 'panel']);
                 super.update();
             }
         }

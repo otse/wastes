@@ -99,17 +99,7 @@ namespace objects {
 		hooks.register('sectorCreate', (sector: lod.sector) => {
 			pts.func(sector.small, (pos) => {
 				let pixel = wastes.buildingmap.pixel(pos);
-				if (pixel.is_color(color_scrappy_wall_with_deck)) {
-					//factory(objects.deck, pixel, pos);
-					//factory(objects.wall, pixel, pos, { type: 'scrappy' });
-					//factory(objects.roof, pixel, pos);
-				}
-				else if (pixel.is_color(color_woody_wall)) {
-					//factory(objects.deck, pixel, pos);
-					//factory(objects.wall, pixel, pos, { type: 'woody' });
-					//factory(objects.roof, pixel, pos);
-				}
-				else if (pixel.is_color(color_plywood_wall)) {
+				if (pixel.is_color(color_plywood_wall)) {
 					factory(objects.deck, pixel, pos);
 					factory(objects.wall, pixel, pos, { type: 'plywood' });
 					factory(objects.roof, pixel, pos);
@@ -581,7 +571,7 @@ namespace objects {
 		constructor() {
 			super(numbers.roofs);
 			this.type = 'panel';
-			this.height = 4;
+			this.height = 10;
 		}
 		override create() {
 			this.tiled();
@@ -686,7 +676,7 @@ namespace objects {
 			this.tiled();
 			this.size = [20, 31];
 			//this.cell = [255 - this.pixel!.array[3], 0];
-			//return
+			return
 			let shape = new sprite({
 				binded: this,
 				tuple: sprites.dshelves,
@@ -702,7 +692,7 @@ namespace objects {
 		constructor() {
 			super(numbers.roofs);
 			this.type = 'roof';
-			this.height = 2;
+			this.height = 3;
 		}
 		override create() {
 			//return;
@@ -779,7 +769,7 @@ namespace objects {
 		constructor() {
 			super(numbers.walls);
 			this.type = 'door'
-			this.height = 24;
+			this.height = 23;
 		}
 		override create() {
 			this.tiled();

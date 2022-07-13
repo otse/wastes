@@ -15,7 +15,6 @@ namespace rooms {
         started = true;
 
 
-
     }
 
     export function tick() {
