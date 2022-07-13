@@ -1162,7 +1162,7 @@ void main() {
                     cell: this.cell,
                     color: this.color,
                     opacity: this.opacity,
-                    order: -.6
+                    order: -.5
                 });
                 // if we have a deck, add it to heightAdd
                 let sector = lod$1.ggalaxy.at(lod$1.ggalaxy.big(this.wpos));
@@ -1607,9 +1607,9 @@ void main() {
                 this.cell = [255 - this.pixel.array[3], 0];
                 let tuple = sprites$1.dscrappywalls;
                 if (((_a = this.hints) === null || _a === void 0 ? void 0 : _a.type) == 'plywood')
-                    tuple = sprites$1.dplywoodwalls;
+                    tuple = sprites$1.dderingerwalls;
                 if (((_b = this.hints) === null || _b === void 0 ? void 0 : _b.type) == 'overgrown')
-                    tuple = sprites$1.dovergrownwalls;
+                    tuple = sprites$1.dderingerwalls;
                 if (((_c = this.hints) === null || _c === void 0 ? void 0 : _c.type) == 'deringer')
                     tuple = sprites$1.dderingerwalls;
                 if (((_d = this.hints) === null || _d === void 0 ? void 0 : _d.type) == 'woody')

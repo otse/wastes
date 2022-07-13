@@ -306,9 +306,9 @@ namespace objects {
 			this.cell = [255 - this.pixel!.array[3], 0];
 			let tuple = sprites.dscrappywalls;
 			if (this.hints?.type == 'plywood')
-				tuple = sprites.dplywoodwalls;
+				tuple = sprites.dderingerwalls;
 			if (this.hints?.type == 'overgrown')
-				tuple = sprites.dovergrownwalls;
+				tuple = sprites.dderingerwalls;
 			if (this.hints?.type == 'deringer')
 				tuple = sprites.dderingerwalls;
 			if (this.hints?.type == 'woody')
