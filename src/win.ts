@@ -210,13 +210,13 @@ namespace win {
 		static change() {
 			const which = 1;
 
-			this.modal!.content.innerHTML = dialogues[dialog[0]][dialog[1]][0]
+			this.modal!.content.innerHTML = dialogues[dialog[0]][dialog[1]][0] + "&nbsp;"
 
 			const next = dialogues[dialog[0]][dialog[1]][1];
 
 			if (next != -1) {
 				let button = document.createElement('div');
-				button.innerHTML = ' >>'
+				button.innerHTML = '>>'
 				button.className = 'item';
 				this.modal!.content.append(button);
 

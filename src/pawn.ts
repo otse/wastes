@@ -57,7 +57,7 @@ export namespace pawns {
 			if (wasterSprite)
 				this.size = pts.divide([90, 180], 5);
 			else
-				this.size = pts.divide([100, 100], 2);
+				this.size = pts.divide([50, 100], 2);
 
 			let shape = new sprite({
 				binded: this,
@@ -74,10 +74,11 @@ export namespace pawns {
 				this.created = true;
 				// make wee guy target
 				//this.group = new THREE.Group
-				let w = 50, h = 50;
+				let w = this.size[0], h = this.size[1];
 				this.target = ren.make_render_target(w, h);
 				this.camera = ren.ortographic_camera(w, h);
 				this.scene = new Scene()
+				//this.scene.background = new Color('#333');
 				this.scene.rotation.set(Math.PI / 6, Math.PI / 4, 0);
 				this.scene.position.set(0, 0, 0);
 				this.scene.scale.set(1, 1, 1);
@@ -223,7 +224,7 @@ export namespace pawns {
 			this.groups.legr.position.set(legsSize / 2, -bodyHeight / 2, 0);
 			this.meshes.legr.position.set(0, -legsHeight / 2, 0);
 
-			this.groups.ground.position.set(-bodyWidth * 2, -bodyHeight, 0);
+			this.groups.ground.position.set(0, -bodyHeight * 1.5, 0);
 			//mesh.rotation.set(Math.PI / 2, 0, 0);
 
 			this.scene.add(this.groups.ground);

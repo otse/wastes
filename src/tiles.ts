@@ -78,7 +78,7 @@ export namespace tiles {
 
 	}
 
-	const color_purple_water: vec4 = [40, 90, 130, 255];
+	const color_purple_water: vec4 = [40, 120, 130, 255];
 
 	export class tile extends lod.obj {
 		static lastHover?: tile
@@ -147,7 +147,7 @@ export namespace tiles {
 				cell: this.cell,
 				color: this.color,
 				opacity: this.opacity,
-				order: -.5
+				order: -.6
 			});
 			// if we have a deck, add it to heightAdd
 			let sector = lod.ggalaxy.at(lod.ggalaxy.big(this.wpos));

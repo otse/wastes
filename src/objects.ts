@@ -114,9 +114,9 @@ namespace objects {
 					factory(objects.wall, pixel, pos, { type: 'sideroom' });
 					factory(objects.roof, pixel, pos);
 				}
-				else if (pixel.is_color(color_medieval_wall)) {
-					factory(objects.wall, pixel, pos, { type: 'medieval' });
-				}
+				//else if (pixel.is_color(color_medieval_wall)) {
+				//	factory(objects.wall, pixel, pos, { type: 'medieval' });
+				//}
 				else if (pixel.is_color(color_scrappy_wall)) {
 					factory(objects.wall, pixel, pos, { type: 'scrappy' });
 					//factory(objects.roof, pixel, pos);
@@ -134,10 +134,6 @@ namespace objects {
 				}
 				else if (pixel.is_color(color_wheat)) {
 					factory(objects.wheat, pixel, pos);
-				}
-
-				else if (pixel.is_color(color_medieval_wall)) {
-					factory(objects.wall, pixel, pos, { type: 'medieval' });
 				}
 				else if (pixel.is_color(color_deck_and_roof)) {
 					factory(objects.deck, pixel, pos);
@@ -424,7 +420,7 @@ namespace objects {
 		static timer = 0;
 		constructor() {
 			super(numbers.floors);
-			this.type = 'porch'
+			this.type = 'tree'
 			this.height = 3;
 		}
 		override create() {
@@ -433,7 +429,7 @@ namespace objects {
 			let shape = new sprite({
 				binded: this,
 				tuple: sprites.ddeadtreetrunk,
-				order: .4,
+				order: 0.6,
 			});
 			this.stack();
 		}

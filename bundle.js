@@ -1113,7 +1113,7 @@ void main() {
             }
         }
         tiles.tick = tick;
-        const color_purple_water = [40, 90, 130, 255];
+        const color_purple_water = [40, 120, 130, 255];
         class tile extends lod$1.obj {
             constructor(wpos) {
                 super(numbers.tiles);
@@ -1162,7 +1162,7 @@ void main() {
                     cell: this.cell,
                     color: this.color,
                     opacity: this.opacity,
-                    order: -.5
+                    order: -.6
                 });
                 // if we have a deck, add it to heightAdd
                 let sector = lod$1.ggalaxy.at(lod$1.ggalaxy.big(this.wpos));
@@ -1359,7 +1359,6 @@ void main() {
         const color_plywood_wall = [20, 84, 87];
         const color_overgrown_wall = [35, 105, 63];
         const color_deringer_wall = [80, 44, 27];
-        const color_medieval_wall = [128, 128, 128];
         const color_deck_and_roof = [114, 128, 124];
         const color_porch = [110, 120, 120];
         const color_rails = [110, 100, 120];
@@ -1429,9 +1428,9 @@ void main() {
                         factory(objects.wall, pixel, pos, { type: 'sideroom' });
                         factory(objects.roof, pixel, pos);
                     }
-                    else if (pixel.is_color(color_medieval_wall)) {
-                        factory(objects.wall, pixel, pos, { type: 'medieval' });
-                    }
+                    //else if (pixel.is_color(color_medieval_wall)) {
+                    //	factory(objects.wall, pixel, pos, { type: 'medieval' });
+                    //}
                     else if (pixel.is_color(color_scrappy_wall)) {
                         factory(objects.wall, pixel, pos, { type: 'scrappy' });
                         //factory(objects.roof, pixel, pos);
@@ -1445,9 +1444,6 @@ void main() {
                     else if (pixel.is_color(color_grass)) ;
                     else if (pixel.is_color(color_wheat)) {
                         factory(objects.wheat, pixel, pos);
-                    }
-                    else if (pixel.is_color(color_medieval_wall)) {
-                        factory(objects.wall, pixel, pos, { type: 'medieval' });
                     }
                     else if (pixel.is_color(color_deck_and_roof)) {
                         factory(objects.deck, pixel, pos);
@@ -1723,7 +1719,7 @@ void main() {
         class deadtree extends objected {
             constructor() {
                 super(numbers.floors);
-                this.type = 'porch';
+                this.type = 'tree';
                 this.height = 3;
             }
             create() {
@@ -1732,7 +1728,7 @@ void main() {
                 new sprite({
                     binded: this,
                     tuple: sprites$1.ddeadtreetrunk,
-                    order: .4,
+                    order: 0.6,
                 });
                 this.stack();
             }
@@ -7175,11 +7171,11 @@ void main() {
                 }
             }
             static change() {
-                this.modal.content.innerHTML = dialogues[dialog[0]][dialog[1]][0];
+                this.modal.content.innerHTML = dialogues[dialog[0]][dialog[1]][0] + "&nbsp;";
                 const next = dialogues[dialog[0]][dialog[1]][1];
                 if (next != -1) {
                     let button = document.createElement('div');
-                    button.innerHTML = ' >>';
+                    button.innerHTML = '>>';
                     button.className = 'item';
                     this.modal.content.append(button);
                     button.onclick = (e) => {
@@ -7302,7 +7298,7 @@ void main() {
             }
             create() {
                 this.tiled();
-                this.size = pts.divide([100, 100], 2);
+                this.size = pts.divide([50, 100], 2);
                 new sprite({
                     binded: this,
                     tuple: sprites$1.test100,
@@ -7315,10 +7311,11 @@ void main() {
                     this.created = true;
                     // make wee guy target
                     //this.group = new THREE.Group
-                    let w = 50, h = 50;
+                    let w = this.size[0], h = this.size[1];
                     this.target = ren$1.make_render_target(w, h);
                     this.camera = ren$1.ortographic_camera(w, h);
                     this.scene = new THREE.Scene();
+                    //this.scene.background = new Color('#333');
                     this.scene.rotation.set(Math.PI / 6, Math.PI / 4, 0);
                     this.scene.position.set(0, 0, 0);
                     this.scene.scale.set(1, 1, 1);
@@ -7434,7 +7431,7 @@ void main() {
                 this.meshes.legl.position.set(0, -legsHeight / 2, 0);
                 this.groups.legr.position.set(legsSize / 2, -bodyHeight / 2, 0);
                 this.meshes.legr.position.set(0, -legsHeight / 2, 0);
-                this.groups.ground.position.set(-bodyWidth * 2, -bodyHeight, 0);
+                this.groups.ground.position.set(0, -bodyHeight * 1.5, 0);
                 //mesh.rotation.set(Math.PI / 2, 0, 0);
                 this.scene.add(this.groups.ground);
             }

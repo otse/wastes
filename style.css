@@ -2,8 +2,7 @@
 	z-index: 1;
 	display: block;
 	position: absolute;
-	font-family: 'Press Start 2P', cursive;
-	font-family: Courier;
+	font-family: 'Poppins', sans-serif;
 	width: 100%;
 	height: 100%;
 }
