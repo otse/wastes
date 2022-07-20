@@ -855,8 +855,8 @@ void main() {
             this.roffset = [0, 0];
             if (!this.vars.cell)
                 this.vars.cell = [0, 0];
-            if (!this.vars.order)
-                this.vars.order = 0;
+            if (!this.vars.orderBias)
+                this.vars.orderBias = 0;
             if (!this.vars.opacity)
                 this.vars.opacity = 1;
             this.myUvTransform = new THREE.Matrix3;
@@ -872,13 +872,13 @@ void main() {
                 calc = pts.add(obj.rpos, pts.divide(obj.size, 2));
             else
                 calc = pts.add(obj.rpos, [0, obj.size[1]]);
-            let pos = pts.round(obj.wpos);
+            let pos = obj.wpos; //pts.round(obj.wpos);
             calc = pts.add(calc, [this.rleft, this.rup + this.rup2]);
             if (this.mesh) {
                 this.retransform();
                 this.mesh.position.fromArray([...calc, 0]);
                 this.mesh.updateMatrix();
-                this.mesh.renderOrder = -pos[1] + pos[0] + this.vars.order;
+                this.mesh.renderOrder = -pos[1] + pos[0] + this.vars.orderBias;
                 this.mesh.rotation.z = this.vars.binded.ro;
             }
         }
@@ -1162,7 +1162,7 @@ void main() {
                     cell: this.cell,
                     color: this.color,
                     opacity: this.opacity,
-                    order: -.5
+                    orderBias: -.5
                 });
                 // if we have a deck, add it to heightAdd
                 let sector = lod$1.ggalaxy.at(lod$1.ggalaxy.big(this.wpos));
@@ -1623,7 +1623,7 @@ void main() {
                     binded: this,
                     tuple: tuple,
                     cell: this.cell,
-                    order: .6,
+                    orderBias: .6,
                 });
                 this.stack();
             }
@@ -1648,7 +1648,7 @@ void main() {
                     binded: this,
                     tuple: sprites$1.ddeck,
                     cell: this.cell,
-                    order: .4,
+                    orderBias: .4,
                 });
                 this.stack();
             }
@@ -1682,7 +1682,7 @@ void main() {
                     binded: this,
                     tuple: sprites$1.dporch,
                     cell: this.cell,
-                    order: .4,
+                    orderBias: .0,
                 });
                 this.stack();
             }
@@ -1707,7 +1707,7 @@ void main() {
                     binded: this,
                     tuple: sprites$1.drails,
                     cell: this.cell,
-                    order: .4,
+                    orderBias: .4,
                 });
                 this.stack();
             }
@@ -1728,7 +1728,7 @@ void main() {
                 new sprite({
                     binded: this,
                     tuple: sprites$1.ddeadtreetrunk,
-                    order: 0.6,
+                    orderBias: 0.6,
                 });
                 this.stack();
             }
@@ -1752,7 +1752,7 @@ void main() {
                 new sprite({
                     binded: this,
                     tuple: sprites$1.ddecidtreetrunk,
-                    order: 0.6,
+                    orderBias: 0.6,
                 });
                 this.stack();
                 const tile = tiles$1.get(this.wpos);
@@ -1794,7 +1794,7 @@ void main() {
                     new sprite({
                         binded: this,
                         tuple: tuple,
-                        order: 0.7,
+                        orderBias: 0.7,
                         color: color
                     });
                     if (this.hints.tree)
@@ -1835,7 +1835,7 @@ void main() {
                     binded: this,
                     tuple: sprites$1.dgrass,
                     cell: this.cell,
-                    order: .6,
+                    orderBias: .6,
                     color: color
                 });
                 this.stack();
@@ -1874,7 +1874,7 @@ void main() {
                     tuple: sprites$1.dpanel,
                     cell: [0, 0],
                     //color: color,
-                    order: .6
+                    orderBias: .6
                 });
                 shape.rup2 = 15;
                 shape.rleft = 2;
@@ -1951,7 +1951,7 @@ void main() {
                     tuple: sprites$1.dcrate,
                     cell: this.cell,
                     //color: color,
-                    order: .6
+                    orderBias: .6
                 });
                 this.stack(['roof', 'wall']);
             }
@@ -1985,7 +1985,7 @@ void main() {
                 let shape = new sprite({
                     binded: this,
                     tuple: sprites$1.droof,
-                    order: 1.6,
+                    orderBias: 1.6,
                 });
                 shape.rup = 29;
             }
@@ -2014,7 +2014,7 @@ void main() {
                     binded: this,
                     tuple: sprites$1.dfalsefronts,
                     cell: this.cell,
-                    order: 1.6,
+                    orderBias: 1.6,
                 });
                 this.stack();
                 //this.z = 29+4;
@@ -2042,7 +2042,7 @@ void main() {
                 new sprite({
                     binded: this,
                     tuple: sprites$1.dacidbarrel,
-                    order: .4,
+                    orderBias: .4,
                 });
                 this.stack();
             }
@@ -2063,7 +2063,7 @@ void main() {
                     binded: this,
                     tuple: sprites$1.ddoor,
                     cell: this.cell,
-                    order: door.order,
+                    orderBias: door.order,
                 });
                 this.stack();
             }
@@ -2077,7 +2077,7 @@ void main() {
                         pawning = true;
                         let sprite = this.shape;
                         sprite.vars.cell = pts.subtract(this.cell, [1, 0]);
-                        sprite.vars.order = 1.55;
+                        sprite.vars.orderBias = 1.55;
                         sprite.retransform();
                         sprite.update();
                         this.open = true;
@@ -2087,7 +2087,7 @@ void main() {
                 if (!pawning) {
                     let sprite = this.shape;
                     sprite.vars.cell = this.cell;
-                    sprite.vars.order = door.order;
+                    sprite.vars.orderBias = door.order;
                     sprite.retransform();
                     sprite.update();
                     this.open = false;
@@ -2106,7 +2106,7 @@ void main() {
                 new sprite({
                     binded: this,
                     tuple: sprites$1.shrubs,
-                    order: .5
+                    orderBias: .5
                 });
             }
         }
@@ -7303,7 +7303,7 @@ void main() {
                     binded: this,
                     tuple: sprites$1.test100,
                     cell: this.cell,
-                    order: 1.5,
+                    orderBias: 1.3,
                 });
                 if (!this.created) {
                     // set scene scale to 1, 1, 1 and w h both to 50
@@ -7540,9 +7540,11 @@ void main() {
                             pos = pts.add(pos, pts.divide([1, 1], 2));
                             mouse = pts.subtract(mouse, pos);
                             mouse[1] = -mouse[1];
-                            //mouse = pts.inv(mouse);
-                            x = mouse[0];
-                            y = mouse[1];
+                            const dist = pts.distsimple(pos, wastes.gview.mwpos);
+                            if (dist > 0.5) {
+                                x = mouse[0];
+                                y = mouse[1];
+                            }
                             //move = true;
                         }
                     }

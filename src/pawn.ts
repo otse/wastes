@@ -63,7 +63,7 @@ export namespace pawns {
 				binded: this,
 				tuple: wasterSprite ? sprites.pchris : sprites.test100,
 				cell: this.cell,
-				order: 1.5,
+				orderBias: 1.3,
 			});
 
 			if (!this.created) {
@@ -358,9 +358,12 @@ export namespace pawns {
 						pos = pts.add(pos, pts.divide([1, 1], 2));
 						mouse = pts.subtract(mouse, pos);
 						mouse[1] = -mouse[1];
-						//mouse = pts.inv(mouse);
-						x = mouse[0];
-						y = mouse[1];
+						const dist = pts.distsimple(pos, wastes.gview.mwpos);
+						
+						if (dist > 0.5) {
+							x = mouse[0];
+							y = mouse[1];
+						}
 						//move = true;
 					}
 				}

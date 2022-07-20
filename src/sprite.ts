@@ -13,7 +13,7 @@ interface SpriteParameters {
 	color?: vec4,
 	opacity?: number
 	mask?: string,
-	order?: number
+	orderBias?: number
 };
 
 export namespace sprite {
@@ -36,8 +36,8 @@ export class sprite extends lod.shape {
 		super(vars.binded, numbers.sprites);
 		if (!this.vars.cell)
 			this.vars.cell = [0, 0];
-		if (!this.vars.order)
-			this.vars.order = 0;
+		if (!this.vars.orderBias)
+			this.vars.orderBias = 0;
 		if (!this.vars.opacity)
 			this.vars.opacity = 1;
 		this.myUvTransform = new Matrix3;
@@ -54,13 +54,13 @@ export class sprite extends lod.shape {
 		else
 			calc = pts.add(obj.rpos, [0, obj.size[1]]);
 
-		let pos = pts.round(obj.wpos);
+		let pos = obj.wpos;//pts.round(obj.wpos);
 		calc = pts.add(calc, [this.rleft, this.rup + this.rup2]);
 		if (this.mesh) {
 			this.retransform();
 			this.mesh.position.fromArray([...calc, 0]);
 			this.mesh.updateMatrix();
-			this.mesh.renderOrder = -pos[1] + pos[0] + this.vars.order!;
+			this.mesh.renderOrder = -pos[1] + pos[0] + this.vars.orderBias!;
 			this.mesh.rotation.z = this.vars.binded.ro;
 		}
 	}

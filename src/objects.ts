@@ -325,7 +325,7 @@ namespace objects {
 				binded: this,
 				tuple: tuple,
 				cell: this.cell,
-				order: .6,
+				orderBias: .6,
 			});
 			this.stack();
 		}
@@ -352,7 +352,7 @@ namespace objects {
 				binded: this,
 				tuple: sprites.ddeck,
 				cell: this.cell,
-				order: .4,
+				orderBias: .4,
 			});
 			this.stack();
 		}
@@ -385,7 +385,7 @@ namespace objects {
 				binded: this,
 				tuple: sprites.dporch,
 				cell: this.cell,
-				order: .4,
+				orderBias: .0,
 			});
 			this.stack();
 		}
@@ -409,7 +409,7 @@ namespace objects {
 				binded: this,
 				tuple: sprites.drails,
 				cell: this.cell,
-				order: .4,
+				orderBias: .4,
 			});
 			this.stack();
 		}
@@ -429,7 +429,7 @@ namespace objects {
 			let shape = new sprite({
 				binded: this,
 				tuple: sprites.ddeadtreetrunk,
-				order: 0.6,
+				orderBias: 0.6,
 			});
 			this.stack();
 		}
@@ -451,7 +451,7 @@ namespace objects {
 			let shape = new sprite({
 				binded: this,
 				tuple: sprites.ddecidtreetrunk,
-				order: 0.6,
+				orderBias: 0.6,
 			});
 			this.stack();
 			const tile = tiles.get(this.wpos)!;
@@ -494,7 +494,7 @@ namespace objects {
 				let shape = new sprite({
 					binded: this,
 					tuple: tuple,
-					order: 0.7,
+					orderBias: 0.7,
 					color: color
 				});
 				if (this.hints.tree)
@@ -534,7 +534,7 @@ namespace objects {
 				binded: this,
 				tuple: sprites.dgrass,
 				cell: this.cell,
-				order: .6,
+				orderBias: .6,
 				color: color
 			});
 			this.stack();
@@ -557,7 +557,7 @@ namespace objects {
 				tuple: sprites.dwheat,
 				cell: this.cell,
 				//color: color,
-				order: .6
+				orderBias: .6
 			});
 			this.stack();
 		}
@@ -579,7 +579,7 @@ namespace objects {
 				tuple: sprites.dpanel,
 				cell: [0, 0],
 				//color: color,
-				order: .6
+				orderBias: .6
 			});
 			shape.rup2 = 15;
 			shape.rleft = 2;
@@ -656,7 +656,7 @@ namespace objects {
 				tuple: sprites.dcrate,
 				cell: this.cell,
 				//color: color,
-				order: .6
+				orderBias: .6
 			});
 			this.stack(['roof', 'wall']);
 		}
@@ -677,7 +677,7 @@ namespace objects {
 				binded: this,
 				tuple: sprites.dshelves,
 				//cell: this.cell,
-				order: 0
+				orderBias: 0
 			});
 			shape.rup2 = 9;
 			shape.rleft = 6;
@@ -697,7 +697,7 @@ namespace objects {
 			let shape = new sprite({
 				binded: this,
 				tuple: sprites.droof,
-				order: 1.6,
+				orderBias: 1.6,
 			});
 			shape.rup = 29;
 		}
@@ -725,7 +725,7 @@ namespace objects {
 				binded: this,
 				tuple: sprites.dfalsefronts,
 				cell: this.cell,
-				order: 1.6,
+				orderBias: 1.6,
 			});
 			this.stack();
 			//this.z = 29+4;
@@ -752,7 +752,7 @@ namespace objects {
 			let shape = new sprite({
 				binded: this,
 				tuple: sprites.dacidbarrel,
-				order: .4,
+				orderBias: .4,
 			});
 			this.stack();
 		}
@@ -775,7 +775,7 @@ namespace objects {
 				binded: this,
 				tuple: sprites.ddoor,
 				cell: this.cell,
-				order: door.order,
+				orderBias: door.order,
 			});
 			this.stack();
 		}
@@ -789,7 +789,7 @@ namespace objects {
 					pawning = true;
 					let sprite = this.shape as sprite;
 					sprite.vars.cell = pts.subtract(this.cell, [1, 0]);
-					sprite.vars.order = 1.55;
+					sprite.vars.orderBias = 1.55;
 					sprite.retransform();
 					sprite.update();
 					this.open = true;
@@ -799,7 +799,7 @@ namespace objects {
 			if (!pawning) {
 				let sprite = this.shape as sprite;
 				sprite.vars.cell = this.cell;
-				sprite.vars.order = door.order;
+				sprite.vars.orderBias = door.order;
 				sprite.retransform();
 				sprite.update();
 				this.open = false;
@@ -817,7 +817,7 @@ namespace objects {
 			let shape = new sprite({
 				binded: this,
 				tuple: sprites.shrubs,
-				order: .5
+				orderBias: .5
 			});
 		}
 
