@@ -1339,7 +1339,7 @@ void main() {
             crunch += `walls: ${numbers.walls[0]} / ${numbers.walls[1]}<br />`;
             crunch += `roofs: ${numbers.roofs[0]} / ${numbers.roofs[1]}<br />`;
             crunch += '<br />';
-            crunch += `controls: WASD-move, hold middlemouse-pan, scrollwheel-zoom, spacebar-toggle roofs, h-hide debug, c-character menu<br />`;
+            crunch += `controls: WASD to move, also click to move, hold middlemouse to pan, scrollwheel to zoom, spacebar to toggle roofs, h to hide debug, c for character menu<br />`;
             let element = document.querySelectorAll('.stats')[0];
             element.innerHTML = crunch;
             element.style.visibility = this.show ? 'visible' : 'hidden';
@@ -1784,8 +1784,8 @@ void main() {
                 if (!(255 - color2.array[3])) {
                     if (this.hints.color) {
                         color = [
-                            Math.floor(color[0] * 1.4),
-                            Math.floor(color[1] * 1.4),
+                            Math.floor(color[0] * 1.6),
+                            Math.floor(color[1] * 1.6),
                             Math.floor(color[2] * 1.6),
                             color[3],
                         ];
@@ -7308,17 +7308,19 @@ void main() {
                 if (!this.created) {
                     // set scene scale to 1, 1, 1 and w h both to 50
                     // for a 1:1 pawn, otherwise set to 2, 2, 2 and 100
+                    const scale = 1;
                     this.created = true;
                     // make wee guy target
                     //this.group = new THREE.Group
-                    let w = this.size[0], h = this.size[1];
+                    let w = this.size[0] * scale;
+                    let h = this.size[1] * scale;
                     this.target = ren$1.make_render_target(w, h);
                     this.camera = ren$1.ortographic_camera(w, h);
                     this.scene = new THREE.Scene();
                     //this.scene.background = new Color('#333');
                     this.scene.rotation.set(Math.PI / 6, Math.PI / 4, 0);
                     this.scene.position.set(0, 0, 0);
-                    this.scene.scale.set(1, 1, 1);
+                    this.scene.scale.set(scale, scale, scale);
                     //this.scene.background = new Color('salmon');
                     let amb = new THREE.AmbientLight('white');
                     this.scene.add(amb);
@@ -7345,7 +7347,8 @@ void main() {
                     return;
                 this.made = true;
                 const mult = .5;
-                const headSize = 10 * mult;
+                const headSize = 11 * mult;
+                const gasMaskSize = 5 * mult;
                 const legsSize = 8 * mult;
                 const legsHeight = 25 * mult;
                 const armsSize = 6 * mult;
@@ -7380,7 +7383,11 @@ void main() {
                 }
                 let boxHead = new THREE.BoxGeometry(headSize, headSize, headSize, 1, 1, 1);
                 let materialHead = new THREE.MeshLambertMaterial({
-                    color: '#c08e77'
+                    color: '#31362c'
+                });
+                let boxGasMask = new THREE.BoxGeometry(gasMaskSize, gasMaskSize, gasMaskSize, 1, 1, 1);
+                let materialGasMask = new THREE.MeshLambertMaterial({
+                    color: '#31362c'
                 });
                 let boxBody = new THREE.BoxGeometry(bodyWidth, bodyHeight, bodyThick, 1, 1, 1);
                 //let materialBody = new MeshLambertMaterial({
@@ -7395,12 +7402,14 @@ void main() {
                     color: '#484c4c'
                 });
                 this.meshes.head = new THREE.Mesh(boxHead, materialHead);
+                this.meshes.gasMask = new THREE.Mesh(boxGasMask, materialGasMask);
                 this.meshes.body = new THREE.Mesh(boxBody, materialsBody);
                 this.meshes.arml = new THREE.Mesh(boxArms, materialArms);
                 this.meshes.armr = new THREE.Mesh(boxArms, materialArms);
                 this.meshes.legl = new THREE.Mesh(boxLegs, materialLegs);
                 this.meshes.legr = new THREE.Mesh(boxLegs, materialLegs);
                 this.groups.head = new THREE.Group;
+                this.groups.gasMask = new THREE.Group;
                 this.groups.body = new THREE.Group;
                 this.groups.arml = new THREE.Group;
                 this.groups.armr = new THREE.Group;
@@ -7408,11 +7417,13 @@ void main() {
                 this.groups.legr = new THREE.Group;
                 this.groups.ground = new THREE.Group;
                 this.groups.head.add(this.meshes.head);
+                this.groups.gasMask.add(this.meshes.gasMask);
                 this.groups.body.add(this.meshes.body);
                 this.groups.arml.add(this.meshes.arml);
                 this.groups.armr.add(this.meshes.armr);
                 this.groups.legl.add(this.meshes.legl);
                 this.groups.legr.add(this.meshes.legr);
+                this.groups.head.add(this.groups.gasMask);
                 this.groups.body.add(this.groups.head);
                 this.groups.body.add(this.groups.arml);
                 this.groups.body.add(this.groups.armr);
@@ -7420,6 +7431,8 @@ void main() {
                 this.groups.body.add(this.groups.legr);
                 this.groups.ground.add(this.groups.body);
                 this.groups.head.position.set(0, bodyHeight / 2 + headSize / 2, 0);
+                this.groups.gasMask.position.set(0, -headSize / 2, headSize / 1.5);
+                this.groups.gasMask.rotation.set(-Math.PI / 4, 0, 0);
                 this.groups.body.position.set(0, bodyHeight, 0);
                 this.groups.arml.position.set(-bodyWidth / 2 - armsSize / 2, bodyHeight / 2, 0);
                 this.groups.arml.rotation.set(0, 0, -armsAngle);
@@ -7520,6 +7533,17 @@ void main() {
                         if (app$1.key('d')) {
                             x += 1;
                             y += -1;
+                        }
+                        if ((!x && !y) && app$1.button(0) >= 1) {
+                            let mouse = wastes.gview.mwpos;
+                            let pos = this.wpos;
+                            pos = pts.add(pos, pts.divide([1, 1], 2));
+                            mouse = pts.subtract(mouse, pos);
+                            mouse[1] = -mouse[1];
+                            //mouse = pts.inv(mouse);
+                            x = mouse[0];
+                            y = mouse[1];
+                            //move = true;
                         }
                     }
                     if (x || y) {

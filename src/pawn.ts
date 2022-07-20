@@ -71,17 +71,19 @@ export namespace pawns {
 				// set scene scale to 1, 1, 1 and w h both to 50
 				// for a 1:1 pawn, otherwise set to 2, 2, 2 and 100
 
+				const scale = 1;
 				this.created = true;
 				// make wee guy target
 				//this.group = new THREE.Group
-				let w = this.size[0], h = this.size[1];
+				let w = this.size[0] * scale;
+				let h = this.size[1] * scale;
 				this.target = ren.make_render_target(w, h);
 				this.camera = ren.ortographic_camera(w, h);
 				this.scene = new Scene()
 				//this.scene.background = new Color('#333');
 				this.scene.rotation.set(Math.PI / 6, Math.PI / 4, 0);
 				this.scene.position.set(0, 0, 0);
-				this.scene.scale.set(1, 1, 1);
+				this.scene.scale.set(scale, scale, scale);
 				//this.scene.background = new Color('salmon');
 
 				let amb = new AmbientLight('white');
@@ -118,7 +120,8 @@ export namespace pawns {
 
 			const mult = .5;
 
-			const headSize = 10 * mult;
+			const headSize = 11 * mult;
+			const gasMaskSize = 5 * mult;
 			const legsSize = 8 * mult;
 			const legsHeight = 25 * mult;
 			const legsUp = 5 * mult;
@@ -158,7 +161,12 @@ export namespace pawns {
 
 			let boxHead = new BoxGeometry(headSize, headSize, headSize, 1, 1, 1);
 			let materialHead = new MeshLambertMaterial({
-				color: '#c08e77'
+				color: '#31362c'
+			});
+
+			let boxGasMask = new BoxGeometry(gasMaskSize, gasMaskSize, gasMaskSize, 1, 1, 1);
+			let materialGasMask = new MeshLambertMaterial({
+				color: '#31362c'
 			});
 
 			let boxBody = new BoxGeometry(bodyWidth, bodyHeight, bodyThick, 1, 1, 1);
@@ -177,6 +185,7 @@ export namespace pawns {
 			});
 
 			this.meshes.head = new Mesh(boxHead, materialHead);
+			this.meshes.gasMask = new Mesh(boxGasMask, materialGasMask);
 			this.meshes.body = new Mesh(boxBody, materialsBody);
 
 			this.meshes.arml = new Mesh(boxArms, materialArms);
@@ -186,6 +195,7 @@ export namespace pawns {
 			this.meshes.legr = new Mesh(boxLegs, materialLegs);
 
 			this.groups.head = new Group;
+			this.groups.gasMask = new Group;
 			this.groups.body = new Group;
 			this.groups.arml = new Group;
 			this.groups.armr = new Group;
@@ -194,11 +204,14 @@ export namespace pawns {
 			this.groups.ground = new Group;
 
 			this.groups.head.add(this.meshes.head);
+			this.groups.gasMask.add(this.meshes.gasMask);
 			this.groups.body.add(this.meshes.body);
 			this.groups.arml.add(this.meshes.arml);
 			this.groups.armr.add(this.meshes.armr);
 			this.groups.legl.add(this.meshes.legl);
 			this.groups.legr.add(this.meshes.legr);
+
+			this.groups.head.add(this.groups.gasMask);
 
 			this.groups.body.add(this.groups.head);
 			this.groups.body.add(this.groups.arml);
@@ -208,6 +221,8 @@ export namespace pawns {
 			this.groups.ground.add(this.groups.body);
 
 			this.groups.head.position.set(0, bodyHeight / 2 + headSize / 2, 0);
+			this.groups.gasMask.position.set(0, -headSize / 2, headSize / 1.5);
+			this.groups.gasMask.rotation.set(-Math.PI / 4, 0, 0);
 			this.groups.body.position.set(0, bodyHeight, 0);
 
 			this.groups.arml.position.set(-bodyWidth / 2 - armsSize / 2, bodyHeight / 2, 0);
@@ -304,7 +319,7 @@ export namespace pawns {
 				}
 				else
 					win.container.call(false);
-				
+
 				if (pawns.length && pts.distsimple(pawns[0].wpos, this.wpos) < 1.5) {
 					win.dialogue.call(true, pawns[0]);
 				}
@@ -319,6 +334,7 @@ export namespace pawns {
 				let speed = 0.038 * ren.delta;
 				let x = 0;
 				let y = 0;
+				let move = true;
 				if (this.type == 'you') {
 					if (app.key('w')) {
 						x += -1;
@@ -336,6 +352,17 @@ export namespace pawns {
 						x += 1;
 						y += -1;
 					}
+					if ((!x && !y) && app.button(0) >= 1) {
+						let mouse = wastes.gview.mwpos;
+						let pos = this.wpos;
+						pos = pts.add(pos, pts.divide([1, 1], 2));
+						mouse = pts.subtract(mouse, pos);
+						mouse[1] = -mouse[1];
+						//mouse = pts.inv(mouse);
+						x = mouse[0];
+						y = mouse[1];
+						//move = true;
+					}
 				}
 				if (x || y) {
 					this.speed += 0.1;
@@ -343,7 +370,8 @@ export namespace pawns {
 					x = speed * Math.sin(angle);
 					y = speed * Math.cos(angle);
 					this.angle = angle;
-					this.try_move_to([x, y]);
+					if (move)
+						this.try_move_to([x, y]);
 				}
 				else {
 					this.speed -= 0.1;

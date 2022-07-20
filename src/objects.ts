@@ -484,8 +484,8 @@ namespace objects {
 			if (!(255 - color2.array[3])) {
 				if (this.hints.color) {
 					color = [
-						Math.floor(color[0] * 1.4),
-						Math.floor(color[1] * 1.4),
+						Math.floor(color[0] * 1.6),
+						Math.floor(color[1] * 1.6),
 						Math.floor(color[2] * 1.6),
 						color[3],
 					]
