@@ -132,7 +132,7 @@ export namespace pawns {
 			const bodyWidth = 16 * mult;
 			const bodyHeight = 24 * mult;
 
-			const bodyTexture = [29, 12];
+			/*const bodyTexture = [29, 12];
 			let materialsBody: any[] = [];
 			{
 				let mat = new Matrix3;
@@ -157,7 +157,7 @@ export namespace pawns {
 						myUvTransform: transforms[i]
 					}));
 				}
-			}
+			}*/
 
 			let boxHead = new BoxGeometry(headSize, headSize, headSize, 1, 1, 1);
 			let materialHead = new MeshLambertMaterial({
@@ -170,13 +170,13 @@ export namespace pawns {
 			});
 
 			let boxBody = new BoxGeometry(bodyWidth, bodyHeight, bodyThick, 1, 1, 1);
-			//let materialBody = new MeshLambertMaterial({
-			//	color: '#544f43'
-			//});
+			let materialBody = new MeshLambertMaterial({
+				color: '#444139'
+			});
 
 			let boxArms = new BoxGeometry(armsSize, armsHeight, armsSize, 1, 1, 1);
 			let materialArms = new MeshLambertMaterial({
-				color: '#544f43'
+				color: '#444139'
 			});
 
 			let boxLegs = new BoxGeometry(legsSize, legsHeight, legsSize, 1, 1, 1);
@@ -186,7 +186,7 @@ export namespace pawns {
 
 			this.meshes.head = new Mesh(boxHead, materialHead);
 			this.meshes.gasMask = new Mesh(boxGasMask, materialGasMask);
-			this.meshes.body = new Mesh(boxBody, materialsBody);
+			this.meshes.body = new Mesh(boxBody, materialBody);
 
 			this.meshes.arml = new Mesh(boxArms, materialArms);
 			this.meshes.armr = new Mesh(boxArms, materialArms);

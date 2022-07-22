@@ -268,13 +268,23 @@ var wastes = (function (exports, THREE) {
     var app$1 = app;
 
     const fragmentPost = `
+float saturation = 2.0;
+
 // Todo add effect
 varying vec2 vUv;
 uniform sampler2D tDiffuse;
 void main() {
 	vec4 clr = texture2D( tDiffuse, vUv );
 	clr.rgb = mix(clr.rgb, vec3(0.5), 0.0);
+	
+	/*
+	vec3 original_color = clr.rgb;
+	vec3 lumaWeights = vec3(.25,.50,.25);
+	vec3 grey = vec3(dot(lumaWeights,original_color));
+	vec4 outt = vec4(grey + saturation * (original_color - grey), 1.0);
+	*/
 	gl_FragColor = clr;
+	//gl_FragColor = outt;
 }`;
     const vertexScreen = `
 varying vec2 vUv;
@@ -529,7 +539,7 @@ void main() {
             constructor(span) {
                 this.arrays = [];
                 lod.ggalaxy = this;
-                new grid(3, 3);
+                new grid(2, 2);
             }
             update(wpos) {
                 lod.ggrid.big = this.big(wpos);
@@ -872,7 +882,7 @@ void main() {
                 calc = pts.add(obj.rpos, pts.divide(obj.size, 2));
             else
                 calc = pts.add(obj.rpos, [0, obj.size[1]]);
-            let pos = obj.wpos; //pts.round(obj.wpos);
+            let pos = pts.round(obj.wpos);
             calc = pts.add(calc, [this.rleft, this.rup + this.rup2]);
             if (this.mesh) {
                 this.retransform();
@@ -923,7 +933,7 @@ void main() {
         }
     }
     function SpriteMaterial(parameters, uniforms) {
-        let material = new THREE.MeshBasicMaterial(parameters);
+        let material = new THREE.MeshLambertMaterial(parameters);
         material.customProgramCacheKey = function () {
             return 'spritemat';
         };
@@ -1134,7 +1144,7 @@ void main() {
                     this.height = 6;
                     this.cell = [1, 0];
                     this.color = wastes.colormap.pixel(this.wpos).array;
-                    const divisor = 5;
+                    const divisor = 3;
                     let height = wastes.heightmap.pixel(this.wpos);
                     this.z += Math.floor(height.array[0] / divisor);
                     this.z -= 3; // so we dip the water
@@ -1162,7 +1172,7 @@ void main() {
                     cell: this.cell,
                     color: this.color,
                     opacity: this.opacity,
-                    orderBias: -.5
+                    orderBias: -0.5
                 });
                 // if we have a deck, add it to heightAdd
                 let sector = lod$1.ggalaxy.at(lod$1.ggalaxy.big(this.wpos));
@@ -1403,10 +1413,7 @@ void main() {
             hooks.register('sectorCreate', (sector) => {
                 pts.func(sector.small, (pos) => {
                     let pixel = wastes.roofmap.pixel(pos);
-                    if (pixel.is_color(color_false_front)) {
-                        //factory(objects.roof, pixel, pos);
-                        factory(objects.falsefront, pixel, pos);
-                    }
+                    if (pixel.is_color(color_false_front)) ;
                 });
                 return false;
             });
@@ -1609,7 +1616,7 @@ void main() {
                 if (((_a = this.hints) === null || _a === void 0 ? void 0 : _a.type) == 'plywood')
                     tuple = sprites$1.dderingerwalls;
                 if (((_b = this.hints) === null || _b === void 0 ? void 0 : _b.type) == 'overgrown')
-                    tuple = sprites$1.dderingerwalls;
+                    tuple = sprites$1.dovergrownwalls;
                 if (((_c = this.hints) === null || _c === void 0 ? void 0 : _c.type) == 'deringer')
                     tuple = sprites$1.dderingerwalls;
                 if (((_d = this.hints) === null || _d === void 0 ? void 0 : _d.type) == 'woody')
@@ -1869,30 +1876,10 @@ void main() {
                 this.size = [8, 10];
                 //let color =  tiles.get(this.wpos)!.color;
                 //this.cell = [Math.floor(Math.random() * 2), 0];
-                let shape = new sprite({
-                    binded: this,
-                    tuple: sprites$1.dpanel,
-                    cell: [0, 0],
-                    //color: color,
-                    orderBias: .6
-                });
-                shape.rup2 = 15;
-                shape.rleft = 2;
-                this.stack();
+                return;
             }
             tick() {
-                let sprite = this.shape;
-                this.ticker += ren$1.delta / 60;
-                const cell = sprite.vars.cell;
-                if (this.ticker > 0.5) {
-                    if (cell[0] < 5)
-                        cell[0]++;
-                    else
-                        cell[0] = 0;
-                    this.ticker = 0;
-                }
-                //sprite.retransform();
-                sprite.update();
+                return;
                 //console.log('boo');
             }
         }
@@ -7357,30 +7344,32 @@ void main() {
                 const bodyThick = 10 * mult;
                 const bodyWidth = 16 * mult;
                 const bodyHeight = 24 * mult;
-                const bodyTexture = [29, 12];
-                let materialsBody = [];
+                /*const bodyTexture = [29, 12];
+                let materialsBody: any[] = [];
                 {
-                    new THREE.Matrix3;
-                    let transforms = [];
-                    transforms.push(new THREE.Matrix3().setUvTransform(// left
-                    bodyWidth * 2 / bodyTexture[0], 0, bodyThick / bodyTexture[0], 1, 0, 0, 1));
-                    transforms.push(new THREE.Matrix3().setUvTransform(// right
-                    bodyWidth * 2 / bodyTexture[0] + bodyThick / bodyTexture[0], 0, -bodyThick / bodyTexture[0], 1, 0, 0, 1));
-                    transforms.push(new THREE.Matrix3().setUvTransform(// top
-                    bodyWidth * 2 / bodyTexture[0] + bodyThick / bodyTexture[0], 0, bodyWidth / bodyTexture[0], bodyThick / bodyTexture[1], 0, 0, 1));
-                    transforms.push(new THREE.Matrix3()); // bottom ?
-                    transforms.push(new THREE.Matrix3().setUvTransform(// front
-                    0, 0, bodyWidth / bodyTexture[0], 1, 0, 0, 1));
-                    transforms.push(new THREE.Matrix3().setUvTransform(// back
-                    bodyWidth / bodyTexture[0], 0, bodyWidth / bodyTexture[0], 1, 0, 0, 1));
+                    let mat = new Matrix3;
+
+                    let transforms: any[] = [];
+                    transforms.push(new Matrix3().setUvTransform( // left
+                        bodyWidth * 2 / bodyTexture[0], 0, bodyThick / bodyTexture[0], 1, 0, 0, 1));
+                    transforms.push(new Matrix3().setUvTransform( // right
+                        bodyWidth * 2 / bodyTexture[0] + bodyThick / bodyTexture[0], 0, -bodyThick / bodyTexture[0], 1, 0, 0, 1));
+                    transforms.push(new Matrix3().setUvTransform( // top
+                        bodyWidth * 2 / bodyTexture[0] + bodyThick / bodyTexture[0], 0, bodyWidth / bodyTexture[0], bodyThick / bodyTexture[1], 0, 0, 1));
+                    transforms.push(new Matrix3()); // bottom ?
+                    transforms.push(new Matrix3().setUvTransform( // front
+                        0, 0, bodyWidth / bodyTexture[0], 1, 0, 0, 1));
+                    transforms.push(new Matrix3().setUvTransform( // back
+                        bodyWidth / bodyTexture[0], 0, bodyWidth / bodyTexture[0], 1, 0, 0, 1));
+
                     for (let i in transforms) {
                         materialsBody.push(SpriteMaterial({
-                            map: ren$1.load_texture(`tex/pawn/body.png`, 0),
+                            map: ren.load_texture(`tex/pawn/body.png`, 0),
                         }, {
                             myUvTransform: transforms[i]
                         }));
                     }
-                }
+                }*/
                 let boxHead = new THREE.BoxGeometry(headSize, headSize, headSize, 1, 1, 1);
                 let materialHead = new THREE.MeshLambertMaterial({
                     color: '#31362c'
@@ -7390,12 +7379,12 @@ void main() {
                     color: '#31362c'
                 });
                 let boxBody = new THREE.BoxGeometry(bodyWidth, bodyHeight, bodyThick, 1, 1, 1);
-                //let materialBody = new MeshLambertMaterial({
-                //	color: '#544f43'
-                //});
+                let materialBody = new THREE.MeshLambertMaterial({
+                    color: '#444139'
+                });
                 let boxArms = new THREE.BoxGeometry(armsSize, armsHeight, armsSize, 1, 1, 1);
                 let materialArms = new THREE.MeshLambertMaterial({
-                    color: '#544f43'
+                    color: '#444139'
                 });
                 let boxLegs = new THREE.BoxGeometry(legsSize, legsHeight, legsSize, 1, 1, 1);
                 let materialLegs = new THREE.MeshLambertMaterial({
@@ -7403,7 +7392,7 @@ void main() {
                 });
                 this.meshes.head = new THREE.Mesh(boxHead, materialHead);
                 this.meshes.gasMask = new THREE.Mesh(boxGasMask, materialGasMask);
-                this.meshes.body = new THREE.Mesh(boxBody, materialsBody);
+                this.meshes.body = new THREE.Mesh(boxBody, materialBody);
                 this.meshes.arml = new THREE.Mesh(boxArms, materialArms);
                 this.meshes.armr = new THREE.Mesh(boxArms, materialArms);
                 this.meshes.legl = new THREE.Mesh(boxLegs, materialLegs);

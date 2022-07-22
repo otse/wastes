@@ -90,7 +90,7 @@ namespace objects {
 				let pixel = wastes.roofmap.pixel(pos);
 				if (pixel.is_color(color_false_front)) {
 					//factory(objects.roof, pixel, pos);
-					factory(objects.falsefront, pixel, pos);
+					//factory(objects.falsefront, pixel, pos);
 				}
 			})
 			return false;
@@ -308,7 +308,7 @@ namespace objects {
 			if (this.hints?.type == 'plywood')
 				tuple = sprites.dderingerwalls;
 			if (this.hints?.type == 'overgrown')
-				tuple = sprites.dderingerwalls;
+				tuple = sprites.dovergrownwalls;
 			if (this.hints?.type == 'deringer')
 				tuple = sprites.dderingerwalls;
 			if (this.hints?.type == 'woody')
@@ -574,6 +574,7 @@ namespace objects {
 			this.size = [8, 10];
 			//let color =  tiles.get(this.wpos)!.color;
 			//this.cell = [Math.floor(Math.random() * 2), 0];
+			return;
 			let shape = new sprite({
 				binded: this,
 				tuple: sprites.dpanel,
@@ -586,6 +587,7 @@ namespace objects {
 			this.stack();
 		}
 		override tick() {
+			return;
 			let sprite = this.shape as sprite;
 			this.ticker += ren.delta / 60;
 			const cell = sprite.vars.cell!;

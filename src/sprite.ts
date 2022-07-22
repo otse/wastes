@@ -1,4 +1,4 @@
-import { Color, Mesh, BoxGeometry, PlaneBufferGeometry, MeshBasicMaterial, MeshBasicMaterialParameters, Shader, Matrix3, Vector2 } from "three";
+import { Color, Mesh, BoxGeometry, PlaneBufferGeometry, MeshLambertMaterial, MeshBasicMaterialParameters, Shader, Matrix3, Vector2 } from "three";
 
 import lod, { numbers } from "./lod";
 import pts from "./pts";
@@ -26,7 +26,7 @@ export class sprite extends lod.shape {
 	rup2 = 0
 	rleft = 0
 	mesh: Mesh
-	material: MeshBasicMaterial
+	material: MeshLambertMaterial
 	geometry: PlaneBufferGeometry
 	roffset: vec2 = [0, 0]
 	myUvTransform: Matrix3
@@ -54,7 +54,7 @@ export class sprite extends lod.shape {
 		else
 			calc = pts.add(obj.rpos, [0, obj.size[1]]);
 
-		let pos = obj.wpos;//pts.round(obj.wpos);
+		let pos = pts.round(obj.wpos);
 		calc = pts.add(calc, [this.rleft, this.rup + this.rup2]);
 		if (this.mesh) {
 			this.retransform();
@@ -106,7 +106,7 @@ export class sprite extends lod.shape {
 };
 
 export function SpriteMaterial(parameters: MeshBasicMaterialParameters, uniforms: any) {
-	let material = new MeshBasicMaterial(parameters)
+	let material = new MeshLambertMaterial(parameters)
 	material.customProgramCacheKey = function () {
 		return 'spritemat';
 	}

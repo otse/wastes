@@ -120,7 +120,7 @@ export namespace tiles {
 					}
 				}
 
-				const divisor = 5;
+				const divisor = 3;
 				let height = wastes.heightmap.pixel(this.wpos);
 				this.z += Math.floor(height.array[0] / divisor);
 				this.z -= 3; // so we dip the water
@@ -147,7 +147,7 @@ export namespace tiles {
 				cell: this.cell,
 				color: this.color,
 				opacity: this.opacity,
-				orderBias: -.5
+				orderBias: -0.5
 			});
 			// if we have a deck, add it to heightAdd
 			let sector = lod.ggalaxy.at(lod.ggalaxy.big(this.wpos));
