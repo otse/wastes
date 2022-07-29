@@ -37,7 +37,11 @@ export namespace pawns {
 	const wasterSprite = false;
 
 	export class pawn extends objects.objected {
-		dialog: any
+		dialog = [
+			[`I'm a commoner.`, 1],
+			[`It can be hazardous around here. The purple for example is contaminated soil.`, 2],
+			[`Stay clear from the irradiated areas, marked by dead trees.`, -1],
+		]
 		pawntype = 'generic'
 		trader = false
 		inventory: objects.container
@@ -114,6 +118,25 @@ export namespace pawns {
 			this.tiled();
 			this.stack();
 			super.update();
+		}
+		override setup_context() {
+			win.contextmenu.reset();
+			if (this.type != 'you')
+				win.contextmenu.options.options.push(["Talk to", () => {
+					return pts.distsimple(you.wpos, this.wpos) < 1;
+				}, () => {
+					win.dialogue.talkingTo = this;
+					win.dialogue.call_once();
+				}]);
+			if (this.pawntype == 'trader') {
+				win.contextmenu.options.options.push(["Trade", () => {
+					return pts.distsimple(you.wpos, this.wpos) < 1;
+				}, () => { }]);
+			}
+			else {
+
+				//win.contextmenu.options.options.push("See inventory");
+			}
 		}
 		groups: any = {}
 		meshes: any = {}
@@ -266,7 +289,7 @@ export namespace pawns {
 		mousing = false
 		swoop = 0
 		angle = 0
-		speed = 1
+		animSpeed = 1
 		override tick() {
 
 			const sprite = this.shape as sprite;
@@ -275,7 +298,9 @@ export namespace pawns {
 				this.mousing = true;
 				sprite.material.color.set('#c1ffcd');
 				console.log('mover');
-				win.contextmenu.focus = this;
+				if (this.type != 'you') {
+					win.contextmenu.focus = this;
+				}
 				//win.character.anchor = this;
 				//win.character.toggle(this.mousing);
 			}
@@ -295,10 +320,10 @@ export namespace pawns {
 			this.swoop += 0.04;
 			const swoop1 = Math.cos(Math.PI * this.swoop);
 			const swoop2 = Math.cos(Math.PI * this.swoop - Math.PI);
-			this.groups.legl.rotation.x = swoop1 * legsSwoop * this.speed;
-			this.groups.legr.rotation.x = swoop2 * legsSwoop * this.speed;
-			this.groups.arml.rotation.x = swoop2 * armsSwoop * this.speed;
-			this.groups.armr.rotation.x = swoop1 * armsSwoop * this.speed;
+			this.groups.legl.rotation.x = swoop1 * legsSwoop * this.animSpeed;
+			this.groups.legr.rotation.x = swoop2 * legsSwoop * this.animSpeed;
+			this.groups.arml.rotation.x = swoop2 * armsSwoop * this.animSpeed;
+			this.groups.armr.rotation.x = swoop1 * armsSwoop * this.animSpeed;
 			this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
 
 			let posr = pts.round(this.wpos);
@@ -346,8 +371,6 @@ export namespace pawns {
 				else
 					win.container.call(false);*/
 
-				
-
 				if (pawns.length && pts.distsimple(pawns[0].wpos, this.wpos) < 1.5) {
 					//win.contextmenu.focus = pawns[0];
 				}
@@ -360,7 +383,7 @@ export namespace pawns {
 				let speed = 0.038 * ren.delta;
 				let x = 0;
 				let y = 0;
-				let move = true;
+				let wasd = true;
 				if (this.type == 'you') {
 					if (app.key('w')) {
 						x += -1;
@@ -382,6 +405,7 @@ export namespace pawns {
 						speed *= 10;
 					}
 					if ((!x && !y) && app.button(0) >= 1) {
+						wasd = false;
 						let mouse = wastes.gview.mwpos;
 						let pos = this.wpos;
 						pos = pts.add(pos, pts.divide([1, 1], 2));
@@ -397,21 +421,24 @@ export namespace pawns {
 					}
 				}
 				if (x || y) {
-					this.speed += 0.1;
 					let angle = pts.angle([0, 0], [x, y]);
-					x = speed * Math.sin(angle);
-					y = speed * Math.cos(angle);
-					this.angle = angle;
-					if (move)
+					if (!win.mousingClickable || wasd) {
+						this.animSpeed += 0.1;
+						this.angle = angle;
+						x = speed * Math.sin(angle);
+						y = speed * Math.cos(angle);
 						this.try_move_to([x, y]);
+					}
+					else
+						this.animSpeed = 0;
 				}
-				else {
-					this.speed -= 0.1;
-				}
-				if (this.speed > 1)
-					this.speed = 1;
-				else if (this.speed < 0) {
-					this.speed = 0;
+				else
+					this.animSpeed -= 0.1;
+				// Normalize
+				if (this.animSpeed > 1)
+					this.animSpeed = 1;
+				else if (this.animSpeed < 0) {
+					this.animSpeed = 0;
 					this.swoop = 0;
 				}
 			}

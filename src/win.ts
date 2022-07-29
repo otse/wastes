@@ -3,10 +3,9 @@ import { default as THREE, BoxGeometry } from "three";
 import app from "./app";
 import lod from "./lod";
 import pts from "./pts";
-import pawns from "./pawn";
 
 import ren from './renderer';
-import wastes from "./wastes";
+import wastes, { pawns } from "./wastes";
 import objects from "./objects";
 import areas from "./areas";
 import hooks from "./hooks";
@@ -16,6 +15,8 @@ namespace win {
 	var win: HTMLElement;
 
 	var toggle_character = false;
+
+	export var mousingClickable = false;
 
 	export var started = false;
 
@@ -139,8 +140,6 @@ namespace win {
 		}
 	}
 
-	const dialog = [1, 0];
-
 	type speech = [text: string, follow: number]
 
 	const dialogues: speech[][] = [
@@ -186,10 +185,16 @@ namespace win {
 	}
 
 	export class contextmenu {
-		static focus?: lod.obj
+		static focus?: objects.objected
 		static focusCur?: lod.obj
 		static modal?: modal
+		static buttons: any = []
+		static options: { options: [name: string, condition: () => boolean, action: () => any][] } = { options: [] }
 
+		static reset() {
+			this.buttons = []
+			this.options.options = [];
+		}
 		static init() {
 			hooks.register('viewMClick', (view) => {
 				this.modal?.deletor();
@@ -201,9 +206,10 @@ namespace win {
 				console.log('contextmenu on ?', this.focus);
 
 				if (this.focus) {
+					this.focus.setup_context();
 					this.focusCur = this.focus;
 					this.modal?.deletor();
-					this.modal = new modal(this.focus.type);
+					this.open();
 				}
 				else {
 					this.modal?.deletor();
@@ -213,34 +219,51 @@ namespace win {
 				return false;
 			});
 		}
-		static open() {
+		static destroy() {
+			this.modal?.deletor();
+			//this.focusCur = undefined;
 		}
-		static change() {
-			const which = 1;
+		static open() {
+			this.modal = new modal(this.focus!.type);
+			this.modal.content.innerHTML = '';
+			this.modal.element.classList.add('contextmenu');
 
-			this.modal!.content.innerHTML = "wot&nbsp;"
-
-			//const next = dialogues[dialog[0]][dialog[1]][1];
-
-			/*if (next != -1) {
+			for (let option of this.options.options) {
 				let button = document.createElement('div');
-				button.innerHTML = '>>'
-				button.className = 'item';
-				this.modal!.content.append(button);
-
+				button.innerHTML = option[0] + "&nbsp;"
+				//if (tuple[1] > 1) {
+				//	button.innerHTML += ` <span>×${tuple[1]}</span>`
+				//}
+				button.className = 'option';
 				button.onclick = (e) => {
-					console.log('woo');
-					dialog[1] = next;
-					this.change();
-					//button.remove();
+					if (option[1]()) {
+						this.modal?.deletor();
+						mousingClickable = false;
+						option[2]();
+					}
 				};
-			}*/
+				button.onmouseover = () => { mousingClickable = true; }
+				button.onmouseleave = () => { mousingClickable = false; }
+				this.modal.content.append(button);
+				this.buttons.push([button, option]);
+			}
+		}
+		static update() {
+			//console.log('focusCur', this.focusCur);
+			for (let button of this.buttons) {
+				const element = button[0];
+				const option = button[1];
+				if (!option[1]()) {
+					element.classList.add('disabled');
+				}
+				else {
+					element.classList.remove('disabled');
+				}
+			}
 		}
 		static tick() {
-
-			//contextmenu.open();
-
 			if (this.modal && this.focusCur) {
+				this.update();
 				this.modal.float(this.focusCur, [0, 10]);
 			}
 
@@ -248,36 +271,30 @@ namespace win {
 	}
 
 	export class dialogue {
-		static obj?: lod.obj
+		static talkingTo?: pawns.pawn
+		static talkingToCur?: pawns.pawn
 		static modal?: modal
-		static call(open: boolean, obj?: lod.obj, refresh = false) {
-
-			if (open && !this.modal) {
-				this.modal = new modal();
-			}
-			else if (!open && this.modal) {
+		static where = [0, 0];
+		static call_once() {
+			if (this.talkingTo != this.talkingToCur) {
 				this.modal?.deletor();
-				this.obj = undefined;
 				this.modal = undefined;
-				dialog[1] = 0;
+				this.talkingToCur = undefined;
 			}
 
-			if (this.modal && obj != this.obj) {
-				if (obj) {
-					this.obj = obj;
-					//this.modal.update(obj.type + ' dialogue');
-				}
-				const cast = this.obj as pawns.pawn;
-
+			if (this.talkingTo && !this.modal) {
+				this.talkingToCur = this.talkingTo;
+				this.modal = new modal();
+				this.where[1] = 0;
 				this.change();
 			}
 		}
 		static change() {
 			const which = 1;
 
-			this.modal!.content.innerHTML = dialogues[dialog[0]][dialog[1]][0] + "&nbsp;"
+			this.modal!.content.innerHTML = this.talkingToCur!.dialog[this.where[1]][0] + "&nbsp;"
 
-			const next = dialogues[dialog[0]][dialog[1]][1];
+			const next = this.talkingToCur!.dialog[this.where[1]][1];
 
 			if (next != -1) {
 				let button = document.createElement('div');
@@ -287,15 +304,23 @@ namespace win {
 
 				button.onclick = (e) => {
 					console.log('woo');
-					dialog[1] = next;
+					this.where[1] = next as number;
+					mousingClickable = false;
 					this.change();
 					//button.remove();
 				};
+				button.onmouseover = () => { mousingClickable = true; }
+				button.onmouseleave = () => { mousingClickable = false; }
 			}
 		}
 		static tick() {
-			if (this.modal && this.obj) {
-				this.modal.float(this.obj, [0, 10]);
+			if (this.modal && this.talkingToCur) {
+				this.modal.float(this.talkingToCur, [0, 10]);
+			}
+			if (this.talkingToCur && pts.distsimple(pawns.you.wpos, this.talkingToCur.wpos) > 1) {
+				this.talkingToCur = undefined;
+				this.modal?.deletor();
+				this.modal = undefined;
 			}
 		}
 	}

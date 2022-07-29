@@ -8,10 +8,45 @@
 }
 
 .modal {
-    position: absolute;
-    width: 300px;
-    color: black;
-    border: 2px gray inset;
+	position: absolute;
+	width: 300px;
+	color: black;
+	bborder: 2px gray inset;
+}
+
+.modal.contextmenu {
+	bbackground: red;
+	border: 0;
+	width: 200px;
+}
+
+.modal.contextmenu .content {
+	padding: 1;
+	margin: 0;
+}
+
+.modal.contextmenu .option {
+    display: block;
+    border-top: 1px #848484 solid;
+    /* background: #bbbbbb; */
+    cursor: pointer;
+	padding: 3px;
+    /* margin: 1px; */
+}
+
+.option.disabled {
+	background: #585858;
+	color: #2f2f2f;
+    font-style: italic;
+	font-weight: bold;
+}
+
+option.disabled:hover {
+	
+}
+
+.modal.contextmenu .option:not(.disabled):hover {
+	background: #d4d4d4;
 }
 
 .modal :first-child::before {
@@ -19,18 +54,20 @@
 }
 
 .modal .title {
-    margin: 0px;
-    padding: 4px;
-    color: black;
-    border: 1px gray inset;
-    background: #8b8b8b;
-    bbackground: midnightblue;
+	margin: 0px;
+	padding: 4px;
+	color: black;
+	bborder: 1px gray inset;
+	background: #8b8b8b;
+	bbackground: midnightblue;
 }
 
 .modal .content {
 	padding: 4px;
 	background: darkgray;
 }
+
+
 
 .modal .item {
 	display: inline-block;
@@ -50,11 +87,11 @@
 }
 
 .area {
-    position: absolute;
+	position: absolute;
 	color: white;
 	font-size: 2em;
 	right: 20%;
-    bottom: 20%;
+	bottom: 20%;
 	transition: opacity 1s ease-in-out 2s;
 	opacity: 1;
 }

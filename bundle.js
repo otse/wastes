@@ -1173,7 +1173,7 @@ void main() {
                     cell: this.cell,
                     color: this.color,
                     opacity: this.opacity,
-                    orderBias: -0.5
+                    orderBias: -1.0
                 });
                 // if we have a deck, add it to heightAdd
                 let sector = lod$1.ggalaxy.at(lod$1.ggalaxy.big(this.wpos));
@@ -1608,6 +1608,8 @@ void main() {
                 if (this.shape)
                     this.shape.rup = calc + this.heightAdd;
             }
+            setup_context() {
+            }
         }
         objects.objected = objected;
         class wall extends objected {
@@ -1987,16 +1989,20 @@ void main() {
                     sprite.material.color.set('#c1ffcd');
                     console.log('mover');
                     win$1.contextmenu.focus = this;
-                    //win.character.anchor = this;
-                    //win.character.toggle(this.mousing);
                 }
                 else if (!this.mousedSquare(wastes.gview.mrpos2) && this.mousing) {
                     if (win$1.contextmenu.focus == this)
                         win$1.contextmenu.focus = undefined;
                     sprite.material.color.set('white');
                     this.mousing = false;
-                    //win.character.toggle(this.mousing);
                 }
+            }
+            setup_context() {
+                console.log('setup context');
+                win$1.contextmenu.reset();
+                win$1.contextmenu.options.options.push(["See contents", () => {
+                        return pts.distsimple(pawns$1.you.wpos, this.wpos) < 1;
+                    }, () => { }]);
             }
         }
         objects.crate = crate;
@@ -7051,6 +7057,7 @@ void main() {
     (function (win_1) {
         var win;
         var toggle_character = false;
+        win_1.mousingClickable = false;
         win_1.started = false;
         function start() {
             win_1.started = true;
@@ -7154,22 +7161,6 @@ void main() {
         }
         character.open = false;
         win_1.character = character;
-        const dialog = [1, 0];
-        const dialogues = [
-            [
-            //['I spent some of my time sewing suits for wasters.', 3]
-            ],
-            [
-                [`I'm a trader.`, 1],
-                [`It can be hazardous around here. The purple for example is contaminated soil.`, 2],
-                [`Stay clear from the irradiated areas, marked by dead trees.`, -1],
-            ],
-            [
-                [`I'm a vendor of sifty town.`, 1],
-                [`I trade in most forms of scraps.`, 2],
-                [`.`, 3]
-            ]
-        ];
         class you {
             static call(open) {
                 var _a;
@@ -7196,6 +7187,10 @@ void main() {
         }
         win_1.you = you;
         class contextmenu {
+            static reset() {
+                this.buttons = [];
+                this.options.options = [];
+            }
             static init() {
                 hooks.register('viewMClick', (view) => {
                     var _a;
@@ -7207,9 +7202,10 @@ void main() {
                     var _a, _b;
                     console.log('contextmenu on ?', this.focus);
                     if (this.focus) {
+                        this.focus.setup_context();
                         this.focusCur = this.focus;
                         (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
-                        this.modal = new modal(this.focus.type);
+                        this.open();
                     }
                     else {
                         (_b = this.modal) === null || _b === void 0 ? void 0 : _b.deletor();
@@ -7218,57 +7214,77 @@ void main() {
                     return false;
                 });
             }
-            static open() {
+            static destroy() {
+                var _a;
+                (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
+                //this.focusCur = undefined;
             }
-            static change() {
-                this.modal.content.innerHTML = "wot&nbsp;";
-                //const next = dialogues[dialog[0]][dialog[1]][1];
-                /*if (next != -1) {
+            static open() {
+                this.modal = new modal(this.focus.type);
+                this.modal.content.innerHTML = '';
+                this.modal.element.classList.add('contextmenu');
+                for (let option of this.options.options) {
                     let button = document.createElement('div');
-                    button.innerHTML = '>>'
-                    button.className = 'item';
-                    this.modal!.content.append(button);
-
+                    button.innerHTML = option[0] + "&nbsp;";
+                    //if (tuple[1] > 1) {
+                    //	button.innerHTML += ` <span>×${tuple[1]}</span>`
+                    //}
+                    button.className = 'option';
                     button.onclick = (e) => {
-                        console.log('woo');
-                        dialog[1] = next;
-                        this.change();
-                        //button.remove();
+                        var _a;
+                        if (option[1]()) {
+                            (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
+                            win_1.mousingClickable = false;
+                            option[2]();
+                        }
                     };
-                }*/
+                    button.onmouseover = () => { win_1.mousingClickable = true; };
+                    button.onmouseleave = () => { win_1.mousingClickable = false; };
+                    this.modal.content.append(button);
+                    this.buttons.push([button, option]);
+                }
+            }
+            static update() {
+                //console.log('focusCur', this.focusCur);
+                for (let button of this.buttons) {
+                    const element = button[0];
+                    const option = button[1];
+                    if (!option[1]()) {
+                        element.classList.add('disabled');
+                    }
+                    else {
+                        element.classList.remove('disabled');
+                    }
+                }
             }
             static tick() {
-                //contextmenu.open();
                 if (this.modal && this.focusCur) {
+                    this.update();
                     this.modal.float(this.focusCur, [0, 10]);
                 }
             }
         }
+        contextmenu.buttons = [];
+        contextmenu.options = { options: [] };
         win_1.contextmenu = contextmenu;
         class dialogue {
-            static call(open, obj, refresh = false) {
+            static call_once() {
                 var _a;
-                if (open && !this.modal) {
-                    this.modal = new modal();
-                }
-                else if (!open && this.modal) {
+                if (this.talkingTo != this.talkingToCur) {
                     (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
-                    this.obj = undefined;
                     this.modal = undefined;
-                    dialog[1] = 0;
+                    this.talkingToCur = undefined;
                 }
-                if (this.modal && obj != this.obj) {
-                    if (obj) {
-                        this.obj = obj;
-                        //this.modal.update(obj.type + ' dialogue');
-                    }
-                    this.obj;
+                if (this.talkingTo && !this.modal) {
+                    this.talkingToCur = this.talkingTo;
+                    this.modal = new modal();
+                    this.where[1] = 0;
                     this.change();
                 }
             }
             static change() {
-                this.modal.content.innerHTML = dialogues[dialog[0]][dialog[1]][0] + "&nbsp;";
-                const next = dialogues[dialog[0]][dialog[1]][1];
+                this.modal.content.innerHTML = this.talkingToCur.dialog[this.where[1]][0] + "&nbsp;";
+                const next = this.talkingToCur.dialog[this.where[1]][1];
                 if (next != -1) {
                     let button = document.createElement('div');
                     button.innerHTML = '>>';
@@ -7276,18 +7292,28 @@ void main() {
                     this.modal.content.append(button);
                     button.onclick = (e) => {
                         console.log('woo');
-                        dialog[1] = next;
+                        this.where[1] = next;
+                        win_1.mousingClickable = false;
                         this.change();
                         //button.remove();
                     };
+                    button.onmouseover = () => { win_1.mousingClickable = true; };
+                    button.onmouseleave = () => { win_1.mousingClickable = false; };
                 }
             }
             static tick() {
-                if (this.modal && this.obj) {
-                    this.modal.float(this.obj, [0, 10]);
+                var _a;
+                if (this.modal && this.talkingToCur) {
+                    this.modal.float(this.talkingToCur, [0, 10]);
+                }
+                if (this.talkingToCur && pts.distsimple(pawns$1.you.wpos, this.talkingToCur.wpos) > 1) {
+                    this.talkingToCur = undefined;
+                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
+                    this.modal = undefined;
                 }
             }
         }
+        dialogue.where = [0, 0];
         win_1.dialogue = dialogue;
         class container {
             static call(open, obj, refresh = false) {
@@ -7378,6 +7404,11 @@ void main() {
         class pawn extends objects$1.objected {
             constructor() {
                 super(numbers.pawns);
+                this.dialog = [
+                    [`I'm a commoner.`, 1],
+                    [`It can be hazardous around here. The purple for example is contaminated soil.`, 2],
+                    [`Stay clear from the irradiated areas, marked by dead trees.`, -1],
+                ];
                 this.pawntype = 'generic';
                 this.trader = false;
                 this.items = [];
@@ -7388,7 +7419,7 @@ void main() {
                 this.mousing = false;
                 this.swoop = 0;
                 this.angle = 0;
-                this.speed = 1;
+                this.animSpeed = 1;
                 this.type = 'pawn';
                 this.height = 24;
                 this.inventory = new objects$1.container;
@@ -7439,6 +7470,21 @@ void main() {
                 this.tiled();
                 this.stack();
                 super.update();
+            }
+            setup_context() {
+                win$1.contextmenu.reset();
+                if (this.type != 'you')
+                    win$1.contextmenu.options.options.push(["Talk to", () => {
+                            return pts.distsimple(pawns_1.you.wpos, this.wpos) < 1;
+                        }, () => {
+                            win$1.dialogue.talkingTo = this;
+                            win$1.dialogue.call_once();
+                        }]);
+                if (this.pawntype == 'trader') {
+                    win$1.contextmenu.options.options.push(["Trade", () => {
+                            return pts.distsimple(pawns_1.you.wpos, this.wpos) < 1;
+                        }, () => { }]);
+                }
             }
             make() {
                 if (this.made)
@@ -7563,7 +7609,9 @@ void main() {
                     this.mousing = true;
                     sprite.material.color.set('#c1ffcd');
                     console.log('mover');
-                    win$1.contextmenu.focus = this;
+                    if (this.type != 'you') {
+                        win$1.contextmenu.focus = this;
+                    }
                     //win.character.anchor = this;
                     //win.character.toggle(this.mousing);
                 }
@@ -7580,10 +7628,10 @@ void main() {
                 this.swoop += 0.04;
                 const swoop1 = Math.cos(Math.PI * this.swoop);
                 const swoop2 = Math.cos(Math.PI * this.swoop - Math.PI);
-                this.groups.legl.rotation.x = swoop1 * legsSwoop * this.speed;
-                this.groups.legr.rotation.x = swoop2 * legsSwoop * this.speed;
-                this.groups.arml.rotation.x = swoop2 * armsSwoop * this.speed;
-                this.groups.armr.rotation.x = swoop1 * armsSwoop * this.speed;
+                this.groups.legl.rotation.x = swoop1 * legsSwoop * this.animSpeed;
+                this.groups.legr.rotation.x = swoop2 * legsSwoop * this.animSpeed;
+                this.groups.arml.rotation.x = swoop2 * armsSwoop * this.animSpeed;
+                this.groups.armr.rotation.x = swoop1 * armsSwoop * this.animSpeed;
                 this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
                 let posr = pts.round(this.wpos);
                 if (this.type == 'you') {
@@ -7631,6 +7679,7 @@ void main() {
                     let speed = 0.038 * ren$1.delta;
                     let x = 0;
                     let y = 0;
+                    let wasd = true;
                     if (this.type == 'you') {
                         if (app$1.key('w')) {
                             x += -1;
@@ -7652,6 +7701,7 @@ void main() {
                             speed *= 10;
                         }
                         if ((!x && !y) && app$1.button(0) >= 1) {
+                            wasd = false;
                             let mouse = wastes.gview.mwpos;
                             let pos = this.wpos;
                             pos = pts.add(pos, pts.divide([1, 1], 2));
@@ -7666,20 +7716,24 @@ void main() {
                         }
                     }
                     if (x || y) {
-                        this.speed += 0.1;
                         let angle = pts.angle([0, 0], [x, y]);
-                        x = speed * Math.sin(angle);
-                        y = speed * Math.cos(angle);
-                        this.angle = angle;
-                        this.try_move_to([x, y]);
+                        if (!win$1.mousingClickable || wasd) {
+                            this.animSpeed += 0.1;
+                            this.angle = angle;
+                            x = speed * Math.sin(angle);
+                            y = speed * Math.cos(angle);
+                            this.try_move_to([x, y]);
+                        }
+                        else
+                            this.animSpeed = 0;
                     }
-                    else {
-                        this.speed -= 0.1;
-                    }
-                    if (this.speed > 1)
-                        this.speed = 1;
-                    else if (this.speed < 0) {
-                        this.speed = 0;
+                    else
+                        this.animSpeed -= 0.1;
+                    // Normalize
+                    if (this.animSpeed > 1)
+                        this.animSpeed = 1;
+                    else if (this.animSpeed < 0) {
+                        this.animSpeed = 0;
                         this.swoop = 0;
                     }
                 }
@@ -7875,6 +7929,7 @@ void main() {
     var wastes = exports.wastes;
 
     exports["default"] = wastes;
+    exports.pawns = pawns$1;
     exports.win = win$1;
 
     Object.defineProperty(exports, '__esModule', { value: true });

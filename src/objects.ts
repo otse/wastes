@@ -3,7 +3,7 @@ import { THREE, Group, Mesh, Shader, BoxGeometry, ConeGeometry, CylinderGeometry
 import { ColladaLoader } from "three/examples/jsm/loaders/ColladaLoader";
 
 import lod, { numbers } from "./lod";
-import wastes, { win } from "./wastes";
+import wastes, { win, pawns } from "./wastes";
 import ren from "./renderer";
 import pts from "./pts";
 import aabb2 from "./aabb2";
@@ -261,6 +261,7 @@ namespace objects {
 	}
 
 	export class objected extends lod.obj {
+		static focus: objected
 		solid = true
 		pixel?: pixel
 		tile?: tiles.tile
@@ -292,6 +293,8 @@ namespace objects {
 			this.calc = calc;
 			if (this.shape)
 				(this.shape as sprite).rup = calc + this.heightAdd;
+		}
+		setup_context() { // override me
 		}
 	}
 	export class wall extends objected {
@@ -675,16 +678,21 @@ namespace objects {
 				sprite.material.color.set('#c1ffcd');
 				console.log('mover');
 				win.contextmenu.focus = this;
-				//win.character.anchor = this;
-				//win.character.toggle(this.mousing);
 			}
 			else if (!this.mousedSquare(wastes.gview.mrpos2) && this.mousing) {
 				if (win.contextmenu.focus == this)
 					win.contextmenu.focus = undefined;
 				sprite.material.color.set('white');
 				this.mousing = false;
-				//win.character.toggle(this.mousing);
 			}
+		}
+		override setup_context() {
+			console.log('setup context');
+
+			win.contextmenu.reset();
+			win.contextmenu.options.options.push(["See contents", () => {
+				return pts.distsimple(pawns.you.wpos, this.wpos) < 1;
+			}, () => { }]);
 		}
 	}
 	export class shelves extends objected {
