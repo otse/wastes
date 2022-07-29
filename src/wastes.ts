@@ -14,7 +14,7 @@ import win from "./win";
 import rooms from "./rooms";
 import areas from "./areas";
 
-export { win, pawns }; // fixes creepy rollup error
+export { win, pawns, objects }; // fixes creepy rollup error
 
 
 export namespace wastes {

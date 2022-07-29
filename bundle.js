@@ -1967,6 +1967,7 @@ void main() {
                 this.mousing = false;
                 this.type = 'crate';
                 this.height = 17;
+                this.container.obj = this;
             }
             create() {
                 this.tiled();
@@ -2002,7 +2003,10 @@ void main() {
                 win$1.contextmenu.reset();
                 win$1.contextmenu.options.options.push(["See contents", () => {
                         return pts.distsimple(pawns$1.you.wpos, this.wpos) < 1;
-                    }, () => { }]);
+                    }, () => {
+                        win$1.container.crate = this;
+                        win$1.container.call_once();
+                    }]);
             }
         }
         objects.crate = crate;
@@ -7316,29 +7320,18 @@ void main() {
         dialogue.where = [0, 0];
         win_1.dialogue = dialogue;
         class container {
-            static call(open, obj, refresh = false) {
+            static call_once() {
                 var _a;
-                //this.anchor = obj;
-                if (!this.obj) {
-                    this.obj = new lod$1.obj;
-                    this.obj.size = [24, 40];
-                    this.obj.wpos = [38, 49];
-                }
-                if (open && !this.modal) {
-                    this.modal = new modal('container');
-                }
-                else if (!open && this.modal) {
+                if (this.crate != this.crateCur) {
                     (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
-                    this.obj = undefined;
                     this.modal = undefined;
+                    this.crateCur = undefined;
                 }
-                if (this.modal && obj != this.obj) {
-                    if (obj) {
-                        this.obj = obj;
-                        this.modal.update(obj.type + ' contents');
-                    }
+                if (this.crate) {
+                    this.crateCur = this.crate;
+                    this.modal = new modal('container');
                     this.modal.content.innerHTML = '';
-                    const cast = this.obj;
+                    const cast = this.crate;
                     for (let tuple of cast.container.tuples) {
                         let button = document.createElement('div');
                         button.innerHTML = tuple[0];
@@ -7358,9 +7351,60 @@ void main() {
                     }
                 }
             }
+            /*static call(open: boolean, obj?: lod.obj, refresh = false) {
+                //this.anchor = obj;
+                if (!this.obj) {
+                    this.obj = new lod.obj;
+                    this.obj.size = [24, 40];
+                    this.obj.wpos = [38, 49];
+                }
+
+                if (open && !this.modal) {
+                    this.modal = new modal('container');
+                }
+                else if (!open && this.modal) {
+                    this.modal?.deletor();
+                    this.obj = undefined;
+                    this.modal = undefined;
+                }
+
+                if (this.modal && obj != this.obj) {
+                    if (obj) {
+                        this.obj = obj;
+                        this.modal.update(obj.type + ' contents');
+                    }
+                    this.modal.content.innerHTML = ''
+
+                    const cast = this.obj as objects.crate;
+                    for (let tuple of cast.container.tuples) {
+                        let button = document.createElement('div');
+                        button.innerHTML = tuple[0];
+                        if (tuple[1] > 1) {
+                            button.innerHTML += ` <span>×${tuple[1]}</span>`
+                        }
+                        button.className = 'item';
+                        this.modal.content.append(button);
+
+                        button.onclick = (e) => {
+                            console.log('woo');
+                            button.remove();
+                            cast.container.remove(tuple[0]);
+                            pawns.you?.inventory.add(tuple[0]);
+                        };
+
+                        //this.modal.content.innerHTML += item + '<br />';
+                    }
+                }
+            }*/
             static tick() {
-                if (this.modal && this.obj) {
-                    this.modal.float(this.obj);
+                var _a;
+                if (this.modal && this.crateCur) {
+                    this.modal.float(this.crateCur);
+                }
+                if (this.crateCur && pts.distsimple(pawns$1.you.wpos, this.crateCur.wpos) > 1) {
+                    this.crateCur = undefined;
+                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
+                    this.modal = undefined;
                 }
             }
         }
@@ -7929,6 +7973,7 @@ void main() {
     var wastes = exports.wastes;
 
     exports["default"] = wastes;
+    exports.objects = objects$1;
     exports.pawns = pawns$1;
     exports.win = win$1;
 

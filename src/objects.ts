@@ -613,6 +613,7 @@ namespace objects {
 	}
 	type item = [string: string, amount: number]
 	export class container {
+		obj?: objects.objected
 		tuples: [string: string, amount: number][] = []
 		constructor() {
 			if (Math.random() > .5)
@@ -654,6 +655,7 @@ namespace objects {
 			super(numbers.objs);
 			this.type = 'crate'
 			this.height = 17;
+			this.container.obj = this;
 		}
 		override create() {
 			this.tiled();
@@ -692,7 +694,10 @@ namespace objects {
 			win.contextmenu.reset();
 			win.contextmenu.options.options.push(["See contents", () => {
 				return pts.distsimple(pawns.you.wpos, this.wpos) < 1;
-			}, () => { }]);
+			}, () => {
+				win.container.crate = this;
+				win.container.call_once();
+			}]);
 		}
 	}
 	export class shelves extends objected {

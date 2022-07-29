@@ -326,9 +326,46 @@ namespace win {
 	}
 
 	export class container {
-		static obj?: lod.obj
+		static crate?: objects.objected
+		static crateCur?: objects.objected
+		//static obj?: lod.obj
 		static modal?: modal
-		static call(open: boolean, obj?: lod.obj, refresh = false) {
+		static call_once() {
+			if (this.crate != this.crateCur) {
+				this.modal?.deletor();
+				this.modal = undefined;
+				this.crateCur = undefined;
+			}
+
+			if (this.crate) {
+				this.crateCur = this.crate;
+
+				this.modal = new modal('container');
+				this.modal.content.innerHTML = ''
+
+				const cast = this.crate as objects.crate;
+
+				for (let tuple of cast.container.tuples) {
+					let button = document.createElement('div');
+					button.innerHTML = tuple[0];
+					if (tuple[1] > 1) {
+						button.innerHTML += ` <span>×${tuple[1]}</span>`
+					}
+					button.className = 'item';
+					this.modal.content.append(button);
+
+					button.onclick = (e) => {
+						console.log('woo');
+						button.remove();
+						cast.container.remove(tuple[0]);
+						pawns.you?.inventory.add(tuple[0]);
+					};
+
+					//this.modal.content.innerHTML += item + '<br />';
+				}
+			}
+		}
+		/*static call(open: boolean, obj?: lod.obj, refresh = false) {
 			//this.anchor = obj;
 			if (!this.obj) {
 				this.obj = new lod.obj;
@@ -372,10 +409,15 @@ namespace win {
 					//this.modal.content.innerHTML += item + '<br />';
 				}
 			}
-		}
+		}*/
 		static tick() {
-			if (this.modal && this.obj) {
-				this.modal.float(this.obj);
+			if (this.modal && this.crateCur) {
+				this.modal.float(this.crateCur);
+			}
+			if (this.crateCur && pts.distsimple(pawns.you.wpos, this.crateCur.wpos) > 1) {
+				this.crateCur = undefined;
+				this.modal?.deletor();
+				this.modal = undefined;
 			}
 		}
 	}
