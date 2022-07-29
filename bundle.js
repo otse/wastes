@@ -727,7 +727,7 @@ void main() {
                 if (this.off())
                     return;
                 this.counts[0]--;
-                this.delete();
+                //this.delete();
                 (_a = this.shape) === null || _a === void 0 ? void 0 : _a.hide();
                 // console.log(' obj.hide ');
             }
@@ -743,6 +743,7 @@ void main() {
             create() {
                 console.warn(' (lod) obj.create ');
             }
+            // delete is never used
             delete() {
                 // console.warn(' (lod) obj.delete ');
             }
@@ -968,7 +969,7 @@ void main() {
                 console.log('(testing chamber) show sector');
                 return false;
             });
-            hooks.register('viewClick', (view) => {
+            hooks.register('viewRClick', (view) => {
                 console.log(' asteorid! ');
                 let ping = new Asteroid;
                 ping.wpos = pts.add(wastes.gview.mwpos, [-1, -1]);
@@ -1289,8 +1290,14 @@ void main() {
             this.mwpos = lod$1.unproject(this.mrpos);
             //this.mwpos = pts.add(this.mwpos, [.5, -.5])
             // now..
-            if (app$1.button(2) >= 1) {
-                hooks.call('viewClick', this);
+            if (app$1.button(0) == 1) {
+                hooks.call('viewLClick', this);
+            }
+            if (app$1.button(1) == 1) {
+                hooks.call('viewMClick', this);
+            }
+            if (app$1.button(2) == 1) {
+                hooks.call('viewRClick', this);
             }
         }
         move() {
@@ -1351,7 +1358,7 @@ void main() {
             crunch += `walls: ${numbers.walls[0]} / ${numbers.walls[1]}<br />`;
             crunch += `roofs: ${numbers.roofs[0]} / ${numbers.roofs[1]}<br />`;
             crunch += '<br />';
-            crunch += `controls: WASD to move, also click to move, hold middlemouse to pan, scrollwheel to zoom, spacebar to toggle roofs, h to hide debug, c for character menu<br />`;
+            crunch += `controls: rclick for context menu, click to move or WASD, hold middlemouse to pan, scrollwheel to zoom, spacebar to toggle roofs, h to hide debug, c for character menu<br />`;
             let element = document.querySelectorAll('.stats')[0];
             element.innerHTML = crunch;
             element.style.visibility = this.show ? 'visible' : 'hidden';
@@ -1955,6 +1962,7 @@ void main() {
             constructor() {
                 super(numbers.objs);
                 this.container = new container;
+                this.mousing = false;
                 this.type = 'crate';
                 this.height = 17;
             }
@@ -1971,6 +1979,24 @@ void main() {
                     orderBias: .6
                 });
                 this.stack(['roof', 'wall']);
+            }
+            tick() {
+                const sprite = this.shape;
+                if (this.mousedSquare(wastes.gview.mrpos2) && !this.mousing) {
+                    this.mousing = true;
+                    sprite.material.color.set('#c1ffcd');
+                    console.log('mover');
+                    win$1.contextmenu.focus = this;
+                    //win.character.anchor = this;
+                    //win.character.toggle(this.mousing);
+                }
+                else if (!this.mousedSquare(wastes.gview.mrpos2) && this.mousing) {
+                    if (win$1.contextmenu.focus == this)
+                        win$1.contextmenu.focus = undefined;
+                    sprite.material.color.set('white');
+                    this.mousing = false;
+                    //win.character.toggle(this.mousing);
+                }
             }
         }
         objects.crate = crate;
@@ -2294,6 +2320,7 @@ void main() {
         function start() {
             shear.started = true;
             document.title = 'shear';
+            document.body.oncontextmenu = function () { };
             spare = document.createElement("canvas");
             spareCtx = spare.getContext('2d');
             spare.width = 24;
@@ -7028,6 +7055,7 @@ void main() {
         function start() {
             win_1.started = true;
             win = document.getElementById('win');
+            contextmenu.init();
         }
         win_1.start = start;
         function tick() {
@@ -7042,6 +7070,7 @@ void main() {
             character.tick();
             container.tick();
             dialogue.tick();
+            contextmenu.tick();
         }
         win_1.tick = tick;
         class modal {
@@ -7166,6 +7195,56 @@ void main() {
             }
         }
         win_1.you = you;
+        class contextmenu {
+            static init() {
+                hooks.register('viewMClick', (view) => {
+                    var _a;
+                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
+                    this.focus = undefined;
+                    return false;
+                });
+                hooks.register('viewRClick', (view) => {
+                    var _a, _b;
+                    console.log('contextmenu on ?', this.focus);
+                    if (this.focus) {
+                        this.focusCur = this.focus;
+                        (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
+                        this.modal = new modal(this.focus.type);
+                    }
+                    else {
+                        (_b = this.modal) === null || _b === void 0 ? void 0 : _b.deletor();
+                        this.focusCur = undefined;
+                    }
+                    return false;
+                });
+            }
+            static open() {
+            }
+            static change() {
+                this.modal.content.innerHTML = "wot&nbsp;";
+                //const next = dialogues[dialog[0]][dialog[1]][1];
+                /*if (next != -1) {
+                    let button = document.createElement('div');
+                    button.innerHTML = '>>'
+                    button.className = 'item';
+                    this.modal!.content.append(button);
+
+                    button.onclick = (e) => {
+                        console.log('woo');
+                        dialog[1] = next;
+                        this.change();
+                        //button.remove();
+                    };
+                }*/
+            }
+            static tick() {
+                //contextmenu.open();
+                if (this.modal && this.focusCur) {
+                    this.modal.float(this.focusCur, [0, 10]);
+                }
+            }
+        }
+        win_1.contextmenu = contextmenu;
         class dialogue {
             static call(open, obj, refresh = false) {
                 var _a;
@@ -7299,6 +7378,8 @@ void main() {
         class pawn extends objects$1.objected {
             constructor() {
                 super(numbers.pawns);
+                this.pawntype = 'generic';
+                this.trader = false;
                 this.items = [];
                 this.created = false;
                 this.groups = {};
@@ -7482,10 +7563,13 @@ void main() {
                     this.mousing = true;
                     sprite.material.color.set('#c1ffcd');
                     console.log('mover');
+                    win$1.contextmenu.focus = this;
                     //win.character.anchor = this;
                     //win.character.toggle(this.mousing);
                 }
                 else if (!this.mousedSquare(wastes.gview.mrpos2) && this.mousing) {
+                    if (win$1.contextmenu.focus == this)
+                        win$1.contextmenu.focus = undefined;
                     sprite.material.color.set('white');
                     this.mousing = false;
                     //win.character.toggle(this.mousing);
@@ -7519,7 +7603,7 @@ void main() {
                     */
                     let containers = [];
                     let pawns = [];
-                    for (let y = -1; y <= 1; y++)
+                    for (let y = -1; y <= 1; y++) {
                         for (let x = -1; x <= 1; x++) {
                             let pos = pts.add(posr, [x, y]);
                             let sector = lod$1.ggalaxy.at(lod$1.ggalaxy.big(pos));
@@ -7533,17 +7617,15 @@ void main() {
                                 }
                             }
                         }
+                    }
                     containers.sort((a, b) => pts.distsimple(this.wpos, a.wpos) < pts.distsimple(this.wpos, b.wpos) ? -1 : 1);
-                    if (containers.length && pts.distsimple(containers[0].wpos, this.wpos) < 1.0) {
-                        win$1.container.call(true, containers[0]);
+                    pawns.sort((a, b) => pts.distsimple(this.wpos, a.wpos) < pts.distsimple(this.wpos, b.wpos) ? -1 : 1);
+                    /*if (containers.length && pts.distsimple(containers[0].wpos, this.wpos) < 1.0) {
+                        win.container.call(true, containers[0]);
                     }
                     else
-                        win$1.container.call(false);
-                    if (pawns.length && pts.distsimple(pawns[0].wpos, this.wpos) < 1.5) {
-                        win$1.dialogue.call(true, pawns[0]);
-                    }
-                    else
-                        win$1.dialogue.call(false);
+                        win.container.call(false);*/
+                    if (pawns.length && pts.distsimple(pawns[0].wpos, this.wpos) < 1.5) ;
                 }
                 {
                     let speed = 0.038 * ren$1.delta;
@@ -7565,6 +7647,9 @@ void main() {
                         if (app$1.key('d')) {
                             x += 1;
                             y += -1;
+                        }
+                        if (app$1.key('x')) {
+                            speed *= 10;
                         }
                         if ((!x && !y) && app$1.button(0) >= 1) {
                             let mouse = wastes.gview.mwpos;
@@ -7742,6 +7827,7 @@ void main() {
                 pawns$1.make_you();
                 let pos = [37.5, 48.5];
                 let vendor = new pawns$1.pawn();
+                vendor.pawntype = 'trader';
                 vendor.wpos = pos;
                 lod$1.add(vendor);
                 let peacekeeper = new pawns$1.pawn();
@@ -7789,6 +7875,7 @@ void main() {
     var wastes = exports.wastes;
 
     exports["default"] = wastes;
+    exports.win = win$1;
 
     Object.defineProperty(exports, '__esModule', { value: true });
 

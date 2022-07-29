@@ -18,6 +18,8 @@ namespace shear {
 
 		document.title = 'shear';
 
+		document.body.oncontextmenu = function() {}
+
 		spare = document.createElement("canvas") as HTMLCanvasElement;
 		spareCtx = spare.getContext('2d')!;
 		spare.width = 24;

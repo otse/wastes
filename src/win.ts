@@ -9,6 +9,7 @@ import ren from './renderer';
 import wastes from "./wastes";
 import objects from "./objects";
 import areas from "./areas";
+import hooks from "./hooks";
 
 namespace win {
 
@@ -22,6 +23,8 @@ namespace win {
 		started = true;
 
 		win = document.getElementById('win') as HTMLElement;
+
+		contextmenu.init();
 
 	}
 
@@ -43,6 +46,7 @@ namespace win {
 		character.tick();
 		container.tick();
 		dialogue.tick();
+		contextmenu.tick();
 	}
 
 	class modal {
@@ -173,12 +177,73 @@ namespace win {
 				this.call(true);
 				this.modal!.float(pawns.you, [-5, 5]);
 				console.log('call and float');
-				
+
 			}
-			else
-			{
+			else {
 				this.call(false);
 			}
+		}
+	}
+
+	export class contextmenu {
+		static focus?: lod.obj
+		static focusCur?: lod.obj
+		static modal?: modal
+
+		static init() {
+			hooks.register('viewMClick', (view) => {
+				this.modal?.deletor();
+				this.focus = undefined;
+				return false;
+			});
+
+			hooks.register('viewRClick', (view) => {
+				console.log('contextmenu on ?', this.focus);
+
+				if (this.focus) {
+					this.focusCur = this.focus;
+					this.modal?.deletor();
+					this.modal = new modal(this.focus.type);
+				}
+				else {
+					this.modal?.deletor();
+					this.focusCur = undefined;
+				}
+
+				return false;
+			});
+		}
+		static open() {
+		}
+		static change() {
+			const which = 1;
+
+			this.modal!.content.innerHTML = "wot&nbsp;"
+
+			//const next = dialogues[dialog[0]][dialog[1]][1];
+
+			/*if (next != -1) {
+				let button = document.createElement('div');
+				button.innerHTML = '>>'
+				button.className = 'item';
+				this.modal!.content.append(button);
+
+				button.onclick = (e) => {
+					console.log('woo');
+					dialog[1] = next;
+					this.change();
+					//button.remove();
+				};
+			}*/
+		}
+		static tick() {
+
+			//contextmenu.open();
+
+			if (this.modal && this.focusCur) {
+				this.modal.float(this.focusCur, [0, 10]);
+			}
+
 		}
 	}
 
@@ -294,7 +359,7 @@ namespace win {
 		static call(open: boolean, area?: areas.area, refresh = false) {
 			if (open) {
 				console.log('boo');
-				
+
 				let element = document.createElement('div');
 				element.className = 'area';
 				element.innerHTML = ` ${area?.name || ''} `;

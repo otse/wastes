@@ -38,6 +38,8 @@ export namespace pawns {
 
 	export class pawn extends objects.objected {
 		dialog: any
+		pawntype = 'generic'
+		trader = false
 		inventory: objects.container
 		items: string[] = []
 		group
@@ -273,16 +275,18 @@ export namespace pawns {
 				this.mousing = true;
 				sprite.material.color.set('#c1ffcd');
 				console.log('mover');
+				win.contextmenu.focus = this;
 				//win.character.anchor = this;
 				//win.character.toggle(this.mousing);
 			}
-			else if (!this.mousedSquare(wastes.gview.mrpos2) && this.mousing)
-			{
+			else if (!this.mousedSquare(wastes.gview.mrpos2) && this.mousing) {
+				if (win.contextmenu.focus == this)
+					win.contextmenu.focus = undefined;
 				sprite.material.color.set('white');
 				this.mousing = false;
 				//win.character.toggle(this.mousing);
 			}
-			
+
 
 			const legsSwoop = 0.8;
 			const armsSwoop = 0.5;
@@ -317,7 +321,7 @@ export namespace pawns {
 
 				let containers: objects.objected[] = [];
 				let pawns: pawns.pawn[] = [];
-				for (let y = -1; y <= 1; y++)
+				for (let y = -1; y <= 1; y++) {
 					for (let x = -1; x <= 1; x++) {
 						let pos = pts.add(posr, [x, y]);
 						let sector = lod.ggalaxy.at(lod.ggalaxy.big(pos));
@@ -331,20 +335,22 @@ export namespace pawns {
 							}
 						}
 					}
+				}
 
 				containers.sort((a, b) => pts.distsimple(this.wpos, a.wpos) < pts.distsimple(this.wpos, b.wpos) ? -1 : 1)
+				pawns.sort((a, b) => pts.distsimple(this.wpos, a.wpos) < pts.distsimple(this.wpos, b.wpos) ? -1 : 1)
 
-				if (containers.length && pts.distsimple(containers[0].wpos, this.wpos) < 1.0) {
+				/*if (containers.length && pts.distsimple(containers[0].wpos, this.wpos) < 1.0) {
 					win.container.call(true, containers[0]);
 				}
 				else
-					win.container.call(false);
+					win.container.call(false);*/
+
+				
 
 				if (pawns.length && pts.distsimple(pawns[0].wpos, this.wpos) < 1.5) {
-					win.dialogue.call(true, pawns[0]);
+					//win.contextmenu.focus = pawns[0];
 				}
-				else
-					win.dialogue.call(false);
 
 			}
 
@@ -372,6 +378,9 @@ export namespace pawns {
 						x += 1;
 						y += -1;
 					}
+					if (app.key('x')) {
+						speed *= 10;
+					}
 					if ((!x && !y) && app.button(0) >= 1) {
 						let mouse = wastes.gview.mwpos;
 						let pos = this.wpos;
@@ -379,7 +388,7 @@ export namespace pawns {
 						mouse = pts.subtract(mouse, pos);
 						mouse[1] = -mouse[1];
 						const dist = pts.distsimple(pos, wastes.gview.mwpos);
-						
+
 						if (dist > 0.5) {
 							x = mouse[0];
 							y = mouse[1];

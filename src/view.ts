@@ -104,8 +104,14 @@ export class view {
 		this.mwpos = lod.unproject(this.mrpos);
 		//this.mwpos = pts.add(this.mwpos, [.5, -.5])
 		// now..
-		if (app.button(2) >= 1) {
-			hooks.call('viewClick', this);
+		if (app.button(0) == 1) {
+			hooks.call('viewLClick', this);
+		}
+		if (app.button(1) == 1) {
+			hooks.call('viewMClick', this);
+		}
+		if (app.button(2) == 1) {
+			hooks.call('viewRClick', this);
 		}
 	}
 	move() {
@@ -173,7 +179,7 @@ export class view {
 		crunch += `roofs: ${numbers.roofs[0]} / ${numbers.roofs[1]}<br />`;
 		crunch += '<br />';
 
-		crunch += `controls: WASD to move, also click to move, hold middlemouse to pan, scrollwheel to zoom, spacebar to toggle roofs, h to hide debug, c for character menu<br />`;
+		crunch += `controls: rclick for context menu, click to move or WASD, hold middlemouse to pan, scrollwheel to zoom, spacebar to toggle roofs, h to hide debug, c for character menu<br />`;
 
 		let element = document.querySelectorAll('.stats')[0] as any;
 		element.innerHTML = crunch;

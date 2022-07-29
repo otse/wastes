@@ -269,7 +269,7 @@ namespace lod {
 			super();
 			this.counts[1]++;
 		}
-		finalize() {
+		finalize() { // finalzie is never used
 			this.hide();
 			this.counts[1]--;
 		}
@@ -285,7 +285,7 @@ namespace lod {
 			if (this.off())
 				return;
 			this.counts[0]--;
-			this.delete();
+			//this.delete();
 			this.shape?.hide();
 			// console.log(' obj.hide ');
 		}
@@ -301,6 +301,7 @@ namespace lod {
 		create() { // implement me
 			console.warn(' (lod) obj.create ');
 		}
+		// delete is never used
 		delete() { // implement me
 			// console.warn(' (lod) obj.delete ');
 		}

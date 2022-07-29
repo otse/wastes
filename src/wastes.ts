@@ -14,6 +14,8 @@ import win from "./win";
 import rooms from "./rooms";
 import areas from "./areas";
 
+export { win }; // fixes creepy rollup error
+
 
 export namespace wastes {
 
@@ -112,6 +114,7 @@ export namespace wastes {
 
 			let pos: vec2 = [37.5, 48.5];
 			let vendor = new pawns.pawn();
+			vendor.pawntype = 'trader';
 			vendor.wpos = pos;
 			lod.add(vendor);
 

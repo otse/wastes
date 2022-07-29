@@ -26,7 +26,7 @@ namespace testing_chamber {
 			return false;
 		});
 
-		hooks.register('viewClick', (view) => {
+		hooks.register('viewRClick', (view) => {
 			console.log(' asteorid! ')
 			let ping = new Asteroid;
 			ping.wpos = pts.add(wastes.gview.mwpos, [-1, -1]);
