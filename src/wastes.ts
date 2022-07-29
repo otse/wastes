@@ -108,12 +108,18 @@ export namespace wastes {
 			areas.start();
 			win.start();
 			
-			pawns.make();
+			pawns.make_you();
 
 			let pos: vec2 = [37.5, 48.5];
 			let vendor = new pawns.pawn();
 			vendor.wpos = pos;
 			lod.add(vendor);
+
+			let peacekeeper = new pawns.pawn();
+			peacekeeper.wpos = [45.5, 56.5];
+			peacekeeper.angle = Math.PI / 2;
+			//peacekeeper.dialogue = 'I protect the vicinity.'
+			lod.add(peacekeeper);
 		}
 	}
 

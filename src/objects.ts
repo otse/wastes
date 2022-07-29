@@ -332,8 +332,12 @@ namespace objects {
 		adapt() {
 			// change sprite to surrounding walls
 		}
-		//tick() {
-		//}
+		tick() {
+			/*if (this.mousedSquare(wastes.gview.mrpos2)) {
+				const sprite = this.shape as sprite;
+				sprite.material.color.set('#c1ffcd');
+			}*/
+		}
 	}
 	export class deck extends objected {
 		static timer = 0;
@@ -574,7 +578,7 @@ namespace objects {
 			this.size = [8, 10];
 			//let color =  tiles.get(this.wpos)!.color;
 			//this.cell = [Math.floor(Math.random() * 2), 0];
-			return;
+			//return;
 			let shape = new sprite({
 				binded: this,
 				tuple: sprites.dpanel,
@@ -587,7 +591,7 @@ namespace objects {
 			this.stack();
 		}
 		override tick() {
-			return;
+			//return;
 			let sprite = this.shape as sprite;
 			this.ticker += ren.delta / 60;
 			const cell = sprite.vars.cell!;

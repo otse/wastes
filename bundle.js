@@ -1222,6 +1222,7 @@ void main() {
             this.mpos = [0, 0];
             this.mwpos = [0, 0];
             this.mrpos = [0, 0];
+            this.mrpos2 = [0, 0];
             this.begin = [0, 0];
             this.before = [0, 0];
             this.show = true;
@@ -1283,6 +1284,7 @@ void main() {
             mouse = pts.mult(mouse, this.zoom);
             mouse[1] = -mouse[1];
             this.mrpos = pts.add(mouse, this.rpos);
+            this.mrpos2 = pts.subtract(this.mrpos, [0, 3]); // why minus 3 ?
             this.mrpos = pts.add(this.mrpos, lod$1.project([.5, -.5])); // correction
             this.mwpos = lod$1.unproject(this.mrpos);
             //this.mwpos = pts.add(this.mwpos, [.5, -.5])
@@ -1637,6 +1639,12 @@ void main() {
             adapt() {
                 // change sprite to surrounding walls
             }
+            tick() {
+                /*if (this.mousedSquare(wastes.gview.mrpos2)) {
+                    const sprite = this.shape as sprite;
+                    sprite.material.color.set('#c1ffcd');
+                }*/
+            }
         }
         objects.wall = wall;
         class deck extends objected {
@@ -1876,10 +1884,32 @@ void main() {
                 this.size = [8, 10];
                 //let color =  tiles.get(this.wpos)!.color;
                 //this.cell = [Math.floor(Math.random() * 2), 0];
-                return;
+                //return;
+                let shape = new sprite({
+                    binded: this,
+                    tuple: sprites$1.dpanel,
+                    cell: [0, 0],
+                    //color: color,
+                    orderBias: .6
+                });
+                shape.rup2 = 15;
+                shape.rleft = 2;
+                this.stack();
             }
             tick() {
-                return;
+                //return;
+                let sprite = this.shape;
+                this.ticker += ren$1.delta / 60;
+                const cell = sprite.vars.cell;
+                if (this.ticker > 0.5) {
+                    if (cell[0] < 5)
+                        cell[0]++;
+                    else
+                        cell[0] = 0;
+                    this.ticker = 0;
+                }
+                //sprite.retransform();
+                sprite.update();
                 //console.log('boo');
             }
         }
@@ -7254,7 +7284,7 @@ void main() {
     var pawns;
     (function (pawns_1) {
         pawns_1.placeAtMouse = false;
-        function make() {
+        function make_you() {
             let pos = [44, 44];
             let paw = new pawn();
             paw.type = 'you';
@@ -7262,7 +7292,7 @@ void main() {
             pawns_1.you = paw;
             lod$1.add(paw);
         }
-        pawns_1.make = make;
+        pawns_1.make_you = make_you;
         function handle() {
         }
         pawns_1.handle = handle;
@@ -7285,7 +7315,7 @@ void main() {
             }
             create() {
                 this.tiled();
-                this.size = pts.divide([50, 100], 2);
+                this.size = pts.divide([50, 75], 2);
                 new sprite({
                     binded: this,
                     tuple: sprites$1.test100,
@@ -7433,7 +7463,7 @@ void main() {
                 this.meshes.legl.position.set(0, -legsHeight / 2, 0);
                 this.groups.legr.position.set(legsSize / 2, -bodyHeight / 2, 0);
                 this.meshes.legr.position.set(0, -legsHeight / 2, 0);
-                this.groups.ground.position.set(0, -bodyHeight * 1.5, 0);
+                this.groups.ground.position.set(0, -bodyHeight, 0);
                 //mesh.rotation.set(Math.PI / 2, 0, 0);
                 this.scene.add(this.groups.ground);
             }
@@ -7447,6 +7477,19 @@ void main() {
             }
             tick() {
                 var _a, _b;
+                const sprite = this.shape;
+                if (this.mousedSquare(wastes.gview.mrpos2) && !this.mousing) {
+                    this.mousing = true;
+                    sprite.material.color.set('#c1ffcd');
+                    console.log('mover');
+                    //win.character.anchor = this;
+                    //win.character.toggle(this.mousing);
+                }
+                else if (!this.mousedSquare(wastes.gview.mrpos2) && this.mousing) {
+                    sprite.material.color.set('white');
+                    this.mousing = false;
+                    //win.character.toggle(this.mousing);
+                }
                 const legsSwoop = 0.8;
                 const armsSwoop = 0.5;
                 this.render();
@@ -7696,11 +7739,16 @@ void main() {
                 rooms$1.start();
                 areas$1.start();
                 win$1.start();
-                pawns$1.make();
+                pawns$1.make_you();
                 let pos = [37.5, 48.5];
                 let vendor = new pawns$1.pawn();
                 vendor.wpos = pos;
                 lod$1.add(vendor);
+                let peacekeeper = new pawns$1.pawn();
+                peacekeeper.wpos = [45.5, 56.5];
+                peacekeeper.angle = Math.PI / 2;
+                //peacekeeper.dialogue = 'I protect the vicinity.'
+                lod$1.add(peacekeeper);
             }
         }
         function start() {

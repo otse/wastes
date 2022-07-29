@@ -21,6 +21,7 @@ export class view {
 	mpos: vec2 = [0, 0]
 	mwpos: vec2 = [0, 0]
 	mrpos: vec2 = [0, 0]
+	mrpos2: vec2 = [0, 0]
 	static make() {
 		return new view;
 	}
@@ -96,6 +97,9 @@ export class view {
 		mouse = pts.mult(mouse, this.zoom);
 		mouse[1] = -mouse[1];
 		this.mrpos = pts.add(mouse, this.rpos);
+
+		this.mrpos2 = pts.subtract(this.mrpos, [0, 3]); // why minus 3 ?
+
 		this.mrpos = pts.add(this.mrpos, lod.project([.5, -.5])); // correction
 		this.mwpos = lod.unproject(this.mrpos);
 		//this.mwpos = pts.add(this.mwpos, [.5, -.5])

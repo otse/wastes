@@ -17,9 +17,11 @@ export namespace pawns {
 
 	export var you: pawn;
 
+	export var mousing: pawn | undefined;
+
 	export const placeAtMouse = false;
 
-	export function make() {
+	export function make_you() {
 		let pos: vec2 = [44, 44];
 		let paw = new pawn();
 		paw.type = 'you';
@@ -35,6 +37,7 @@ export namespace pawns {
 	const wasterSprite = false;
 
 	export class pawn extends objects.objected {
+		dialog: any
 		inventory: objects.container
 		items: string[] = []
 		group
@@ -57,7 +60,7 @@ export namespace pawns {
 			if (wasterSprite)
 				this.size = pts.divide([90, 180], 5);
 			else
-				this.size = pts.divide([50, 100], 2);
+				this.size = pts.divide([50, 75], 2);
 
 			let shape = new sprite({
 				binded: this,
@@ -239,7 +242,7 @@ export namespace pawns {
 			this.groups.legr.position.set(legsSize / 2, -bodyHeight / 2, 0);
 			this.meshes.legr.position.set(0, -legsHeight / 2, 0);
 
-			this.groups.ground.position.set(0, -bodyHeight * 1.5, 0);
+			this.groups.ground.position.set(0, -bodyHeight, 0);
 			//mesh.rotation.set(Math.PI / 2, 0, 0);
 
 			this.scene.add(this.groups.ground);
@@ -263,6 +266,23 @@ export namespace pawns {
 		angle = 0
 		speed = 1
 		override tick() {
+
+			const sprite = this.shape as sprite;
+
+			if (this.mousedSquare(wastes.gview.mrpos2) && !this.mousing) {
+				this.mousing = true;
+				sprite.material.color.set('#c1ffcd');
+				console.log('mover');
+				//win.character.anchor = this;
+				//win.character.toggle(this.mousing);
+			}
+			else if (!this.mousedSquare(wastes.gview.mrpos2) && this.mousing)
+			{
+				sprite.material.color.set('white');
+				this.mousing = false;
+				//win.character.toggle(this.mousing);
+			}
+			
 
 			const legsSwoop = 0.8;
 			const armsSwoop = 0.5;
