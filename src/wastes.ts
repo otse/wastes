@@ -13,6 +13,8 @@ import pawns from "./pawn";
 import win from "./win";
 import rooms from "./rooms";
 import areas from "./areas";
+import colormap from "./colormap";
+import { shadows } from "./shadows";
 
 export { win, pawns, objects }; // fixes creepy rollup error
 
@@ -28,13 +30,13 @@ export namespace wastes {
 
 	var started = false;
 
-	export var heightmap: objects.colormap
-	export var objectmap: objects.colormap
-	export var buildingmap: objects.colormap
-	export var roofmap: objects.colormap
-	export var treemap: objects.colormap
-	export var colormap: objects.colormap
-	export var roughmap: objects.colormap
+	export var heightmap: colormap.colormap
+	export var objectmap: colormap.colormap
+	export var buildingmap: colormap.colormap
+	export var roofmap: colormap.colormap
+	export var treemap: colormap.colormap
+	export var colormap: colormap.colormap
+	export var roughmap: colormap.colormap
 
 	export function sample(a) {
 		return a[Math.floor(Math.random() * a.length)];
@@ -85,7 +87,6 @@ export namespace wastes {
 		if (window.location.href.indexOf("#testingchamber") != -1) {
 			gview = view.make();
 			testing_chamber.start();
-			tests.start();
 		}
 		else if (window.location.href.indexOf("#modeler") != -1) {
 			modeler.start();
@@ -104,12 +105,14 @@ export namespace wastes {
 			objects.register();
 			tiles.register();
 			sprites.start();
+			shadows.start();
 			tiles.start();
 			objects.start();
 			rooms.start();
 			areas.start();
 			win.start();
-			
+			tests.start();
+
 			pawns.make_you();
 
 			let pos: vec2 = [37.5, 48.5];
@@ -121,6 +124,12 @@ export namespace wastes {
 			let peacekeeper = new pawns.pawn();
 			peacekeeper.wpos = [45.5, 56.5];
 			peacekeeper.angle = Math.PI / 2;
+			peacekeeper.dialog = [
+				[`I'm on duty.`, 1],
+				[`I protect the civilized area here. It may not look that civil at first glance.`, 2],
+				[`But undernearth the filth theres beauty to behold.`, 3],
+				[`Just don't misbehave.`, -1]
+			]
 			//peacekeeper.dialogue = 'I protect the vicinity.'
 			lod.add(peacekeeper);
 		}

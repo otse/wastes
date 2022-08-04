@@ -12,10 +12,10 @@ import hooks from "./hooks";
 import sprite from "./sprite";
 import sprites from "./sprites";
 import app from "./app";
+import colormap from "./colormap";
+import shadows from "./shadows";
 
 namespace objects {
-
-	const mapSpan = 100;
 
 	const color_door: vec3 = [210, 210, 210];
 	const color_wooden_door_and_deck: vec3 = [24, 93, 61];
@@ -56,15 +56,14 @@ namespace objects {
 
 		console.log(' objects register ');
 
-		wastes.heightmap = new colormap('heightmap');
-		wastes.objectmap = new colormap('objectmap');
-		wastes.buildingmap = new colormap('buildingmap');
-		wastes.colormap = new colormap('colormap');
-		wastes.roughmap = new colormap('roughmap');
-		wastes.roofmap = new colormap('roofmap');
+		wastes.heightmap = new colormap.colormap('heightmap');
+		wastes.objectmap = new colormap.colormap('objectmap');
+		wastes.buildingmap = new colormap.colormap('buildingmap');
+		wastes.colormap = new colormap.colormap('colormap');
+		wastes.roughmap = new colormap.colormap('roughmap');
+		wastes.roofmap = new colormap.colormap('roofmap');
 
 		const treeTreshold = 50;
-
 
 		hooks.register('sectorCreate', (sector: lod.sector) => {
 			pts.func(sector.small, (pos) => {
@@ -174,79 +173,6 @@ namespace objects {
 		}
 	}
 
-	const zeroes: vec4 = [0, 0, 0, 0]
-
-	export class pixel {
-		constructor(
-			public context: colormap,
-			public pos: vec2,
-			public array: vec4) {
-		}
-		left() {
-			return this.context.pixel(pts.add(this.pos, [-1, 0]));
-		}
-		right() {
-			return this.context.pixel(pts.add(this.pos, [1, 0]));
-		}
-		up() {
-			return this.context.pixel(pts.add(this.pos, [0, 1]));
-		}
-		down() {
-			return this.context.pixel(pts.add(this.pos, [0, -1]));
-		}
-		same(pixel: pixel) {
-			return this.is_color(<vec3><unknown>pixel.array);
-		}
-		is_color(vec: vec3) {
-			return vec[0] == this.array[0] && vec[1] == this.array[1] && vec[2] == this.array[2];
-		}
-		is_color_range(a: vec3, b: vec3) {
-			return this.array[0] >= a[0] && this.array[0] <= b[0] &&
-				this.array[1] >= a[1] && this.array[1] <= b[1] &&
-				this.array[2] >= a[2] && this.array[2] <= b[2]
-		}
-		is_black() {
-			return this.is_color([0, 0, 0]);
-		}
-		is_white() {
-			return this.is_color([255, 255, 255]);
-		}
-	}
-
-	export class colormap {
-		readonly data: vec4[][] = []
-		canvas
-		ctx
-		constructor(id: string) {
-			var img = document.getElementById(id) as any;
-			this.canvas = document.createElement('canvas')!;
-			this.canvas.width = mapSpan;
-			this.canvas.height = mapSpan;
-			this.ctx = this.canvas.getContext('2d')!;
-			//this.ctx.scale(1, 1);
-			this.ctx.drawImage(img, 0, 0, img.width, img.height);
-			this.process();
-		}
-		get(pos: vec2): vec4 | undefined {
-			if (this.data[pos[1]])
-				return this.data[pos[1]][pos[0]];
-		}
-		pixel(pos: vec2) {
-			return new pixel(this, pos, this.get(pos) || [0, 0, 0, 0]);
-		}
-		process() {
-			for (let y = 0; y < mapSpan; y++) {
-				this.data[y] = [];
-				for (let x = 0; x < mapSpan; x++) {
-					const data = this.ctx.getImageData(x, mapSpan - 1 - y, 1, 1).data;
-					if (this.data[y] == undefined)
-						this.data[y] = [];
-					this.data[y][x] = data;
-				}
-			}
-		}
-	}
-
 	export function is_solid(pos: vec2) {
 		const passable = ['land', 'deck', 'shelves', 'porch', 'pawn', 'you', 'door', 'leaves', 'roof', 'falsefront', 'panel'];
 		pos = pts.round(pos);
@@ -263,7 +189,7 @@ namespace objects {
 	export class objected extends lod.obj {
 		static focus: objected
 		solid = true
-		pixel?: pixel
+		pixel?: colormap.pixel
 		tile?: tiles.tile
 		cell: vec2 = [0, 0]
 		heightAdd = 0
@@ -330,6 +256,7 @@ namespace objects {
 				cell: this.cell,
 				orderBias: .6,
 			});
+
 			this.stack();
 		}
 		adapt() {
@@ -388,13 +315,18 @@ namespace objects {
 			this.size = [24, 17];
 			//if (this.pixel!.array[3] < 240)
 			//	this.cell = [240 - this.pixel!.array[3], 0];
+			let color = [255, 255, 255, 255] as vec4;
+			color = shadows.calc(color, this.wpos);
+
 			let shape = new sprite({
 				binded: this,
 				tuple: sprites.dporch,
 				cell: this.cell,
 				orderBias: .0,
+				color: color
 			});
 			this.stack();
+
 		}
 		override tick() {
 		}
@@ -474,6 +406,7 @@ namespace objects {
 		}
 	}
 	export class treeleaves extends objected {
+		shaded = false
 		constructor() {
 			super(numbers.leaves);
 			this.type = 'leaves'
@@ -504,6 +437,17 @@ namespace objects {
 					orderBias: 0.7,
 					color: color
 				});
+				//shadows.shade(this.wpos, 0.1);
+				if (!this.shaded) {
+					this.shaded = true;
+					const shadow = 0.025;
+					shadows.shade_matrix(this.wpos,
+						[
+							[shadow / 2, shadow, shadow / 2],
+							[shadow, shadow, shadow],
+							[shadow / 2, shadow, shadow / 2]
+						]);
+				}
 				if (this.hints.tree)
 					this.special_leaves_stack();
 				else
@@ -581,7 +525,7 @@ namespace objects {
 			this.size = [8, 10];
 			//let color =  tiles.get(this.wpos)!.color;
 			//this.cell = [Math.floor(Math.random() * 2), 0];
-			//return;
+			return;
 			let shape = new sprite({
 				binded: this,
 				tuple: sprites.dpanel,
@@ -594,7 +538,7 @@ namespace objects {
 			this.stack();
 		}
 		override tick() {
-			//return;
+			return;
 			let sprite = this.shape as sprite;
 			this.ticker += ren.delta / 60;
 			const cell = sprite.vars.cell!;
@@ -724,6 +668,7 @@ namespace objects {
 		}
 	}
 	export class roof extends objected {
+		shaded = false
 		constructor() {
 			super(numbers.roofs);
 			this.type = 'roof';
@@ -739,6 +684,15 @@ namespace objects {
 				orderBias: 1.6,
 			});
 			shape.rup = 29;
+			if (!this.shaded) {
+				this.shaded = true;
+				shadows.shade_matrix(this.wpos, [
+					[0, 0, 0, 0, 0],
+					[0, 0, 0, 0, 0],
+					[0, 0, .8, 0, 0],
+					[0, 0, 0, .8, 0],
+					[0, 0, 0, 0, .8]], true);
+			}
 		}
 		override tick() {
 			const sprite = this.shape as sprite;

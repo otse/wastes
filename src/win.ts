@@ -328,7 +328,7 @@ namespace win {
 	export class container {
 		static crate?: objects.objected
 		static crateCur?: objects.objected
-		//static obj?: lod.obj
+	//static obj?: lod.obj
 		static modal?: modal
 		static call_once() {
 			if (this.crate != this.crateCur) {

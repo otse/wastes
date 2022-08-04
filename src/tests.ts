@@ -19,13 +19,13 @@ export namespace tests {
 	export class mouserock {
 		static obj: lod.obj;
 		static start() {
-			const mouseAsteroid = false;
+			const mouseAsteroid = true;
 			if (mouseAsteroid) {
 				this.obj = new lod.obj();
 				this.obj.shape = new sprite({ binded: this.obj, tuple: sprites.asteroid });
-				this.obj.show();
-				let daisy = this.obj.shape as sprite;
-				ren.scene.add(daisy.mesh);
+				//this.obj.show();
+				//let daisy = this.obj.shape as sprite;
+				//ren.scene.add(daisy.mesh);
 			}
 		}
 		static tick() {

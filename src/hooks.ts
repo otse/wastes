@@ -1,6 +1,8 @@
 
 // inspired by gmod lua !
 
+// calls the last registered hook first, this lets you override behavior
+
 type func = (any) => boolean
 
 export class hooks<T = never> {

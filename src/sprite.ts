@@ -75,6 +75,8 @@ export class sprite extends lod.shape {
 		this.mesh.parent?.remove(this.mesh);
 	}
 	override create() {
+		//console.log('create');
+		
 		const obj = this.vars.binded;
 
 		this.retransform();
@@ -86,7 +88,7 @@ export class sprite extends lod.shape {
 		}
 		else {
 			const c = this.vars.color || [255, 255, 255, 255];
-			color = new Color(`rgb(${c[0]}, ${c[1]}, ${c[2]})}`);
+			color = new Color(`rgb(${Math.round(c[0])},${Math.round(c[1])},${Math.round(c[2])})`);
 		}
 		this.material = SpriteMaterial({
 			map: ren.load_texture(`${this.vars.tuple[3]}.png`, 0),

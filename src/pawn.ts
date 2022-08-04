@@ -6,6 +6,7 @@ import lod, { numbers } from "./lod";
 import objects from "./objects";
 import pts from "./pts";
 import ren from "./renderer";
+import shadows from "./shadows";
 import sprite, { SpriteMaterial } from "./sprite";
 import sprites from "./sprites";
 import tiles from "./tiles";
@@ -448,6 +449,13 @@ export namespace pawns {
 			this.tiled();
 			//this.tile?.paint();
 			this.sector?.swap(this);
+
+			// shade the pawn
+			let color = [1, 1, 1, 1] as vec4;
+			color = shadows.calc(color, pts.round(this.wpos));
+			
+			sprite.material.color.setRGB(color[0], color[1], color[2]);
+			
 			this.stack(['pawn', 'you', 'leaves', 'door', 'roof', 'falsefront', 'panel']);
 			super.update();
 		}

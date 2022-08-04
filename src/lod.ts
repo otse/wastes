@@ -110,7 +110,7 @@ namespace lod {
 	}
 
 	export class sector extends toggle {
-		color;
+		color?;
 		group: Group;
 		readonly small: aabb2;
 		private readonly objs: obj[] = [];
@@ -161,6 +161,7 @@ namespace lod {
 			}
 		}
 		swap(obj: obj) {
+			// Call me whenever you move
 			let newSector = this.galaxy.at(this.galaxy.big(pts.round(obj.wpos)));
 			if (obj.sector != newSector) {
 				obj.sector?.remove(obj);

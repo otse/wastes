@@ -8,6 +8,7 @@ import aabb2 from "./aabb2";
 import hooks from "./hooks";
 import sprite from "./sprite";
 import sprites from "./sprites";
+import shadows from "./shadows";
 
 export namespace tiles {
 
@@ -81,7 +82,9 @@ export namespace tiles {
 	const color_purple_water: vec4 = [40, 120, 130, 255];
 
 	export class tile extends lod.obj {
+		isLand = false
 		static lastHover?: tile
+		refresh = false
 		tuple: sprites.tuple
 		cell: vec2
 		// objs: lod.obj[] = []
@@ -103,12 +106,12 @@ export namespace tiles {
 				this.color = color_purple_water;
 			}
 			if (!colour.is_black()) {
+				this.isLand = true;
 				this.type = 'land';
 				this.size = [24, 30];
 				this.tuple = sprites.dgraveltiles;
 				this.height = 6;
 				this.cell = [1, 0];
-				this.color = wastes.colormap.pixel(this.wpos).array;
 
 				const useRoughMap = false;
 
@@ -141,6 +144,10 @@ export namespace tiles {
 				return this.objs.splice(i, 1).length;
 		}*/
 		override create() {
+			if (this.isLand) {
+				this.color = wastes.colormap.pixel(this.wpos).array;
+				this.color = shadows.calc(this.color, this.wpos);
+			}
 			let shape = new sprite({
 				binded: this,
 				tuple: this.tuple,
@@ -182,6 +189,13 @@ export namespace tiles {
 			sprite.mesh.material.color.set('pink');
 		}
 		tick() {
+			if (this.refresh) {
+				this.refresh = false;
+				console.log('refreshing tile');
+				
+				this.hide();
+				this.show();
+			}
 		}
 	}
 

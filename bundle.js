@@ -337,8 +337,60 @@ void main() {
             ren.renderer.setRenderTarget(null);
             ren.renderer.clear();
             ren.renderer.render(ren.scene2, ren.camera2);
+            gifFrames++;
+            if (gifFrames > 30) {
+                gifFrames = 0;
+                //gif.addFrame(renderer.domElement, { delay: 0 });
+                convert_canvas_to_gif();
+                //gif.addFrame(renderer.domElement, { delay: 0 });
+                //gif.render();
+            }
         }
         ren.render = render;
+        var gifFrames = 0;
+        var gif;
+        var gifCanvas;
+        var gifCtx;
+        function setup_gif() {
+            console.log('setup gif!!');
+            gif = new GIF({
+                repeat: 0,
+                workers: 2,
+                quality: 100,
+                width: ren.screen[0],
+                height: ren.screen[1]
+            });
+            gif.addFrame(ren.renderer.domElement, { delay: 0.0, copy: true });
+            gif.on('finished', function (blob) {
+                console.log('finished!');
+                //window.open(URL.createObjectURL(blob));
+                let img = new Image();
+                img.onload = function () {
+                    gifCtx.drawImage(img, 0, 0);
+                };
+                img.src = URL.createObjectURL(blob);
+                //renderer.domElement.blob = URL.createObjectURL(blob);
+            });
+            gif.render();
+        }
+        function convert_canvas_to_gif() {
+            gifCanvas = document.getElementById('gifCanvas');
+            gifCtx = gifCanvas.getContext('2d');
+            //if (gifCanvas)
+            gifCanvas.width = ren.screen[0];
+            gifCanvas.height = ren.screen[1];
+            gifCanvas.style.width = ren.screen[0];
+            gifCanvas.style.height = ren.screen[1];
+            gif.addFrame(ren.renderer.domElement, { delay: 1.0, copy: true });
+            //gif.render();
+            setup_gif();
+            //const ctx = renderer.domElement;//.getContext( 'webgl' );
+            //gif.addFrame(renderer.domElement, { delay: 0.0 });
+            //console.log(renderer.domElement);
+            //gif.render();
+            //gif.addFrame(renderer.domElement.getContext('2d'), {copy: true});
+        }
+        ren.convert_canvas_to_gif = convert_canvas_to_gif;
         function init() {
             console.log('renderer init');
             ren.clock = new THREE.Clock();
@@ -347,6 +399,7 @@ void main() {
             //groups.menu = new Group
             ren.scene = new THREE.Scene();
             groups.axisSwap.add(groups.tiles);
+            //groups.axisSwap.scale.set(1, -1, 1);
             ren.scene.add(groups.axisSwap);
             ren.scene.background = new THREE.Color('#333');
             ren.scene2 = new THREE.Scene();
@@ -377,6 +430,8 @@ void main() {
             //quadPost.position.z = -100;
             ren.scene2.add(ren.quadPost);
             window.ren = ren;
+            setup_gif();
+            convert_canvas_to_gif();
         }
         ren.init = init;
         ren.screen = [0, 0];
@@ -611,6 +666,7 @@ void main() {
             }
             swap(obj) {
                 var _a;
+                // Call me whenever you move
                 let newSector = this.galaxy.at(this.galaxy.big(pts.round(obj.wpos)));
                 if (obj.sector != newSector) {
                     (_a = obj.sector) === null || _a === void 0 ? void 0 : _a.remove(obj);
@@ -905,6 +961,7 @@ void main() {
             (_c = this.mesh.parent) === null || _c === void 0 ? void 0 : _c.remove(this.mesh);
         }
         create() {
+            //console.log('create');
             var _a;
             this.vars.binded;
             this.retransform();
@@ -915,7 +972,7 @@ void main() {
             }
             else {
                 const c = this.vars.color || [255, 255, 255, 255];
-                color = new THREE.Color(`rgb(${c[0]}, ${c[1]}, ${c[2]})}`);
+                color = new THREE.Color(`rgb(${Math.round(c[0])},${Math.round(c[1])},${Math.round(c[2])})`);
             }
             this.material = SpriteMaterial({
                 map: ren$1.load_texture(`${this.vars.tuple[3]}.png`, 0),
@@ -1059,6 +1116,13 @@ void main() {
         tests.tick = tick;
         class mouserock {
             static start() {
+                {
+                    this.obj = new lod$1.obj();
+                    this.obj.shape = new sprite({ binded: this.obj, tuple: sprites$1.asteroid });
+                    //this.obj.show();
+                    //let daisy = this.obj.shape as sprite;
+                    //ren.scene.add(daisy.mesh);
+                }
             }
             static tick() {
                 var _a;
@@ -1072,6 +1136,143 @@ void main() {
         tests.mouserock = mouserock;
     })(tests || (tests = {}));
     var tests$1 = tests;
+
+    var colormap;
+    (function (colormap_1) {
+        colormap_1.mapSpan = 100;
+        class pixel {
+            constructor(context, pos, array) {
+                this.context = context;
+                this.pos = pos;
+                this.array = array;
+            }
+            left() {
+                return this.context.pixel(pts.add(this.pos, [-1, 0]));
+            }
+            right() {
+                return this.context.pixel(pts.add(this.pos, [1, 0]));
+            }
+            up() {
+                return this.context.pixel(pts.add(this.pos, [0, 1]));
+            }
+            down() {
+                return this.context.pixel(pts.add(this.pos, [0, -1]));
+            }
+            same(pixel) {
+                return this.is_color(pixel.array);
+            }
+            is_color(vec) {
+                return vec[0] == this.array[0] && vec[1] == this.array[1] && vec[2] == this.array[2];
+            }
+            is_color_range(a, b) {
+                return this.array[0] >= a[0] && this.array[0] <= b[0] &&
+                    this.array[1] >= a[1] && this.array[1] <= b[1] &&
+                    this.array[2] >= a[2] && this.array[2] <= b[2];
+            }
+            is_black() {
+                return this.is_color([0, 0, 0]);
+            }
+            is_white() {
+                return this.is_color([255, 255, 255]);
+            }
+        }
+        colormap_1.pixel = pixel;
+        class colormap {
+            constructor(id) {
+                this.data = [];
+                var img = document.getElementById(id);
+                this.canvas = document.createElement('canvas');
+                this.canvas.width = colormap_1.mapSpan;
+                this.canvas.height = colormap_1.mapSpan;
+                this.ctx = this.canvas.getContext('2d');
+                //this.ctx.scale(1, 1);
+                this.ctx.drawImage(img, 0, 0, img.width, img.height);
+                this.process();
+            }
+            get(pos) {
+                if (this.data[pos[1]])
+                    return this.data[pos[1]][pos[0]];
+            }
+            pixel(pos) {
+                return new pixel(this, pos, this.get(pos) || [0, 0, 0, 0]);
+            }
+            process() {
+                for (let y = 0; y < colormap_1.mapSpan; y++) {
+                    this.data[y] = [];
+                    for (let x = 0; x < colormap_1.mapSpan; x++) {
+                        const data = this.ctx.getImageData(x, colormap_1.mapSpan - 1 - y, 1, 1).data;
+                        //if (this.data[y] == undefined)
+                        //	this.data[y] = [];
+                        this.data[y][x] = data;
+                    }
+                }
+            }
+        }
+        colormap_1.colormap = colormap;
+    })(colormap || (colormap = {}));
+    var colormap$1 = colormap;
+
+    var shadows;
+    (function (shadows) {
+        // takes care of soft shadows cast by tree-leaves and walls
+        const default_shade = 1.0;
+        shadows.data = [];
+        function shade(pos, amount, set = false) {
+            if (!set)
+                shadows.data[pos[1]][pos[0]] -= amount;
+            else if (set && amount)
+                shadows.data[pos[1]][pos[0]] = amount;
+            if (shadows.data[pos[1]][pos[0]] < 0)
+                shadows.data[pos[1]][pos[0]] = 0;
+            const tile = tiles$1.get(pos);
+            if (tile)
+                tile.refresh = true;
+        }
+        shadows.shade = shade;
+        function shade_matrix(pos, matrix, set = false) {
+            for (let y = 0; y < matrix.length; y++) {
+                for (let x = 0; x < matrix[y].length; x++) {
+                    let negx = -Math.floor(matrix[y].length / 2) + x;
+                    let negy = -Math.floor(matrix[y].length / 2) + y;
+                    //console.log([negx, negy]);
+                    let pos2 = pts.add(pos, [negx, negy]);
+                    shade(pos2, matrix[y][x], set);
+                    //shade
+                }
+            }
+            tiles$1.get(pos).refresh = true;
+        }
+        shadows.shade_matrix = shade_matrix;
+        function get_amount(pos) {
+            if (shadows.data[pos[1]])
+                return shadows.data[pos[1]][pos[0]] || 0;
+            else
+                return default_shade;
+        }
+        shadows.get_amount = get_amount;
+        function calc(a, pos) {
+            const n = get_amount(pos);
+            let b = [a[0], a[1], a[2], a[3]];
+            b[0] = a[0] * n;
+            b[1] = a[1] * n;
+            b[2] = a[2] * n;
+            return b;
+        }
+        shadows.calc = calc;
+        function start() {
+            for (let y = 0; y < colormap$1.mapSpan; y++) {
+                this.data[y] = [];
+                for (let x = 0; x < colormap$1.mapSpan; x++) {
+                    this.data[y][x] = default_shade;
+                }
+            }
+        }
+        shadows.start = start;
+        function tick() {
+        }
+        shadows.tick = tick;
+    })(shadows || (shadows = {}));
+    var shadows$1 = shadows;
 
     var tiles;
     (function (tiles) {
@@ -1128,6 +1329,8 @@ void main() {
         class tile extends lod$1.obj {
             constructor(wpos) {
                 super(numbers.tiles);
+                this.isLand = false;
+                this.refresh = false;
                 this.opacity = 1;
                 this.wpos = wpos;
                 let colour = wastes.colormap.pixel(this.wpos);
@@ -1139,12 +1342,12 @@ void main() {
                     this.color = color_purple_water;
                 }
                 if (!colour.is_black()) {
+                    this.isLand = true;
                     this.type = 'land';
                     this.size = [24, 30];
                     this.tuple = sprites$1.dgraveltiles;
                     this.height = 6;
                     this.cell = [1, 0];
-                    this.color = wastes.colormap.pixel(this.wpos).array;
                     const divisor = 3;
                     let height = wastes.heightmap.pixel(this.wpos);
                     this.z += Math.floor(height.array[0] / divisor);
@@ -1167,6 +1370,10 @@ void main() {
                     return this.objs.splice(i, 1).length;
             }*/
             create() {
+                if (this.isLand) {
+                    this.color = wastes.colormap.pixel(this.wpos).array;
+                    this.color = shadows$1.calc(this.color, this.wpos);
+                }
                 let shape = new sprite({
                     binded: this,
                     tuple: this.tuple,
@@ -1206,6 +1413,12 @@ void main() {
                 sprite.mesh.material.color.set('pink');
             }
             tick() {
+                if (this.refresh) {
+                    this.refresh = false;
+                    console.log('refreshing tile');
+                    this.hide();
+                    this.show();
+                }
             }
         }
         tiles.tile = tile;
@@ -1367,7 +1580,6 @@ void main() {
 
     var objects;
     (function (objects) {
-        const mapSpan = 100;
         const color_door = [210, 210, 210];
         const color_wooden_door_and_deck = [24, 93, 61];
         const color_decidtree = [20, 70, 20];
@@ -1397,12 +1609,12 @@ void main() {
         objects.factory = factory;
         function register() {
             console.log(' objects register ');
-            wastes.heightmap = new colormap('heightmap');
-            wastes.objectmap = new colormap('objectmap');
-            wastes.buildingmap = new colormap('buildingmap');
-            wastes.colormap = new colormap('colormap');
-            wastes.roughmap = new colormap('roughmap');
-            wastes.roofmap = new colormap('roofmap');
+            wastes.heightmap = new colormap$1.colormap('heightmap');
+            wastes.objectmap = new colormap$1.colormap('objectmap');
+            wastes.buildingmap = new colormap$1.colormap('buildingmap');
+            wastes.colormap = new colormap$1.colormap('colormap');
+            wastes.roughmap = new colormap$1.colormap('roughmap');
+            wastes.roofmap = new colormap$1.colormap('roofmap');
             hooks.register('sectorCreate', (sector) => {
                 pts.func(sector.small, (pos) => {
                     let pixel = wastes.objectmap.pixel(pos);
@@ -1497,75 +1709,6 @@ void main() {
             }
         }
         objects.tick = tick;
-        class pixel {
-            constructor(context, pos, array) {
-                this.context = context;
-                this.pos = pos;
-                this.array = array;
-            }
-            left() {
-                return this.context.pixel(pts.add(this.pos, [-1, 0]));
-            }
-            right() {
-                return this.context.pixel(pts.add(this.pos, [1, 0]));
-            }
-            up() {
-                return this.context.pixel(pts.add(this.pos, [0, 1]));
-            }
-            down() {
-                return this.context.pixel(pts.add(this.pos, [0, -1]));
-            }
-            same(pixel) {
-                return this.is_color(pixel.array);
-            }
-            is_color(vec) {
-                return vec[0] == this.array[0] && vec[1] == this.array[1] && vec[2] == this.array[2];
-            }
-            is_color_range(a, b) {
-                return this.array[0] >= a[0] && this.array[0] <= b[0] &&
-                    this.array[1] >= a[1] && this.array[1] <= b[1] &&
-                    this.array[2] >= a[2] && this.array[2] <= b[2];
-            }
-            is_black() {
-                return this.is_color([0, 0, 0]);
-            }
-            is_white() {
-                return this.is_color([255, 255, 255]);
-            }
-        }
-        objects.pixel = pixel;
-        class colormap {
-            constructor(id) {
-                this.data = [];
-                var img = document.getElementById(id);
-                this.canvas = document.createElement('canvas');
-                this.canvas.width = mapSpan;
-                this.canvas.height = mapSpan;
-                this.ctx = this.canvas.getContext('2d');
-                //this.ctx.scale(1, 1);
-                this.ctx.drawImage(img, 0, 0, img.width, img.height);
-                this.process();
-            }
-            get(pos) {
-                if (this.data[pos[1]])
-                    return this.data[pos[1]][pos[0]];
-            }
-            pixel(pos) {
-                return new pixel(this, pos, this.get(pos) || [0, 0, 0, 0]);
-            }
-            process() {
-                for (let y = 0; y < mapSpan; y++) {
-                    this.data[y] = [];
-                    for (let x = 0; x < mapSpan; x++) {
-                        const data = this.ctx.getImageData(x, mapSpan - 1 - y, 1, 1).data;
-                        if (this.data[y] == undefined)
-                            this.data[y] = [];
-                        this.data[y][x] = data;
-                    }
-                }
-            }
-        }
-        objects.colormap = colormap;
         function is_solid(pos) {
             const passable = ['land', 'deck', 'shelves', 'porch', 'pawn', 'you', 'door', 'leaves', 'roof', 'falsefront', 'panel'];
             pos = pts.round(pos);
@@ -1702,11 +1845,14 @@ void main() {
                 this.size = [24, 17];
                 //if (this.pixel!.array[3] < 240)
                 //	this.cell = [240 - this.pixel!.array[3], 0];
+                let color = [255, 255, 255, 255];
+                color = shadows$1.calc(color, this.wpos);
                 new sprite({
                     binded: this,
                     tuple: sprites$1.dporch,
                     cell: this.cell,
                     orderBias: .0,
+                    color: color
                 });
                 this.stack();
             }
@@ -1795,6 +1941,7 @@ void main() {
         class treeleaves extends objected {
             constructor() {
                 super(numbers.leaves);
+                this.shaded = false;
                 this.type = 'leaves';
                 this.height = 14;
             }
@@ -1821,6 +1968,16 @@ void main() {
                         orderBias: 0.7,
                         color: color
                     });
+                    //shadows.shade(this.wpos, 0.1);
+                    if (!this.shaded) {
+                        this.shaded = true;
+                        const shadow = 0.025;
+                        shadows$1.shade_matrix(this.wpos, [
+                            [shadow / 2, shadow, shadow / 2],
+                            [shadow, shadow, shadow],
+                            [shadow / 2, shadow, shadow / 2]
+                        ]);
+                    }
                     if (this.hints.tree)
                         this.special_leaves_stack();
                     else
@@ -1893,32 +2050,10 @@ void main() {
                 this.size = [8, 10];
                 //let color =  tiles.get(this.wpos)!.color;
                 //this.cell = [Math.floor(Math.random() * 2), 0];
-                //return;
-                let shape = new sprite({
-                    binded: this,
-                    tuple: sprites$1.dpanel,
-                    cell: [0, 0],
-                    //color: color,
-                    orderBias: .6
-                });
-                shape.rup2 = 15;
-                shape.rleft = 2;
-                this.stack();
+                return;
             }
             tick() {
-                //return;
-                let sprite = this.shape;
-                this.ticker += ren$1.delta / 60;
-                const cell = sprite.vars.cell;
-                if (this.ticker > 0.5) {
-                    if (cell[0] < 5)
-                        cell[0]++;
-                    else
-                        cell[0] = 0;
-                    this.ticker = 0;
-                }
-                //sprite.retransform();
-                sprite.update();
+                return;
                 //console.log('boo');
             }
         }
@@ -2028,6 +2163,7 @@ void main() {
         class roof extends objected {
             constructor() {
                 super(numbers.roofs);
+                this.shaded = false;
                 this.type = 'roof';
                 this.height = 3;
             }
@@ -2041,6 +2177,16 @@ void main() {
                     orderBias: 1.6,
                 });
                 shape.rup = 29;
+                if (!this.shaded) {
+                    this.shaded = true;
+                    shadows$1.shade_matrix(this.wpos, [
+                        [0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0],
+                        [0, 0, .8, 0, 0],
+                        [0, 0, 0, .8, 0],
+                        [0, 0, 0, 0, .8]
+                    ], true);
+                }
             }
             tick() {
                 const sprite = this.shape;
@@ -7786,6 +7932,10 @@ void main() {
                 this.tiled();
                 //this.tile?.paint();
                 (_b = this.sector) === null || _b === void 0 ? void 0 : _b.swap(this);
+                // shade the pawn
+                let color = [1, 1, 1, 1];
+                color = shadows$1.calc(color, pts.round(this.wpos));
+                sprite.material.color.setRGB(color[0], color[1], color[2]);
                 this.stack(['pawn', 'you', 'leaves', 'door', 'roof', 'falsefront', 'panel']);
                 super.update();
             }
@@ -7898,7 +8048,6 @@ void main() {
             if (window.location.href.indexOf("#testingchamber") != -1) {
                 wastes.gview = view.make();
                 testing_chamber$1.start();
-                tests$1.start();
             }
             else if (window.location.href.indexOf("#modeler") != -1) {
                 modeler$1.start();
@@ -7917,11 +8066,13 @@ void main() {
                 objects$1.register();
                 tiles$1.register();
                 sprites.start();
+                shadows.start();
                 tiles$1.start();
                 objects$1.start();
                 rooms$1.start();
                 areas$1.start();
                 win$1.start();
+                tests$1.start();
                 pawns$1.make_you();
                 let pos = [37.5, 48.5];
                 let vendor = new pawns$1.pawn();
@@ -7931,6 +8082,12 @@ void main() {
                 let peacekeeper = new pawns$1.pawn();
                 peacekeeper.wpos = [45.5, 56.5];
                 peacekeeper.angle = Math.PI / 2;
+                peacekeeper.dialog = [
+                    [`I'm on duty.`, 1],
+                    [`I protect the civilized area here. It may not look that civil at first glance.`, 2],
+                    [`But undernearth the filth theres beauty to behold.`, 3],
+                    [`Just don't misbehave.`, -1]
+                ];
                 //peacekeeper.dialogue = 'I protect the vicinity.'
                 lod$1.add(peacekeeper);
             }
