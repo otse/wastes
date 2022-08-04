@@ -43,6 +43,7 @@ export class view {
 		this.wpos = lod.unproject(this.rpos);
 		lod.ggalaxy.update(this.wpos);
 		const zoom = wastes.gview.zoom;
+		// ren.renderer.domElement.style.transform = `scale(${1/zoom},${1/zoom})`;
 		ren.camera.scale.set(zoom, zoom, zoom);
 		ren.camera.updateProjectionMatrix();
 	}

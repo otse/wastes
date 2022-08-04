@@ -25,6 +25,16 @@
 	margin: 0;
 }
 
+.modal .item img {
+	display: inline-block;
+    width: 40px;
+    height: 40px;
+    mmargin: 2px;
+	margin-right: 4px;
+    float: left;
+	image-rendering: pixelated;
+}
+
 .modal.contextmenu .option {
     display: block;
     border-top: 1px #848484 solid;
@@ -67,15 +77,23 @@ option.disabled:hover {
 	background: darkgray;
 }
 
-
+.modal .button {
+	display: inline-block;
+	margin-right: 1ex;
+	border: 1px gray inset;
+	padding: 0px;
+	color: #333;
+	cursor: pointer;
+}
 
 .modal .item {
 	display: inline-block;
 	margin-right: 1ex;
-	border: 1px gray inset;
-	padding: 1px;
+	bborder: 1px gray inset;
+	padding: 0px;
 	color: #333;
 	cursor: pointer;
+	lline-height: 34px;
 }
 
 .modal .item > span {

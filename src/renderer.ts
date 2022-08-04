@@ -61,7 +61,7 @@ namespace ren {
 
 	export var camera: PerspectiveCamera
 	export var camera2: OrthographicCamera
-	
+
 	export var target: WebGLRenderTarget
 	export var renderer: WebGLRenderer
 
@@ -83,7 +83,7 @@ namespace ren {
 		if (delta > 2)
 			delta = 0.016;
 
-		delta *= 60.0;
+		//delta *= 60.0;
 		//filmic.composer.render();
 	}
 
@@ -107,7 +107,7 @@ namespace ren {
 	}
 	let alternate = true;
 	export function render() {
-		
+
 		/*alternate = ! alternate;
 		if (alternate) {
 			return;
@@ -121,6 +121,7 @@ namespace ren {
 		renderer.setRenderTarget(null);
 		renderer.clear();
 		renderer.render(scene2, camera2);
+
 	}
 
 	export var plane
@@ -137,6 +138,7 @@ namespace ren {
 
 		scene = new Scene();
 		groups.axisSwap.add(groups.tiles);
+		//groups.axisSwap.scale.set(1, -1, 1);
 		scene.add(groups.axisSwap);
 		scene.background = new Color('#333');
 
@@ -180,6 +182,7 @@ namespace ren {
 		scene2.add(quadPost);
 
 		(window as any).ren = ren;
+
 	}
 
 	export var screen: vec2 = [0, 0];
@@ -203,7 +206,7 @@ namespace ren {
 		      new is ${pts.to_string(screenCorrected)}`);
 
 		target.setSize(screenCorrected[0], screenCorrected[1]);
-
+		
 		plane = new PlaneBufferGeometry(screenCorrected[0], screenCorrected[1]);
 
 		if (quadPost)

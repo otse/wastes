@@ -20,8 +20,6 @@ export namespace pawns {
 
 	export var mousing: pawn | undefined;
 
-	export const placeAtMouse = false;
-
 	export function make_you() {
 		let pos: vec2 = [44, 44];
 		let paw = new pawn();
@@ -318,7 +316,7 @@ export namespace pawns {
 			const armsSwoop = 0.5;
 			this.render();
 
-			this.swoop += 0.04;
+			this.swoop += ren.delta * 2.5;
 			const swoop1 = Math.cos(Math.PI * this.swoop);
 			const swoop2 = Math.cos(Math.PI * this.swoop - Math.PI);
 			this.groups.legl.rotation.x = swoop1 * legsSwoop * this.animSpeed;
@@ -381,7 +379,7 @@ export namespace pawns {
 			const moveMath = true;
 
 			if (moveMath) {
-				let speed = 0.038 * ren.delta;
+				let speed = 0.038 * ren.delta * 60;
 				let x = 0;
 				let y = 0;
 				let wasd = true;
@@ -424,7 +422,7 @@ export namespace pawns {
 				if (x || y) {
 					let angle = pts.angle([0, 0], [x, y]);
 					if (!win.mousingClickable || wasd) {
-						this.animSpeed += 0.1;
+						this.animSpeed += ren.delta * 5;
 						this.angle = angle;
 						x = speed * Math.sin(angle);
 						y = speed * Math.cos(angle);
@@ -434,7 +432,7 @@ export namespace pawns {
 						this.animSpeed = 0;
 				}
 				else
-					this.animSpeed -= 0.1;
+					this.animSpeed -= ren.delta * 5;
 				// Normalize
 				if (this.animSpeed > 1)
 					this.animSpeed = 1;
@@ -444,8 +442,6 @@ export namespace pawns {
 				}
 			}
 
-			if (placeAtMouse)
-				this.wpos = tiles.hovering?.wpos || [38, 44];
 			this.tiled();
 			//this.tile?.paint();
 			this.sector?.swap(this);

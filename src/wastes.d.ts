@@ -11,6 +11,7 @@ declare interface Point {
 	y: number
 }
 
+// Not Used
 declare interface Asset {
 	readonly img: string
 	readonly size: vec2
@@ -18,13 +19,16 @@ declare interface Asset {
 	readonly offset?: vec2
 }
 
-declare const anExampleFunction: Function;
+declare var GIF: any;
+declare var CCapture: any;
 
+declare const anExampleFunction: Function;
 
 declare namespace astar {
 	function search(a, b, c): any;
 	
 }
+
 
 declare class Graph {
 	constructor(array, options);

@@ -307,7 +307,7 @@ void main() {
             ren.delta = ren.clock.getDelta();
             if (ren.delta > 2)
                 ren.delta = 0.016;
-            ren.delta *= 60.0;
+            //delta *= 60.0;
             //filmic.composer.render();
         }
         ren.update = update;
@@ -337,60 +337,8 @@ void main() {
             ren.renderer.setRenderTarget(null);
             ren.renderer.clear();
             ren.renderer.render(ren.scene2, ren.camera2);
-            gifFrames++;
-            if (gifFrames > 30) {
-                gifFrames = 0;
-                //gif.addFrame(renderer.domElement, { delay: 0 });
-                convert_canvas_to_gif();
-                //gif.addFrame(renderer.domElement, { delay: 0 });
-                //gif.render();
-            }
         }
         ren.render = render;
-        var gifFrames = 0;
-        var gif;
-        var gifCanvas;
-        var gifCtx;
-        function setup_gif() {
-            console.log('setup gif!!');
-            gif = new GIF({
-                repeat: 0,
-                workers: 2,
-                quality: 100,
-                width: ren.screen[0],
-                height: ren.screen[1]
-            });
-            gif.addFrame(ren.renderer.domElement, { delay: 0.0, copy: true });
-            gif.on('finished', function (blob) {
-                console.log('finished!');
-                //window.open(URL.createObjectURL(blob));
-                let img = new Image();
-                img.onload = function () {
-                    gifCtx.drawImage(img, 0, 0);
-                };
-                img.src = URL.createObjectURL(blob);
-                //renderer.domElement.blob = URL.createObjectURL(blob);
-            });
-            gif.render();
-        }
-        function convert_canvas_to_gif() {
-            gifCanvas = document.getElementById('gifCanvas');
-            gifCtx = gifCanvas.getContext('2d');
-            //if (gifCanvas)
-            gifCanvas.width = ren.screen[0];
-            gifCanvas.height = ren.screen[1];
-            gifCanvas.style.width = ren.screen[0];
-            gifCanvas.style.height = ren.screen[1];
-            gif.addFrame(ren.renderer.domElement, { delay: 1.0, copy: true });
-            //gif.render();
-            setup_gif();
-            //const ctx = renderer.domElement;//.getContext( 'webgl' );
-            //gif.addFrame(renderer.domElement, { delay: 0.0 });
-            //console.log(renderer.domElement);
-            //gif.render();
-            //gif.addFrame(renderer.domElement.getContext('2d'), {copy: true});
-        }
-        ren.convert_canvas_to_gif = convert_canvas_to_gif;
         function init() {
             console.log('renderer init');
             ren.clock = new THREE.Clock();
@@ -430,8 +378,6 @@ void main() {
             //quadPost.position.z = -100;
             ren.scene2.add(ren.quadPost);
             window.ren = ren;
-            setup_gif();
-            convert_canvas_to_gif();
         }
         ren.init = init;
         ren.screen = [0, 0];
@@ -1329,6 +1275,7 @@ void main() {
         class tile extends lod$1.obj {
             constructor(wpos) {
                 super(numbers.tiles);
+                this.hasDeck = false;
                 this.isLand = false;
                 this.refresh = false;
                 this.opacity = 1;
@@ -1348,6 +1295,13 @@ void main() {
                     this.tuple = sprites$1.dgraveltiles;
                     this.height = 6;
                     this.cell = [1, 0];
+                    {
+                        let biome = wastes.roughmap.pixel(this.wpos);
+                        if (biome.array[0] > 70) {
+                            this.tuple = sprites$1.dswamptiles;
+                            //this.z -= 1;
+                        }
+                    }
                     const divisor = 3;
                     let height = wastes.heightmap.pixel(this.wpos);
                     this.z += Math.floor(height.array[0] / divisor);
@@ -1461,6 +1415,7 @@ void main() {
             this.wpos = lod$1.unproject(this.rpos);
             lod$1.ggalaxy.update(this.wpos);
             const zoom = wastes.gview.zoom;
+            // ren.renderer.domElement.style.transform = `scale(${1/zoom},${1/zoom})`;
             ren$1.camera.scale.set(zoom, zoom, zoom);
             ren$1.camera.updateProjectionMatrix();
         }
@@ -7251,9 +7206,10 @@ void main() {
                 if (title)
                     this.title.innerHTML = title;
             }
-            reposition(pos = ['', '']) {
-                this.element.style.top = pos[1];
-                this.element.style.left = pos[0];
+            reposition(pos) {
+                const round = pts.floor(pos);
+                this.element.style.top = round[1];
+                this.element.style.left = round[0];
             }
             deletor() {
                 this.element.remove();
@@ -7271,7 +7227,7 @@ void main() {
                 pos = pts.divide(pos, ren$1.ndpi);
                 //pos = pts.add(pos, pts.divide(ren.screenCorrected, 2));
                 //pos[1] -= ren.screenCorrected[1] / 2;
-                this.reposition([ren$1.screen[0] / 2 + pos[0] + '', ren$1.screen[1] / 2 - pos[1] + '']);
+                this.reposition([ren$1.screen[0] / 2 + pos[0], ren$1.screen[1] / 2 - pos[1]]);
             }
         }
         class character {
@@ -7280,7 +7236,7 @@ void main() {
                 this.open = open;
                 if (open && !this.modal) {
                     this.modal = new modal('you');
-                    this.modal.reposition(['100px', '30%']);
+                    //this.modal.reposition(['100px', '30%']);
                     this.modal.content.innerHTML = 'stats:<br />effectiveness: 100%<br /><hr>';
                     this.modal.content.innerHTML += 'inventory:<br />';
                     //inventory
@@ -7288,7 +7244,8 @@ void main() {
                     if (inventory) {
                         for (let tuple of inventory.tuples) {
                             let button = document.createElement('div');
-                            button.innerHTML = tuple[0];
+                            button.innerHTML = `<img width="20" height="20" src="tex/items/${tuple[0]}.png">`;
+                            button.innerHTML += tuple[0];
                             if (tuple[1] > 1) {
                                 button.innerHTML += ` <span>×${tuple[1]}</span>`;
                             }
@@ -7438,7 +7395,7 @@ void main() {
                 if (next != -1) {
                     let button = document.createElement('div');
                     button.innerHTML = '>>';
-                    button.className = 'item';
+                    button.className = 'button';
                     this.modal.content.append(button);
                     button.onclick = (e) => {
                         console.log('woo');
@@ -7484,7 +7441,7 @@ void main() {
                         if (tuple[1] > 1) {
                             button.innerHTML += ` <span>×${tuple[1]}</span>`;
                         }
-                        button.className = 'item';
+                        button.className = 'button';
                         this.modal.content.append(button);
                         button.onclick = (e) => {
                             var _a;
@@ -7492,7 +7449,10 @@ void main() {
                             button.remove();
                             cast.container.remove(tuple[0]);
                             (_a = pawns$1.you) === null || _a === void 0 ? void 0 : _a.inventory.add(tuple[0]);
+                            win_1.mousingClickable = false;
                         };
+                        button.onmouseover = () => { win_1.mousingClickable = true; };
+                        button.onmouseleave = () => { win_1.mousingClickable = false; };
                         //this.modal.content.innerHTML += item + '<br />';
                     }
                 }
@@ -7578,7 +7538,6 @@ void main() {
 
     var pawns;
     (function (pawns_1) {
-        pawns_1.placeAtMouse = false;
         function make_you() {
             let pos = [44, 44];
             let paw = new pawn();
@@ -7793,7 +7752,7 @@ void main() {
                 sprite.material.map = this.target.texture;
             }
             tick() {
-                var _a, _b;
+                var _a;
                 const sprite = this.shape;
                 if (this.mousedSquare(wastes.gview.mrpos2) && !this.mousing) {
                     this.mousing = true;
@@ -7815,7 +7774,7 @@ void main() {
                 const legsSwoop = 0.8;
                 const armsSwoop = 0.5;
                 this.render();
-                this.swoop += 0.04;
+                this.swoop += ren$1.delta * 2.5;
                 const swoop1 = Math.cos(Math.PI * this.swoop);
                 const swoop2 = Math.cos(Math.PI * this.swoop - Math.PI);
                 this.groups.legl.rotation.x = swoop1 * legsSwoop * this.animSpeed;
@@ -7866,7 +7825,7 @@ void main() {
                     if (pawns.length && pts.distsimple(pawns[0].wpos, this.wpos) < 1.5) ;
                 }
                 {
-                    let speed = 0.038 * ren$1.delta;
+                    let speed = 0.038 * ren$1.delta * 60;
                     let x = 0;
                     let y = 0;
                     let wasd = true;
@@ -7908,7 +7867,7 @@ void main() {
                     if (x || y) {
                         let angle = pts.angle([0, 0], [x, y]);
                         if (!win$1.mousingClickable || wasd) {
-                            this.animSpeed += 0.1;
+                            this.animSpeed += ren$1.delta * 5;
                             this.angle = angle;
                             x = speed * Math.sin(angle);
                             y = speed * Math.cos(angle);
@@ -7918,7 +7877,7 @@ void main() {
                             this.animSpeed = 0;
                     }
                     else
-                        this.animSpeed -= 0.1;
+                        this.animSpeed -= ren$1.delta * 5;
                     // Normalize
                     if (this.animSpeed > 1)
                         this.animSpeed = 1;
@@ -7927,11 +7886,9 @@ void main() {
                         this.swoop = 0;
                     }
                 }
-                if (pawns_1.placeAtMouse)
-                    this.wpos = ((_a = tiles$1.hovering) === null || _a === void 0 ? void 0 : _a.wpos) || [38, 44];
                 this.tiled();
                 //this.tile?.paint();
-                (_b = this.sector) === null || _b === void 0 ? void 0 : _b.swap(this);
+                (_a = this.sector) === null || _a === void 0 ? void 0 : _a.swap(this);
                 // shade the pawn
                 let color = [1, 1, 1, 1];
                 color = shadows$1.calc(color, pts.round(this.wpos));

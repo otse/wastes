@@ -82,6 +82,7 @@ export namespace tiles {
 	const color_purple_water: vec4 = [40, 120, 130, 255];
 
 	export class tile extends lod.obj {
+		hasDeck = false
 		isLand = false
 		static lastHover?: tile
 		refresh = false
@@ -113,7 +114,7 @@ export namespace tiles {
 				this.height = 6;
 				this.cell = [1, 0];
 
-				const useRoughMap = false;
+				const useRoughMap = true;
 
 				if (useRoughMap) {
 					let biome = wastes.roughmap.pixel(this.wpos);

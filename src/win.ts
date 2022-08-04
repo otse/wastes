@@ -77,9 +77,10 @@ namespace win {
 			if (title)
 				this.title.innerHTML = title;
 		}
-		reposition(pos = ['', '']) {
-			this.element.style.top = pos[1];
-			this.element.style.left = pos[0];
+		reposition(pos: vec2) {
+			const round = pts.floor(pos);
+			this.element.style.top = round[1];
+			this.element.style.left = round[0];
 		}
 		deletor() {
 			this.element.remove();
@@ -98,7 +99,7 @@ namespace win {
 			pos = pts.divide(pos, ren.ndpi);
 			//pos = pts.add(pos, pts.divide(ren.screenCorrected, 2));
 			//pos[1] -= ren.screenCorrected[1] / 2;
-			this.reposition([ren.screen[0] / 2 + pos[0] + '', ren.screen[1] / 2 - pos[1] + '']);
+			this.reposition([ren.screen[0] / 2 + pos[0], ren.screen[1] / 2 - pos[1]]);
 		}
 	}
 
@@ -110,7 +111,7 @@ namespace win {
 			this.open = open;
 			if (open && !this.modal) {
 				this.modal = new modal('you',);
-				this.modal.reposition(['100px', '30%']);
+				//this.modal.reposition(['100px', '30%']);
 
 				this.modal.content.innerHTML = 'stats:<br />effectiveness: 100%<br /><hr>';
 				this.modal.content.innerHTML += 'inventory:<br />';
@@ -119,7 +120,8 @@ namespace win {
 				if (inventory) {
 					for (let tuple of inventory.tuples) {
 						let button = document.createElement('div');
-						button.innerHTML = tuple[0];
+						button.innerHTML = `<img width="20" height="20" src="tex/items/${tuple[0]}.png">`;
+						button.innerHTML += tuple[0];
 						if (tuple[1] > 1) {
 							button.innerHTML += ` <span>×${tuple[1]}</span>`
 						}
@@ -299,7 +301,7 @@ namespace win {
 			if (next != -1) {
 				let button = document.createElement('div');
 				button.innerHTML = '>>'
-				button.className = 'item';
+				button.className = 'button';
 				this.modal!.content.append(button);
 
 				button.onclick = (e) => {
@@ -351,7 +353,7 @@ namespace win {
 					if (tuple[1] > 1) {
 						button.innerHTML += ` <span>×${tuple[1]}</span>`
 					}
-					button.className = 'item';
+					button.className = 'button';
 					this.modal.content.append(button);
 
 					button.onclick = (e) => {
@@ -359,7 +361,10 @@ namespace win {
 						button.remove();
 						cast.container.remove(tuple[0]);
 						pawns.you?.inventory.add(tuple[0]);
+						mousingClickable = false;
 					};
+					button.onmouseover = () => { mousingClickable = true; }
+					button.onmouseleave = () => { mousingClickable = false; }
 
 					//this.modal.content.innerHTML += item + '<br />';
 				}
