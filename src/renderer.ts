@@ -16,6 +16,17 @@ void main() {
 const fragmentPost = `
 float saturation = 2.0;
 
+uniform int compressionEffect;
+
+// 32 is nice
+float factor = 48.0;
+
+void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {
+
+	outputColor = vec4(floor(inputColor.rgb * factor + 0.5) / factor, inputColor.a);
+
+}
+
 // Todo add effect
 varying vec2 vUv;
 uniform sampler2D tDiffuse;
@@ -29,7 +40,9 @@ void main() {
 	vec3 grey = vec3(dot(lumaWeights,original_color));
 	vec4 outt = vec4(grey + saturation * (original_color - grey), 1.0);
 	*/
+	vec4 outt;
 	gl_FragColor = clr;
+	mainImage(clr, vUv, gl_FragColor);
 	//gl_FragColor = outt;
 }`
 
