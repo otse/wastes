@@ -120,7 +120,7 @@ namespace win {
 				if (inventory) {
 					for (let tuple of inventory.tuples) {
 						let button = document.createElement('div');
-						button.innerHTML = `<img width="20" height="20" src="tex/items/${tuple[0]}.png">`;
+						//button.innerHTML = `<img width="20" height="20" src="tex/items/${tuple[0]}.png">`;
 						button.innerHTML += tuple[0];
 						if (tuple[1] > 1) {
 							button.innerHTML += ` <span>×${tuple[1]}</span>`
@@ -129,6 +129,11 @@ namespace win {
 						this.modal.content.append(button);
 					}
 				}
+				this.modal.content.innerHTML += '<hr>guns:<br />';
+				if (pawns.you.gun)
+					this.modal.content.innerHTML += `<img class="gun" src="tex/guns/${pawns.you.gun}.png">`;
+
+
 			}
 			else if (!open && this.modal) {
 				this.modal?.deletor();
@@ -348,23 +353,23 @@ namespace win {
 				const cast = this.crate as objects.crate;
 
 				for (let tuple of cast.container.tuples) {
-					let button = document.createElement('div');
-					button.innerHTML = tuple[0];
+					let item = document.createElement('div');
+					item.innerHTML = tuple[0];
 					if (tuple[1] > 1) {
-						button.innerHTML += ` <span>×${tuple[1]}</span>`
+						item.innerHTML += ` <span>×${tuple[1]}</span>`
 					}
-					button.className = 'button';
-					this.modal.content.append(button);
+					item.className = 'item';
+					this.modal.content.append(item);
 
-					button.onclick = (e) => {
+					item.onclick = (e) => {
 						console.log('woo');
-						button.remove();
+						item.remove();
 						cast.container.remove(tuple[0]);
 						pawns.you?.inventory.add(tuple[0]);
 						mousingClickable = false;
 					};
-					button.onmouseover = () => { mousingClickable = true; }
-					button.onmouseleave = () => { mousingClickable = false; }
+					item.onmouseover = () => { mousingClickable = true; }
+					item.onmouseleave = () => { mousingClickable = false; }
 
 					//this.modal.content.innerHTML += item + '<br />';
 				}

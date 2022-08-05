@@ -89,7 +89,7 @@ option.disabled:hover {
 .modal .item {
 	display: inline-block;
 	margin-right: 1ex;
-	bborder: 1px gray inset;
+	border: 1px gray inset;
 	padding: 0px;
 	color: #333;
 	cursor: pointer;
@@ -102,6 +102,12 @@ option.disabled:hover {
 
 .modal .item:hover {
 	color: purple;
+}
+
+.modal .gun {
+	display: block;
+	width: 200px;
+	height: 150px;
 }
 
 .area {

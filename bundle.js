@@ -273,7 +273,8 @@ float saturation = 2.0;
 uniform int compressionEffect;
 
 // 32 is nice
-float factor = 48.0;
+// 48 is mild
+float factor = 32.0;
 
 void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {
 
@@ -1398,7 +1399,7 @@ void main() {
             this.zoom = 0.33;
             this.zoomIndex = 4;
             this.zooms = [1, 0.5, 0.33, 0.2, 0.1, 0.05];
-            this.wpos = [40, 48];
+            this.wpos = [45, 51];
             this.rpos = [0, 0];
             this.mpos = [0, 0];
             this.mwpos = [0, 0];
@@ -1775,6 +1776,7 @@ void main() {
             }
             create() {
                 this.tiled();
+                this.tile.hasDeck = true;
                 //this.tile!.z -= 24;
                 this.size = [24, 17];
                 //if (this.pixel!.array[3] < 240)
@@ -7165,6 +7167,56 @@ void main() {
             });
         }
         collada_1.start = start;
+        function load_model(path, then) {
+            var myScene;
+            const loadingManager = new THREE.LoadingManager(function () {
+            });
+            const loader = new ColladaLoader(loadingManager);
+            loader.load('collada/revolver.dae', function (collada) {
+                //wastes.gview.zoomIndex = 0;
+                myScene = collada.scene;
+                new THREE.Group;
+                //group.rotation.set(0, -Math.PI / 2, 0);
+                //group.position.set(wastes.size, 0, 0);
+                //group.add(myScene);
+                //console.log(elf);
+                function fix(material) {
+                    //material.color = new THREE.Color('red');
+                    material.minFilter = material.magFilter = THREE__default["default"].LinearFilter;
+                    material.side = THREE__default["default"].DoubleSide;
+                }
+                function traversal(object) {
+                    if (object.material) {
+                        if (!object.material.length)
+                            fix(object.material);
+                        else
+                            for (let material of object.material)
+                                fix(material);
+                    }
+                }
+                myScene.traverse(traversal);
+                //group.add(new AxesHelper(300));
+                //console.log(myScene.scale);
+                // 1 / 0.0254
+                const zoom = 30;
+                myScene.scale.multiplyScalar(zoom);
+                //elf.rotation.set(-Math.PI / 2, 0, 0);
+                //myScene.position.set(1, 0, 0);
+                //ren.scene.add(group);
+                /*let sun = new DirectionalLight(0xffffff, 0.35);
+                sun.position.set(-wastes.size, wastes.size * 2, wastes.size / 2);
+                //sun.add(new AxesHelper(100));
+                group.add(sun);
+                group.add(sun.target);
+
+                window['group'] = group;
+                window['elf'] = myScene;
+                */
+                then(myScene);
+            });
+            return myScene;
+        }
+        collada_1.load_model = load_model;
         function tick() {
         }
         collada_1.tick = tick;
@@ -7257,7 +7309,7 @@ void main() {
                     if (inventory) {
                         for (let tuple of inventory.tuples) {
                             let button = document.createElement('div');
-                            button.innerHTML = `<img width="20" height="20" src="tex/items/${tuple[0]}.png">`;
+                            //button.innerHTML = `<img width="20" height="20" src="tex/items/${tuple[0]}.png">`;
                             button.innerHTML += tuple[0];
                             if (tuple[1] > 1) {
                                 button.innerHTML += ` <span>×${tuple[1]}</span>`;
@@ -7266,6 +7318,9 @@ void main() {
                             this.modal.content.append(button);
                         }
                     }
+                    this.modal.content.innerHTML += '<hr>guns:<br />';
+                    if (pawns$1.you.gun)
+                        this.modal.content.innerHTML += `<img class="gun" src="tex/guns/${pawns$1.you.gun}.png">`;
                 }
                 else if (!open && this.modal) {
                     (_b = this.modal) === null || _b === void 0 ? void 0 : _b.deletor();
@@ -7449,23 +7504,23 @@ void main() {
                     this.modal.content.innerHTML = '';
                     const cast = this.crate;
                     for (let tuple of cast.container.tuples) {
-                        let button = document.createElement('div');
-                        button.innerHTML = tuple[0];
+                        let item = document.createElement('div');
+                        item.innerHTML = tuple[0];
                         if (tuple[1] > 1) {
-                            button.innerHTML += ` <span>×${tuple[1]}</span>`;
+                            item.innerHTML += ` <span>×${tuple[1]}</span>`;
                         }
-                        button.className = 'button';
-                        this.modal.content.append(button);
-                        button.onclick = (e) => {
+                        item.className = 'item';
+                        this.modal.content.append(item);
+                        item.onclick = (e) => {
                             var _a;
                             console.log('woo');
-                            button.remove();
+                            item.remove();
                             cast.container.remove(tuple[0]);
                             (_a = pawns$1.you) === null || _a === void 0 ? void 0 : _a.inventory.add(tuple[0]);
                             win_1.mousingClickable = false;
                         };
-                        button.onmouseover = () => { win_1.mousingClickable = true; };
-                        button.onmouseleave = () => { win_1.mousingClickable = false; };
+                        item.onmouseover = () => { win_1.mousingClickable = true; };
+                        item.onmouseleave = () => { win_1.mousingClickable = false; };
                         //this.modal.content.innerHTML += item + '<br />';
                     }
                 }
@@ -7574,6 +7629,7 @@ void main() {
                 this.pawntype = 'generic';
                 this.trader = false;
                 this.items = [];
+                this.gun = 'revolver';
                 this.created = false;
                 this.groups = {};
                 this.meshes = {};
@@ -7590,17 +7646,17 @@ void main() {
             create() {
                 this.tiled();
                 this.size = pts.divide([50, 75], 2);
-                new sprite({
+                let shape = new sprite({
                     binded: this,
                     tuple: sprites$1.test100,
                     cell: this.cell,
                     orderBias: 1.3,
                 });
+                shape.show();
                 if (!this.created) {
-                    // set scene scale to 1, 1, 1 and w h both to 50
-                    // for a 1:1 pawn, otherwise set to 2, 2, 2 and 100
-                    const scale = 1;
                     this.created = true;
+                    // Set scale to increase pixels exponentially
+                    const scale = 1;
                     // make wee guy target
                     //this.group = new THREE.Group
                     let w = this.size[0] * scale;
@@ -7622,6 +7678,8 @@ void main() {
                     this.scene.add(sun);
                     this.scene.add(sun.target);
                 }
+                const spritee = this.shape;
+                spritee.material.map = this.target.texture;
             }
             try_move_to(pos) {
                 let venture = pts.add(this.wpos, pos);
@@ -7652,43 +7710,42 @@ void main() {
                 if (this.made)
                     return;
                 this.made = true;
-                const mult = .5;
-                const headSize = 11 * mult;
-                const gasMaskSize = 5 * mult;
-                const legsSize = 8 * mult;
-                const legsHeight = 25 * mult;
-                const armsSize = 6 * mult;
-                const armsHeight = 22 * mult;
+                const headSize = 5.5;
+                const gasMaskSize = 2.5;
+                const legsSize = 4;
+                const legsHeight = 12.5;
+                const armsSize = 3;
+                const armsHeight = 12;
                 const armsAngle = .0;
-                const bodyThick = 10 * mult;
-                const bodyWidth = 16 * mult;
-                const bodyHeight = 24 * mult;
-                /*const bodyTexture = [29, 12];
-                let materialsBody: any[] = [];
-                {
-                    let mat = new Matrix3;
-
-                    let transforms: any[] = [];
-                    transforms.push(new Matrix3().setUvTransform( // left
-                        bodyWidth * 2 / bodyTexture[0], 0, bodyThick / bodyTexture[0], 1, 0, 0, 1));
-                    transforms.push(new Matrix3().setUvTransform( // right
-                        bodyWidth * 2 / bodyTexture[0] + bodyThick / bodyTexture[0], 0, -bodyThick / bodyTexture[0], 1, 0, 0, 1));
-                    transforms.push(new Matrix3().setUvTransform( // top
-                        bodyWidth * 2 / bodyTexture[0] + bodyThick / bodyTexture[0], 0, bodyWidth / bodyTexture[0], bodyThick / bodyTexture[1], 0, 0, 1));
-                    transforms.push(new Matrix3()); // bottom ?
-                    transforms.push(new Matrix3().setUvTransform( // front
-                        0, 0, bodyWidth / bodyTexture[0], 1, 0, 0, 1));
-                    transforms.push(new Matrix3().setUvTransform( // back
-                        bodyWidth / bodyTexture[0], 0, bodyWidth / bodyTexture[0], 1, 0, 0, 1));
-
+                const bodyThick = 5;
+                const bodyWidth = 8;
+                const bodyHeight = 12;
+                const transforme = (thick, width, height, path) => {
+                    const sizes = [width + width + thick + width, height];
+                    let materials = [];
+                    let transforms = [];
+                    transforms.push(new THREE.Matrix3().setUvTransform(// left
+                    width * 2 / sizes[0], 0, thick / sizes[0], 1, 0, 0, 1));
+                    transforms.push(new THREE.Matrix3().setUvTransform(// right
+                    width * 2 / sizes[0] + thick / sizes[0], 0, -thick / sizes[0], 1, 0, 0, 1));
+                    transforms.push(new THREE.Matrix3().setUvTransform(// top
+                    width * 2 / sizes[0] + thick / sizes[0], 0, thick / sizes[0], thick / sizes[1], 0, 0, 1));
+                    transforms.push(new THREE.Matrix3()); // bottom ?
+                    transforms.push(new THREE.Matrix3().setUvTransform(// front
+                    0, 0, width / sizes[0], 1, 0, 0, 1));
+                    transforms.push(new THREE.Matrix3().setUvTransform(// back
+                    width / sizes[0], 0, width / sizes[0], 1, 0, 0, 1));
                     for (let i in transforms) {
-                        materialsBody.push(SpriteMaterial({
-                            map: ren.load_texture(`tex/pawn/body.png`, 0),
+                        materials.push(SpriteMaterial({
+                            map: ren$1.load_texture(path, 0),
                         }, {
                             myUvTransform: transforms[i]
                         }));
                     }
-                }*/
+                    return materials;
+                };
+                transforme(bodyThick, bodyWidth, bodyHeight, `tex/pawn/body.png`);
+                transforme(armsSize, armsSize, armsHeight, `tex/pawn/arms.png`);
                 let boxHead = new THREE.BoxGeometry(headSize, headSize, headSize, 1, 1, 1);
                 let materialHead = new THREE.MeshLambertMaterial({
                     color: '#31362c'
@@ -7709,6 +7766,15 @@ void main() {
                 let materialLegs = new THREE.MeshLambertMaterial({
                     color: '#484c4c'
                 });
+                /*let boxGunGrip = new BoxGeometry(2, 5, 2, 1, 1, 1);
+                let materialGunGrip = new MeshLambertMaterial({
+                    color: '#768383'
+                });
+
+                let boxGunBarrel = new BoxGeometry(2, gunBarrelHeight, 2, 1, 1, 1);
+                let materialGunBarrel = new MeshLambertMaterial({
+                    color: '#768383'
+                });*/
                 this.meshes.head = new THREE.Mesh(boxHead, materialHead);
                 this.meshes.gasMask = new THREE.Mesh(boxGasMask, materialGasMask);
                 this.meshes.body = new THREE.Mesh(boxBody, materialBody);
@@ -7716,6 +7782,8 @@ void main() {
                 this.meshes.armr = new THREE.Mesh(boxArms, materialArms);
                 this.meshes.legl = new THREE.Mesh(boxLegs, materialLegs);
                 this.meshes.legr = new THREE.Mesh(boxLegs, materialLegs);
+                /*this.meshes.gungrip = new Mesh(boxGunGrip, materialGunGrip);
+                this.meshes.gunbarrel = new Mesh(boxGunBarrel, materialGunBarrel);*/
                 this.groups.head = new THREE.Group;
                 this.groups.gasMask = new THREE.Group;
                 this.groups.body = new THREE.Group;
@@ -7724,6 +7792,8 @@ void main() {
                 this.groups.legl = new THREE.Group;
                 this.groups.legr = new THREE.Group;
                 this.groups.ground = new THREE.Group;
+                /*this.groups.gungrip = new Group;
+                this.groups.gunbarrel = new Group;*/
                 this.groups.head.add(this.meshes.head);
                 this.groups.gasMask.add(this.meshes.gasMask);
                 this.groups.body.add(this.meshes.body);
@@ -7732,6 +7802,10 @@ void main() {
                 this.groups.legl.add(this.meshes.legl);
                 this.groups.legr.add(this.meshes.legr);
                 this.groups.head.add(this.groups.gasMask);
+                /*this.groups.gungrip.add(this.meshes.gungrip);
+                this.groups.gunbarrel.add(this.meshes.gunbarrel);*/
+                /*this.groups.gungrip.add(this.groups.gunbarrel);
+                this.groups.armr.add(this.groups.gungrip);*/
                 this.groups.body.add(this.groups.head);
                 this.groups.body.add(this.groups.arml);
                 this.groups.body.add(this.groups.armr);
@@ -7742,12 +7816,15 @@ void main() {
                 this.groups.gasMask.position.set(0, -headSize / 2, headSize / 1.5);
                 this.groups.gasMask.rotation.set(-Math.PI / 4, 0, 0);
                 this.groups.body.position.set(0, bodyHeight, 0);
-                this.groups.arml.position.set(-bodyWidth / 2 - armsSize / 2, bodyHeight / 2, 0);
-                this.groups.arml.rotation.set(0, 0, -armsAngle);
-                this.meshes.arml.position.set(0, -armsHeight / 2, 0);
-                this.groups.armr.position.set(bodyWidth / 2 + armsSize / 2, bodyHeight / 2, 0);
-                this.groups.armr.rotation.set(0, 0, armsAngle);
+                this.groups.armr.position.set(-bodyWidth / 2 - armsSize / 2, bodyHeight / 2, 0);
+                this.groups.armr.rotation.set(0, 0, -armsAngle);
                 this.meshes.armr.position.set(0, -armsHeight / 2, 0);
+                this.groups.arml.position.set(bodyWidth / 2 + armsSize / 2, bodyHeight / 2, 0);
+                this.groups.arml.rotation.set(0, 0, armsAngle);
+                this.meshes.arml.position.set(0, -armsHeight / 2, 0);
+                /*this.groups.gungrip.position.set(0, -armsHeight, 0);
+                this.meshes.gungrip.rotation.set(Math.PI / 2, 0, 0);
+                this.meshes.gunbarrel.position.set(0, -gunBarrelHeight / 2, 0);*/
                 this.groups.legl.position.set(-legsSize / 2, -bodyHeight / 2, 0);
                 this.meshes.legl.position.set(0, -legsHeight / 2, 0);
                 this.groups.legr.position.set(legsSize / 2, -bodyHeight / 2, 0);
@@ -7755,45 +7832,33 @@ void main() {
                 this.groups.ground.position.set(0, -bodyHeight, 0);
                 //mesh.rotation.set(Math.PI / 2, 0, 0);
                 this.scene.add(this.groups.ground);
+                collada$1.load_model('collada/revolver', (model) => {
+                    model.rotation.set(0, 0, Math.PI / 2);
+                    model.position.set(0, -armsHeight, 0);
+                    this.groups.armr.add(model);
+                });
             }
             render() {
                 this.make();
                 ren$1.renderer.setRenderTarget(this.target);
                 ren$1.renderer.clear();
                 ren$1.renderer.render(this.scene, this.camera);
-                const sprite = this.shape;
-                sprite.material.map = this.target.texture;
+                this.shape;
+                //if (!wasterSprite)
+                //	sprite.material.map = this.target.texture;
             }
             tick() {
                 var _a;
-                const sprite = this.shape;
-                if (this.mousedSquare(wastes.gview.mrpos2) && !this.mousing) {
-                    this.mousing = true;
-                    sprite.material.color.set('#c1ffcd');
-                    console.log('mover');
-                    if (this.type != 'you') {
-                        win$1.contextmenu.focus = this;
-                    }
-                    //win.character.anchor = this;
-                    //win.character.toggle(this.mousing);
-                }
-                else if (!this.mousedSquare(wastes.gview.mrpos2) && this.mousing) {
-                    if (win$1.contextmenu.focus == this)
-                        win$1.contextmenu.focus = undefined;
-                    sprite.material.color.set('white');
-                    this.mousing = false;
-                    //win.character.toggle(this.mousing);
-                }
                 const legsSwoop = 0.8;
                 const armsSwoop = 0.5;
                 this.render();
-                this.swoop += ren$1.delta * 2.5;
+                this.swoop += ren$1.delta * 2.75;
                 const swoop1 = Math.cos(Math.PI * this.swoop);
                 const swoop2 = Math.cos(Math.PI * this.swoop - Math.PI);
                 this.groups.legl.rotation.x = swoop1 * legsSwoop * this.animSpeed;
                 this.groups.legr.rotation.x = swoop2 * legsSwoop * this.animSpeed;
-                this.groups.arml.rotation.x = swoop2 * armsSwoop * this.animSpeed;
-                this.groups.armr.rotation.x = swoop1 * armsSwoop * this.animSpeed;
+                this.groups.arml.rotation.x = swoop1 * armsSwoop * this.animSpeed;
+                this.groups.armr.rotation.x = swoop2 * armsSwoop * this.animSpeed;
                 this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
                 let posr = pts.round(this.wpos);
                 if (this.type == 'you') {
@@ -7904,8 +7969,30 @@ void main() {
                 (_a = this.sector) === null || _a === void 0 ? void 0 : _a.swap(this);
                 // shade the pawn
                 let color = [1, 1, 1, 1];
-                color = shadows$1.calc(color, pts.round(this.wpos));
-                sprite.material.color.setRGB(color[0], color[1], color[2]);
+                const sprite = this.shape;
+                if (!this.tile.hasDeck) {
+                    color = shadows$1.calc(color, pts.round(this.wpos));
+                    sprite.material.color.setRGB(color[0], color[1], color[2]);
+                }
+                if (this.type != 'you') {
+                    if (this.mousedSquare(wastes.gview.mrpos2) /*&& !this.mousing*/) {
+                        this.mousing = true;
+                        sprite.material.color.set('#c1ffcd');
+                        //console.log('mover');
+                        if (this.type != 'you') {
+                            win$1.contextmenu.focus = this;
+                        }
+                        //win.character.anchor = this;
+                        //win.character.toggle(this.mousing);
+                    }
+                    else if (!this.mousedSquare(wastes.gview.mrpos2) && this.mousing) {
+                        if (win$1.contextmenu.focus == this)
+                            win$1.contextmenu.focus = undefined;
+                        //sprite.material.color.set('white');
+                        this.mousing = false;
+                        //win.character.toggle(this.mousing);
+                    }
+                }
                 this.stack(['pawn', 'you', 'leaves', 'door', 'roof', 'falsefront', 'panel']);
                 super.update();
             }

@@ -278,6 +278,7 @@ namespace objects {
 		}
 		override create() {
 			this.tiled();
+			this.tile!.hasDeck = true;
 			//this.tile!.z -= 24;
 			this.size = [24, 17];
 			//if (this.pixel!.array[3] < 240)
@@ -444,7 +445,7 @@ namespace objects {
 					shadows.shade_matrix(this.wpos,
 						[
 							[shadow / 2, shadow, shadow / 2],
-							[shadow, shadow, shadow],
+							[shadow,     shadow, shadow],
 							[shadow / 2, shadow, shadow / 2]
 						]);
 				}

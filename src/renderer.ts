@@ -19,7 +19,8 @@ float saturation = 2.0;
 uniform int compressionEffect;
 
 // 32 is nice
-float factor = 48.0;
+// 48 is mild
+float factor = 32.0;
 
 void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {
 
