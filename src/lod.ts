@@ -211,6 +211,14 @@ namespace lod {
 				this.outside = this.spread;
 			}
 		}
+		grow() {
+			this.spread++;
+			this.outside++;
+		}
+		shrink() {
+			this.spread--;
+			this.outside--;
+		}
 		visible(sector: sector) {
 			return sector.dist() < this.spread;
 		}

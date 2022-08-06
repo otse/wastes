@@ -67,7 +67,7 @@ export namespace pawns {
 			if (wasterSprite)
 				this.size = pts.divide([90, 180], 5);
 			else
-				this.size = pts.divide([50, 75], 2);
+				this.size = pts.divide([50, 40], 1);
 
 			let shape = new sprite({
 				binded: this,
@@ -75,6 +75,7 @@ export namespace pawns {
 				cell: this.cell,
 				orderBias: 1.3,
 			});
+			shape.rleft = -this.size[0] / 4;
 			shape.show();
 
 			if (!this.created) {
@@ -82,20 +83,19 @@ export namespace pawns {
 
 				// Set scale to increase pixels exponentially
 				const scale = 1;
-				
+
 				// make wee guy target
 				//this.group = new THREE.Group
-				let w = this.size[0] * scale;
-				let h = this.size[1] * scale;
-				this.target = ren.make_render_target(w, h);
-				this.camera = ren.ortographic_camera(w, h);
+				let size = pts.mult(this.size, scale);
+
+				this.target = ren.make_render_target(size[0], size[1]);
+				this.camera = ren.make_orthographic_camera(size[0], size[1]);
 
 				this.scene = new Scene()
 				//this.scene.background = new Color('#333');
 				this.scene.rotation.set(Math.PI / 6, Math.PI / 4, 0);
 				this.scene.position.set(0, 0, 0);
 				this.scene.scale.set(scale, scale, scale);
-				//this.scene.background = new Color('salmon');
 
 				let amb = new AmbientLight('white');
 				this.scene.add(amb);
@@ -286,13 +286,14 @@ export namespace pawns {
 			this.groups.gasMask.rotation.set(-Math.PI / 4, 0, 0);
 			this.groups.body.position.set(0, bodyHeight, 0);
 
-			this.groups.armr.position.set(-bodyWidth / 2 - armsSize / 2, bodyHeight / 2, 0);
+			//this.meshes.armr.position.set(0, armsSize / 2, 0);
+			this.groups.armr.position.set(-bodyWidth / 2 - armsSize / 2, bodyHeight / 2 - armsSize / 2, 0);
 			this.groups.armr.rotation.set(0, 0, -armsAngle);
-			this.meshes.armr.position.set(0, -armsHeight / 2, 0);
+			this.meshes.armr.position.set(0, -armsHeight / 2 + armsSize / 2, 0);
 
-			this.groups.arml.position.set(bodyWidth / 2 + armsSize / 2, bodyHeight / 2, 0);
+			this.groups.arml.position.set(bodyWidth / 2 + armsSize / 2, bodyHeight / 2 - armsSize / 2, 0);
 			this.groups.arml.rotation.set(0, 0, armsAngle);
-			this.meshes.arml.position.set(0, -armsHeight / 2, 0);
+			this.meshes.arml.position.set(0, -armsHeight / 2 + armsSize / 2, 0);
 
 			/*this.groups.gungrip.position.set(0, -armsHeight, 0);
 			this.meshes.gungrip.rotation.set(Math.PI / 2, 0, 0);
@@ -304,17 +305,17 @@ export namespace pawns {
 			this.groups.legr.position.set(legsSize / 2, -bodyHeight / 2, 0);
 			this.meshes.legr.position.set(0, -legsHeight / 2, 0);
 
-			this.groups.ground.position.set(0, -bodyHeight, 0);
+			this.groups.ground.position.set(0, -bodyHeight * 1.0, 0);
 			//mesh.rotation.set(Math.PI / 2, 0, 0);
 
 			this.scene.add(this.groups.ground);
 
 			const gun = collada.load_model('collada/revolver', (model) => {
 				model.rotation.set(0, 0, Math.PI / 2);
-				model.position.set(0, -armsHeight, 0);
+				model.position.set(0, -armsHeight + armsSize / 2, 0);
 				this.groups.armr.add(model);
 			});
-			
+
 		}
 		render() {
 
@@ -333,7 +334,7 @@ export namespace pawns {
 		mousing = false
 		swoop = 0
 		angle = 0
-		animSpeed = 1
+		walkSmoother = 1
 		override tick() {
 
 			const legsSwoop = 0.8;
@@ -343,11 +344,16 @@ export namespace pawns {
 			this.swoop += ren.delta * 2.75;
 			const swoop1 = Math.cos(Math.PI * this.swoop);
 			const swoop2 = Math.cos(Math.PI * this.swoop - Math.PI);
-			this.groups.legl.rotation.x = swoop1 * legsSwoop * this.animSpeed;
-			this.groups.legr.rotation.x = swoop2 * legsSwoop * this.animSpeed;
-			this.groups.arml.rotation.x = swoop1 * armsSwoop * this.animSpeed;
-			this.groups.armr.rotation.x = swoop2 * armsSwoop * this.animSpeed;
+			this.groups.legl.rotation.x = swoop1 * legsSwoop * this.walkSmoother;
+			this.groups.legr.rotation.x = swoop2 * legsSwoop * this.walkSmoother;
+			this.groups.arml.rotation.x = swoop1 * armsSwoop * this.walkSmoother;
+			this.groups.armr.rotation.x = swoop2 * armsSwoop * this.walkSmoother;
 			this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
+
+			if (this.type == 'you' && app.key('shift')) {
+				this.groups.armr.rotation.x = -Math.PI / 2;
+
+			}
 
 			let posr = pts.round(this.wpos);
 
@@ -425,7 +431,7 @@ export namespace pawns {
 						y += -1;
 					}
 					if (app.key('x')) {
-						speed *= 10;
+						speed *= 5;
 					}
 					if ((!x && !y) && app.button(0) >= 1) {
 						wasd = false;
@@ -444,26 +450,24 @@ export namespace pawns {
 					}
 				}
 				if (x || y) {
-					let angle = pts.angle([0, 0], [x, y]);
-					if (!win.mousingClickable || wasd) {
-						this.animSpeed += ren.delta * 5;
+					if (!win.hoveringClickableElement || wasd) {
+						// Proceed when we click or use wasd!
+						let angle = pts.angle([0, 0], [x, y]);
 						this.angle = angle;
 						x = speed * Math.sin(angle);
 						y = speed * Math.cos(angle);
-						this.try_move_to([x, y]);
+						if (!app.key('shift')) {
+							this.walkSmoother += ren.delta * 5;
+							this.try_move_to([x, y]);
+						}
+						else
+							this.walkSmoother -= ren.delta * 5;
 					}
-					else
-						this.animSpeed = 0;
 				}
 				else
-					this.animSpeed -= ren.delta * 5;
-				// Normalize
-				if (this.animSpeed > 1)
-					this.animSpeed = 1;
-				else if (this.animSpeed < 0) {
-					this.animSpeed = 0;
-					this.swoop = 0;
-				}
+					this.walkSmoother -= ren.delta * 5;
+
+				this.walkSmoother = wastes.clamp(this.walkSmoother, 0, 1);
 			}
 
 			this.tiled();
@@ -476,31 +480,30 @@ export namespace pawns {
 
 			const sprite = this.shape as sprite;
 
-			if (!this.tile!.hasDeck) {
+			if (this.type != 'you' && this.mousedSquare(wastes.gview.mrpos2) /*&& !this.mousing*/) {
+				this.mousing = true;
+				sprite.material.color.set('#c1ffcd');
+				//console.log('mover');
+				if (this.type != 'you') {
+					win.contextmenu.focus = this;
+				}
+				//win.character.anchor = this;
+				//win.character.toggle(this.mousing);
+			}
+			else if (!this.mousedSquare(wastes.gview.mrpos2) && this.mousing) {
+				if (win.contextmenu.focus == this)
+					win.contextmenu.focus = undefined;
+				//sprite.material.color.set('white');
+				this.mousing = false;
+				//win.character.toggle(this.mousing);
+			}
+			else if (!this.mousing && !this.tile!.hasDeck) {
 				color = shadows.calc(color, pts.round(this.wpos));
 				sprite.material.color.setRGB(color[0], color[1], color[2]);
 			}
-			if (this.type != 'you') {
-				if (this.mousedSquare(wastes.gview.mrpos2) /*&& !this.mousing*/) {
-					this.mousing = true;
-					sprite.material.color.set('#c1ffcd');
-					//console.log('mover');
-					if (this.type != 'you') {
-						win.contextmenu.focus = this;
-					}
-					//win.character.anchor = this;
-					//win.character.toggle(this.mousing);
-				}
-				else if (!this.mousedSquare(wastes.gview.mrpos2) && this.mousing) {
-					if (win.contextmenu.focus == this)
-						win.contextmenu.focus = undefined;
-					//sprite.material.color.set('white');
-					this.mousing = false;
-					//win.character.toggle(this.mousing);
-				}
+			else {
+				sprite.material.color.set('white');
 			}
-
-
 
 			this.stack(['pawn', 'you', 'leaves', 'door', 'roof', 'falsefront', 'panel']);
 			super.update();

@@ -16,7 +16,7 @@ namespace win {
 
 	var toggle_character = false;
 
-	export var mousingClickable = false;
+	export var hoveringClickableElement = false;
 
 	export var started = false;
 
@@ -245,12 +245,12 @@ namespace win {
 				button.onclick = (e) => {
 					if (option[1]()) {
 						this.modal?.deletor();
-						mousingClickable = false;
+						hoveringClickableElement = false;
 						option[2]();
 					}
 				};
-				button.onmouseover = () => { mousingClickable = true; }
-				button.onmouseleave = () => { mousingClickable = false; }
+				button.onmouseover = () => { hoveringClickableElement = true; }
+				button.onmouseleave = () => { hoveringClickableElement = false; }
 				this.modal.content.append(button);
 				this.buttons.push([button, option]);
 			}
@@ -312,12 +312,12 @@ namespace win {
 				button.onclick = (e) => {
 					console.log('woo');
 					this.where[1] = next as number;
-					mousingClickable = false;
+					hoveringClickableElement = false;
 					this.change();
 					//button.remove();
 				};
-				button.onmouseover = () => { mousingClickable = true; }
-				button.onmouseleave = () => { mousingClickable = false; }
+				button.onmouseover = () => { hoveringClickableElement = true; }
+				button.onmouseleave = () => { hoveringClickableElement = false; }
 			}
 		}
 		static tick() {
@@ -366,10 +366,10 @@ namespace win {
 						item.remove();
 						cast.container.remove(tuple[0]);
 						pawns.you?.inventory.add(tuple[0]);
-						mousingClickable = false;
+						hoveringClickableElement = false;
 					};
-					item.onmouseover = () => { mousingClickable = true; }
-					item.onmouseleave = () => { mousingClickable = false; }
+					item.onmouseover = () => { hoveringClickableElement = true; }
+					item.onmouseleave = () => { hoveringClickableElement = false; }
 
 					//this.modal.content.innerHTML += item + '<br />';
 				}

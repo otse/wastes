@@ -274,7 +274,7 @@ uniform int compressionEffect;
 
 // 32 is nice
 // 48 is mild
-float factor = 32.0;
+float factor = 48.0;
 
 void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {
 
@@ -417,9 +417,9 @@ void main() {
             if (ren.quadPost)
                 ren.quadPost.geometry = ren.plane;
             {
-                ren.camera = ortographic_camera(ren.screenCorrected[0], ren.screenCorrected[1]);
+                ren.camera = make_orthographic_camera(ren.screenCorrected[0], ren.screenCorrected[1]);
             }
-            ren.camera2 = ortographic_camera(ren.screenCorrected[0], ren.screenCorrected[1]);
+            ren.camera2 = make_orthographic_camera(ren.screenCorrected[0], ren.screenCorrected[1]);
             ren.camera2.updateProjectionMatrix();
             ren.renderer.setSize(ren.screen[0], ren.screen[1]);
         }
@@ -453,12 +453,12 @@ void main() {
             return target;
         }
         ren.make_render_target = make_render_target;
-        function ortographic_camera(w, h) {
+        function make_orthographic_camera(w, h) {
             let camera = new THREE.OrthographicCamera(w / -2, w / 2, h / 2, h / -2, -10000, 10000);
             camera.updateProjectionMatrix();
             return camera;
         }
-        ren.ortographic_camera = ortographic_camera;
+        ren.make_orthographic_camera = make_orthographic_camera;
         function erase_children(group) {
             while (group.children.length > 0)
                 group.remove(group.children[0]);
@@ -674,6 +674,14 @@ void main() {
                     console.warn(' outside less than spread ', this.spread, this.outside);
                     this.outside = this.spread;
                 }
+            }
+            grow() {
+                this.spread++;
+                this.outside++;
+            }
+            shrink() {
+                this.spread--;
+                this.outside--;
             }
             visible(sector) {
                 return sector.dist() < this.spread;
@@ -1405,6 +1413,7 @@ void main() {
             this.mwpos = [0, 0];
             this.mrpos = [0, 0];
             this.mrpos2 = [0, 0];
+            this.spread = 2;
             this.begin = [0, 0];
             this.before = [0, 0];
             this.show = true;
@@ -1434,7 +1443,7 @@ void main() {
             ren$1.camera.updateProjectionMatrix();
         }
         pan() {
-            const continuousSpeed = -100;
+            const panDivisor = -1;
             if (app$1.button(1) == 1) {
                 let mouse = app$1.mouse();
                 mouse[1] = -mouse[1];
@@ -1446,8 +1455,13 @@ void main() {
                 mouse[1] = -mouse[1];
                 let dif = pts.subtract(this.begin, mouse);
                 {
-                    dif = pts.divide(dif, continuousSpeed);
-                    this.rpos = pts.add(this.rpos, dif);
+                    dif = pts.divide(dif, panDivisor);
+                    // necessary mods
+                    dif = pts.mult(dif, ren$1.ndpi);
+                    dif = pts.mult(dif, this.zoom);
+                    dif = pts.subtract(dif, this.before);
+                    this.rpos = pts.inv(dif);
+                    //this.rpos = pts.floor(this.rpos); // floor 
                 }
             }
             else if (app$1.button(1) == -1) {
@@ -1499,6 +1513,12 @@ void main() {
                 this.zoomIndex -= 1;
             if ((app$1.key('r') == 1 || app$1.wheel == 1) && this.zoomIndex < this.zooms.length - 1)
                 this.zoomIndex += 1;
+            if (app$1.key('t') == 1) {
+                lod$1.ggrid.shrink();
+            }
+            if (app$1.key('g') == 1) {
+                lod$1.ggrid.grow();
+            }
             this.zoom = this.zooms[this.zoomIndex];
             add = pts.mult(add, this.zoom);
             add = pts.floor(add);
@@ -1540,7 +1560,7 @@ void main() {
             crunch += `walls: ${numbers.walls[0]} / ${numbers.walls[1]}<br />`;
             crunch += `roofs: ${numbers.roofs[0]} / ${numbers.roofs[1]}<br />`;
             crunch += '<br />';
-            crunch += `controls: rclick for context menu, click to move or WASD, hold middlemouse to pan, scrollwheel to zoom, spacebar to toggle roofs, h to hide debug, c for character menu<br />`;
+            crunch += `controls: rclick for context menu, [w, a, s, d] or hold click to move, [r, f] to zoom, [t, g] to expand view, hold shift to aim, hold middlemouse to pan, scrollwheel to zoom, spacebar to toggle roofs, h to hide debug, c for character menu<br />`;
             let element = document.querySelectorAll('.stats')[0];
             element.innerHTML = crunch;
             element.style.visibility = this.show ? 'visible' : 'hidden';
@@ -1941,7 +1961,7 @@ void main() {
                     //shadows.shade(this.wpos, 0.1);
                     if (!this.shaded) {
                         this.shaded = true;
-                        const shadow = 0.025;
+                        const shadow = 0.03;
                         shadows$1.shade_matrix(this.wpos, [
                             [shadow / 2, shadow, shadow / 2],
                             [shadow, shadow, shadow],
@@ -2149,12 +2169,13 @@ void main() {
                 shape.rup = 29;
                 if (!this.shaded) {
                     this.shaded = true;
+                    const shadow = .8;
                     shadows$1.shade_matrix(this.wpos, [
                         [0, 0, 0, 0, 0],
                         [0, 0, 0, 0, 0],
-                        [0, 0, .8, 0, 0],
-                        [0, 0, 0, .8, 0],
-                        [0, 0, 0, 0, .8]
+                        [0, 0, shadow, 0, 0],
+                        [0, 0, 0, shadow, 0],
+                        [0, 0, 0, 0, shadow]
                     ], true);
                 }
             }
@@ -7227,7 +7248,7 @@ void main() {
     (function (win_1) {
         var win;
         var toggle_character = false;
-        win_1.mousingClickable = false;
+        win_1.hoveringClickableElement = false;
         win_1.started = false;
         function start() {
             win_1.started = true;
@@ -7409,12 +7430,12 @@ void main() {
                         var _a;
                         if (option[1]()) {
                             (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
-                            win_1.mousingClickable = false;
+                            win_1.hoveringClickableElement = false;
                             option[2]();
                         }
                     };
-                    button.onmouseover = () => { win_1.mousingClickable = true; };
-                    button.onmouseleave = () => { win_1.mousingClickable = false; };
+                    button.onmouseover = () => { win_1.hoveringClickableElement = true; };
+                    button.onmouseleave = () => { win_1.hoveringClickableElement = false; };
                     this.modal.content.append(button);
                     this.buttons.push([button, option]);
                 }
@@ -7468,12 +7489,12 @@ void main() {
                     button.onclick = (e) => {
                         console.log('woo');
                         this.where[1] = next;
-                        win_1.mousingClickable = false;
+                        win_1.hoveringClickableElement = false;
                         this.change();
                         //button.remove();
                     };
-                    button.onmouseover = () => { win_1.mousingClickable = true; };
-                    button.onmouseleave = () => { win_1.mousingClickable = false; };
+                    button.onmouseover = () => { win_1.hoveringClickableElement = true; };
+                    button.onmouseleave = () => { win_1.hoveringClickableElement = false; };
                 }
             }
             static tick() {
@@ -7517,10 +7538,10 @@ void main() {
                             item.remove();
                             cast.container.remove(tuple[0]);
                             (_a = pawns$1.you) === null || _a === void 0 ? void 0 : _a.inventory.add(tuple[0]);
-                            win_1.mousingClickable = false;
+                            win_1.hoveringClickableElement = false;
                         };
-                        item.onmouseover = () => { win_1.mousingClickable = true; };
-                        item.onmouseleave = () => { win_1.mousingClickable = false; };
+                        item.onmouseover = () => { win_1.hoveringClickableElement = true; };
+                        item.onmouseleave = () => { win_1.hoveringClickableElement = false; };
                         //this.modal.content.innerHTML += item + '<br />';
                     }
                 }
@@ -7637,7 +7658,7 @@ void main() {
                 this.mousing = false;
                 this.swoop = 0;
                 this.angle = 0;
-                this.animSpeed = 1;
+                this.walkSmoother = 1;
                 this.type = 'pawn';
                 this.height = 24;
                 this.inventory = new objects$1.container;
@@ -7645,13 +7666,14 @@ void main() {
             }
             create() {
                 this.tiled();
-                this.size = pts.divide([50, 75], 2);
+                this.size = pts.divide([50, 40], 1);
                 let shape = new sprite({
                     binded: this,
                     tuple: sprites$1.test100,
                     cell: this.cell,
                     orderBias: 1.3,
                 });
+                shape.rleft = -this.size[0] / 4;
                 shape.show();
                 if (!this.created) {
                     this.created = true;
@@ -7659,16 +7681,14 @@ void main() {
                     const scale = 1;
                     // make wee guy target
                     //this.group = new THREE.Group
-                    let w = this.size[0] * scale;
-                    let h = this.size[1] * scale;
-                    this.target = ren$1.make_render_target(w, h);
-                    this.camera = ren$1.ortographic_camera(w, h);
+                    let size = pts.mult(this.size, scale);
+                    this.target = ren$1.make_render_target(size[0], size[1]);
+                    this.camera = ren$1.make_orthographic_camera(size[0], size[1]);
                     this.scene = new THREE.Scene();
                     //this.scene.background = new Color('#333');
                     this.scene.rotation.set(Math.PI / 6, Math.PI / 4, 0);
                     this.scene.position.set(0, 0, 0);
                     this.scene.scale.set(scale, scale, scale);
-                    //this.scene.background = new Color('salmon');
                     let amb = new THREE.AmbientLight('white');
                     this.scene.add(amb);
                     let sun = new THREE.DirectionalLight(0xffffff, 0.5);
@@ -7816,12 +7836,13 @@ void main() {
                 this.groups.gasMask.position.set(0, -headSize / 2, headSize / 1.5);
                 this.groups.gasMask.rotation.set(-Math.PI / 4, 0, 0);
                 this.groups.body.position.set(0, bodyHeight, 0);
-                this.groups.armr.position.set(-bodyWidth / 2 - armsSize / 2, bodyHeight / 2, 0);
+                //this.meshes.armr.position.set(0, armsSize / 2, 0);
+                this.groups.armr.position.set(-bodyWidth / 2 - armsSize / 2, bodyHeight / 2 - armsSize / 2, 0);
                 this.groups.armr.rotation.set(0, 0, -armsAngle);
-                this.meshes.armr.position.set(0, -armsHeight / 2, 0);
-                this.groups.arml.position.set(bodyWidth / 2 + armsSize / 2, bodyHeight / 2, 0);
+                this.meshes.armr.position.set(0, -armsHeight / 2 + armsSize / 2, 0);
+                this.groups.arml.position.set(bodyWidth / 2 + armsSize / 2, bodyHeight / 2 - armsSize / 2, 0);
                 this.groups.arml.rotation.set(0, 0, armsAngle);
-                this.meshes.arml.position.set(0, -armsHeight / 2, 0);
+                this.meshes.arml.position.set(0, -armsHeight / 2 + armsSize / 2, 0);
                 /*this.groups.gungrip.position.set(0, -armsHeight, 0);
                 this.meshes.gungrip.rotation.set(Math.PI / 2, 0, 0);
                 this.meshes.gunbarrel.position.set(0, -gunBarrelHeight / 2, 0);*/
@@ -7829,12 +7850,12 @@ void main() {
                 this.meshes.legl.position.set(0, -legsHeight / 2, 0);
                 this.groups.legr.position.set(legsSize / 2, -bodyHeight / 2, 0);
                 this.meshes.legr.position.set(0, -legsHeight / 2, 0);
-                this.groups.ground.position.set(0, -bodyHeight, 0);
+                this.groups.ground.position.set(0, -bodyHeight * 1.0, 0);
                 //mesh.rotation.set(Math.PI / 2, 0, 0);
                 this.scene.add(this.groups.ground);
                 collada$1.load_model('collada/revolver', (model) => {
                     model.rotation.set(0, 0, Math.PI / 2);
-                    model.position.set(0, -armsHeight, 0);
+                    model.position.set(0, -armsHeight + armsSize / 2, 0);
                     this.groups.armr.add(model);
                 });
             }
@@ -7855,11 +7876,14 @@ void main() {
                 this.swoop += ren$1.delta * 2.75;
                 const swoop1 = Math.cos(Math.PI * this.swoop);
                 const swoop2 = Math.cos(Math.PI * this.swoop - Math.PI);
-                this.groups.legl.rotation.x = swoop1 * legsSwoop * this.animSpeed;
-                this.groups.legr.rotation.x = swoop2 * legsSwoop * this.animSpeed;
-                this.groups.arml.rotation.x = swoop1 * armsSwoop * this.animSpeed;
-                this.groups.armr.rotation.x = swoop2 * armsSwoop * this.animSpeed;
+                this.groups.legl.rotation.x = swoop1 * legsSwoop * this.walkSmoother;
+                this.groups.legr.rotation.x = swoop2 * legsSwoop * this.walkSmoother;
+                this.groups.arml.rotation.x = swoop1 * armsSwoop * this.walkSmoother;
+                this.groups.armr.rotation.x = swoop2 * armsSwoop * this.walkSmoother;
                 this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
+                if (this.type == 'you' && app$1.key('shift')) {
+                    this.groups.armr.rotation.x = -Math.PI / 2;
+                }
                 let posr = pts.round(this.wpos);
                 if (this.type == 'you') {
                     /*
@@ -7925,7 +7949,7 @@ void main() {
                             y += -1;
                         }
                         if (app$1.key('x')) {
-                            speed *= 10;
+                            speed *= 5;
                         }
                         if ((!x && !y) && app$1.button(0) >= 1) {
                             wasd = false;
@@ -7943,26 +7967,23 @@ void main() {
                         }
                     }
                     if (x || y) {
-                        let angle = pts.angle([0, 0], [x, y]);
-                        if (!win$1.mousingClickable || wasd) {
-                            this.animSpeed += ren$1.delta * 5;
+                        if (!win$1.hoveringClickableElement || wasd) {
+                            // Proceed when we click or use wasd!
+                            let angle = pts.angle([0, 0], [x, y]);
                             this.angle = angle;
                             x = speed * Math.sin(angle);
                             y = speed * Math.cos(angle);
-                            this.try_move_to([x, y]);
+                            if (!app$1.key('shift')) {
+                                this.walkSmoother += ren$1.delta * 5;
+                                this.try_move_to([x, y]);
+                            }
+                            else
+                                this.walkSmoother -= ren$1.delta * 5;
                         }
-                        else
-                            this.animSpeed = 0;
                     }
                     else
-                        this.animSpeed -= ren$1.delta * 5;
-                    // Normalize
-                    if (this.animSpeed > 1)
-                        this.animSpeed = 1;
-                    else if (this.animSpeed < 0) {
-                        this.animSpeed = 0;
-                        this.swoop = 0;
-                    }
+                        this.walkSmoother -= ren$1.delta * 5;
+                    this.walkSmoother = wastes.clamp(this.walkSmoother, 0, 1);
                 }
                 this.tiled();
                 //this.tile?.paint();
@@ -7970,28 +7991,29 @@ void main() {
                 // shade the pawn
                 let color = [1, 1, 1, 1];
                 const sprite = this.shape;
-                if (!this.tile.hasDeck) {
+                if (this.type != 'you' && this.mousedSquare(wastes.gview.mrpos2) /*&& !this.mousing*/) {
+                    this.mousing = true;
+                    sprite.material.color.set('#c1ffcd');
+                    //console.log('mover');
+                    if (this.type != 'you') {
+                        win$1.contextmenu.focus = this;
+                    }
+                    //win.character.anchor = this;
+                    //win.character.toggle(this.mousing);
+                }
+                else if (!this.mousedSquare(wastes.gview.mrpos2) && this.mousing) {
+                    if (win$1.contextmenu.focus == this)
+                        win$1.contextmenu.focus = undefined;
+                    //sprite.material.color.set('white');
+                    this.mousing = false;
+                    //win.character.toggle(this.mousing);
+                }
+                else if (!this.mousing && !this.tile.hasDeck) {
                     color = shadows$1.calc(color, pts.round(this.wpos));
                     sprite.material.color.setRGB(color[0], color[1], color[2]);
                 }
-                if (this.type != 'you') {
-                    if (this.mousedSquare(wastes.gview.mrpos2) /*&& !this.mousing*/) {
-                        this.mousing = true;
-                        sprite.material.color.set('#c1ffcd');
-                        //console.log('mover');
-                        if (this.type != 'you') {
-                            win$1.contextmenu.focus = this;
-                        }
-                        //win.character.anchor = this;
-                        //win.character.toggle(this.mousing);
-                    }
-                    else if (!this.mousedSquare(wastes.gview.mrpos2) && this.mousing) {
-                        if (win$1.contextmenu.focus == this)
-                            win$1.contextmenu.focus = undefined;
-                        //sprite.material.color.set('white');
-                        this.mousing = false;
-                        //win.character.toggle(this.mousing);
-                    }
+                else {
+                    sprite.material.color.set('white');
                 }
                 this.stack(['pawn', 'you', 'leaves', 'door', 'roof', 'falsefront', 'panel']);
                 super.update();
@@ -8024,7 +8046,7 @@ void main() {
         areas_1.started = false;
         function start() {
             areas_1.started = true;
-            areas.push({ name: "Trashy Vendor", bound: new aabb2([33, 39], [46, 54]) });
+            areas.push({ name: "Trashy Vendor", bound: new aabb2([35, 46], [42, 52]) });
         }
         areas_1.start = start;
         function tick() {

@@ -20,7 +20,7 @@ uniform int compressionEffect;
 
 // 32 is nice
 // 48 is mild
-float factor = 32.0;
+float factor = 48.0;
 
 void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {
 
@@ -235,10 +235,10 @@ namespace ren {
 			camera.position.z = 800;
 		}
 		else {
-			camera = ortographic_camera(screenCorrected[0], screenCorrected[1]);
+			camera = make_orthographic_camera(screenCorrected[0], screenCorrected[1]);
 		}
 
-		camera2 = ortographic_camera(screenCorrected[0], screenCorrected[1]);
+		camera2 = make_orthographic_camera(screenCorrected[0], screenCorrected[1]);
 		camera2.updateProjectionMatrix();
 		renderer.setSize(screen[0], screen[1]);
 	}
@@ -274,7 +274,7 @@ namespace ren {
 		return target;
 	}
 
-	export function ortographic_camera(w, h) {
+	export function make_orthographic_camera(w, h) {
 		let camera = new OrthographicCamera(w / - 2, w / 2, h / 2, h / - 2, - 10000, 10000);
 		camera.updateProjectionMatrix();
 

@@ -441,7 +441,7 @@ namespace objects {
 				//shadows.shade(this.wpos, 0.1);
 				if (!this.shaded) {
 					this.shaded = true;
-					const shadow = 0.025;
+					const shadow = 0.03;
 					shadows.shade_matrix(this.wpos,
 						[
 							[shadow / 2, shadow, shadow / 2],
@@ -687,12 +687,13 @@ namespace objects {
 			shape.rup = 29;
 			if (!this.shaded) {
 				this.shaded = true;
+				const shadow = .8;
 				shadows.shade_matrix(this.wpos, [
 					[0, 0, 0, 0, 0],
 					[0, 0, 0, 0, 0],
-					[0, 0, .8, 0, 0],
-					[0, 0, 0, .8, 0],
-					[0, 0, 0, 0, .8]], true);
+					[0, 0, shadow, 0, 0],
+					[0, 0, 0, shadow, 0],
+					[0, 0, 0, 0, shadow]], true);
 			}
 		}
 		override tick() {

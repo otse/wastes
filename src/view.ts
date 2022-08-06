@@ -22,6 +22,7 @@ export class view {
 	mwpos: vec2 = [0, 0]
 	mrpos: vec2 = [0, 0]
 	mrpos2: vec2 = [0, 0]
+	spread = 2
 	static make() {
 		return new view;
 	}
@@ -50,7 +51,7 @@ export class view {
 	begin: vec2 = [0, 0]
 	before: vec2 = [0, 0]
 	pan() {
-		let continousMode = true;
+		let continousMode = false;
 		const panDivisor = -1;
 		const continuousSpeed = -100;
 		if (app.button(1) == 1) {
@@ -133,6 +134,13 @@ export class view {
 			this.zoomIndex -= 1;
 		if ((app.key('r') == 1 || app.wheel == 1) && this.zoomIndex < this.zooms.length - 1)
 			this.zoomIndex += 1;
+		if (app.key('t') == 1) {
+			lod.ggrid.shrink();
+		}
+		if (app.key('g') == 1) {
+			lod.ggrid.grow();
+		}
+
 		this.zoom = this.zooms[this.zoomIndex];
 		add = pts.mult(add, this.zoom);
 		add = pts.floor(add);
@@ -180,7 +188,7 @@ export class view {
 		crunch += `roofs: ${numbers.roofs[0]} / ${numbers.roofs[1]}<br />`;
 		crunch += '<br />';
 
-		crunch += `controls: rclick for context menu, click to move or WASD, hold middlemouse to pan, scrollwheel to zoom, spacebar to toggle roofs, h to hide debug, c for character menu<br />`;
+		crunch += `controls: rclick for context menu, [w, a, s, d] or hold click to move, [r, f] to zoom, [t, g] to expand view, hold shift to aim, hold middlemouse to pan, scrollwheel to zoom, spacebar to toggle roofs, h to hide debug, c for character menu<br />`;
 
 		let element = document.querySelectorAll('.stats')[0] as any;
 		element.innerHTML = crunch;
