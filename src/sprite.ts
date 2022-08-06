@@ -1,4 +1,4 @@
-import { Color, Mesh, BoxGeometry, PlaneBufferGeometry, MeshLambertMaterial, MeshBasicMaterialParameters, Shader, Matrix3, Vector2 } from "three";
+import { Color, Mesh, BoxGeometry, PlaneBufferGeometry, MeshLambertMaterial, MeshLambertMaterialParameters, Shader, Matrix3, Vector2 } from "three";
 
 import lod, { numbers } from "./lod";
 import pts from "./pts";
@@ -107,7 +107,7 @@ export class sprite extends lod.shape {
 	}
 };
 
-export function SpriteMaterial(parameters: MeshBasicMaterialParameters, uniforms: any) {
+export function SpriteMaterial(parameters: MeshLambertMaterialParameters, uniforms: any) {
 	let material = new MeshLambertMaterial(parameters)
 	material.customProgramCacheKey = function () {
 		return 'spritemat';

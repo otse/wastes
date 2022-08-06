@@ -1,4 +1,5 @@
 import { default as THREE, Scene, Color, Group, AxesHelper, Mesh, BoxGeometry, DirectionalLight, AmbientLight, PlaneBufferGeometry, MeshLambertMaterial, Shader, Matrix3, Vector2 } from "three";
+import aabb2 from "./aabb2";
 
 import app from "./app";
 import collada from "./collada";
@@ -42,6 +43,7 @@ export namespace pawns {
 			[`It can be hazardous around here. The purple for example is contaminated soil.`, 2],
 			[`Stay clear from the irradiated areas, marked by dead trees.`, -1],
 		]
+		walkArea: aabb2
 		pawntype = 'generic'
 		trader = false
 		inventory: objects.container
@@ -109,8 +111,10 @@ export namespace pawns {
 				this.scene.add(sun.target);
 			}
 
-			const spritee = this.shape as sprite;
-			spritee.material.map = this.target.texture;
+			if (!wasterSprite) {
+				const spritee = this.shape as sprite;
+				spritee.material.map = this.target.texture;
+			}
 
 		}
 		try_move_to(pos: vec2) {
@@ -318,32 +322,111 @@ export namespace pawns {
 
 		}
 		render() {
-
-			this.make();
-
 			ren.renderer.setRenderTarget(this.target);
 			ren.renderer.clear();
 			ren.renderer.render(this.scene, this.camera);
+		}
+		aimTarget: vec2 = [0, 0]
+		move() {
 
-			const sprite = this.shape as sprite;
+			let speed = 0.038 * ren.delta * 60;
+			let x = 0;
+			let y = 0;
+			let wasd = true;
 
-			//if (!wasterSprite)
-			//	sprite.material.map = this.target.texture;
+			if (this.type == 'you') {
+				if (app.key('w')) {
+					x += -1;
+					y += -1;
+				}
+				if (app.key('s')) {
+					x += 1;
+					y += 1;
+				}
+				if (app.key('a')) {
+					x += -1;
+					y += 1;
+				}
+				if (app.key('d')) {
+					x += 1;
+					y += -1;
+				}
+				if (app.key('x')) {
+					speed *= 5;
+				}
+			}
+
+			if (this.type == 'you' && (!x && !y) && app.button(0) >= 1 && !win.hoveringClickableElement) {
+				// Deduce x and y from click moving
+				wasd = false;
+				let mouse = wastes.gview.mwpos;
+				let pos = this.wpos;
+				pos = pts.add(pos, pts.divide([1, 1], 2));
+				mouse = pts.subtract(mouse, pos);
+				mouse[1] = -mouse[1];
+				const dist = pts.distsimple(pos, wastes.gview.mwpos);
+
+				if (dist > 0.5) {
+					x = mouse[0];
+					y = mouse[1];
+				}
+			}
+
+			if (x || y) {
+				// We have to deduce an angle and move that way
+				// Unless we're aiming with a gun
+				let angle = pts.angle([0, 0], [x, y]);				
+				this.angle = angle;
+				x = speed * Math.sin(angle);
+				y = speed * Math.cos(angle);
+				if (!app.key('shift')) {
+					this.walkSmoother += ren.delta * 5;
+					this.try_move_to([x, y]);
+				}
+				else {
+					this.walkSmoother -= ren.delta * 5;
+				}
+			}
+			else if (this.type != 'you' && pts.together(this.aimTarget)) {
+				
+				let angle = pts.angle(this.wpos, this.aimTarget);
+				//console.log(pts.subtract(this.wpos, this.aimTarget));
+				
+				this.angle = -angle + Math.PI;
+
+				//this.wpos = this.aimTarget;
+				//this.wpos = this.aimTarget;
+
+				speed = 0.038 * ren.delta * 30;
+
+				x = speed * Math.sin(this.angle);
+				y = speed * Math.cos(this.angle);
+				this.walkSmoother += ren.delta * 5;
+
+				//this.wpos = [x, y];
+				this.try_move_to([x, y]);
+
+				const dist = pts.distsimple(this.wpos, this.aimTarget);
+
+				if (dist < 0.5) {
+					this.aimTarget = [0, 0];
+				}
+			}
+			else
+				this.walkSmoother -= ren.delta * 5;
+
+			this.walkSmoother = wastes.clamp(this.walkSmoother, 0, 1);
 
 		}
-		mousing = false
-		swoop = 0
-		angle = 0
-		walkSmoother = 1
-		override tick() {
-
+		animateBodyParts() {
 			const legsSwoop = 0.8;
 			const armsSwoop = 0.5;
-			this.render();
 
 			this.swoop += ren.delta * 2.75;
+
 			const swoop1 = Math.cos(Math.PI * this.swoop);
 			const swoop2 = Math.cos(Math.PI * this.swoop - Math.PI);
+
 			this.groups.legl.rotation.x = swoop1 * legsSwoop * this.walkSmoother;
 			this.groups.legr.rotation.x = swoop2 * legsSwoop * this.walkSmoother;
 			this.groups.arml.rotation.x = swoop1 * armsSwoop * this.walkSmoother;
@@ -352,10 +435,31 @@ export namespace pawns {
 
 			if (this.type == 'you' && app.key('shift')) {
 				this.groups.armr.rotation.x = -Math.PI / 2;
-
 			}
 
+			this.render();
+		}
+		mousing = false
+		swoop = 0
+		angle = 0
+		walkSmoother = 1
+		randomWalker = 0
+		override tick() {
+
+			this.make();
+
 			let posr = pts.round(this.wpos);
+
+			if (this.type != 'you' && this.walkArea) {
+				if (this.randomWalker++ > 120) {
+					const target = this.walkArea.random_point();
+					this.aimTarget = target;
+					//this.try_move_to(target);
+					//console.log('wee', target);
+					//this.wpos = target;
+					this.randomWalker = 0;
+				}
+			}
 
 			if (this.type == 'you') {
 				/*
@@ -406,69 +510,9 @@ export namespace pawns {
 
 			}
 
-			const moveMath = true;
+			this.move();
 
-			if (moveMath) {
-				let speed = 0.038 * ren.delta * 60;
-				let x = 0;
-				let y = 0;
-				let wasd = true;
-				if (this.type == 'you') {
-					if (app.key('w')) {
-						x += -1;
-						y += -1;
-					}
-					if (app.key('s')) {
-						x += 1;
-						y += 1;
-					}
-					if (app.key('a')) {
-						x += -1;
-						y += 1;
-					}
-					if (app.key('d')) {
-						x += 1;
-						y += -1;
-					}
-					if (app.key('x')) {
-						speed *= 5;
-					}
-					if ((!x && !y) && app.button(0) >= 1) {
-						wasd = false;
-						let mouse = wastes.gview.mwpos;
-						let pos = this.wpos;
-						pos = pts.add(pos, pts.divide([1, 1], 2));
-						mouse = pts.subtract(mouse, pos);
-						mouse[1] = -mouse[1];
-						const dist = pts.distsimple(pos, wastes.gview.mwpos);
-
-						if (dist > 0.5) {
-							x = mouse[0];
-							y = mouse[1];
-						}
-						//move = true;
-					}
-				}
-				if (x || y) {
-					if (!win.hoveringClickableElement || wasd) {
-						// Proceed when we click or use wasd!
-						let angle = pts.angle([0, 0], [x, y]);
-						this.angle = angle;
-						x = speed * Math.sin(angle);
-						y = speed * Math.cos(angle);
-						if (!app.key('shift')) {
-							this.walkSmoother += ren.delta * 5;
-							this.try_move_to([x, y]);
-						}
-						else
-							this.walkSmoother -= ren.delta * 5;
-					}
-				}
-				else
-					this.walkSmoother -= ren.delta * 5;
-
-				this.walkSmoother = wastes.clamp(this.walkSmoother, 0, 1);
-			}
+			this.animateBodyParts();
 
 			this.tiled();
 			//this.tile?.paint();

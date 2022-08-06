@@ -100,13 +100,15 @@ export namespace tiles {
 			let colour = wastes.colormap.pixel(this.wpos);
 
 			if (colour.is_black()) {
+				// We are a water
 				this.type = 'water';
 				this.size = [24, 12];
-				this.tuple = sprites.dtile;
+				this.tuple = sprites.dwater;
 				this.opacity = .5;
 				this.color = color_purple_water;
 			}
 			if (!colour.is_black()) {
+				// We're a land tile
 				this.isLand = true;
 				this.type = 'land';
 				this.size = [24, 30];
@@ -179,7 +181,7 @@ export namespace tiles {
 				last.hide();
 				last.show();
 			}
-			sprite.mesh.material.color.set('green');
+			sprite.mesh.material.color.set('#768383');
 			tile.lastHover = this;
 		}
 		paint() {

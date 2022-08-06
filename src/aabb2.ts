@@ -43,6 +43,45 @@ class aabb2 {
 			return 1
 		return 2
 	}
+	random_point(): vec2 {
+		const width = this.max[0] - this.min[0];
+		const length = this.max[1] - this.min[1];
+		return [this.min[0] + width * Math.random(), this.min[1] + length * Math.random()];
+	}
+	ray(r: {dir: vec2; org: vec2}) {
+		// r.dir is unit direction vector of ray
+		let dirfrac: any = {};
+		dirfrac.x = 1.0 / r.dir[0];
+		dirfrac.y = 1.0 / r.dir[1];
+		// lb is the corner of AABB with minimal coordinates - left bottom, rt is maximal corner
+		// r.org is origin of ray
+		let t1 = (this.min[0] - r.org[0])*dirfrac.x;
+		let t2 = (this.max[0] - r.org[0])*dirfrac.x;
+		let t3 = (this.min[1] - r.org[1])*dirfrac.y;
+		let t4 = (this.max[1] - r.org[1])*dirfrac.y;
+
+		let tmin = Math.max(Math.max(Math.min(t1, t2), Math.min(t3, t4)));
+		let tmax = Math.min(Math.min(Math.max(t1, t2), Math.max(t3, t4)));
+
+		let t;
+
+		// if tmax < 0, ray (line) is intersecting AABB, but the whole AABB is behind us
+		if (tmax < 0)
+		{
+			t = tmax;
+			return false;
+		}
+
+		// if tmin > tmax, ray doesn't intersect AABB
+		if (tmin > tmax)
+		{
+			t = tmax;
+			return false;
+		}
+
+		t = tmin;
+		return true;
+	}
 }
 
 export default aabb2;

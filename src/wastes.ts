@@ -15,6 +15,7 @@ import rooms from "./rooms";
 import areas from "./areas";
 import colormap from "./colormap";
 import { shadows } from "./shadows";
+import aabb2 from "./aabb2";
 
 export { win, pawns, objects }; // fixes creepy rollup error
 
@@ -124,6 +125,7 @@ export namespace wastes {
 			let peacekeeper = new pawns.pawn();
 			peacekeeper.wpos = [45.5, 56.5];
 			peacekeeper.angle = Math.PI / 2;
+			peacekeeper.walkArea = new aabb2([43, 51], [46, 57]);
 			peacekeeper.dialog = [
 				[`I'm on duty.`, 1],
 				[`I protect the civilized area here. It may not look that civil at first glance.`, 2],

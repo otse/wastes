@@ -167,6 +167,34 @@ var wastes = (function (exports, THREE) {
                 return 1;
             return 2;
         }
+        random_point() {
+            const width = this.max[0] - this.min[0];
+            const length = this.max[1] - this.min[1];
+            return [this.min[0] + width * Math.random(), this.min[1] + length * Math.random()];
+        }
+        ray(r) {
+            // r.dir is unit direction vector of ray
+            let dirfrac = {};
+            dirfrac.x = 1.0 / r.dir[0];
+            dirfrac.y = 1.0 / r.dir[1];
+            // lb is the corner of AABB with minimal coordinates - left bottom, rt is maximal corner
+            // r.org is origin of ray
+            let t1 = (this.min[0] - r.org[0]) * dirfrac.x;
+            let t2 = (this.max[0] - r.org[0]) * dirfrac.x;
+            let t3 = (this.min[1] - r.org[1]) * dirfrac.y;
+            let t4 = (this.max[1] - r.org[1]) * dirfrac.y;
+            let tmin = Math.max(Math.max(Math.min(t1, t2), Math.min(t3, t4)));
+            let tmax = Math.min(Math.min(Math.max(t1, t2), Math.max(t3, t4)));
+            // if tmax < 0, ray (line) is intersecting AABB, but the whole AABB is behind us
+            if (tmax < 0) {
+                return false;
+            }
+            // if tmin > tmax, ray doesn't intersect AABB
+            if (tmin > tmax) {
+                return false;
+            }
+            return true;
+        }
     }
     aabb2.TEST = TEST;
 
@@ -835,6 +863,7 @@ void main() {
         sprites.asteroid = [[512, 512], [512, 512], 0, 'tex/pngwing.com'];
         sprites.shrubs = [[24, 15], [24, 15], 0, 'tex/shrubs'];
         sprites.dtile = [[24, 12], [24, 12], 0, 'tex/dtile'];
+        sprites.dwater = [[24, 12], [24, 12], 0, 'tex/8bit/dwater'];
         sprites.dtile4 = [[24, 17], [24, 17], 0, 'tex/dtileup4'];
         sprites.dgrass = [[96, 30], [24, 31], 0, 'tex/dgrass'];
         sprites.dwheat = [[96, 30], [24, 31], 0, 'tex/dwheat'];
@@ -1304,13 +1333,15 @@ void main() {
                 this.wpos = wpos;
                 let colour = wastes.colormap.pixel(this.wpos);
                 if (colour.is_black()) {
+                    // We are a water
                     this.type = 'water';
                     this.size = [24, 12];
-                    this.tuple = sprites$1.dtile;
+                    this.tuple = sprites$1.dwater;
                     this.opacity = .5;
                     this.color = color_purple_water;
                 }
                 if (!colour.is_black()) {
+                    // We're a land tile
                     this.isLand = true;
                     this.type = 'land';
                     this.size = [24, 30];
@@ -1379,7 +1410,7 @@ void main() {
                     last.hide();
                     last.show();
                 }
-                sprite.mesh.material.color.set('green');
+                sprite.mesh.material.color.set('#768383');
                 tile.lastHover = this;
             }
             paint() {
@@ -7655,10 +7686,12 @@ void main() {
                 this.groups = {};
                 this.meshes = {};
                 this.made = false;
+                this.aimTarget = [0, 0];
                 this.mousing = false;
                 this.swoop = 0;
                 this.angle = 0;
                 this.walkSmoother = 1;
+                this.randomWalker = 0;
                 this.type = 'pawn';
                 this.height = 24;
                 this.inventory = new objects$1.container;
@@ -7698,8 +7731,10 @@ void main() {
                     this.scene.add(sun);
                     this.scene.add(sun.target);
                 }
-                const spritee = this.shape;
-                spritee.material.map = this.target.texture;
+                {
+                    const spritee = this.shape;
+                    spritee.material.map = this.target.texture;
+                }
             }
             try_move_to(pos) {
                 let venture = pts.add(this.wpos, pos);
@@ -7860,19 +7895,86 @@ void main() {
                 });
             }
             render() {
-                this.make();
                 ren$1.renderer.setRenderTarget(this.target);
                 ren$1.renderer.clear();
                 ren$1.renderer.render(this.scene, this.camera);
-                this.shape;
-                //if (!wasterSprite)
-                //	sprite.material.map = this.target.texture;
             }
-            tick() {
-                var _a;
+            move() {
+                let speed = 0.038 * ren$1.delta * 60;
+                let x = 0;
+                let y = 0;
+                if (this.type == 'you') {
+                    if (app$1.key('w')) {
+                        x += -1;
+                        y += -1;
+                    }
+                    if (app$1.key('s')) {
+                        x += 1;
+                        y += 1;
+                    }
+                    if (app$1.key('a')) {
+                        x += -1;
+                        y += 1;
+                    }
+                    if (app$1.key('d')) {
+                        x += 1;
+                        y += -1;
+                    }
+                    if (app$1.key('x')) {
+                        speed *= 5;
+                    }
+                }
+                if (this.type == 'you' && (!x && !y) && app$1.button(0) >= 1 && !win$1.hoveringClickableElement) {
+                    let mouse = wastes.gview.mwpos;
+                    let pos = this.wpos;
+                    pos = pts.add(pos, pts.divide([1, 1], 2));
+                    mouse = pts.subtract(mouse, pos);
+                    mouse[1] = -mouse[1];
+                    const dist = pts.distsimple(pos, wastes.gview.mwpos);
+                    if (dist > 0.5) {
+                        x = mouse[0];
+                        y = mouse[1];
+                    }
+                }
+                if (x || y) {
+                    // We have to deduce an angle and move that way
+                    // Unless we're aiming with a gun
+                    let angle = pts.angle([0, 0], [x, y]);
+                    this.angle = angle;
+                    x = speed * Math.sin(angle);
+                    y = speed * Math.cos(angle);
+                    if (!app$1.key('shift')) {
+                        this.walkSmoother += ren$1.delta * 5;
+                        this.try_move_to([x, y]);
+                    }
+                    else {
+                        this.walkSmoother -= ren$1.delta * 5;
+                    }
+                }
+                else if (this.type != 'you' && pts.together(this.aimTarget)) {
+                    let angle = pts.angle(this.wpos, this.aimTarget);
+                    //console.log(pts.subtract(this.wpos, this.aimTarget));
+                    this.angle = -angle + Math.PI;
+                    //this.wpos = this.aimTarget;
+                    //this.wpos = this.aimTarget;
+                    speed = 0.038 * ren$1.delta * 30;
+                    x = speed * Math.sin(this.angle);
+                    y = speed * Math.cos(this.angle);
+                    this.walkSmoother += ren$1.delta * 5;
+                    //this.wpos = [x, y];
+                    this.try_move_to([x, y]);
+                    const dist = pts.distsimple(this.wpos, this.aimTarget);
+                    if (dist < 0.5) {
+                        this.aimTarget = [0, 0];
+                    }
+                }
+                else
+                    this.walkSmoother -= ren$1.delta * 5;
+                this.walkSmoother = wastes.clamp(this.walkSmoother, 0, 1);
+            }
+            animateBodyParts() {
                 const legsSwoop = 0.8;
                 const armsSwoop = 0.5;
-                this.render();
                 this.swoop += ren$1.delta * 2.75;
                 const swoop1 = Math.cos(Math.PI * this.swoop);
                 const swoop2 = Math.cos(Math.PI * this.swoop - Math.PI);
@@ -7884,7 +7986,22 @@ void main() {
                 if (this.type == 'you' && app$1.key('shift')) {
                     this.groups.armr.rotation.x = -Math.PI / 2;
                 }
+                this.render();
+            }
+            tick() {
+                var _a;
+                this.make();
                 let posr = pts.round(this.wpos);
+                if (this.type != 'you' && this.walkArea) {
+                    if (this.randomWalker++ > 120) {
+                        const target = this.walkArea.random_point();
+                        this.aimTarget = target;
+                        //this.try_move_to(target);
+                        //console.log('wee', target);
+                        //this.wpos = target;
+                        this.randomWalker = 0;
+                    }
+                }
                 if (this.type == 'you') {
                     /*
                     if (this.mousedSquare(wastes.gview.mrpos) && !this.mousing) {
@@ -7926,65 +8043,8 @@ void main() {
                         win.container.call(false);*/
                     if (pawns.length && pts.distsimple(pawns[0].wpos, this.wpos) < 1.5) ;
                 }
-                {
-                    let speed = 0.038 * ren$1.delta * 60;
-                    let x = 0;
-                    let y = 0;
-                    let wasd = true;
-                    if (this.type == 'you') {
-                        if (app$1.key('w')) {
-                            x += -1;
-                            y += -1;
-                        }
-                        if (app$1.key('s')) {
-                            x += 1;
-                            y += 1;
-                        }
-                        if (app$1.key('a')) {
-                            x += -1;
-                            y += 1;
-                        }
-                        if (app$1.key('d')) {
-                            x += 1;
-                            y += -1;
-                        }
-                        if (app$1.key('x')) {
-                            speed *= 5;
-                        }
-                        if ((!x && !y) && app$1.button(0) >= 1) {
-                            wasd = false;
-                            let mouse = wastes.gview.mwpos;
-                            let pos = this.wpos;
-                            pos = pts.add(pos, pts.divide([1, 1], 2));
-                            mouse = pts.subtract(mouse, pos);
-                            mouse[1] = -mouse[1];
-                            const dist = pts.distsimple(pos, wastes.gview.mwpos);
-                            if (dist > 0.5) {
-                                x = mouse[0];
-                                y = mouse[1];
-                            }
-                            //move = true;
-                        }
-                    }
-                    if (x || y) {
-                        if (!win$1.hoveringClickableElement || wasd) {
-                            // Proceed when we click or use wasd!
-                            let angle = pts.angle([0, 0], [x, y]);
-                            this.angle = angle;
-                            x = speed * Math.sin(angle);
-                            y = speed * Math.cos(angle);
-                            if (!app$1.key('shift')) {
-                                this.walkSmoother += ren$1.delta * 5;
-                                this.try_move_to([x, y]);
-                            }
-                            else
-                                this.walkSmoother -= ren$1.delta * 5;
-                        }
-                    }
-                    else
-                        this.walkSmoother -= ren$1.delta * 5;
-                    this.walkSmoother = wastes.clamp(this.walkSmoother, 0, 1);
-                }
+                this.move();
+                this.animateBodyParts();
                 this.tiled();
                 //this.tile?.paint();
                 (_a = this.sector) === null || _a === void 0 ? void 0 : _a.swap(this);
@@ -8161,6 +8221,7 @@ void main() {
                 let peacekeeper = new pawns$1.pawn();
                 peacekeeper.wpos = [45.5, 56.5];
                 peacekeeper.angle = Math.PI / 2;
+                peacekeeper.walkArea = new aabb2([43, 51], [46, 57]);
                 peacekeeper.dialog = [
                     [`I'm on duty.`, 1],
                     [`I protect the civilized area here. It may not look that civil at first glance.`, 2],
