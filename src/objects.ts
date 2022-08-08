@@ -188,9 +188,13 @@ namespace objects {
 
 	export class objected extends lod.obj {
 		static focus: objected
+		isObjected = true
+		paintTimer = 0
+		paintedRed = false
 		solid = true
 		pixel?: colormap.pixel
 		tile?: tiles.tile
+		tileBound: aabb2
 		cell: vec2 = [0, 0]
 		heightAdd = 0
 		hints?: any
@@ -201,6 +205,31 @@ namespace objects {
 		}
 		tiled() {
 			this.tile = tiles.get(pts.round(this.wpos));
+			this.tileBound = new aabb2([-.5, -.5], [.5, .5]);
+			this.tileBound.translate(this.wpos);
+		}
+		onhit() {
+			const sprite = this.shape as sprite;
+			if (sprite) {
+				sprite.material.color.set('red');
+				this.paintedRed = true;
+			}
+		}
+		tick() {
+			if (this.paintedRed) {
+				this.paintTimer += ren.delta;
+				if (this.paintTimer > 1)
+				{
+					const sprite = this.shape as sprite;
+					sprite.material.color.set('white');
+					console.log('beo');
+					
+					this.paintedRed = false;
+					this.paintTimer = 0;
+				}
+			}
+			//console.log('oo');
+				
 		}
 		//update(): void {
 		//	this.tiled();
@@ -262,12 +291,18 @@ namespace objects {
 		adapt() {
 			// change sprite to surrounding walls
 		}
-		tick() {
-			/*if (this.mousedSquare(wastes.gview.mrpos2)) {
+		/*tick() {
+			if (this.mousedSquare(wastes.gview.mrpos2)) {
 				const sprite = this.shape as sprite;
 				sprite.material.color.set('#c1ffcd');
-			}*/
-		}
+			}
+		}*/
+		/*onhit() {
+			const sprite = this.shape as sprite;
+			if (sprite) {
+				sprite.material.color.set('red');
+			}
+		}*/
 	}
 	export class deck extends objected {
 		static timer = 0;
@@ -292,6 +327,7 @@ namespace objects {
 			this.stack();
 		}
 		override tick() {
+			super.tick();
 			let pos = this.wpos;
 			let sector = lod.ggalaxy.at(lod.ggalaxy.big(pos));
 			let at = sector.stacked(pos);
@@ -328,8 +364,6 @@ namespace objects {
 			});
 			this.stack();
 
-		}
-		override tick() {
 		}
 	}
 	export class rails extends objected {
@@ -697,6 +731,7 @@ namespace objects {
 			}
 		}
 		override tick() {
+			super.tick();
 			const sprite = this.shape as sprite;
 			if (!sprite)
 				return;
@@ -775,6 +810,7 @@ namespace objects {
 			this.stack();
 		}
 		override tick() {
+			super.tick();
 			if (!this.shape)
 				return;
 			let pos = this.wpos;

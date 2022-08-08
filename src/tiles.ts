@@ -199,7 +199,6 @@ export namespace tiles {
 			}
 			if (pts.equals(this.wpos, pts.round(pawns.you.wpos))) {
 				//console.log('boo');
-
 				//this.paint();
 			}
 		}

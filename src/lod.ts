@@ -201,6 +201,7 @@ namespace lod {
 	export class grid {
 		big: vec2 = [0, 0];
 		public shown: sector[] = [];
+		all: obj[] = []
 		constructor(
 			public spread,
 			public outside
@@ -217,7 +218,7 @@ namespace lod {
 		}
 		shrink() {
 			console.log('shrink');
-			
+
 			this.spread--;
 			this.outside--;
 		}
@@ -240,21 +241,21 @@ namespace lod {
 			}
 		}
 		offs() {
-			const noConcat = false;
-			let allObjs: obj[] = [];
+			this.all = [];
 			let i = this.shown.length;
 			while (i--) {
 				let sector: sector;
 				sector = this.shown[i];
-				if (!noConcat)
-					allObjs = allObjs.concat(sector.objsro());
 				sector.tick();
 				if (sector.dist() > this.outside) {
 					sector.hide();
 					this.shown.splice(i, 1);
 				}
+				else {
+					this.all = this.all.concat(sector.objsro());
+				}
 			}
-			for (let obj of allObjs)
+			for (let obj of this.all)
 				obj.tick();
 		}
 	}

@@ -706,6 +706,7 @@ void main() {
                 this.outside = outside;
                 this.big = [0, 0];
                 this.shown = [];
+                this.all = [];
                 lod.ggrid = this;
                 if (this.outside < this.spread) {
                     console.warn(' outside less than spread ', this.spread, this.outside);
@@ -740,19 +741,21 @@ void main() {
                 }
             }
             offs() {
-                let allObjs = [];
+                this.all = [];
                 let i = this.shown.length;
                 while (i--) {
                     let sector;
                     sector = this.shown[i];
-                    allObjs = allObjs.concat(sector.objsro());
                     sector.tick();
                     if (sector.dist() > this.outside) {
                         sector.hide();
                         this.shown.splice(i, 1);
                     }
+                    else {
+                        this.all = this.all.concat(sector.objsro());
+                    }
                 }
-                for (let obj of allObjs)
+                for (let obj of this.all)
                     obj.tick();
             }
         }
@@ -6074,6 +6077,9 @@ void main() {
         class objected extends lod$1.obj {
             constructor(counts) {
                 super(counts);
+                this.isObjected = true;
+                this.paintTimer = 0;
+                this.paintedRed = false;
                 this.solid = true;
                 this.cell = [0, 0];
                 this.heightAdd = 0;
@@ -6081,6 +6087,28 @@ void main() {
             }
             tiled() {
                 this.tile = tiles$1.get(pts.round(this.wpos));
+                this.tileBound = new aabb2([-.5, -.5], [.5, .5]);
+                this.tileBound.translate(this.wpos);
+            }
+            onhit() {
+                const sprite = this.shape;
+                if (sprite) {
+                    sprite.material.color.set('red');
+                    this.paintedRed = true;
+                }
+            }
+            tick() {
+                if (this.paintedRed) {
+                    this.paintTimer += ren$1.delta;
+                    if (this.paintTimer > 1) {
+                        const sprite = this.shape;
+                        sprite.material.color.set('white');
+                        console.log('beo');
+                        this.paintedRed = false;
+                        this.paintTimer = 0;
+                    }
+                }
+                //console.log('oo');
             }
             //update(): void {
             //	this.tiled();
@@ -6140,12 +6168,6 @@ void main() {
             adapt() {
                 // change sprite to surrounding walls
             }
-            tick() {
-                /*if (this.mousedSquare(wastes.gview.mrpos2)) {
-                    const sprite = this.shape as sprite;
-                    sprite.material.color.set('#c1ffcd');
-                }*/
-            }
         }
         objects.wall = wall;
         class deck extends objected {
@@ -6170,6 +6192,7 @@ void main() {
                 this.stack();
             }
             tick() {
+                super.tick();
                 let pos = this.wpos;
                 let sector = lod$1.ggalaxy.at(lod$1.ggalaxy.big(pos));
                 let at = sector.stacked(pos);
@@ -6205,8 +6228,6 @@ void main() {
                     color: color
                 });
                 this.stack();
-            }
-            tick() {
             }
         }
         porch.timer = 0;
@@ -6540,6 +6561,7 @@ void main() {
                 }
             }
             tick() {
+                super.tick();
                 const sprite = this.shape;
                 if (!sprite)
                     return;
@@ -6618,6 +6640,7 @@ void main() {
                 this.stack();
             }
             tick() {
+                super.tick();
                 if (!this.shape)
                     return;
                 let pos = this.wpos;
@@ -7050,7 +7073,7 @@ void main() {
     var pawns;
     (function (pawns_1) {
         function make_you() {
-            let pos = [44, 44];
+            let pos = [44, 52];
             let paw = new pawn();
             paw.type = 'you';
             paw.wpos = pos;
@@ -7318,7 +7341,7 @@ void main() {
                         speed *= 5;
                     }
                 }
-                if (this.type == 'you' && (!x && !y) && app$1.button(0) >= 1 && !win$1.hoveringClickableElement) {
+                if (this.type == 'you' && (!x && !y) && (app$1.button(0) >= 1 || app$1.key('shift')) && !win$1.hoveringClickableElement) {
                     let mouse = wastes.gview.mwpos;
                     let pos = this.wpos;
                     pos = pts.add(pos, pts.divide([1, 1], 2));
@@ -7393,6 +7416,32 @@ void main() {
                 this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
                 if (this.type == 'you' && app$1.key('shift')) {
                     this.groups.armr.rotation.x = -Math.PI / 2;
+                    if (app$1.button(0) == 1) {
+                        console.log('shoot');
+                        for (let obj of lod$1.ggrid.all) {
+                            const objected = obj;
+                            if (objected.isObjected) {
+                                const test = objected.tileBound.ray({
+                                    dir: [Math.sin(this.angle), Math.cos(this.angle)],
+                                    org: this.wpos
+                                });
+                                if (test) {
+                                    console.log('we hit something');
+                                    objected.onhit();
+                                }
+                            }
+                        }
+                        /*let pos = this.wpos;
+                        let sector = lod.ggalaxy.at(lod.ggalaxy.big(pos));
+                        let at = sector.stacked(pos);
+                        for (let obj of at) {
+                            if (obj.type == 'you') {
+                                wastes.HIDE_ROOFS = true;
+                                break;
+                            }
+                        }*/
+                    }
+                    //
                 }
                 this.render();
             }
@@ -7663,13 +7712,12 @@ void main() {
             this.zoom = 0.33;
             this.zoomIndex = 4;
             this.zooms = [1, 0.5, 0.33, 0.2, 0.1, 0.05];
-            this.wpos = [45, 51];
+            this.wpos = [44, 52];
             this.rpos = [0, 0];
             this.mpos = [0, 0];
             this.mwpos = [0, 0];
             this.mrpos = [0, 0];
             this.mrpos2 = [0, 0];
-            this.spread = 2;
             this.begin = [0, 0];
             this.before = [0, 0];
             this.show = true;
@@ -7688,16 +7736,16 @@ void main() {
         tick() {
             this.move();
             this.mouse();
-            this.pan();
             if (!this.follow)
                 this.wpos = lod$1.unproject(this.rpos);
             else {
                 let pos = this.follow.wpos;
                 pos = pts.add(pos, [.5, .5]);
                 this.wpos = pts.clone(pos);
-                pos = lod$1.project(pos);
-                this.rpos = pos;
+                this.rpos = lod$1.project(pos);
+                this.rpos = pts.add(this.rpos, [0, this.follow.size[1] / 2]);
             }
+            this.pan();
             this.set_camera();
             this.stats();
             lod$1.ggalaxy.update(this.wpos);
@@ -7725,6 +7773,7 @@ void main() {
                     dif = pts.mult(dif, this.zoom);
                     dif = pts.subtract(dif, this.before);
                     this.rpos = pts.inv(dif);
+                    this.wpos = lod$1.unproject(this.rpos);
                     //this.rpos = pts.floor(this.rpos); // floor 
                 }
             }
@@ -7834,6 +7883,7 @@ void main() {
 		[v] to toggle camera<br />
 		[z] to toggle bit depth effect<br />
 		[shift] to aim<br />
+		[shift + click] to shoot<br />
 		[middle mouse] to pan<br />
 		[spacebar] to toggle roofs<br />
 		[h] to hide debug<br />

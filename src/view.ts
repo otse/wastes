@@ -16,14 +16,13 @@ export class view {
 	zoom = 0.33
 	zoomIndex = 4
 	zooms = [1, 0.5, 0.33, 0.2, 0.1, 0.05]
-	wpos: vec2 = [45, 51]
+	wpos: vec2 = [44, 52]
 	rpos: vec2 = [0, 0]
 	mpos: vec2 = [0, 0]
 	mwpos: vec2 = [0, 0]
 	mrpos: vec2 = [0, 0]
 	mrpos2: vec2 = [0, 0]
 	follow?: lod.obj
-	spread = 2
 	static make() {
 		return new view;
 	}
@@ -39,16 +38,16 @@ export class view {
 	tick() {
 		this.move();
 		this.mouse();
-		this.pan();
 		if (!this.follow)
 			this.wpos = lod.unproject(this.rpos);
 		else {
 			let pos = this.follow.wpos;
 			pos = pts.add(pos, [.5, .5]);
 			this.wpos = pts.clone(pos);
-			pos = lod.project(pos);
-			this.rpos = pos;
+			this.rpos = lod.project(pos);
+			this.rpos = pts.add(this.rpos, [0, this.follow.size[1] / 2]);
 		}
+		this.pan();
 		this.set_camera();
 		this.stats();
 		lod.ggalaxy.update(this.wpos);
@@ -84,6 +83,8 @@ export class view {
 				dif = pts.mult(dif, this.zoom);
 				dif = pts.subtract(dif, this.before);
 				this.rpos = pts.inv(dif);
+				this.wpos = lod.unproject(this.rpos);
+
 				//this.rpos = pts.floor(this.rpos); // floor 
 			}
 		}
@@ -207,6 +208,7 @@ export class view {
 		[v] to toggle camera<br />
 		[z] to toggle bit depth effect<br />
 		[shift] to aim<br />
+		[shift + click] to shoot<br />
 		[middle mouse] to pan<br />
 		[spacebar] to toggle roofs<br />
 		[h] to hide debug<br />

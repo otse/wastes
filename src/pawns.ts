@@ -23,7 +23,7 @@ export namespace pawns {
 	export var mousing: pawn | undefined;
 
 	export function make_you() {
-		let pos: vec2 = [44, 44];
+		let pos: vec2 = [44, 52];
 		let paw = new pawn();
 		paw.type = 'you';
 		paw.wpos = pos;
@@ -358,7 +358,7 @@ export namespace pawns {
 				}
 			}
 
-			if (this.type == 'you' && (!x && !y) && app.button(0) >= 1 && !win.hoveringClickableElement) {
+			if (this.type == 'you' && (!x && !y) && (app.button(0) >= 1 || app.key('shift')) && !win.hoveringClickableElement) {
 				// Deduce x and y from click moving
 				wasd = false;
 				let mouse = wastes.gview.mwpos;
@@ -366,6 +366,7 @@ export namespace pawns {
 				pos = pts.add(pos, pts.divide([1, 1], 2));
 				mouse = pts.subtract(mouse, pos);
 				mouse[1] = -mouse[1];
+				
 				const dist = pts.distsimple(pos, wastes.gview.mwpos);
 
 				if (dist > 0.5) {
@@ -428,8 +429,7 @@ export namespace pawns {
 					this.update();
 					wastes.gview.follow = this;
 				}
-				else
-				{
+				else {
 					wastes.gview.follow = undefined;
 				}
 			}
@@ -453,7 +453,38 @@ export namespace pawns {
 			this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
 
 			if (this.type == 'you' && app.key('shift')) {
+
 				this.groups.armr.rotation.x = -Math.PI / 2;
+
+				if (app.button(0) == 1) {
+					console.log('shoot');
+
+					for (let obj of lod.ggrid.all) {
+						const objected = obj as objects.objected;
+						if (objected.isObjected) {
+							const test = objected.tileBound.ray(
+								{
+									dir: [Math.sin(this.angle), Math.cos(this.angle)],
+									org: this.wpos
+								});
+							if (test) {
+								console.log('we hit something');
+								objected.onhit();
+							}
+						}
+					}
+					/*let pos = this.wpos;
+					let sector = lod.ggalaxy.at(lod.ggalaxy.big(pos));
+					let at = sector.stacked(pos);
+					for (let obj of at) {
+						if (obj.type == 'you') {
+							wastes.HIDE_ROOFS = true;
+							break;
+						}
+					}*/
+
+				}
+				//
 			}
 
 			this.render();
