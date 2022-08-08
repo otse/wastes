@@ -1,7 +1,7 @@
 import { default as THREE, BoxGeometry } from "three";
 import aabb2 from "./aabb2";
 import app from "./app";
-import pawns from "./pawn";
+import pawns from "./pawns";
 
 import ren from './renderer';
 import wastes from "./wastes";

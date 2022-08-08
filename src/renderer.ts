@@ -16,11 +16,12 @@ void main() {
 const fragmentPost = `
 float saturation = 2.0;
 
-uniform int compressionEffect;
+uniform int compression;
 
 // 32 is nice
 // 48 is mild
-float factor = 48.0;
+float factor = 32.0;
+
 
 void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {
 
@@ -43,7 +44,9 @@ void main() {
 	*/
 	vec4 outt;
 	gl_FragColor = clr;
+	if (compression == 1) {
 	mainImage(clr, vUv, gl_FragColor);
+	}
 	//gl_FragColor = outt;
 }`
 
@@ -122,6 +125,10 @@ namespace ren {
 	let alternate = true;
 	export function render() {
 
+		if (app.key('z') == 1) {
+			materialPost.uniforms.compression.value = !materialPost.uniforms.compression.value;
+		}
+
 		/*alternate = ! alternate;
 		if (alternate) {
 			return;
@@ -182,7 +189,10 @@ namespace ren {
 		window.addEventListener('resize', onWindowResize, false);
 
 		materialPost = new ShaderMaterial({
-			uniforms: { tDiffuse: { value: target.texture } },
+			uniforms: {
+				tDiffuse: { value: target.texture }, 
+				compression: { value: 1 }
+			},
 			vertexShader: vertexScreen,
 			fragmentShader: fragmentPost,
 			depthWrite: false

@@ -445,7 +445,7 @@ namespace objects {
 					shadows.shade_matrix(this.wpos,
 						[
 							[shadow / 2, shadow, shadow / 2],
-							[shadow,     shadow, shadow],
+							[shadow, shadow, shadow],
 							[shadow / 2, shadow, shadow / 2]
 						]);
 				}
@@ -620,7 +620,7 @@ namespace objects {
 		override tick() {
 			const sprite = this.shape as sprite;
 
-			if (this.mousedSquare(wastes.gview.mrpos2) && !this.mousing) {
+			if (this.mousedSquare(wastes.gview.mrpos2) /*&& !this.mousing*/) {
 				this.mousing = true;
 				sprite.material.color.set('#c1ffcd');
 				console.log('mover');
@@ -775,6 +775,8 @@ namespace objects {
 			this.stack();
 		}
 		override tick() {
+			if (!this.shape)
+				return;
 			let pos = this.wpos;
 			let sector = lod.ggalaxy.at(lod.ggalaxy.big(pos));
 			let at = sector.stacked(pos);

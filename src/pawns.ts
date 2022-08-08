@@ -68,8 +68,10 @@ export namespace pawns {
 
 			if (wasterSprite)
 				this.size = pts.divide([90, 180], 5);
-			else
+			else {
 				this.size = pts.divide([50, 40], 1);
+				this.subsize = [25, 40];
+			}
 
 			let shape = new sprite({
 				binded: this,
@@ -84,7 +86,7 @@ export namespace pawns {
 				this.created = true;
 
 				// Set scale to increase pixels exponentially
-				const scale = 1;
+				const scale = 10;
 
 				// make wee guy target
 				//this.group = new THREE.Group
@@ -375,7 +377,7 @@ export namespace pawns {
 			if (x || y) {
 				// We have to deduce an angle and move that way
 				// Unless we're aiming with a gun
-				let angle = pts.angle([0, 0], [x, y]);				
+				let angle = pts.angle([0, 0], [x, y]);
 				this.angle = angle;
 				x = speed * Math.sin(angle);
 				y = speed * Math.cos(angle);
@@ -388,10 +390,10 @@ export namespace pawns {
 				}
 			}
 			else if (this.type != 'you' && pts.together(this.aimTarget)) {
-				
+
 				let angle = pts.angle(this.wpos, this.aimTarget);
 				//console.log(pts.subtract(this.wpos, this.aimTarget));
-				
+
 				this.angle = -angle + Math.PI;
 
 				//this.wpos = this.aimTarget;
@@ -414,6 +416,23 @@ export namespace pawns {
 			}
 			else
 				this.walkSmoother -= ren.delta * 5;
+
+			if (this.type == 'you') {
+				const sprite = this.shape as sprite;
+
+				if (app.key('v') == 1) {
+					wastes.FOLLOW_CAMERA = !wastes.FOLLOW_CAMERA;
+				}
+				if (wastes.FOLLOW_CAMERA) {
+					this.wtorpos();
+					this.update();
+					wastes.gview.follow = this;
+				}
+				else
+				{
+					wastes.gview.follow = undefined;
+				}
+			}
 
 			this.walkSmoother = wastes.clamp(this.walkSmoother, 0, 1);
 
@@ -446,12 +465,15 @@ export namespace pawns {
 		randomWalker = 0
 		override tick() {
 
+			if (!this.shape)
+				return;
+
 			this.make();
 
 			let posr = pts.round(this.wpos);
 
 			if (this.type != 'you' && this.walkArea) {
-				if (this.randomWalker++ > 120) {
+				if (this.randomWalker++ > 60 * 4) {
 					const target = this.walkArea.random_point();
 					this.aimTarget = target;
 					//this.try_move_to(target);
@@ -524,29 +546,33 @@ export namespace pawns {
 
 			const sprite = this.shape as sprite;
 
-			if (this.type != 'you' && this.mousedSquare(wastes.gview.mrpos2) /*&& !this.mousing*/) {
-				this.mousing = true;
-				sprite.material.color.set('#c1ffcd');
-				//console.log('mover');
-				if (this.type != 'you') {
-					win.contextmenu.focus = this;
+			// We could have been nulled due to a hide, dispose
+			if (sprite) {
+
+				if (this.type != 'you' && this.mousedSquare(wastes.gview.mrpos2) /*&& !this.mousing*/) {
+					this.mousing = true;
+					sprite.material.color.set('#c1ffcd');
+					//console.log('mover');
+					if (this.type != 'you') {
+						win.contextmenu.focus = this;
+					}
+					//win.character.anchor = this;
+					//win.character.toggle(this.mousing);
 				}
-				//win.character.anchor = this;
-				//win.character.toggle(this.mousing);
-			}
-			else if (!this.mousedSquare(wastes.gview.mrpos2) && this.mousing) {
-				if (win.contextmenu.focus == this)
-					win.contextmenu.focus = undefined;
-				//sprite.material.color.set('white');
-				this.mousing = false;
-				//win.character.toggle(this.mousing);
-			}
-			else if (!this.mousing && !this.tile!.hasDeck) {
-				color = shadows.calc(color, pts.round(this.wpos));
-				sprite.material.color.setRGB(color[0], color[1], color[2]);
-			}
-			else {
-				sprite.material.color.set('white');
+				else if (!this.mousedSquare(wastes.gview.mrpos2) && this.mousing) {
+					if (win.contextmenu.focus == this)
+						win.contextmenu.focus = undefined;
+					//sprite.material.color.set('white');
+					this.mousing = false;
+					//win.character.toggle(this.mousing);
+				}
+				else if (!this.mousing && !this.tile!.hasDeck) {
+					color = shadows.calc(color, pts.round(this.wpos));
+					sprite.material.color.setRGB(color[0], color[1], color[2]);
+				}
+				else {
+					sprite.material.color.set('white');
+				}
 			}
 
 			this.stack(['pawn', 'you', 'leaves', 'door', 'roof', 'falsefront', 'panel']);

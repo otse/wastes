@@ -82,7 +82,7 @@ namespace lod {
 		readonly arrays: sector[][] = []
 		constructor(span) {
 			ggalaxy = this;
-			new grid(2, 2);
+			new grid(1, 1);
 		}
 		update(wpos: vec2) {
 			ggrid.big = this.big(wpos);
@@ -216,6 +216,8 @@ namespace lod {
 			this.outside++;
 		}
 		shrink() {
+			console.log('shrink');
+			
 			this.spread--;
 			this.outside--;
 		}
@@ -267,6 +269,7 @@ namespace lod {
 		wpos: vec2 = [0, 0]
 		rpos: vec2 = [0, 0]
 		size: vec2 = [100, 100]
+		subsize: vec2 = [0, 0]
 		shape: shape | null
 		sector: sector | null
 		ro = 0
@@ -320,7 +323,12 @@ namespace lod {
 			this.shape?.update();
 		}
 		bound() {
-			this.aabbScreen = new aabb2([0, 0], this.size);
+			let size = this.size;
+
+			if (pts.together(this.subsize))
+				size = this.subsize;
+
+			this.aabbScreen = new aabb2([0, 0], size);
 			this.aabbScreen.translate(this.rpos);
 		}
 		mousedSquare(mouse: Vec2) {
@@ -353,8 +361,9 @@ namespace lod {
 		dispose() { // implement me
 		}
 		finalize() {
-			this.hide();
+			// this.hide();
 			this.counts[1]--;
+			this.bindObj.shape = null;
 		}
 		show() {
 			if (this.on())
@@ -366,6 +375,7 @@ namespace lod {
 			if (this.off())
 				return;
 			this.dispose();
+			this.finalize();
 			this.counts[0]--;
 		}
 	}

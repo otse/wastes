@@ -9,7 +9,7 @@ import { sprites } from "./sprites";
 import tree from "./tree";
 import shear from "./shear";
 import collada from "./collada";
-import pawns from "./pawn";
+import pawns from "./pawns";
 import win from "./win";
 import rooms from "./rooms";
 import areas from "./areas";
@@ -28,6 +28,7 @@ export namespace wastes {
 
 	export var SOME_OTHER_SETTING = false;
 	export var HIDE_ROOFS = false;
+	export var FOLLOW_CAMERA = true;
 
 	var started = false;
 

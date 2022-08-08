@@ -22,6 +22,7 @@ export class view {
 	mwpos: vec2 = [0, 0]
 	mrpos: vec2 = [0, 0]
 	mrpos2: vec2 = [0, 0]
+	follow?: lod.obj
 	spread = 2
 	static make() {
 		return new view;
@@ -39,9 +40,17 @@ export class view {
 		this.move();
 		this.mouse();
 		this.pan();
-		this.chase();
+		if (!this.follow)
+			this.wpos = lod.unproject(this.rpos);
+		else {
+			let pos = this.follow.wpos;
+			pos = pts.add(pos, [.5, .5]);
+			this.wpos = pts.clone(pos);
+			pos = lod.project(pos);
+			this.rpos = pos;
+		}
+		this.set_camera();
 		this.stats();
-		this.wpos = lod.unproject(this.rpos);
 		lod.ggalaxy.update(this.wpos);
 		const zoom = wastes.gview.zoom;
 		// ren.renderer.domElement.style.transform = `scale(${1/zoom},${1/zoom})`;
@@ -83,7 +92,7 @@ export class view {
 			this.rpos = pts.floor(this.rpos);
 		}
 	}
-	chase() {
+	set_camera() {
 		const smooth = false;
 		if (smooth) {
 			this.rpos = pts.floor(this.rpos);
@@ -172,8 +181,10 @@ export class view {
 
 		crunch += `lod grid size: ${lod.ggrid.spread * 2 + 1} / ${lod.ggrid.outside * 2 + 1}<br />`;
 		crunch += `mouse tile: ${pts.to_string(tiles.hovering?.wpos || [0, 0])}<br />`;
+		crunch += `view center: ${pts.to_string(pts.floor(this.wpos))}<br />`;
 		crunch += `view bigpos: ${pts.to_string(lod.ggalaxy.big(this.wpos))}<br />`;
 		crunch += `view zoom: ${this.zoom}<br />`;
+		crunch += `lod grid: ${lod.ggrid.spread}, ${lod.ggrid.outside}<br />`;
 		crunch += '<br />';
 
 		//crunch += `world wpos: ${pts.to_string(this.pos)}<br /><br />`;
@@ -188,7 +199,18 @@ export class view {
 		crunch += `roofs: ${numbers.roofs[0]} / ${numbers.roofs[1]}<br />`;
 		crunch += '<br />';
 
-		crunch += `controls: rclick for context menu, [w, a, s, d] or hold click to move, [r, f] to zoom, [t, g] to expand view, hold shift to aim, hold middlemouse to pan, scrollwheel to zoom, spacebar to toggle roofs, h to hide debug, c for character menu<br />`;
+		crunch += `controls:<br />
+		[right click] for context menu<br />
+		[w, a, s, d] or [click] to move<br />
+		[r, f] or [scrollwheel] to zoom<br />
+		[t, g] to change lod<br />
+		[v] to toggle camera<br />
+		[z] to toggle bit depth effect<br />
+		[shift] to aim<br />
+		[middle mouse] to pan<br />
+		[spacebar] to toggle roofs<br />
+		[h] to hide debug<br />
+		[c] for character menu<br />`;
 
 		let element = document.querySelectorAll('.stats')[0] as any;
 		element.innerHTML = crunch;

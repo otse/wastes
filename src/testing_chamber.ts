@@ -97,7 +97,7 @@ namespace testing_chamber {
 				binded: this,
 				tuple: sprites.test100
 			});
-			shape.dime = false;
+			shape.dimetric = false;
 		}
 		tick() {
 			let shape = this.shape as sprite;

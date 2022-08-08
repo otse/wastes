@@ -9,6 +9,7 @@ import hooks from "./hooks";
 import sprite from "./sprite";
 import sprites from "./sprites";
 import shadows from "./shadows";
+import pawns from "./pawns";
 
 export namespace tiles {
 
@@ -186,18 +187,20 @@ export namespace tiles {
 		}
 		paint() {
 			const sprite = this.shape as sprite;
-			if (!sprite?.mesh)
+			if (!sprite || !sprite.mesh)
 				return;
-			[Math.floor(Math.random() * 4)];
-			sprite.mesh.material.color.set('pink');
+			sprite.mesh.material.color.set('red');
 		}
 		tick() {
 			if (this.refresh) {
 				this.refresh = false;
-				console.log('refreshing tile');
-				
 				this.hide();
 				this.show();
+			}
+			if (pts.equals(this.wpos, pts.round(pawns.you.wpos))) {
+				//console.log('boo');
+
+				//this.paint();
 			}
 		}
 	}

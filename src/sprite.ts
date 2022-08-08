@@ -21,10 +21,11 @@ export namespace sprite {
 };
 
 export class sprite extends lod.shape {
-	dime = true
+	dimetric = true
 	rup = 0
 	rup2 = 0
 	rleft = 0
+	calc: vec2 = [0, 0]
 	mesh: Mesh
 	material: MeshLambertMaterial
 	geometry: PlaneBufferGeometry
@@ -43,12 +44,19 @@ export class sprite extends lod.shape {
 		this.myUvTransform = new Matrix3;
 		this.myUvTransform.setUvTransform(0, 0, 1, 1, 0, 0, 1);
 	}
-	update() {
+	override dispose() {
+		if (!this.mesh)
+			return;
+		this.geometry?.dispose();
+		this.material?.dispose();
+		this.mesh.parent?.remove(this.mesh);
+	}
+	override update() {
 		if (!this.mesh)
 			return;
 		const obj = this.vars.binded;
 		let calc = obj.rpos;
-		if (this.dime)
+		if (this.dimetric)
 			// move bottom left corner
 			calc = pts.add(obj.rpos, pts.divide(obj.size, 2));
 		else
@@ -56,6 +64,7 @@ export class sprite extends lod.shape {
 
 		let pos = pts.round(obj.wpos);
 		calc = pts.add(calc, [this.rleft, this.rup + this.rup2]);
+		this.calc = calc;
 		if (this.mesh) {
 			this.retransform();
 			this.mesh.position.fromArray([...calc, 0]);
@@ -66,13 +75,6 @@ export class sprite extends lod.shape {
 	}
 	retransform() {
 		this.myUvTransform.copy(sprites.get_uv_transform(this.vars.cell!, this.vars.tuple));
-	}
-	override dispose() {
-		if (!this.mesh)
-			return;
-		this.geometry?.dispose();
-		this.material?.dispose();
-		this.mesh.parent?.remove(this.mesh);
 	}
 	override create() {
 		//console.log('create');
