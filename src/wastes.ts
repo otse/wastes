@@ -16,6 +16,7 @@ import areas from "./areas";
 import colormap from "./colormap";
 import { shadows } from "./shadows";
 import aabb2 from "./aabb2";
+import { client } from "./client";
 
 export { win, pawns, objects }; // fixes creepy rollup error
 
@@ -114,6 +115,7 @@ export namespace wastes {
 			areas.start();
 			win.start();
 			tests.start();
+			client.start();
 
 			pawns.make_you();
 

@@ -1,0 +1,28 @@
+{
+    "compilerOptions": {
+        //"baseUrl": "./src2",
+        "sourceMap": false,
+        "module": "commonjs",
+        "target": "es6",
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true,
+        "jsx": "preserve",
+        "lib": [
+            "dom",
+            "es6"
+        ],
+        "sourceMap": false,
+        "outDir": "dist/",
+        "moduleResolution": "node",
+        "strictNullChecks": true
+    },
+    "files": [
+        "server.d.ts"
+    ],
+    "include": [
+        "./",
+    ],
+    "exclude": [
+        "node_modules",
+    ]
+}

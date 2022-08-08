@@ -587,6 +587,11 @@ void main() {
             sector.add(obj);
         }
         lod.add = add;
+        function remove(obj) {
+            var _a;
+            (_a = obj.sector) === null || _a === void 0 ? void 0 : _a.remove(obj);
+        }
+        lod.remove = remove;
         class galaxy {
             constructor(span) {
                 this.arrays = [];
@@ -643,7 +648,7 @@ void main() {
                 if (i == -1) {
                     this.objs.push(obj);
                     obj.sector = this;
-                    if (this.isActive())
+                    if (this.isActive() && !obj.isActive())
                         obj.show();
                 }
             }
@@ -6176,6 +6181,7 @@ void main() {
                 this.type = 'deck';
                 this.height = 3;
             }
+            onhit() { }
             create() {
                 this.tiled();
                 this.tile.hasDeck = true;
@@ -6212,6 +6218,7 @@ void main() {
                 this.type = 'porch';
                 this.height = 3;
             }
+            onhit() { }
             create() {
                 this.tiled();
                 //this.tile!.z -= 24;
@@ -6273,8 +6280,6 @@ void main() {
                 });
                 this.stack();
             }
-            tick() {
-            }
         }
         deadtree.timer = 0;
         objects.deadtree = deadtree;
@@ -6316,6 +6321,7 @@ void main() {
                 this.type = 'leaves';
                 this.height = 14;
             }
+            onhit() { }
             create() {
                 this.tiled();
                 this.size = [24, 31];
@@ -6538,6 +6544,7 @@ void main() {
                 this.type = 'roof';
                 this.height = 3;
             }
+            onhit() { }
             create() {
                 //return;
                 this.tiled();
@@ -8246,6 +8253,27 @@ void main() {
     })(areas || (areas = {}));
     var areas$1 = areas;
 
+    var client;
+    (function (client) {
+        function start() {
+            client.socket = new WebSocket("ws://localhost:8080");
+            client.socket.onopen = function (e) {
+                //console.log("[open] Connection established");
+                //console.log("Sending to server");
+                //socket.send("My name is John");
+            };
+            client.socket.onmessage = function (event) {
+                console.log(`[message] Data received from server: ${event.data}`);
+            };
+            setInterval(() => {
+                const json = { player: { wpos: pawns$1.you.wpos } };
+                const string = JSON.stringify(json);
+                client.socket.send(string);
+            }, 1000);
+        }
+        client.start = start;
+    })(client || (client = {}));
+
     exports.wastes = void 0;
     (function (wastes) {
         wastes.size = 24;
@@ -8326,6 +8354,7 @@ void main() {
                 areas$1.start();
                 win$1.start();
                 tests$1.start();
+                client.start();
                 pawns$1.make_you();
                 let pos = [37.5, 48.5];
                 let vendor = new pawns$1.pawn();

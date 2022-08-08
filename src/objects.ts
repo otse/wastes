@@ -311,6 +311,8 @@ namespace objects {
 			this.type = 'deck'
 			this.height = 3;
 		}
+		override onhit() {}
+
 		override create() {
 			this.tiled();
 			this.tile!.hasDeck = true;
@@ -346,6 +348,8 @@ namespace objects {
 			this.type = 'porch'
 			this.height = 3;
 		}
+		override onhit() {}
+
 		override create() {
 			this.tiled();
 			//this.tile!.z -= 24;
@@ -407,8 +411,6 @@ namespace objects {
 			});
 			this.stack();
 		}
-		override tick() {
-		}
 	}
 	export class decidtree extends objected {
 		flowered = false
@@ -447,6 +449,8 @@ namespace objects {
 			this.type = 'leaves'
 			this.height = 14;
 		}
+		override onhit() {}
+
 		override create() {
 			this.tiled();
 			this.size = [24, 31];
@@ -709,6 +713,7 @@ namespace objects {
 			this.type = 'roof';
 			this.height = 3;
 		}
+		override onhit() {}
 		override create() {
 			//return;
 			this.tiled();

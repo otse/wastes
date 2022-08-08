@@ -78,6 +78,10 @@ namespace lod {
 		sector.add(obj);
 	}
 
+	export function remove(obj: obj) {
+		obj.sector?.remove(obj);
+	}
+
 	export class galaxy {
 		readonly arrays: sector[][] = []
 		constructor(span) {
@@ -142,7 +146,7 @@ namespace lod {
 			if (i == -1) {
 				this.objs.push(obj);
 				obj.sector = this;
-				if (this.isActive())
+				if (this.isActive() && !obj.isActive())
 					obj.show();
 			}
 		}
