@@ -8255,6 +8255,7 @@ void main() {
 
     var client;
     (function (client) {
+        client.pawnsId = {};
         function start() {
             client.socket = new WebSocket("ws://localhost:8080");
             client.socket.onopen = function (e) {
@@ -8263,13 +8264,34 @@ void main() {
                 //socket.send("My name is John");
             };
             client.socket.onmessage = function (event) {
-                console.log(`[message] Data received from server: ${event.data}`);
+                const string = event.data;
+                const data = JSON.parse(string);
+                console.log(`received from server`, data);
+                if (Array.isArray(data)) {
+                    const packages = data;
+                    for (let sobj of packages) {
+                        if (sobj.type == 'pawn') {
+                            let pawn = client.pawnsId[sobj.id];
+                            if (!pawn) {
+                                console.log('make a pawn');
+                                let pawn = client.pawnsId[sobj.id] = new pawns$1.pawn();
+                                pawn.wpos = sobj.wpos;
+                                pawn.angle = sobj.angle;
+                                lod$1.add(pawn);
+                            }
+                            else {
+                                pawn.wpos = sobj.wpos;
+                                pawn.angle = sobj.angle;
+                            }
+                        }
+                    }
+                }
             };
             setInterval(() => {
-                const json = { player: { wpos: pawns$1.you.wpos } };
+                const json = { player: { wpos: pawns$1.you.wpos, angle: pawns$1.you.angle } };
                 const string = JSON.stringify(json);
                 client.socket.send(string);
-            }, 1000);
+            }, 333);
         }
         client.start = start;
     })(client || (client = {}));

@@ -3,6 +3,7 @@ import { WebSocketServer } from 'ws';
 import pts from "../src/pts"
 import aabb2 from "../src/aabb2"
 import slod from "./slod"
+import { send } from 'process';
 
 var cons: conn[] = [];
 
@@ -39,31 +40,47 @@ class conn {
 	receive(json: any) {
 		if (json.player) {
 			this.you.wpos = json.player.wpos;
+			this.you.angle = json.player.angle;
 			this.you.sector?.swap(this.you);
 		}
 	}
-	tick() {
+	update_grid() {
 		slod.gworld.update_grid(this.grid, this.you.wpos);
+	}
+	gather() {
+		let packages = this.grid.gather();
+		const string = JSON.stringify(packages);
+		console.log('sending', packages);
+
+		this.ws.send(string);
 	}
 }
 
 const loop = () => {
 	slod.ssector.tick();
 	for (let con of cons) {
-		con.tick();
-		con.ws.send('1/3');
+		con.update_grid();
+		con.gather();
+		//con.ws.send();
 	}
 };
 
 class pawn extends slod.sobj {
+	angle = 0
+	static id = 0
 	constructor() {
 		super();
+		this.id = 'pawn' + pawn.id++;
+		this.type = 'pawn';
 	}
 	override create() {
-		
+
 	}
 	override hide() {
 		console.log('ply-pawn should be impertinent');
+	}
+	override package() {
+		return { id: this.id, type: this.type, wpos: this.wpos, angle: this.angle };
 	}
 }
 
@@ -92,5 +109,5 @@ wss.on('connection', function connection(ws) {
 	});
 
 
-	ws.send('something');
+	//ws.send('something');
 });

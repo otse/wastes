@@ -146,7 +146,11 @@ namespace slod {
 			}
 		}
 		gather() {
-
+			let packages: object[] = [];
+			for (let obj of this.objs) {
+				packages.push(obj.package());
+			}
+			return packages;
 		}
 		static tick() {
 			for (let sector of this.actives) {
@@ -248,9 +252,17 @@ namespace slod {
 				}
 			}
 		}
+		gather() {
+			let packages: object[] = [];
+			for (let sector of this.shown) {
+				packages = packages.concat(sector.gather());
+			}
+			return packages;
+		}
 	}
 
 	export class sobj extends toggle {
+		id = 'sobj0'
 		type = 'an sobj'
 		aabb: aabb2
 		wpos: vec2 = [0, 0]
@@ -299,6 +311,9 @@ namespace slod {
 		}
 		is_type(types: string[]) {
 			return types.indexOf(this.type) != -1;
+		}
+		package() {
+			return { id: this.id, type: this.type, wpos: this.wpos };
 		}
 	}
 }
