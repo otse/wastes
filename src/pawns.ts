@@ -51,6 +51,8 @@ export namespace pawns {
 		inventory: objects.container
 		items: string[] = []
 		gun: string = 'revolver'
+		outfit = ['#444139', '#444139', '#484c4c', '#31362c']
+		aiming = false
 		group
 		mesh
 		target
@@ -207,27 +209,27 @@ export namespace pawns {
 
 			let boxHead = new BoxGeometry(headSize, headSize, headSize, 1, 1, 1);
 			let materialHead = new MeshLambertMaterial({
-				color: '#31362c'
+				color: this.outfit[3]
 			});
 
 			let boxGasMask = new BoxGeometry(gasMaskSize, gasMaskSize, gasMaskSize, 1, 1, 1);
 			let materialGasMask = new MeshLambertMaterial({
-				color: '#31362c'
+				color: this.outfit[3]
 			});
 
 			let boxBody = new BoxGeometry(bodyWidth, bodyHeight, bodyThick, 1, 1, 1);
 			let materialBody = new MeshLambertMaterial({
-				color: '#444139'
+				color: this.outfit[0]
 			});
 
 			let boxArms = new BoxGeometry(armsSize, armsHeight, armsSize, 1, 1, 1);
 			let materialArms = new MeshLambertMaterial({
-				color: '#444139'
+				color: this.outfit[1]
 			});
 
 			let boxLegs = new BoxGeometry(legsSize, legsHeight, legsSize, 1, 1, 1);
 			let materialLegs = new MeshLambertMaterial({
-				color: '#484c4c'
+				color: this.outfit[2]
 			});
 
 			/*let boxGunGrip = new BoxGeometry(2, 5, 2, 1, 1, 1);
@@ -318,7 +320,7 @@ export namespace pawns {
 
 			this.scene.add(this.groups.ground);
 
-			const loadGunAgain = false;
+			const loadGunAgain = true;
 			if (loadGunAgain) {
 				const gun = collada.load_model('collada/revolver', (model) => {
 					model.rotation.set(0, 0, Math.PI / 2);
@@ -457,39 +459,34 @@ export namespace pawns {
 			this.groups.armr.rotation.x = swoop2 * armsSwoop * this.walkSmoother;
 			this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
 
-			if (this.type == 'you' && app.key('shift')) {
+			if (this.type == 'you') {
+				if (app.key('shift')) {
+					this.aiming = true;
 
-				this.groups.armr.rotation.x = -Math.PI / 2;
+					if (app.button(0) == 1) {
+						console.log('shoot');
 
-				if (app.button(0) == 1) {
-					console.log('shoot');
-
-					for (let obj of lod.ggrid.all) {
-						const objected = obj as objects.objected;
-						if (objected.isObjected) {
-							const test = objected.tileBound.ray(
-								{
-									dir: [Math.sin(this.angle), Math.cos(this.angle)],
-									org: this.wpos
-								});
-							if (test) {
-								console.log('we hit something');
-								objected.onhit();
+						for (let obj of lod.ggrid.all) {
+							const objected = obj as objects.objected;
+							if (objected.isObjected) {
+								const test = objected.tileBound.ray(
+									{
+										dir: [Math.sin(this.angle), Math.cos(this.angle)],
+										org: this.wpos
+									});
+								if (test) {
+									console.log('we hit something');
+									objected.onhit();
+								}
 							}
 						}
 					}
-					/*let pos = this.wpos;
-					let sector = lod.ggalaxy.at(lod.ggalaxy.big(pos));
-					let at = sector.stacked(pos);
-					for (let obj of at) {
-						if (obj.type == 'you') {
-							wastes.HIDE_ROOFS = true;
-							break;
-						}
-					}*/
-
 				}
-				//
+				else
+					this.aiming = false;
+			}
+			if (this.aiming) {
+				this.groups.armr.rotation.x = -Math.PI / 2;
 			}
 
 			this.render();
@@ -500,7 +497,7 @@ export namespace pawns {
 		walkSmoother = 1
 		randomWalker = 0
 		nettick() {
-			
+
 			if (!pts.together(this.netwpos))
 				this.netwpos = this.wpos;
 
@@ -512,22 +509,21 @@ export namespace pawns {
 				this.angle += Math.PI * 2;
 			if (this.angle - this.netangle > Math.PI)
 				this.angle -= Math.PI * 2;
-				
+
 			let tweenAngle = (this.netangle - this.angle) * 0.1;
-			
+
 			this.angle += tweenAngle;
 
 			const movement = pts.together(pts.abs(tween));
 			if (movement > 0.005) {
 				//console.log('movement > 0.25');
-				
+
 				this.walkSmoother += ren.delta * 10;
 			}
-			else
-			{
+			else {
 				this.walkSmoother -= ren.delta * 5;
 			}
-			
+
 		}
 		override tick() {
 

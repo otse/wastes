@@ -7773,6 +7773,8 @@ void main() {
                 this.trader = false;
                 this.items = [];
                 this.gun = 'revolver';
+                this.outfit = ['#444139', '#444139', '#484c4c', '#31362c'];
+                this.aiming = false;
                 this.created = false;
                 this.groups = {};
                 this.meshes = {};
@@ -7897,23 +7899,23 @@ void main() {
                 transforme(armsSize, armsSize, armsHeight, `tex/pawn/arms.png`);
                 let boxHead = new THREE.BoxGeometry(headSize, headSize, headSize, 1, 1, 1);
                 let materialHead = new THREE.MeshLambertMaterial({
-                    color: '#31362c'
+                    color: this.outfit[3]
                 });
                 let boxGasMask = new THREE.BoxGeometry(gasMaskSize, gasMaskSize, gasMaskSize, 1, 1, 1);
                 let materialGasMask = new THREE.MeshLambertMaterial({
-                    color: '#31362c'
+                    color: this.outfit[3]
                 });
                 let boxBody = new THREE.BoxGeometry(bodyWidth, bodyHeight, bodyThick, 1, 1, 1);
                 let materialBody = new THREE.MeshLambertMaterial({
-                    color: '#444139'
+                    color: this.outfit[0]
                 });
                 let boxArms = new THREE.BoxGeometry(armsSize, armsHeight, armsSize, 1, 1, 1);
                 let materialArms = new THREE.MeshLambertMaterial({
-                    color: '#444139'
+                    color: this.outfit[1]
                 });
                 let boxLegs = new THREE.BoxGeometry(legsSize, legsHeight, legsSize, 1, 1, 1);
                 let materialLegs = new THREE.MeshLambertMaterial({
-                    color: '#484c4c'
+                    color: this.outfit[2]
                 });
                 /*let boxGunGrip = new BoxGeometry(2, 5, 2, 1, 1, 1);
                 let materialGunGrip = new MeshLambertMaterial({
@@ -7982,6 +7984,13 @@ void main() {
                 this.groups.ground.position.set(0, -bodyHeight * 1.0, 0);
                 //mesh.rotation.set(Math.PI / 2, 0, 0);
                 this.scene.add(this.groups.ground);
+                {
+                    collada$1.load_model('collada/revolver', (model) => {
+                        model.rotation.set(0, 0, Math.PI / 2);
+                        model.position.set(0, -armsHeight + armsSize / 2, 0);
+                        this.groups.armr.add(model);
+                    });
+                }
             }
             render() {
                 ren$1.renderer.setRenderTarget(this.target);
@@ -8086,34 +8095,31 @@ void main() {
                 this.groups.arml.rotation.x = swoop1 * armsSwoop * this.walkSmoother;
                 this.groups.armr.rotation.x = swoop2 * armsSwoop * this.walkSmoother;
                 this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
-                if (this.type == 'you' && app$1.key('shift')) {
-                    this.groups.armr.rotation.x = -Math.PI / 2;
-                    if (app$1.button(0) == 1) {
-                        console.log('shoot');
-                        for (let obj of lod$1.ggrid.all) {
-                            const objected = obj;
-                            if (objected.isObjected) {
-                                const test = objected.tileBound.ray({
-                                    dir: [Math.sin(this.angle), Math.cos(this.angle)],
-                                    org: this.wpos
-                                });
-                                if (test) {
-                                    console.log('we hit something');
-                                    objected.onhit();
+                if (this.type == 'you') {
+                    if (app$1.key('shift')) {
+                        this.aiming = true;
+                        if (app$1.button(0) == 1) {
+                            console.log('shoot');
+                            for (let obj of lod$1.ggrid.all) {
+                                const objected = obj;
+                                if (objected.isObjected) {
+                                    const test = objected.tileBound.ray({
+                                        dir: [Math.sin(this.angle), Math.cos(this.angle)],
+                                        org: this.wpos
+                                    });
+                                    if (test) {
+                                        console.log('we hit something');
+                                        objected.onhit();
+                                    }
                                 }
                             }
                         }
-                        /*let pos = this.wpos;
-                        let sector = lod.ggalaxy.at(lod.ggalaxy.big(pos));
-                        let at = sector.stacked(pos);
-                        for (let obj of at) {
-                            if (obj.type == 'you') {
-                                wastes.HIDE_ROOFS = true;
-                                break;
-                            }
-                        }*/
                     }
-                    //
+                    else
+                        this.aiming = false;
+                }
+                if (this.aiming) {
+                    this.groups.armr.rotation.x = -Math.PI / 2;
                 }
                 this.render();
             }
@@ -8348,12 +8354,14 @@ void main() {
                                 }
                                 pawn.wpos = sobj.wpos;
                                 pawn.angle = sobj.angle;
+                                pawn.outfit = sobj.outfit;
                                 (_a = pawn.sector) === null || _a === void 0 ? void 0 : _a.swap(pawn);
                                 lod$1.add(pawn);
                             }
                             if (pawn && pawn.type != 'you') {
                                 pawn.netwpos = sobj.wpos;
                                 pawn.netangle = sobj.angle;
+                                pawn.aiming = sobj.aiming;
                                 (_b = pawn.sector) === null || _b === void 0 ? void 0 : _b.swap(pawn);
                             }
                         }
@@ -8362,7 +8370,7 @@ void main() {
             };
             setInterval(() => {
                 if (pawns$1.you) {
-                    const json = { player: { wpos: pawns$1.you.wpos, angle: pawns$1.you.angle } };
+                    const json = { player: { wpos: pawns$1.you.wpos, angle: pawns$1.you.angle, aiming: pawns$1.you.aiming } };
                     const string = JSON.stringify(json);
                     client.socket.send(string);
                 }

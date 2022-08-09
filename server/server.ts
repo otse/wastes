@@ -50,6 +50,7 @@ class conn {
 			if (this.you) {
 				this.you.wpos = json.player.wpos;
 				this.you.angle = json.player.angle;
+				this.you.aiming = json.player.aiming;
 				this.you.sector?.swap(this.you);
 			}
 		}
@@ -87,13 +88,22 @@ const loop = () => {
 	}
 };
 
+const outfits: [string, string, string, string][] = [
+	['#444139', '#444139', '#484c4c', '#31362c'],
+	['#484847', '#484847', '#44443f', '#2c3136']
+
+]
+
 class pawn extends slod.sobj {
 	angle = 0
 	static id = 0
+	aiming = false
+	outfit: string[] = []
 	constructor() {
 		super();
 		this.id = 'pawn_' + pawn.id++;
 		this.type = 'pawn';
+		this.outfit = outfits[Math.floor(Math.random() * outfits.length)];
 	}
 	override create() {
 
@@ -102,7 +112,14 @@ class pawn extends slod.sobj {
 		console.log('ply-pawn should be impertinent');
 	}
 	override gather() {
-		return { id: this.id, type: this.type, wpos: this.wpos, angle: this.angle };
+		return {
+			id: this.id,
+			type: this.type,
+			wpos: this.wpos,
+			angle: this.angle,
+			outfit: this.outfit,
+			aiming: this.aiming
+		};
 	}
 }
 

@@ -74,6 +74,7 @@ export namespace client {
 
 							pawn.wpos = sobj.wpos;
 							pawn.angle = sobj.angle;
+							pawn.outfit = sobj.outfit;
 							pawn.sector?.swap(pawn);
 
 							lod.add(pawn);
@@ -81,6 +82,7 @@ export namespace client {
 						if (pawn && pawn.type != 'you') {
 							pawn.netwpos = sobj.wpos;
 							pawn.netangle = sobj.angle;
+							pawn.aiming = sobj.aiming;
 							pawn.sector?.swap(pawn);
 						}
 					}
@@ -92,7 +94,7 @@ export namespace client {
 
 		setInterval(() => {
 			if (pawns.you) {
-				const json = { player: { wpos: pawns.you.wpos, angle: pawns.you.angle } };
+				const json = { player: { wpos: pawns.you.wpos, angle: pawns.you.angle, aiming: pawns.you.aiming } };
 				const string = JSON.stringify(json);
 				socket.send(string);
 			}
