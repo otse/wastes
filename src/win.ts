@@ -179,7 +179,7 @@ namespace win {
 			}
 		}
 		static tick() {
-			if (!pawns.you.isActive()) {
+			if (pawns.you && !pawns.you.isActive()) {
 				this.call(true);
 				this.modal!.float(pawns.you, [-5, 5]);
 				console.log('call and float');
@@ -335,7 +335,7 @@ namespace win {
 	export class container {
 		static crate?: objects.objected
 		static crateCur?: objects.objected
-	//static obj?: lod.obj
+		//static obj?: lod.obj
 		static modal?: modal
 		static call_once() {
 			if (this.crate != this.crateCur) {

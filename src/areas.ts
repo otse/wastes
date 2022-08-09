@@ -31,7 +31,9 @@ namespace areas {
 		if (!started)
 			return;
 
-		let here = new aabb2(pawns.you.wpos, pawns.you.wpos);
+		let pos = wastes.gview.center.wpos;
+
+		let here = new aabb2(pos, pos);
 
 		if (currentArea) {
 			if (currentArea && currentArea.bound.test(here) == aabb2.TEST.Outside) {

@@ -23,34 +23,54 @@ class conn {
 	you: pawn
 	ourwpos: vec2 = [44, 52]
 	grid: slod.sgrid
+	sentPlayer = false
 	constructor(public ws) {
+		this.grid = new slod.sgrid(slod.gworld, 2, 2);
+
 		this.you = new pawn;
+		this.you.wpos = [44, 52];
 		this.you.impertinent = true;
-
 		slod.add(this.you);
+		//const string = JSON.stringify({ playerId: this.you.id });
+		//this.ws.send(string);
 
-		this.grid = new slod.sgrid(slod.gworld, 1, 1);
 	}
 	close() {
 		this.grid.outside = -1;
 		this.grid.offs();
 		this.you.hide();
-		slod.remove(this.you);
+		this.you.sector?.hard_remove(this.you);
+		slod.remove(this.you!);
+		this.you.finalize();
 	}
 	receive(json: any) {
 		if (json.player) {
-			this.you.wpos = json.player.wpos;
-			this.you.angle = json.player.angle;
-			this.you.sector?.swap(this.you);
+			if (this.you) {
+				this.you.wpos = json.player.wpos;
+				this.you.angle = json.player.angle;
+				this.you.sector?.swap(this.you);
+			}
 		}
 	}
 	update_grid() {
-		slod.gworld.update_grid(this.grid, this.you.wpos);
+		if (this.you)
+			slod.gworld.update_grid(this.grid, this.you.wpos);
 	}
 	gather() {
-		let packages = this.grid.gather();
-		const string = JSON.stringify(packages);
-		console.log('sending', packages);
+		let object: any = {};
+
+		if (!this.sentPlayer) {
+			this.sentPlayer = true;
+			console.log('sending you-pawn');
+
+			object.player = this.you?.gather();
+		}
+
+		object.news = this.grid.gather();
+		object.removes = this.grid.removes;
+		this.grid.removes = [];
+
+		const string = JSON.stringify(object);
 
 		this.ws.send(string);
 	}
@@ -70,7 +90,7 @@ class pawn extends slod.sobj {
 	static id = 0
 	constructor() {
 		super();
-		this.id = 'pawn' + pawn.id++;
+		this.id = 'pawn_' + pawn.id++;
 		this.type = 'pawn';
 	}
 	override create() {
@@ -79,7 +99,7 @@ class pawn extends slod.sobj {
 	override hide() {
 		console.log('ply-pawn should be impertinent');
 	}
-	override package() {
+	override gather() {
 		return { id: this.id, type: this.type, wpos: this.wpos, angle: this.angle };
 	}
 }

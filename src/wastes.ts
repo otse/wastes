@@ -117,7 +117,10 @@ export namespace wastes {
 			tests.start();
 			client.start();
 
-			pawns.make_you();
+			gview.center = new lod.obj();
+			gview.center.wpos = [44, 52];
+
+			//pawns.make_you();
 
 			let pos: vec2 = [37.5, 48.5];
 			let vendor = new pawns.pawn();

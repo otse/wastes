@@ -197,10 +197,10 @@ export namespace tiles {
 				this.hide();
 				this.show();
 			}
-			if (pts.equals(this.wpos, pts.round(pawns.you.wpos))) {
+			/*if (pts.equals(this.wpos, pts.round(pawns.you.wpos))) {
 				//console.log('boo');
 				//this.paint();
-			}
+			}*/
 		}
 	}
 

@@ -48,7 +48,7 @@ class toggle {
 
 namespace lod {
 
-	const chunk_coloration = false;
+	const chunk_coloration = true;
 
 	const grid_crawl_makes_sectors = true;
 
@@ -286,8 +286,8 @@ namespace lod {
 			super();
 			this.counts[1]++;
 		}
-		finalize() { // finalzie is never used
-			this.hide();
+		finalize() {
+			// this.hide();
 			this.counts[1]--;
 		}
 		show() {

@@ -23,6 +23,7 @@ export class view {
 	mrpos: vec2 = [0, 0]
 	mrpos2: vec2 = [0, 0]
 	follow?: lod.obj
+	center: lod.obj
 	static make() {
 		return new view;
 	}
@@ -31,9 +32,6 @@ export class view {
 	constructor() {
 		new lod.galaxy(10);
 		this.rpos = lod.project(this.wpos);
-	}
-	remove(obj: lod.obj) {
-		obj.sector?.remove(obj);
 	}
 	tick() {
 		this.move();
@@ -45,9 +43,11 @@ export class view {
 			pos = pts.add(pos, [.5, .5]);
 			this.wpos = pts.clone(pos);
 			this.rpos = lod.project(pos);
-			this.rpos = pts.add(this.rpos, [0, this.follow.size[1] / 2]);
 		}
 		this.pan();
+		if (this.follow) {
+			this.rpos = pts.add(this.rpos, [0, this.follow.size[1] / 2]);
+		}
 		this.set_camera();
 		this.stats();
 		lod.ggalaxy.update(this.wpos);

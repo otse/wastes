@@ -629,6 +629,7 @@ void main() {
                 this.big = big;
                 this.galaxy = galaxy;
                 this.objs = [];
+                this.color = (['lightsalmon', 'lightblue', 'beige', 'pink'])[Math.floor(Math.random() * 4)];
                 let min = pts.mult(this.big, lod.SectorSpan);
                 let max = pts.add(min, [lod.SectorSpan - 1, lod.SectorSpan - 1]);
                 this.small = new aabb2(max, min);
@@ -781,7 +782,7 @@ void main() {
                 this.counts[1]++;
             }
             finalize() {
-                this.hide();
+                // this.hide();
                 this.counts[1]--;
             }
             show() {
@@ -1296,6 +1297,1419 @@ void main() {
         shadows.tick = tick;
     })(shadows || (shadows = {}));
     var shadows$1 = shadows;
+
+    var tiles;
+    (function (tiles) {
+        tiles.started = false;
+        var arrays = [];
+        tiles.hovering = undefined;
+        function get(pos) {
+            if (arrays[pos[1]])
+                return arrays[pos[1]][pos[0]];
+        }
+        tiles.get = get;
+        function register() {
+            console.log(' tiles register ');
+            // this runs before the objects hooks
+            hooks.register('sectorCreate', (sector) => {
+                pts.func(sector.small, (pos) => {
+                    let x = pos[0];
+                    let y = pos[1];
+                    if (arrays[y] == undefined)
+                        arrays[y] = [];
+                    let tile = new tiles.tile([x, y]);
+                    arrays[y][x] = tile;
+                    lod$1.add(tile);
+                });
+                return false;
+            });
+        }
+        tiles.register = register;
+        function start() {
+            tiles.started = true;
+            console.log(' tiles start ');
+            lod$1.ggalaxy.at(lod$1.ggalaxy.big(wastes.gview.wpos));
+        }
+        tiles.start = start;
+        function tick() {
+            if (!tiles.started)
+                return;
+            for (let i = 40; i >= 0; i--) {
+                // pretention grid
+                let pos = lod$1.unproject(pts.add(wastes.gview.mrpos, [0, -i]));
+                pos = pts.floor(pos);
+                const tile = get(pos);
+                if (tile && tile.z + tile.height + tile.heightAdd == i) {
+                    if (tile.sector.isActive()) {
+                        tile.hover();
+                        tiles.hovering = tile;
+                        break;
+                    }
+                }
+            }
+        }
+        tiles.tick = tick;
+        const color_purple_water = [40, 120, 130, 255];
+        class tile extends lod$1.obj {
+            constructor(wpos) {
+                super(numbers.tiles);
+                this.hasDeck = false;
+                this.isLand = false;
+                this.refresh = false;
+                this.opacity = 1;
+                this.wpos = wpos;
+                let colour = wastes.colormap.pixel(this.wpos);
+                if (colour.is_black()) {
+                    // We are a water
+                    this.type = 'water';
+                    this.size = [24, 12];
+                    this.tuple = sprites$1.dwater;
+                    this.opacity = .5;
+                    this.color = color_purple_water;
+                }
+                if (!colour.is_black()) {
+                    // We're a land tile
+                    this.isLand = true;
+                    this.type = 'land';
+                    this.size = [24, 30];
+                    this.tuple = sprites$1.dgraveltiles;
+                    this.height = 6;
+                    this.cell = [1, 0];
+                    {
+                        let biome = wastes.roughmap.pixel(this.wpos);
+                        if (biome.array[0] > 70) {
+                            this.tuple = sprites$1.dswamptiles;
+                            //this.z -= 1;
+                        }
+                    }
+                    const divisor = 3;
+                    let height = wastes.heightmap.pixel(this.wpos);
+                    this.z += Math.floor(height.array[0] / divisor);
+                    this.z -= 3; // so we dip the water
+                    //this.z += Math.random() * 24;
+                }
+            }
+            get_stack() {
+                var _a;
+                (_a = this.sector) === null || _a === void 0 ? void 0 : _a.objsro();
+            }
+            /*stack(obj: lod.obj) {
+                let i = this.objs.indexOf(obj);
+                if (i == -1)
+                    this.objs.push(obj);
+            }
+            unstack(obj: lod.obj) {
+                let i = this.objs.indexOf(obj);
+                if (i > -1)
+                    return this.objs.splice(i, 1).length;
+            }*/
+            create() {
+                if (this.isLand) {
+                    this.color = wastes.colormap.pixel(this.wpos).array;
+                    this.color = shadows$1.calc(this.color, this.wpos);
+                }
+                let shape = new sprite({
+                    binded: this,
+                    tuple: this.tuple,
+                    cell: this.cell,
+                    color: this.color,
+                    opacity: this.opacity,
+                    orderBias: -1.0
+                });
+                // if we have a deck, add it to heightAdd
+                let sector = lod$1.ggalaxy.at(lod$1.ggalaxy.big(this.wpos));
+                let at = sector.stacked(this.wpos);
+                for (let obj of at) {
+                    if (obj.type == 'deck' || obj.type == 'porch')
+                        this.heightAdd = obj.height;
+                }
+                shape.rup = this.z;
+            }
+            //update() {}
+            delete() {
+            }
+            hover() {
+                const sprite = this.shape;
+                if (!(sprite === null || sprite === void 0 ? void 0 : sprite.mesh))
+                    return;
+                const last = tile.lastHover;
+                if (last && last != this && last.sector.isActive()) {
+                    last.hide();
+                    last.show();
+                }
+                sprite.mesh.material.color.set('#768383');
+                tile.lastHover = this;
+            }
+            paint() {
+                const sprite = this.shape;
+                if (!sprite || !sprite.mesh)
+                    return;
+                sprite.mesh.material.color.set('red');
+            }
+            tick() {
+                if (this.refresh) {
+                    this.refresh = false;
+                    this.hide();
+                    this.show();
+                }
+                /*if (pts.equals(this.wpos, pts.round(pawns.you.wpos))) {
+                    //console.log('boo');
+                    //this.paint();
+                }*/
+            }
+        }
+        tiles.tile = tile;
+    })(tiles || (tiles = {}));
+    var tiles$1 = tiles;
+
+    // the view manages what it sees
+    class view {
+        constructor() {
+            this.zoom = 0.33;
+            this.zoomIndex = 4;
+            this.zooms = [1, 0.5, 0.33, 0.2, 0.1, 0.05];
+            this.wpos = [44, 52];
+            this.rpos = [0, 0];
+            this.mpos = [0, 0];
+            this.mwpos = [0, 0];
+            this.mrpos = [0, 0];
+            this.mrpos2 = [0, 0];
+            this.begin = [0, 0];
+            this.before = [0, 0];
+            this.show = true;
+            new lod$1.galaxy(10);
+            this.rpos = lod$1.project(this.wpos);
+        }
+        static make() {
+            return new view;
+        }
+        chart(big) {
+        }
+        tick() {
+            this.move();
+            this.mouse();
+            if (!this.follow)
+                this.wpos = lod$1.unproject(this.rpos);
+            else {
+                let pos = this.follow.wpos;
+                pos = pts.add(pos, [.5, .5]);
+                this.wpos = pts.clone(pos);
+                this.rpos = lod$1.project(pos);
+            }
+            this.pan();
+            if (this.follow) {
+                this.rpos = pts.add(this.rpos, [0, this.follow.size[1] / 2]);
+            }
+            this.set_camera();
+            this.stats();
+            lod$1.ggalaxy.update(this.wpos);
+            const zoom = wastes.gview.zoom;
+            // ren.renderer.domElement.style.transform = `scale(${1/zoom},${1/zoom})`;
+            ren$1.camera.scale.set(zoom, zoom, zoom);
+            ren$1.camera.updateProjectionMatrix();
+        }
+        pan() {
+            const panDivisor = -1;
+            if (app$1.button(1) == 1) {
+                let mouse = app$1.mouse();
+                mouse[1] = -mouse[1];
+                this.begin = mouse;
+                this.before = pts.clone(this.rpos);
+            }
+            if (app$1.button(1) >= 1) {
+                let mouse = app$1.mouse();
+                mouse[1] = -mouse[1];
+                let dif = pts.subtract(this.begin, mouse);
+                {
+                    dif = pts.divide(dif, panDivisor);
+                    // necessary mods
+                    dif = pts.mult(dif, ren$1.ndpi);
+                    dif = pts.mult(dif, this.zoom);
+                    dif = pts.subtract(dif, this.before);
+                    this.rpos = pts.inv(dif);
+                    this.wpos = lod$1.unproject(this.rpos);
+                    //this.rpos = pts.floor(this.rpos); // floor 
+                }
+            }
+            else if (app$1.button(1) == -1) {
+                console.log('woo');
+                this.rpos = pts.floor(this.rpos);
+            }
+        }
+        set_camera() {
+            // let inv = pts.inv(this.rpos);
+            // ren.groups.axisSwap.position.set(inv[0], inv[1], 0);
+            ren$1.camera.position.set(this.rpos[0], this.rpos[1], 0);
+        }
+        mouse() {
+            let mouse = app$1.mouse();
+            mouse = pts.subtract(mouse, pts.divide([ren$1.screen[0], ren$1.screen[1]], 2));
+            mouse = pts.mult(mouse, ren$1.ndpi);
+            mouse = pts.mult(mouse, this.zoom);
+            mouse[1] = -mouse[1];
+            this.mrpos = pts.add(mouse, this.rpos);
+            this.mrpos2 = pts.subtract(this.mrpos, [0, 3]); // why minus 3 ?
+            this.mrpos = pts.add(this.mrpos, lod$1.project([.5, -.5])); // correction
+            this.mwpos = lod$1.unproject(this.mrpos);
+            //this.mwpos = pts.add(this.mwpos, [.5, -.5])
+            // now..
+            if (app$1.button(0) == 1) {
+                hooks.call('viewLClick', this);
+            }
+            if (app$1.button(1) == 1) {
+                hooks.call('viewMClick', this);
+            }
+            if (app$1.button(2) == 1) {
+                hooks.call('viewRClick', this);
+            }
+        }
+        move() {
+            let pan = 10;
+            if (app$1.key('x'))
+                pan *= 2;
+            let add = [0, 0];
+            if (app$1.key('arrowup'))
+                add = pts.add(add, [0, pan]);
+            if (app$1.key('arrowdown'))
+                add = pts.add(add, [0, -pan]);
+            if (app$1.key('arrowleft'))
+                add = pts.add(add, [-pan, 0]);
+            if (app$1.key('arrowright'))
+                add = pts.add(add, [pan, 0]);
+            if ((app$1.key('f') == 1 || app$1.wheel == -1) && this.zoomIndex > 0)
+                this.zoomIndex -= 1;
+            if ((app$1.key('r') == 1 || app$1.wheel == 1) && this.zoomIndex < this.zooms.length - 1)
+                this.zoomIndex += 1;
+            if (app$1.key('t') == 1) {
+                lod$1.ggrid.shrink();
+            }
+            if (app$1.key('g') == 1) {
+                lod$1.ggrid.grow();
+            }
+            this.zoom = this.zooms[this.zoomIndex];
+            add = pts.mult(add, this.zoom);
+            add = pts.floor(add);
+            this.rpos = pts.add(this.rpos, add);
+        }
+        stats() {
+            var _a;
+            if (app$1.key('h') == 1)
+                this.show = !this.show;
+            let crunch = ``;
+            crunch += `DPI_UPSCALED_RT: ${ren$1.DPI_UPSCALED_RT}<br />`;
+            crunch += '<br />';
+            crunch += `dpi: ${ren$1.ndpi}<br />`;
+            crunch += `fps: ${ren$1.fps}<br />`;
+            crunch += `delta: ${ren$1.delta.toPrecision(6)}<br />`;
+            crunch += '<br />';
+            crunch += `textures: ${ren$1.renderer.info.memory.textures}<br />`;
+            crunch += `programs: ${ren$1.renderer.info.programs.length}<br />`;
+            //crunch += `memory: ${Math.floor(ren.memory.usedJSHeapSize / 1000000)} / ${Math.floor(ren.memory.totalJSHeapSize / 1000000)}<br />`;
+            crunch += '<br />';
+            //crunch += `mouse: ${pts.to_string(App.mouse())}<br />`;
+            //crunch += `mpos: ${pts.to_string(pts.floor(this.mpos))}<br />`;
+            crunch += `mwpos: ${pts.to_string(pts.floor(this.mwpos))}<br />`;
+            crunch += `mrpos: ${pts.to_string(pts.floor(this.mrpos))}<br />`;
+            crunch += '<br />';
+            crunch += `lod grid size: ${lod$1.ggrid.spread * 2 + 1} / ${lod$1.ggrid.outside * 2 + 1}<br />`;
+            crunch += `mouse tile: ${pts.to_string(((_a = tiles$1.hovering) === null || _a === void 0 ? void 0 : _a.wpos) || [0, 0])}<br />`;
+            crunch += `view center: ${pts.to_string(pts.floor(this.wpos))}<br />`;
+            crunch += `view bigpos: ${pts.to_string(lod$1.ggalaxy.big(this.wpos))}<br />`;
+            crunch += `view zoom: ${this.zoom}<br />`;
+            crunch += `lod grid: ${lod$1.ggrid.spread}, ${lod$1.ggrid.outside}<br />`;
+            crunch += '<br />';
+            //crunch += `world wpos: ${pts.to_string(this.pos)}<br /><br />`;
+            crunch += `sectors: ${numbers.sectors[0]} / ${numbers.sectors[1]}<br />`;
+            crunch += `game objs: ${numbers.objs[0]} / ${numbers.objs[1]}<br />`;
+            crunch += `sprites: ${numbers.sprites[0]} / ${numbers.sprites[1]}<br />`;
+            crunch += `tiles: ${numbers.tiles[0]} / ${numbers.tiles[1]}<br />`;
+            crunch += `trees: ${numbers.trees[0]} / ${numbers.trees[1]}<br />`;
+            crunch += `leaves: ${numbers.leaves[0]} / ${numbers.leaves[1]}<br />`;
+            crunch += `floors: ${numbers.floors[0]} / ${numbers.floors[1]}<br />`;
+            crunch += `walls: ${numbers.walls[0]} / ${numbers.walls[1]}<br />`;
+            crunch += `roofs: ${numbers.roofs[0]} / ${numbers.roofs[1]}<br />`;
+            crunch += '<br />';
+            crunch += `controls:<br />
+		[right click] for context menu<br />
+		[w, a, s, d] or [click] to move<br />
+		[r, f] or [scrollwheel] to zoom<br />
+		[t, g] to change lod<br />
+		[v] to toggle camera<br />
+		[z] to toggle bit depth effect<br />
+		[shift] to aim<br />
+		[shift + click] to shoot<br />
+		[middle mouse] to pan<br />
+		[spacebar] to toggle roofs<br />
+		[h] to hide debug<br />
+		[c] for character menu<br />`;
+            let element = document.querySelectorAll('.stats')[0];
+            element.innerHTML = crunch;
+            element.style.visibility = this.show ? 'visible' : 'hidden';
+        }
+    }
+
+    var objects;
+    (function (objects) {
+        const color_door = [210, 210, 210];
+        const color_wooden_door_and_deck = [24, 93, 61];
+        const color_decidtree = [20, 70, 20];
+        const color_deadtree = [60, 70, 60];
+        const color_grass = [40, 90, 40];
+        const color_wheat = [130, 130, 0];
+        const color_scrappy_wall = [20, 70, 50];
+        const color_plywood_wall = [20, 84, 87];
+        const color_overgrown_wall = [35, 105, 63];
+        const color_deringer_wall = [80, 44, 27];
+        const color_deck_and_roof = [114, 128, 124];
+        const color_porch = [110, 120, 120];
+        const color_rails = [110, 100, 120];
+        const color_false_front = [255, 255, 255];
+        const color_acid_barrel = [61, 118, 48];
+        const color_wall_chest = [130, 100, 50];
+        const color_shelves = [130, 80, 50];
+        const color_panel = [78, 98, 98];
+        function factory(type, pixel, pos, hints = {}) {
+            let obj = new type;
+            obj.hints = hints;
+            obj.pixel = pixel;
+            obj.wpos = pos;
+            lod$1.add(obj);
+            return obj;
+        }
+        objects.factory = factory;
+        function register() {
+            console.log(' objects register ');
+            wastes.heightmap = new colormap$1.colormap('heightmap');
+            wastes.objectmap = new colormap$1.colormap('objectmap');
+            wastes.buildingmap = new colormap$1.colormap('buildingmap');
+            wastes.colormap = new colormap$1.colormap('colormap');
+            wastes.roughmap = new colormap$1.colormap('roughmap');
+            wastes.roofmap = new colormap$1.colormap('roofmap');
+            hooks.register('sectorCreate', (sector) => {
+                pts.func(sector.small, (pos) => {
+                    let pixel = wastes.objectmap.pixel(pos);
+                    if (pixel.is_color(color_acid_barrel)) ;
+                    else if (pixel.is_color(color_wall_chest)) {
+                        factory(objects.crate, pixel, pos);
+                    }
+                    else if (pixel.is_color(color_shelves)) {
+                        factory(objects.shelves, pixel, pos);
+                    }
+                    else if (pixel.is_color(color_panel)) {
+                        factory(objects.panel, pixel, pos);
+                    }
+                });
+                return false;
+            });
+            hooks.register('sectorCreate', (sector) => {
+                pts.func(sector.small, (pos) => {
+                    let pixel = wastes.roofmap.pixel(pos);
+                    if (pixel.is_color(color_false_front)) ;
+                });
+                return false;
+            });
+            hooks.register('sectorCreate', (sector) => {
+                pts.func(sector.small, (pos) => {
+                    let pixel = wastes.buildingmap.pixel(pos);
+                    if (pixel.is_color(color_plywood_wall)) {
+                        factory(objects.deck, pixel, pos);
+                        factory(objects.wall, pixel, pos, { type: 'plywood' });
+                        factory(objects.roof, pixel, pos);
+                    }
+                    else if (pixel.is_color(color_overgrown_wall)) {
+                        factory(objects.deck, pixel, pos);
+                        factory(objects.wall, pixel, pos, { type: 'overgrown' });
+                        factory(objects.roof, pixel, pos);
+                    }
+                    else if (pixel.is_color(color_deringer_wall)) {
+                        factory(objects.deck, pixel, pos);
+                        factory(objects.wall, pixel, pos, { type: 'sideroom' });
+                        factory(objects.roof, pixel, pos);
+                    }
+                    //else if (pixel.is_color(color_medieval_wall)) {
+                    //	factory(objects.wall, pixel, pos, { type: 'medieval' });
+                    //}
+                    else if (pixel.is_color(color_scrappy_wall)) {
+                        factory(objects.wall, pixel, pos, { type: 'scrappy' });
+                        //factory(objects.roof, pixel, pos);
+                    }
+                    else if (pixel.is_color(color_decidtree)) {
+                        factory(objects.decidtree, pixel, pos, { type: 'decid' });
+                    }
+                    else if (pixel.is_color(color_deadtree)) {
+                        factory(objects.deadtree, pixel, pos);
+                    }
+                    else if (pixel.is_color(color_grass)) ;
+                    else if (pixel.is_color(color_wheat)) {
+                        factory(objects.wheat, pixel, pos);
+                    }
+                    else if (pixel.is_color(color_deck_and_roof)) {
+                        factory(objects.deck, pixel, pos);
+                        factory(objects.roof, pixel, pos);
+                    }
+                    else if (pixel.is_color(color_porch)) {
+                        factory(objects.porch, pixel, pos);
+                    }
+                    else if (pixel.is_color(color_rails)) {
+                        factory(objects.rails, pixel, pos);
+                    }
+                    else if (pixel.is_color(color_door)) {
+                        factory(objects.deck, pixel, pos);
+                        factory(objects.door, pixel, pos);
+                        factory(objects.roof, pixel, pos);
+                    }
+                    else if (pixel.is_color(color_wooden_door_and_deck)) {
+                        factory(objects.deck, pixel, pos);
+                        factory(objects.door, pixel, pos);
+                        //factory(objects.roof, pixel, pos);
+                    }
+                });
+                return false;
+            });
+        }
+        objects.register = register;
+        function start() {
+            console.log(' objects start ');
+        }
+        objects.start = start;
+        function tick() {
+            if (app$1.key(' ') == 1) {
+                wastes.HIDE_ROOFS = !wastes.HIDE_ROOFS;
+                console.log('hide roofs', wastes.HIDE_ROOFS);
+            }
+        }
+        objects.tick = tick;
+        function is_solid(pos) {
+            const passable = ['land', 'deck', 'shelves', 'porch', 'pawn', 'you', 'door', 'leaves', 'roof', 'falsefront', 'panel'];
+            pos = pts.round(pos);
+            let sector = lod$1.ggalaxy.at(lod$1.ggalaxy.big(pos));
+            let at = sector.stacked(pos);
+            for (let obj of at) {
+                if (!obj.is_type(passable)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        objects.is_solid = is_solid;
+        class objected extends lod$1.obj {
+            constructor(counts) {
+                super(counts);
+                this.isObjected = true;
+                this.paintTimer = 0;
+                this.paintedRed = false;
+                this.solid = true;
+                this.cell = [0, 0];
+                this.heightAdd = 0;
+                this.calc = 0; // used for tree leaves
+            }
+            tiled() {
+                this.tile = tiles$1.get(pts.round(this.wpos));
+                this.tileBound = new aabb2([-.5, -.5], [.5, .5]);
+                this.tileBound.translate(this.wpos);
+            }
+            onhit() {
+                const sprite = this.shape;
+                if (sprite) {
+                    sprite.material.color.set('red');
+                    this.paintedRed = true;
+                }
+            }
+            tick() {
+                if (this.paintedRed) {
+                    this.paintTimer += ren$1.delta;
+                    if (this.paintTimer > 1) {
+                        const sprite = this.shape;
+                        sprite.material.color.set('white');
+                        console.log('beo');
+                        this.paintedRed = false;
+                        this.paintTimer = 0;
+                    }
+                }
+                //console.log('oo');
+            }
+            //update(): void {
+            //	this.tiled();
+            //	super.update();
+            //}
+            stack(fallthru = []) {
+                let calc = 0;
+                let stack = this.sector.stacked(pts.round(this.wpos));
+                for (let obj of stack) {
+                    if (obj.is_type(fallthru))
+                        continue;
+                    if (obj == this)
+                        break;
+                    calc += obj.z + obj.height;
+                }
+                this.calc = calc;
+                if (this.shape)
+                    this.shape.rup = calc + this.heightAdd;
+            }
+            setup_context() {
+            }
+        }
+        objects.objected = objected;
+        class wall extends objected {
+            constructor() {
+                super(numbers.walls);
+                this.type = 'wall';
+                this.height = 24;
+            }
+            create() {
+                var _a, _b, _c, _d, _e, _f;
+                this.tiled();
+                this.size = [24, 40];
+                this.cell = [255 - this.pixel.array[3], 0];
+                let tuple = sprites$1.dscrappywalls;
+                if (((_a = this.hints) === null || _a === void 0 ? void 0 : _a.type) == 'plywood')
+                    tuple = sprites$1.dderingerwalls;
+                if (((_b = this.hints) === null || _b === void 0 ? void 0 : _b.type) == 'overgrown')
+                    tuple = sprites$1.dovergrownwalls;
+                if (((_c = this.hints) === null || _c === void 0 ? void 0 : _c.type) == 'deringer')
+                    tuple = sprites$1.dderingerwalls;
+                if (((_d = this.hints) === null || _d === void 0 ? void 0 : _d.type) == 'woody')
+                    tuple = sprites$1.dwoodywalls;
+                if (((_e = this.hints) === null || _e === void 0 ? void 0 : _e.type) == 'medieval')
+                    tuple = sprites$1.dmedievalwalls;
+                else if (((_f = this.hints) === null || _f === void 0 ? void 0 : _f.type) == 'ruddy')
+                    tuple = sprites$1.druddywalls;
+                else ;
+                new sprite({
+                    binded: this,
+                    tuple: tuple,
+                    cell: this.cell,
+                    orderBias: .6,
+                });
+                this.stack();
+            }
+            adapt() {
+                // change sprite to surrounding walls
+            }
+        }
+        objects.wall = wall;
+        class deck extends objected {
+            constructor() {
+                super(numbers.floors);
+                this.type = 'deck';
+                this.height = 3;
+            }
+            onhit() { }
+            create() {
+                this.tiled();
+                this.tile.hasDeck = true;
+                //this.tile!.z -= 24;
+                this.size = [24, 17];
+                //if (this.pixel!.array[3] < 240)
+                //	this.cell = [240 - this.pixel!.array[3], 0];
+                new sprite({
+                    binded: this,
+                    tuple: sprites$1.ddeck,
+                    cell: this.cell,
+                    orderBias: .4,
+                });
+                this.stack();
+            }
+            tick() {
+                super.tick();
+                let pos = this.wpos;
+                let sector = lod$1.ggalaxy.at(lod$1.ggalaxy.big(pos));
+                let at = sector.stacked(pos);
+                for (let obj of at) {
+                    if (obj.type == 'you') {
+                        wastes.HIDE_ROOFS = true;
+                        break;
+                    }
+                }
+            }
+        }
+        deck.timer = 0;
+        objects.deck = deck;
+        class porch extends objected {
+            constructor() {
+                super(numbers.floors);
+                this.type = 'porch';
+                this.height = 3;
+            }
+            onhit() { }
+            create() {
+                this.tiled();
+                //this.tile!.z -= 24;
+                this.size = [24, 17];
+                //if (this.pixel!.array[3] < 240)
+                //	this.cell = [240 - this.pixel!.array[3], 0];
+                let color = [255, 255, 255, 255];
+                color = shadows$1.calc(color, this.wpos);
+                new sprite({
+                    binded: this,
+                    tuple: sprites$1.dporch,
+                    cell: this.cell,
+                    orderBias: .0,
+                    color: color
+                });
+                this.stack();
+            }
+        }
+        porch.timer = 0;
+        objects.porch = porch;
+        class rails extends objected {
+            constructor() {
+                super(numbers.floors);
+                this.type = 'porch';
+                this.height = 3;
+            }
+            create() {
+                this.tiled();
+                //this.tile!.z -= 24;
+                this.size = [24, 17];
+                //if (this.pixel!.array[3] < 240)
+                //	this.cell = [240 - this.pixel!.array[3], 0];
+                new sprite({
+                    binded: this,
+                    tuple: sprites$1.drails,
+                    cell: this.cell,
+                    orderBias: .4,
+                });
+                this.stack();
+            }
+            tick() {
+            }
+        }
+        rails.timer = 0;
+        objects.rails = rails;
+        class deadtree extends objected {
+            constructor() {
+                super(numbers.floors);
+                this.type = 'tree';
+                this.height = 3;
+            }
+            create() {
+                this.tiled();
+                this.size = [24, 50];
+                new sprite({
+                    binded: this,
+                    tuple: sprites$1.ddeadtreetrunk,
+                    orderBias: 0.6,
+                });
+                this.stack();
+            }
+        }
+        deadtree.timer = 0;
+        objects.deadtree = deadtree;
+        class decidtree extends objected {
+            constructor() {
+                super(numbers.trees);
+                this.flowered = false;
+                this.type = 'decid tree';
+                this.height = 24;
+            }
+            create() {
+                this.tiled();
+                this.size = [24, 50];
+                //if (this.pixel!.array[3] < 240)
+                //	this.cell = [240 - this.pixel!.array[3], 0];
+                new sprite({
+                    binded: this,
+                    tuple: sprites$1.ddecidtreetrunk,
+                    orderBias: 0.6,
+                });
+                this.stack();
+                const tile = tiles$1.get(this.wpos);
+                if (!this.flowered) {
+                    this.flowered = true;
+                    for (let y = -1; y <= 1; y++)
+                        for (let x = -1; x <= 1; x++)
+                            if (!(x == 0 && y == 0) /*&& Math.random() > .3*/)
+                                factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [x, y]), { type: this.hints.type, tree: this, color: tile.color });
+                    factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [0, 0]), { type: this.hints.type, color: tile.color });
+                    factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [0, 0]), { type: this.hints.type, color: tile.color });
+                }
+            }
+        }
+        objects.decidtree = decidtree;
+        class treeleaves extends objected {
+            constructor() {
+                super(numbers.leaves);
+                this.shaded = false;
+                this.type = 'leaves';
+                this.height = 14;
+            }
+            onhit() { }
+            create() {
+                this.tiled();
+                this.size = [24, 31];
+                //if (this.pixel!.array[3] < 240)
+                //	this.cell = [240 - this.pixel!.array[3], 0];
+                let color = this.hints.color || [255, 255, 255, 255];
+                let color2 = wastes.colormap.pixel(this.wpos);
+                if (!(255 - color2.array[3])) {
+                    if (this.hints.color) {
+                        color = [
+                            Math.floor(color[0] * 1.6),
+                            Math.floor(color[1] * 1.6),
+                            Math.floor(color[2] * 1.6),
+                            color[3],
+                        ];
+                    }
+                    let tuple = sprites$1.dtreeleaves;
+                    new sprite({
+                        binded: this,
+                        tuple: tuple,
+                        orderBias: 0.7,
+                        color: color
+                    });
+                    //shadows.shade(this.wpos, 0.1);
+                    if (!this.shaded) {
+                        this.shaded = true;
+                        const shadow = 0.03;
+                        shadows$1.shade_matrix(this.wpos, [
+                            [shadow / 2, shadow, shadow / 2],
+                            [shadow, shadow, shadow],
+                            [shadow / 2, shadow, shadow / 2]
+                        ]);
+                    }
+                    if (this.hints.tree)
+                        this.special_leaves_stack();
+                    else
+                        this.stack();
+                }
+            }
+            special_leaves_stack() {
+                console.log('special stack');
+                const tree = this.hints.tree;
+                if (this.shape) {
+                    this.z = tree.calc + tree.height;
+                    this.shape.rup = this.z;
+                }
+            }
+        }
+        objects.treeleaves = treeleaves;
+        class grass extends objected {
+            constructor() {
+                super(numbers.roofs);
+                this.type = 'grass';
+                this.height = 4;
+                this.solid = false;
+            }
+            create() {
+                this.tiled();
+                this.size = [24, 30];
+                let color = tiles$1.get(this.wpos).color;
+                color = [
+                    Math.floor(color[0] * 1.5),
+                    Math.floor(color[1] * 1.5),
+                    Math.floor(color[2] * 2.0),
+                    color[3],
+                ];
+                this.cell = [255 - this.pixel.array[3], 0];
+                new sprite({
+                    binded: this,
+                    tuple: sprites$1.dgrass,
+                    cell: this.cell,
+                    orderBias: .6,
+                    color: color
+                });
+                this.stack();
+            }
+        }
+        objects.grass = grass;
+        class wheat extends objected {
+            constructor() {
+                super(numbers.roofs);
+                this.type = 'wheat';
+                this.height = 4;
+            }
+            create() {
+                this.tiled();
+                this.size = [24, 30];
+                //let color =  tiles.get(this.wpos)!.color;
+                //this.cell = [Math.floor(Math.random() * 2), 0];
+                return;
+            }
+        }
+        objects.wheat = wheat;
+        class panel extends objected {
+            constructor() {
+                super(numbers.roofs);
+                this.ticker = 0;
+                this.type = 'panel';
+                this.height = 10;
+            }
+            create() {
+                this.tiled();
+                this.size = [8, 10];
+                //let color =  tiles.get(this.wpos)!.color;
+                //this.cell = [Math.floor(Math.random() * 2), 0];
+                return;
+            }
+            tick() {
+                return;
+                //console.log('boo');
+            }
+        }
+        objects.panel = panel;
+        class container {
+            constructor() {
+                this.tuples = [];
+                if (Math.random() > .5)
+                    this.add('beer');
+                if (Math.random() > .5)
+                    this.add('string');
+                if (Math.random() > .5)
+                    this.add('stone');
+            }
+            add(item) {
+                let found = false;
+                for (let tuple of this.tuples) {
+                    if (tuple[0] == item) {
+                        tuple[1] += 1;
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    this.tuples.push([item, 1]);
+                }
+                this.tuples.sort();
+            }
+            remove(name) {
+                for (let i = this.tuples.length - 1; i >= 0; i--) {
+                    const tuple = this.tuples[i];
+                    if (tuple[0] == name) {
+                        tuple[1] -= 1;
+                        if (tuple[1] <= 0)
+                            this.tuples.splice(i, 1);
+                        break;
+                    }
+                }
+            }
+        }
+        objects.container = container;
+        class crate extends objected {
+            constructor() {
+                super(numbers.objs);
+                this.container = new container;
+                this.mousing = false;
+                this.type = 'crate';
+                this.height = 17;
+                this.container.obj = this;
+            }
+            create() {
+                this.tiled();
+                this.size = [24, 40];
+                //let color =  tiles.get(this.wpos)!.color;
+                //this.cell = [Math.floor(Math.random() * 2), 0];
+                new sprite({
+                    binded: this,
+                    tuple: sprites$1.dcrate,
+                    cell: this.cell,
+                    //color: color,
+                    orderBias: .6
+                });
+                this.stack(['roof', 'wall']);
+            }
+            tick() {
+                const sprite = this.shape;
+                if (this.mousedSquare(wastes.gview.mrpos2) /*&& !this.mousing*/) {
+                    this.mousing = true;
+                    sprite.material.color.set('#c1ffcd');
+                    console.log('mover');
+                    win$1.contextmenu.focus = this;
+                }
+                else if (!this.mousedSquare(wastes.gview.mrpos2) && this.mousing) {
+                    if (win$1.contextmenu.focus == this)
+                        win$1.contextmenu.focus = undefined;
+                    sprite.material.color.set('white');
+                    this.mousing = false;
+                }
+            }
+            setup_context() {
+                console.log('setup context');
+                win$1.contextmenu.reset();
+                win$1.contextmenu.options.options.push(["See contents", () => {
+                        return pts.distsimple(pawns$1.you.wpos, this.wpos) < 1;
+                    }, () => {
+                        win$1.container.crate = this;
+                        win$1.container.call_once();
+                    }]);
+            }
+        }
+        objects.crate = crate;
+        class shelves extends objected {
+            constructor() {
+                super(numbers.objs);
+                this.container = new container;
+                this.type = 'shelves';
+                this.height = 0;
+            }
+            create() {
+                this.tiled();
+                this.size = [20, 31];
+                //this.cell = [255 - this.pixel!.array[3], 0];
+                return;
+            }
+        }
+        objects.shelves = shelves;
+        class roof extends objected {
+            constructor() {
+                super(numbers.roofs);
+                this.shaded = false;
+                this.type = 'roof';
+                this.height = 3;
+            }
+            onhit() { }
+            create() {
+                //return;
+                this.tiled();
+                this.size = [24, 17];
+                let shape = new sprite({
+                    binded: this,
+                    tuple: sprites$1.droof,
+                    orderBias: 1.6,
+                });
+                shape.rup = 29;
+                if (!this.shaded) {
+                    this.shaded = true;
+                    const shadow = .8;
+                    shadows$1.shade_matrix(this.wpos, [
+                        [0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0],
+                        [0, 0, shadow, 0, 0],
+                        [0, 0, 0, shadow, 0],
+                        [0, 0, 0, 0, shadow]
+                    ], true);
+                }
+            }
+            tick() {
+                super.tick();
+                const sprite = this.shape;
+                if (!sprite)
+                    return;
+                if (wastes.HIDE_ROOFS)
+                    sprite.mesh.visible = false;
+                else if (!wastes.HIDE_ROOFS)
+                    sprite.mesh.visible = true;
+            }
+        }
+        objects.roof = roof;
+        class falsefront extends objected {
+            constructor() {
+                super(numbers.roofs);
+                this.type = 'falsefront';
+                this.height = 5;
+            }
+            create() {
+                this.tiled();
+                this.cell = [255 - this.pixel.array[3], 0];
+                this.size = [24, 40];
+                new sprite({
+                    binded: this,
+                    tuple: sprites$1.dfalsefronts,
+                    cell: this.cell,
+                    orderBias: 1.6,
+                });
+                this.stack();
+                //this.z = 29+4;
+            }
+            tick() {
+                const sprite = this.shape;
+                if (!sprite)
+                    return;
+                if (wastes.HIDE_ROOFS)
+                    sprite.mesh.visible = false;
+                else if (!wastes.HIDE_ROOFS)
+                    sprite.mesh.visible = true;
+            }
+        }
+        objects.falsefront = falsefront;
+        class acidbarrel extends objected {
+            constructor() {
+                super(numbers.objs);
+                this.type = 'acidbarrel';
+                this.height = 4;
+            }
+            create() {
+                this.tiled();
+                this.size = [24, 35];
+                new sprite({
+                    binded: this,
+                    tuple: sprites$1.dacidbarrel,
+                    orderBias: .4,
+                });
+                this.stack();
+            }
+        }
+        objects.acidbarrel = acidbarrel;
+        class door extends objected {
+            constructor() {
+                super(numbers.walls);
+                this.open = false;
+                this.type = 'door';
+                this.height = 23;
+            }
+            create() {
+                this.tiled();
+                this.size = [24, 40];
+                this.cell = [255 - this.pixel.array[3], 0];
+                new sprite({
+                    binded: this,
+                    tuple: sprites$1.ddoor,
+                    cell: this.cell,
+                    orderBias: door.order,
+                });
+                this.stack();
+            }
+            tick() {
+                super.tick();
+                if (!this.shape)
+                    return;
+                let pos = this.wpos;
+                let sector = lod$1.ggalaxy.at(lod$1.ggalaxy.big(pos));
+                let at = sector.stacked(pos);
+                let pawning = false;
+                for (let obj of at) {
+                    if (obj.is_type(['pawn', 'you'])) {
+                        pawning = true;
+                        let sprite = this.shape;
+                        sprite.vars.cell = pts.subtract(this.cell, [1, 0]);
+                        sprite.vars.orderBias = 1.55;
+                        sprite.retransform();
+                        sprite.update();
+                        this.open = true;
+                        break;
+                    }
+                }
+                if (!pawning) {
+                    let sprite = this.shape;
+                    sprite.vars.cell = this.cell;
+                    sprite.vars.orderBias = door.order;
+                    sprite.retransform();
+                    sprite.update();
+                    this.open = false;
+                }
+            }
+        }
+        door.order = .7;
+        objects.door = door;
+        class shrubs extends objected {
+            constructor() {
+                super(numbers.trees);
+                this.type = 'shrubs';
+            }
+            create() {
+                this.size = [24, 15];
+                new sprite({
+                    binded: this,
+                    tuple: sprites$1.shrubs,
+                    orderBias: .5
+                });
+            }
+        }
+        objects.shrubs = shrubs;
+    })(objects || (objects = {}));
+    var objects$1 = objects;
+
+    var modeler;
+    (function (modeler) {
+        modeler.started = false;
+        const textures = [
+            'tex/stock/bricks3.jpg',
+            'tex/stock/whiteplanks.jpg',
+            'tex/stock/brick4.jpg',
+            'tex/stock/metalrooftiles.jpg',
+            'tex/stock/concrete1.jpg',
+            'tex/stock/treebark1.jpg',
+            'tex/stock/leaves.png',
+        ];
+        let currentTex = 0;
+        var gmesh;
+        var ggroup;
+        var rotation = 0;
+        let heightMod = 1;
+        var zooms = [0, 1, [1, 0.33, 0.25, 0.1]];
+        function register() {
+        }
+        modeler.register = register;
+        function start() {
+            modeler.started = true;
+            document.title = 'modeler';
+            gmesh = createMesh();
+            ggroup = new THREE.Group;
+            ggroup.rotation.set(Math.PI / 6, Math.PI / 4, 0);
+            ren$1.scene.add(ggroup);
+            let sun = new THREE.DirectionalLight(0xffffff, 0.4);
+            sun.position.set(-wastes.size, wastes.size * 2, wastes.size / 2);
+            //sun.add(new AxesHelper(100));
+            ggroup.add(sun);
+            ggroup.add(sun.target);
+        }
+        modeler.start = start;
+        function createMesh(size = wastes.size) {
+            const width = 18, height = 18 * 2;
+            let box = new THREE.BoxGeometry(width, height * heightMod, width, 1, 1, 1);
+            let materials = [];
+            const loader = new THREE.TextureLoader();
+            loader.load(textures[currentTex], function (texture) {
+                console.log(texture.magFilter);
+                console.log(texture.minFilter);
+                //texture.magFilter = texture.minFilter = THREE.NearestFilter;
+                texture.wrapS = texture.wrapT = THREE__default["default"].RepeatWrapping;
+                texture.generateMipmaps = true;
+                console.log('woo');
+                let alignments = [
+                    undefined,
+                    new THREE.Matrix3().setUvTransform(0, 0, 1, 1, rotation * Math.PI / 2, 0, 1),
+                    new THREE.Matrix3().setUvTransform(0, 0, 0.5, 1, rotation * Math.PI / 2, 0, 1),
+                    undefined,
+                    new THREE.Matrix3().setUvTransform(0, 0, 1, 1, rotation * Math.PI / 2, 0, 1), // right
+                ];
+                for (let i of [1, 2, 4]) {
+                    materials[i] = myboxmaterial({
+                        map: texture,
+                        transparent: true
+                    }, {
+                        myUvTransform: alignments[i]
+                    });
+                }
+                gmesh = new THREE.Mesh(box, materials);
+                gmesh.position.set(3, 0, 0);
+                ggroup.add(gmesh);
+            });
+        }
+        let show = true;
+        function tick() {
+            if (!modeler.started)
+                return;
+            if (app$1.wheel == -1 && zooms[0] > 0)
+                zooms[0] -= 1;
+            if (app$1.wheel == 1 && zooms[0] < zooms[2].length - 1)
+                zooms[0] += 1;
+            zooms[1] = zooms[2][zooms[0]];
+            ren$1.camera2.scale.set(zooms[1], zooms[1], zooms[1]);
+            let rebuild = false;
+            if (app$1.key('q') == 1) {
+                rotation -= 1;
+                rebuild = true;
+            }
+            if (app$1.key('e') == 1) {
+                rotation += 1;
+                rebuild = true;
+            }
+            if (app$1.key('arrowright') == 1) {
+                rebuild = true;
+                console.log('switch tex');
+                if (currentTex < textures.length - 1)
+                    currentTex++;
+            }
+            if (app$1.key('arrowleft') == 1) {
+                rebuild = true;
+                console.log('switch tex');
+                if (currentTex > 0)
+                    currentTex--;
+            }
+            if (app$1.key('arrowup') == 1) {
+                heightMod += 0.1;
+                rebuild = true;
+            }
+            if (app$1.key('arrowdown') == 1) {
+                heightMod -= 0.1;
+                rebuild = true;
+            }
+            rotation = rotation < 0 ? 3 : rotation > 3 ? 0 : rotation;
+            if (rebuild && gmesh) {
+                gmesh.geometry.dispose();
+                gmesh.material[1].dispose();
+                gmesh.material[2].dispose();
+                gmesh.material[4].dispose();
+                gmesh.parent.remove(gmesh);
+                gmesh = undefined;
+                createMesh();
+                //ggroup.add(gmesh);
+            }
+            if (app$1.key('h') == 1)
+                show = !show;
+            let crunch = ``;
+            crunch += `dpi: ${ren$1.ndpi}<br />`;
+            crunch += `fps: ${ren$1.fps} / ${ren$1.delta.toPrecision(3)}<br />`;
+            crunch += '<br />';
+            crunch += `zoom: ${zooms[1]}<br />`;
+            crunch += `rotation: ${rotation}<br />`;
+            crunch += `controls: mousewheel to zoom, Q, E to rotate texture<br />`;
+            let element = document.querySelectorAll('.stats')[0];
+            element.innerHTML = crunch;
+            element.style.visibility = show ? 'visible' : 'hidden';
+        }
+        modeler.tick = tick;
+        function myboxmaterial(parameters, uniforms) {
+            let material = new THREE.MeshLambertMaterial(parameters);
+            material.customProgramCacheKey = function () {
+                return 'boxmaterial';
+            };
+            material.name = "boxmaterial";
+            material.onBeforeCompile = function (shader) {
+                shader.defines = {};
+                shader.uniforms.myUvTransform = { value: uniforms.myUvTransform };
+                shader.vertexShader = shader.vertexShader.replace(`#include <common>`, `#include <common>
+				uniform mat3 myUvTransform;
+				`);
+                shader.vertexShader = shader.vertexShader.replace(`#include <uv_vertex>`, `
+				#ifdef USE_UV
+				vUv = ( myUvTransform * vec3( uv, 1 ) ).xy;
+				#endif
+				`);
+            };
+            return material;
+        }
+    })(modeler || (modeler = {}));
+    var modeler$1 = modeler;
+
+    var shear;
+    (function (shear) {
+        shear.started = false;
+        var canvas, ctx;
+        var spare, spareCtx;
+        var walls, goal, wallpapers, wallpaper;
+        function start() {
+            shear.started = true;
+            document.title = 'shear';
+            document.body.oncontextmenu = function () { };
+            spare = document.createElement("canvas");
+            spareCtx = spare.getContext('2d');
+            spare.width = 24;
+            spare.height = 40;
+            spare.style.position = 'relative';
+            spare.style.zoom = '3';
+            spare.style.display = 'block';
+            spare.style.zIndex = '2';
+            canvas = document.createElement("canvas");
+            canvas.width = 24 * 11;
+            canvas.height = 40;
+            canvas.id = "shear";
+            canvas.style.position = 'relative';
+            canvas.style.margin = '0px auto';
+            canvas.style.zoom = '3';
+            canvas.style.zIndex = '2';
+            ctx = canvas.getContext('2d');
+            let style = document.location.href.split('shear=')[1];
+            console.log(style);
+            walls = document.getElementById(style);
+            goal = document.getElementById('goal');
+            wallpaper = document.getElementById('wallpaper');
+            wallpapers = document.getElementById('wallpapers');
+            ctx.drawImage(walls, 0, 0);
+            ctx.globalCompositeOperation = 'source-atop';
+            ctx.drawImage(goal, 0, 0);
+            // -4, 8 for thin
+            // -3, 6 for thick
+            let x, y;
+            if (style == 'thin' || style == 'thinner') {
+                y = -4;
+                x = 8;
+            }
+            else if (style == 'thick') {
+                y = -3;
+                x = 6;
+            }
+            // half
+            ctx.drawImage(goal, 24, 0);
+            ctx.drawImage(goal, 24 * 5, 0);
+            ctx.drawImage(goal, 24 * 6, 0);
+            spareCtx.drawImage(canvas, -24 * 5, 0);
+            ctx.drawImage(spare, 24 * 2 + x, y);
+            ctx.drawImage(spare, 24 * 3 + x, y);
+            ctx.drawImage(spare, 24 * 7 + x, y);
+            spareCtx.clearRect(0, 0, 24, 40);
+            spareCtx.drawImage(canvas, -24 * 6, 0);
+            ctx.drawImage(spare, 24 * 2, 0);
+            spareCtx.clearRect(12 + x, 0, 24, 40);
+            ctx.drawImage(spare, 24 * 3 - x, y);
+            spareCtx.drawImage(canvas, -24 * 6, 0);
+            ctx.drawImage(spare, 24 * 4 - x, y);
+            ctx.drawImage(spare, 24 * 8 - x, y);
+            spareCtx.clearRect(0, 0, 24, 40);
+            spareCtx.drawImage(canvas, -24 * 5, 0);
+            ctx.drawImage(spare, 24 * 4, 0);
+            //ctx.drawImage(spare, 24 * 9 - x2, -y2);
+            spareCtx.clearRect(0, 0, 24, 40);
+            spareCtx.drawImage(canvas, -24 * 6, 0);
+            //ctx.drawImage(spare, 24 * 10 + x2, -y2);
+            document.body.append(canvas);
+            document.body.append(spare);
+            start_wallpaper();
+        }
+        shear.start = start;
+        function start_wallpaper() {
+            let style = document.location.href.split('shear=')[1];
+            let x, y;
+            if (style == 'thin' || style == 'thinner') {
+                y = -4;
+                x = 8;
+            }
+            else if (style == 'thick') {
+                y = -3;
+                x = 6;
+            }
+            let spare2Canvas, ctx2;
+            spare2Canvas = document.createElement("canvas");
+            ctx2 = spare2Canvas.getContext('2d');
+            spare2Canvas.width = 24 * 11;
+            spare2Canvas.height = 40;
+            spare2Canvas.style.position = 'relative';
+            spare2Canvas.style.zoom = '3';
+            spare2Canvas.style.display = 'block';
+            spare2Canvas.style.zIndex = '2';
+            ctx2.drawImage(wallpapers, 0, 0);
+            ctx2.globalCompositeOperation = 'source-atop';
+            let wallpaperCanvas;
+            wallpaperCanvas = document.createElement("canvas");
+            let ctx1 = wallpaperCanvas.getContext('2d');
+            wallpaperCanvas.width = 24 * 11;
+            wallpaperCanvas.height = 40;
+            wallpaperCanvas.style.position = 'relative';
+            wallpaperCanvas.style.zoom = '3';
+            wallpaperCanvas.style.display = 'block';
+            wallpaperCanvas.style.zIndex = '2';
+            ctx1.drawImage(walls, 0, 0);
+            ctx1.globalCompositeOperation = 'source-atop';
+            ctx1.drawImage(wallpaper, 0, 0);
+            ctx1.drawImage(wallpaper, 24, 0);
+            ctx1.drawImage(wallpaper, 24 * 5, 0);
+            ctx1.drawImage(wallpaper, 24 * 6, 0);
+            spareCtx.drawImage(wallpaperCanvas, -24 * 5, 0);
+            ctx1.drawImage(spare, 24 * 2 + x, y);
+            ctx1.drawImage(spare, 24 * 3 + x, y);
+            ctx1.drawImage(spare, 24 * 7 + x, y);
+            spareCtx.clearRect(0, 0, 24, 40);
+            spareCtx.drawImage(wallpaperCanvas, -24 * 6, 0);
+            ctx1.drawImage(spare, 24 * 2, 0);
+            spareCtx.clearRect(12 + x, 0, 24, 40);
+            ctx1.drawImage(spare, 24 * 3 - x, y);
+            spareCtx.drawImage(wallpaperCanvas, -24 * 6, 0);
+            ctx1.drawImage(spare, 24 * 4 - x, y);
+            ctx1.drawImage(spare, 24 * 8 - x, y);
+            spareCtx.clearRect(0, 0, 24, 40);
+            spareCtx.drawImage(wallpaperCanvas, -24 * 5, 0);
+            ctx1.drawImage(spare, 24 * 4, 0);
+            //ctx.drawImage(spare, 24 * 9 - x2, -y2);
+            spareCtx.clearRect(0, 0, 24, 40);
+            spareCtx.drawImage(wallpaperCanvas, -24 * 6, 0);
+            //ctx.drawImage(spare, 24 * 10 + x2, -y2);
+            ctx2.drawImage(wallpaperCanvas, 0, 0);
+            ctx.drawImage(spare2Canvas, 0, 0);
+            document.body.append(wallpaperCanvas);
+            document.body.append(spare2Canvas);
+        }
+        shear.start_wallpaper = start_wallpaper;
+        function tick() {
+            if (!shear.started)
+                return;
+            let crunch = `shear`;
+            let element = document.querySelectorAll('.stats')[0];
+            element.innerHTML = crunch;
+        }
+        shear.tick = tick;
+    })(shear || (shear = {}));
+    var shear$1 = shear;
 
     class TGALoader extends THREE.DataTextureLoader {
 
@@ -5935,767 +7349,6 @@ void main() {
     })(collada || (collada = {}));
     var collada$1 = collada;
 
-    var objects;
-    (function (objects) {
-        const color_door = [210, 210, 210];
-        const color_wooden_door_and_deck = [24, 93, 61];
-        const color_decidtree = [20, 70, 20];
-        const color_deadtree = [60, 70, 60];
-        const color_grass = [40, 90, 40];
-        const color_wheat = [130, 130, 0];
-        const color_scrappy_wall = [20, 70, 50];
-        const color_plywood_wall = [20, 84, 87];
-        const color_overgrown_wall = [35, 105, 63];
-        const color_deringer_wall = [80, 44, 27];
-        const color_deck_and_roof = [114, 128, 124];
-        const color_porch = [110, 120, 120];
-        const color_rails = [110, 100, 120];
-        const color_false_front = [255, 255, 255];
-        const color_acid_barrel = [61, 118, 48];
-        const color_wall_chest = [130, 100, 50];
-        const color_shelves = [130, 80, 50];
-        const color_panel = [78, 98, 98];
-        function factory(type, pixel, pos, hints = {}) {
-            let obj = new type;
-            obj.hints = hints;
-            obj.pixel = pixel;
-            obj.wpos = pos;
-            lod$1.add(obj);
-            return obj;
-        }
-        objects.factory = factory;
-        function register() {
-            console.log(' objects register ');
-            wastes.heightmap = new colormap$1.colormap('heightmap');
-            wastes.objectmap = new colormap$1.colormap('objectmap');
-            wastes.buildingmap = new colormap$1.colormap('buildingmap');
-            wastes.colormap = new colormap$1.colormap('colormap');
-            wastes.roughmap = new colormap$1.colormap('roughmap');
-            wastes.roofmap = new colormap$1.colormap('roofmap');
-            hooks.register('sectorCreate', (sector) => {
-                pts.func(sector.small, (pos) => {
-                    let pixel = wastes.objectmap.pixel(pos);
-                    if (pixel.is_color(color_acid_barrel)) ;
-                    else if (pixel.is_color(color_wall_chest)) {
-                        factory(objects.crate, pixel, pos);
-                    }
-                    else if (pixel.is_color(color_shelves)) {
-                        factory(objects.shelves, pixel, pos);
-                    }
-                    else if (pixel.is_color(color_panel)) {
-                        factory(objects.panel, pixel, pos);
-                    }
-                });
-                return false;
-            });
-            hooks.register('sectorCreate', (sector) => {
-                pts.func(sector.small, (pos) => {
-                    let pixel = wastes.roofmap.pixel(pos);
-                    if (pixel.is_color(color_false_front)) ;
-                });
-                return false;
-            });
-            hooks.register('sectorCreate', (sector) => {
-                pts.func(sector.small, (pos) => {
-                    let pixel = wastes.buildingmap.pixel(pos);
-                    if (pixel.is_color(color_plywood_wall)) {
-                        factory(objects.deck, pixel, pos);
-                        factory(objects.wall, pixel, pos, { type: 'plywood' });
-                        factory(objects.roof, pixel, pos);
-                    }
-                    else if (pixel.is_color(color_overgrown_wall)) {
-                        factory(objects.deck, pixel, pos);
-                        factory(objects.wall, pixel, pos, { type: 'overgrown' });
-                        factory(objects.roof, pixel, pos);
-                    }
-                    else if (pixel.is_color(color_deringer_wall)) {
-                        factory(objects.deck, pixel, pos);
-                        factory(objects.wall, pixel, pos, { type: 'sideroom' });
-                        factory(objects.roof, pixel, pos);
-                    }
-                    //else if (pixel.is_color(color_medieval_wall)) {
-                    //	factory(objects.wall, pixel, pos, { type: 'medieval' });
-                    //}
-                    else if (pixel.is_color(color_scrappy_wall)) {
-                        factory(objects.wall, pixel, pos, { type: 'scrappy' });
-                        //factory(objects.roof, pixel, pos);
-                    }
-                    else if (pixel.is_color(color_decidtree)) {
-                        factory(objects.decidtree, pixel, pos, { type: 'decid' });
-                    }
-                    else if (pixel.is_color(color_deadtree)) {
-                        factory(objects.deadtree, pixel, pos);
-                    }
-                    else if (pixel.is_color(color_grass)) ;
-                    else if (pixel.is_color(color_wheat)) {
-                        factory(objects.wheat, pixel, pos);
-                    }
-                    else if (pixel.is_color(color_deck_and_roof)) {
-                        factory(objects.deck, pixel, pos);
-                        factory(objects.roof, pixel, pos);
-                    }
-                    else if (pixel.is_color(color_porch)) {
-                        factory(objects.porch, pixel, pos);
-                    }
-                    else if (pixel.is_color(color_rails)) {
-                        factory(objects.rails, pixel, pos);
-                    }
-                    else if (pixel.is_color(color_door)) {
-                        factory(objects.deck, pixel, pos);
-                        factory(objects.door, pixel, pos);
-                        factory(objects.roof, pixel, pos);
-                    }
-                    else if (pixel.is_color(color_wooden_door_and_deck)) {
-                        factory(objects.deck, pixel, pos);
-                        factory(objects.door, pixel, pos);
-                        //factory(objects.roof, pixel, pos);
-                    }
-                });
-                return false;
-            });
-        }
-        objects.register = register;
-        function start() {
-            console.log(' objects start ');
-        }
-        objects.start = start;
-        function tick() {
-            if (app$1.key(' ') == 1) {
-                wastes.HIDE_ROOFS = !wastes.HIDE_ROOFS;
-                console.log('hide roofs', wastes.HIDE_ROOFS);
-            }
-        }
-        objects.tick = tick;
-        function is_solid(pos) {
-            const passable = ['land', 'deck', 'shelves', 'porch', 'pawn', 'you', 'door', 'leaves', 'roof', 'falsefront', 'panel'];
-            pos = pts.round(pos);
-            let sector = lod$1.ggalaxy.at(lod$1.ggalaxy.big(pos));
-            let at = sector.stacked(pos);
-            for (let obj of at) {
-                if (!obj.is_type(passable)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-        objects.is_solid = is_solid;
-        class objected extends lod$1.obj {
-            constructor(counts) {
-                super(counts);
-                this.isObjected = true;
-                this.paintTimer = 0;
-                this.paintedRed = false;
-                this.solid = true;
-                this.cell = [0, 0];
-                this.heightAdd = 0;
-                this.calc = 0; // used for tree leaves
-            }
-            tiled() {
-                this.tile = tiles$1.get(pts.round(this.wpos));
-                this.tileBound = new aabb2([-.5, -.5], [.5, .5]);
-                this.tileBound.translate(this.wpos);
-            }
-            onhit() {
-                const sprite = this.shape;
-                if (sprite) {
-                    sprite.material.color.set('red');
-                    this.paintedRed = true;
-                }
-            }
-            tick() {
-                if (this.paintedRed) {
-                    this.paintTimer += ren$1.delta;
-                    if (this.paintTimer > 1) {
-                        const sprite = this.shape;
-                        sprite.material.color.set('white');
-                        console.log('beo');
-                        this.paintedRed = false;
-                        this.paintTimer = 0;
-                    }
-                }
-                //console.log('oo');
-            }
-            //update(): void {
-            //	this.tiled();
-            //	super.update();
-            //}
-            stack(fallthru = []) {
-                let calc = 0;
-                let stack = this.sector.stacked(pts.round(this.wpos));
-                for (let obj of stack) {
-                    if (obj.is_type(fallthru))
-                        continue;
-                    if (obj == this)
-                        break;
-                    calc += obj.z + obj.height;
-                }
-                this.calc = calc;
-                if (this.shape)
-                    this.shape.rup = calc + this.heightAdd;
-            }
-            setup_context() {
-            }
-        }
-        objects.objected = objected;
-        class wall extends objected {
-            constructor() {
-                super(numbers.walls);
-                this.type = 'wall';
-                this.height = 24;
-            }
-            create() {
-                var _a, _b, _c, _d, _e, _f;
-                this.tiled();
-                this.size = [24, 40];
-                this.cell = [255 - this.pixel.array[3], 0];
-                let tuple = sprites$1.dscrappywalls;
-                if (((_a = this.hints) === null || _a === void 0 ? void 0 : _a.type) == 'plywood')
-                    tuple = sprites$1.dderingerwalls;
-                if (((_b = this.hints) === null || _b === void 0 ? void 0 : _b.type) == 'overgrown')
-                    tuple = sprites$1.dovergrownwalls;
-                if (((_c = this.hints) === null || _c === void 0 ? void 0 : _c.type) == 'deringer')
-                    tuple = sprites$1.dderingerwalls;
-                if (((_d = this.hints) === null || _d === void 0 ? void 0 : _d.type) == 'woody')
-                    tuple = sprites$1.dwoodywalls;
-                if (((_e = this.hints) === null || _e === void 0 ? void 0 : _e.type) == 'medieval')
-                    tuple = sprites$1.dmedievalwalls;
-                else if (((_f = this.hints) === null || _f === void 0 ? void 0 : _f.type) == 'ruddy')
-                    tuple = sprites$1.druddywalls;
-                else ;
-                new sprite({
-                    binded: this,
-                    tuple: tuple,
-                    cell: this.cell,
-                    orderBias: .6,
-                });
-                this.stack();
-            }
-            adapt() {
-                // change sprite to surrounding walls
-            }
-        }
-        objects.wall = wall;
-        class deck extends objected {
-            constructor() {
-                super(numbers.floors);
-                this.type = 'deck';
-                this.height = 3;
-            }
-            onhit() { }
-            create() {
-                this.tiled();
-                this.tile.hasDeck = true;
-                //this.tile!.z -= 24;
-                this.size = [24, 17];
-                //if (this.pixel!.array[3] < 240)
-                //	this.cell = [240 - this.pixel!.array[3], 0];
-                new sprite({
-                    binded: this,
-                    tuple: sprites$1.ddeck,
-                    cell: this.cell,
-                    orderBias: .4,
-                });
-                this.stack();
-            }
-            tick() {
-                super.tick();
-                let pos = this.wpos;
-                let sector = lod$1.ggalaxy.at(lod$1.ggalaxy.big(pos));
-                let at = sector.stacked(pos);
-                for (let obj of at) {
-                    if (obj.type == 'you') {
-                        wastes.HIDE_ROOFS = true;
-                        break;
-                    }
-                }
-            }
-        }
-        deck.timer = 0;
-        objects.deck = deck;
-        class porch extends objected {
-            constructor() {
-                super(numbers.floors);
-                this.type = 'porch';
-                this.height = 3;
-            }
-            onhit() { }
-            create() {
-                this.tiled();
-                //this.tile!.z -= 24;
-                this.size = [24, 17];
-                //if (this.pixel!.array[3] < 240)
-                //	this.cell = [240 - this.pixel!.array[3], 0];
-                let color = [255, 255, 255, 255];
-                color = shadows$1.calc(color, this.wpos);
-                new sprite({
-                    binded: this,
-                    tuple: sprites$1.dporch,
-                    cell: this.cell,
-                    orderBias: .0,
-                    color: color
-                });
-                this.stack();
-            }
-        }
-        porch.timer = 0;
-        objects.porch = porch;
-        class rails extends objected {
-            constructor() {
-                super(numbers.floors);
-                this.type = 'porch';
-                this.height = 3;
-            }
-            create() {
-                this.tiled();
-                //this.tile!.z -= 24;
-                this.size = [24, 17];
-                //if (this.pixel!.array[3] < 240)
-                //	this.cell = [240 - this.pixel!.array[3], 0];
-                new sprite({
-                    binded: this,
-                    tuple: sprites$1.drails,
-                    cell: this.cell,
-                    orderBias: .4,
-                });
-                this.stack();
-            }
-            tick() {
-            }
-        }
-        rails.timer = 0;
-        objects.rails = rails;
-        class deadtree extends objected {
-            constructor() {
-                super(numbers.floors);
-                this.type = 'tree';
-                this.height = 3;
-            }
-            create() {
-                this.tiled();
-                this.size = [24, 50];
-                new sprite({
-                    binded: this,
-                    tuple: sprites$1.ddeadtreetrunk,
-                    orderBias: 0.6,
-                });
-                this.stack();
-            }
-        }
-        deadtree.timer = 0;
-        objects.deadtree = deadtree;
-        class decidtree extends objected {
-            constructor() {
-                super(numbers.trees);
-                this.flowered = false;
-                this.type = 'decid tree';
-                this.height = 24;
-            }
-            create() {
-                this.tiled();
-                this.size = [24, 50];
-                //if (this.pixel!.array[3] < 240)
-                //	this.cell = [240 - this.pixel!.array[3], 0];
-                new sprite({
-                    binded: this,
-                    tuple: sprites$1.ddecidtreetrunk,
-                    orderBias: 0.6,
-                });
-                this.stack();
-                const tile = tiles$1.get(this.wpos);
-                if (!this.flowered) {
-                    this.flowered = true;
-                    for (let y = -1; y <= 1; y++)
-                        for (let x = -1; x <= 1; x++)
-                            if (!(x == 0 && y == 0) /*&& Math.random() > .3*/)
-                                factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [x, y]), { type: this.hints.type, tree: this, color: tile.color });
-                    factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [0, 0]), { type: this.hints.type, color: tile.color });
-                    factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [0, 0]), { type: this.hints.type, color: tile.color });
-                }
-            }
-        }
-        objects.decidtree = decidtree;
-        class treeleaves extends objected {
-            constructor() {
-                super(numbers.leaves);
-                this.shaded = false;
-                this.type = 'leaves';
-                this.height = 14;
-            }
-            onhit() { }
-            create() {
-                this.tiled();
-                this.size = [24, 31];
-                //if (this.pixel!.array[3] < 240)
-                //	this.cell = [240 - this.pixel!.array[3], 0];
-                let color = this.hints.color || [255, 255, 255, 255];
-                let color2 = wastes.colormap.pixel(this.wpos);
-                if (!(255 - color2.array[3])) {
-                    if (this.hints.color) {
-                        color = [
-                            Math.floor(color[0] * 1.6),
-                            Math.floor(color[1] * 1.6),
-                            Math.floor(color[2] * 1.6),
-                            color[3],
-                        ];
-                    }
-                    let tuple = sprites$1.dtreeleaves;
-                    new sprite({
-                        binded: this,
-                        tuple: tuple,
-                        orderBias: 0.7,
-                        color: color
-                    });
-                    //shadows.shade(this.wpos, 0.1);
-                    if (!this.shaded) {
-                        this.shaded = true;
-                        const shadow = 0.03;
-                        shadows$1.shade_matrix(this.wpos, [
-                            [shadow / 2, shadow, shadow / 2],
-                            [shadow, shadow, shadow],
-                            [shadow / 2, shadow, shadow / 2]
-                        ]);
-                    }
-                    if (this.hints.tree)
-                        this.special_leaves_stack();
-                    else
-                        this.stack();
-                }
-            }
-            special_leaves_stack() {
-                console.log('special stack');
-                const tree = this.hints.tree;
-                if (this.shape) {
-                    this.z = tree.calc + tree.height;
-                    this.shape.rup = this.z;
-                }
-            }
-        }
-        objects.treeleaves = treeleaves;
-        class grass extends objected {
-            constructor() {
-                super(numbers.roofs);
-                this.type = 'grass';
-                this.height = 4;
-                this.solid = false;
-            }
-            create() {
-                this.tiled();
-                this.size = [24, 30];
-                let color = tiles$1.get(this.wpos).color;
-                color = [
-                    Math.floor(color[0] * 1.5),
-                    Math.floor(color[1] * 1.5),
-                    Math.floor(color[2] * 2.0),
-                    color[3],
-                ];
-                this.cell = [255 - this.pixel.array[3], 0];
-                new sprite({
-                    binded: this,
-                    tuple: sprites$1.dgrass,
-                    cell: this.cell,
-                    orderBias: .6,
-                    color: color
-                });
-                this.stack();
-            }
-        }
-        objects.grass = grass;
-        class wheat extends objected {
-            constructor() {
-                super(numbers.roofs);
-                this.type = 'wheat';
-                this.height = 4;
-            }
-            create() {
-                this.tiled();
-                this.size = [24, 30];
-                //let color =  tiles.get(this.wpos)!.color;
-                //this.cell = [Math.floor(Math.random() * 2), 0];
-                return;
-            }
-        }
-        objects.wheat = wheat;
-        class panel extends objected {
-            constructor() {
-                super(numbers.roofs);
-                this.ticker = 0;
-                this.type = 'panel';
-                this.height = 10;
-            }
-            create() {
-                this.tiled();
-                this.size = [8, 10];
-                //let color =  tiles.get(this.wpos)!.color;
-                //this.cell = [Math.floor(Math.random() * 2), 0];
-                return;
-            }
-            tick() {
-                return;
-                //console.log('boo');
-            }
-        }
-        objects.panel = panel;
-        class container {
-            constructor() {
-                this.tuples = [];
-                if (Math.random() > .5)
-                    this.add('beer');
-                if (Math.random() > .5)
-                    this.add('string');
-                if (Math.random() > .5)
-                    this.add('stone');
-            }
-            add(item) {
-                let found = false;
-                for (let tuple of this.tuples) {
-                    if (tuple[0] == item) {
-                        tuple[1] += 1;
-                        found = true;
-                        break;
-                    }
-                }
-                if (!found) {
-                    this.tuples.push([item, 1]);
-                }
-                this.tuples.sort();
-            }
-            remove(name) {
-                for (let i = this.tuples.length - 1; i >= 0; i--) {
-                    const tuple = this.tuples[i];
-                    if (tuple[0] == name) {
-                        tuple[1] -= 1;
-                        if (tuple[1] <= 0)
-                            this.tuples.splice(i, 1);
-                        break;
-                    }
-                }
-            }
-        }
-        objects.container = container;
-        class crate extends objected {
-            constructor() {
-                super(numbers.objs);
-                this.container = new container;
-                this.mousing = false;
-                this.type = 'crate';
-                this.height = 17;
-                this.container.obj = this;
-            }
-            create() {
-                this.tiled();
-                this.size = [24, 40];
-                //let color =  tiles.get(this.wpos)!.color;
-                //this.cell = [Math.floor(Math.random() * 2), 0];
-                new sprite({
-                    binded: this,
-                    tuple: sprites$1.dcrate,
-                    cell: this.cell,
-                    //color: color,
-                    orderBias: .6
-                });
-                this.stack(['roof', 'wall']);
-            }
-            tick() {
-                const sprite = this.shape;
-                if (this.mousedSquare(wastes.gview.mrpos2) /*&& !this.mousing*/) {
-                    this.mousing = true;
-                    sprite.material.color.set('#c1ffcd');
-                    console.log('mover');
-                    win$1.contextmenu.focus = this;
-                }
-                else if (!this.mousedSquare(wastes.gview.mrpos2) && this.mousing) {
-                    if (win$1.contextmenu.focus == this)
-                        win$1.contextmenu.focus = undefined;
-                    sprite.material.color.set('white');
-                    this.mousing = false;
-                }
-            }
-            setup_context() {
-                console.log('setup context');
-                win$1.contextmenu.reset();
-                win$1.contextmenu.options.options.push(["See contents", () => {
-                        return pts.distsimple(pawns$1.you.wpos, this.wpos) < 1;
-                    }, () => {
-                        win$1.container.crate = this;
-                        win$1.container.call_once();
-                    }]);
-            }
-        }
-        objects.crate = crate;
-        class shelves extends objected {
-            constructor() {
-                super(numbers.objs);
-                this.container = new container;
-                this.type = 'shelves';
-                this.height = 0;
-            }
-            create() {
-                this.tiled();
-                this.size = [20, 31];
-                //this.cell = [255 - this.pixel!.array[3], 0];
-                return;
-            }
-        }
-        objects.shelves = shelves;
-        class roof extends objected {
-            constructor() {
-                super(numbers.roofs);
-                this.shaded = false;
-                this.type = 'roof';
-                this.height = 3;
-            }
-            onhit() { }
-            create() {
-                //return;
-                this.tiled();
-                this.size = [24, 17];
-                let shape = new sprite({
-                    binded: this,
-                    tuple: sprites$1.droof,
-                    orderBias: 1.6,
-                });
-                shape.rup = 29;
-                if (!this.shaded) {
-                    this.shaded = true;
-                    const shadow = .8;
-                    shadows$1.shade_matrix(this.wpos, [
-                        [0, 0, 0, 0, 0],
-                        [0, 0, 0, 0, 0],
-                        [0, 0, shadow, 0, 0],
-                        [0, 0, 0, shadow, 0],
-                        [0, 0, 0, 0, shadow]
-                    ], true);
-                }
-            }
-            tick() {
-                super.tick();
-                const sprite = this.shape;
-                if (!sprite)
-                    return;
-                if (wastes.HIDE_ROOFS)
-                    sprite.mesh.visible = false;
-                else if (!wastes.HIDE_ROOFS)
-                    sprite.mesh.visible = true;
-            }
-        }
-        objects.roof = roof;
-        class falsefront extends objected {
-            constructor() {
-                super(numbers.roofs);
-                this.type = 'falsefront';
-                this.height = 5;
-            }
-            create() {
-                this.tiled();
-                this.cell = [255 - this.pixel.array[3], 0];
-                this.size = [24, 40];
-                new sprite({
-                    binded: this,
-                    tuple: sprites$1.dfalsefronts,
-                    cell: this.cell,
-                    orderBias: 1.6,
-                });
-                this.stack();
-                //this.z = 29+4;
-            }
-            tick() {
-                const sprite = this.shape;
-                if (!sprite)
-                    return;
-                if (wastes.HIDE_ROOFS)
-                    sprite.mesh.visible = false;
-                else if (!wastes.HIDE_ROOFS)
-                    sprite.mesh.visible = true;
-            }
-        }
-        objects.falsefront = falsefront;
-        class acidbarrel extends objected {
-            constructor() {
-                super(numbers.objs);
-                this.type = 'acidbarrel';
-                this.height = 4;
-            }
-            create() {
-                this.tiled();
-                this.size = [24, 35];
-                new sprite({
-                    binded: this,
-                    tuple: sprites$1.dacidbarrel,
-                    orderBias: .4,
-                });
-                this.stack();
-            }
-        }
-        objects.acidbarrel = acidbarrel;
-        class door extends objected {
-            constructor() {
-                super(numbers.walls);
-                this.open = false;
-                this.type = 'door';
-                this.height = 23;
-            }
-            create() {
-                this.tiled();
-                this.size = [24, 40];
-                this.cell = [255 - this.pixel.array[3], 0];
-                new sprite({
-                    binded: this,
-                    tuple: sprites$1.ddoor,
-                    cell: this.cell,
-                    orderBias: door.order,
-                });
-                this.stack();
-            }
-            tick() {
-                super.tick();
-                if (!this.shape)
-                    return;
-                let pos = this.wpos;
-                let sector = lod$1.ggalaxy.at(lod$1.ggalaxy.big(pos));
-                let at = sector.stacked(pos);
-                let pawning = false;
-                for (let obj of at) {
-                    if (obj.is_type(['pawn', 'you'])) {
-                        pawning = true;
-                        let sprite = this.shape;
-                        sprite.vars.cell = pts.subtract(this.cell, [1, 0]);
-                        sprite.vars.orderBias = 1.55;
-                        sprite.retransform();
-                        sprite.update();
-                        this.open = true;
-                        break;
-                    }
-                }
-                if (!pawning) {
-                    let sprite = this.shape;
-                    sprite.vars.cell = this.cell;
-                    sprite.vars.orderBias = door.order;
-                    sprite.retransform();
-                    sprite.update();
-                    this.open = false;
-                }
-            }
-        }
-        door.order = .7;
-        objects.door = door;
-        class shrubs extends objected {
-            constructor() {
-                super(numbers.trees);
-                this.type = 'shrubs';
-            }
-            create() {
-                this.size = [24, 15];
-                new sprite({
-                    binded: this,
-                    tuple: sprites$1.shrubs,
-                    orderBias: .5
-                });
-            }
-        }
-        objects.shrubs = shrubs;
-    })(objects || (objects = {}));
-    var objects$1 = objects;
-
     var win;
     (function (win_1) {
         var win;
@@ -6823,7 +7476,7 @@ void main() {
                 }
             }
             static tick() {
-                if (!pawns$1.you.isActive()) {
+                if (pawns$1.you && !pawns$1.you.isActive()) {
                     this.call(true);
                     this.modal.float(pawns$1.you, [-5, 5]);
                     console.log('call and float');
@@ -7552,657 +8205,6 @@ void main() {
     })(pawns || (pawns = {}));
     var pawns$1 = pawns;
 
-    var tiles;
-    (function (tiles) {
-        tiles.started = false;
-        var arrays = [];
-        tiles.hovering = undefined;
-        function get(pos) {
-            if (arrays[pos[1]])
-                return arrays[pos[1]][pos[0]];
-        }
-        tiles.get = get;
-        function register() {
-            console.log(' tiles register ');
-            // this runs before the objects hooks
-            hooks.register('sectorCreate', (sector) => {
-                pts.func(sector.small, (pos) => {
-                    let x = pos[0];
-                    let y = pos[1];
-                    if (arrays[y] == undefined)
-                        arrays[y] = [];
-                    let tile = new tiles.tile([x, y]);
-                    arrays[y][x] = tile;
-                    lod$1.add(tile);
-                });
-                return false;
-            });
-        }
-        tiles.register = register;
-        function start() {
-            tiles.started = true;
-            console.log(' tiles start ');
-            lod$1.ggalaxy.at(lod$1.ggalaxy.big(wastes.gview.wpos));
-        }
-        tiles.start = start;
-        function tick() {
-            if (!tiles.started)
-                return;
-            for (let i = 40; i >= 0; i--) {
-                // pretention grid
-                let pos = lod$1.unproject(pts.add(wastes.gview.mrpos, [0, -i]));
-                pos = pts.floor(pos);
-                const tile = get(pos);
-                if (tile && tile.z + tile.height + tile.heightAdd == i) {
-                    if (tile.sector.isActive()) {
-                        tile.hover();
-                        tiles.hovering = tile;
-                        break;
-                    }
-                }
-            }
-        }
-        tiles.tick = tick;
-        const color_purple_water = [40, 120, 130, 255];
-        class tile extends lod$1.obj {
-            constructor(wpos) {
-                super(numbers.tiles);
-                this.hasDeck = false;
-                this.isLand = false;
-                this.refresh = false;
-                this.opacity = 1;
-                this.wpos = wpos;
-                let colour = wastes.colormap.pixel(this.wpos);
-                if (colour.is_black()) {
-                    // We are a water
-                    this.type = 'water';
-                    this.size = [24, 12];
-                    this.tuple = sprites$1.dwater;
-                    this.opacity = .5;
-                    this.color = color_purple_water;
-                }
-                if (!colour.is_black()) {
-                    // We're a land tile
-                    this.isLand = true;
-                    this.type = 'land';
-                    this.size = [24, 30];
-                    this.tuple = sprites$1.dgraveltiles;
-                    this.height = 6;
-                    this.cell = [1, 0];
-                    {
-                        let biome = wastes.roughmap.pixel(this.wpos);
-                        if (biome.array[0] > 70) {
-                            this.tuple = sprites$1.dswamptiles;
-                            //this.z -= 1;
-                        }
-                    }
-                    const divisor = 3;
-                    let height = wastes.heightmap.pixel(this.wpos);
-                    this.z += Math.floor(height.array[0] / divisor);
-                    this.z -= 3; // so we dip the water
-                    //this.z += Math.random() * 24;
-                }
-            }
-            get_stack() {
-                var _a;
-                (_a = this.sector) === null || _a === void 0 ? void 0 : _a.objsro();
-            }
-            /*stack(obj: lod.obj) {
-                let i = this.objs.indexOf(obj);
-                if (i == -1)
-                    this.objs.push(obj);
-            }
-            unstack(obj: lod.obj) {
-                let i = this.objs.indexOf(obj);
-                if (i > -1)
-                    return this.objs.splice(i, 1).length;
-            }*/
-            create() {
-                if (this.isLand) {
-                    this.color = wastes.colormap.pixel(this.wpos).array;
-                    this.color = shadows$1.calc(this.color, this.wpos);
-                }
-                let shape = new sprite({
-                    binded: this,
-                    tuple: this.tuple,
-                    cell: this.cell,
-                    color: this.color,
-                    opacity: this.opacity,
-                    orderBias: -1.0
-                });
-                // if we have a deck, add it to heightAdd
-                let sector = lod$1.ggalaxy.at(lod$1.ggalaxy.big(this.wpos));
-                let at = sector.stacked(this.wpos);
-                for (let obj of at) {
-                    if (obj.type == 'deck' || obj.type == 'porch')
-                        this.heightAdd = obj.height;
-                }
-                shape.rup = this.z;
-            }
-            //update() {}
-            delete() {
-            }
-            hover() {
-                const sprite = this.shape;
-                if (!(sprite === null || sprite === void 0 ? void 0 : sprite.mesh))
-                    return;
-                const last = tile.lastHover;
-                if (last && last != this && last.sector.isActive()) {
-                    last.hide();
-                    last.show();
-                }
-                sprite.mesh.material.color.set('#768383');
-                tile.lastHover = this;
-            }
-            paint() {
-                const sprite = this.shape;
-                if (!sprite || !sprite.mesh)
-                    return;
-                sprite.mesh.material.color.set('red');
-            }
-            tick() {
-                if (this.refresh) {
-                    this.refresh = false;
-                    this.hide();
-                    this.show();
-                }
-                if (pts.equals(this.wpos, pts.round(pawns$1.you.wpos))) ;
-            }
-        }
-        tiles.tile = tile;
-    })(tiles || (tiles = {}));
-    var tiles$1 = tiles;
-
-    // the view manages what it sees
-    class view {
-        constructor() {
-            this.zoom = 0.33;
-            this.zoomIndex = 4;
-            this.zooms = [1, 0.5, 0.33, 0.2, 0.1, 0.05];
-            this.wpos = [44, 52];
-            this.rpos = [0, 0];
-            this.mpos = [0, 0];
-            this.mwpos = [0, 0];
-            this.mrpos = [0, 0];
-            this.mrpos2 = [0, 0];
-            this.begin = [0, 0];
-            this.before = [0, 0];
-            this.show = true;
-            new lod$1.galaxy(10);
-            this.rpos = lod$1.project(this.wpos);
-        }
-        static make() {
-            return new view;
-        }
-        chart(big) {
-        }
-        remove(obj) {
-            var _a;
-            (_a = obj.sector) === null || _a === void 0 ? void 0 : _a.remove(obj);
-        }
-        tick() {
-            this.move();
-            this.mouse();
-            if (!this.follow)
-                this.wpos = lod$1.unproject(this.rpos);
-            else {
-                let pos = this.follow.wpos;
-                pos = pts.add(pos, [.5, .5]);
-                this.wpos = pts.clone(pos);
-                this.rpos = lod$1.project(pos);
-                this.rpos = pts.add(this.rpos, [0, this.follow.size[1] / 2]);
-            }
-            this.pan();
-            this.set_camera();
-            this.stats();
-            lod$1.ggalaxy.update(this.wpos);
-            const zoom = wastes.gview.zoom;
-            // ren.renderer.domElement.style.transform = `scale(${1/zoom},${1/zoom})`;
-            ren$1.camera.scale.set(zoom, zoom, zoom);
-            ren$1.camera.updateProjectionMatrix();
-        }
-        pan() {
-            const panDivisor = -1;
-            if (app$1.button(1) == 1) {
-                let mouse = app$1.mouse();
-                mouse[1] = -mouse[1];
-                this.begin = mouse;
-                this.before = pts.clone(this.rpos);
-            }
-            if (app$1.button(1) >= 1) {
-                let mouse = app$1.mouse();
-                mouse[1] = -mouse[1];
-                let dif = pts.subtract(this.begin, mouse);
-                {
-                    dif = pts.divide(dif, panDivisor);
-                    // necessary mods
-                    dif = pts.mult(dif, ren$1.ndpi);
-                    dif = pts.mult(dif, this.zoom);
-                    dif = pts.subtract(dif, this.before);
-                    this.rpos = pts.inv(dif);
-                    this.wpos = lod$1.unproject(this.rpos);
-                    //this.rpos = pts.floor(this.rpos); // floor 
-                }
-            }
-            else if (app$1.button(1) == -1) {
-                console.log('woo');
-                this.rpos = pts.floor(this.rpos);
-            }
-        }
-        set_camera() {
-            // let inv = pts.inv(this.rpos);
-            // ren.groups.axisSwap.position.set(inv[0], inv[1], 0);
-            ren$1.camera.position.set(this.rpos[0], this.rpos[1], 0);
-        }
-        mouse() {
-            let mouse = app$1.mouse();
-            mouse = pts.subtract(mouse, pts.divide([ren$1.screen[0], ren$1.screen[1]], 2));
-            mouse = pts.mult(mouse, ren$1.ndpi);
-            mouse = pts.mult(mouse, this.zoom);
-            mouse[1] = -mouse[1];
-            this.mrpos = pts.add(mouse, this.rpos);
-            this.mrpos2 = pts.subtract(this.mrpos, [0, 3]); // why minus 3 ?
-            this.mrpos = pts.add(this.mrpos, lod$1.project([.5, -.5])); // correction
-            this.mwpos = lod$1.unproject(this.mrpos);
-            //this.mwpos = pts.add(this.mwpos, [.5, -.5])
-            // now..
-            if (app$1.button(0) == 1) {
-                hooks.call('viewLClick', this);
-            }
-            if (app$1.button(1) == 1) {
-                hooks.call('viewMClick', this);
-            }
-            if (app$1.button(2) == 1) {
-                hooks.call('viewRClick', this);
-            }
-        }
-        move() {
-            let pan = 10;
-            if (app$1.key('x'))
-                pan *= 2;
-            let add = [0, 0];
-            if (app$1.key('arrowup'))
-                add = pts.add(add, [0, pan]);
-            if (app$1.key('arrowdown'))
-                add = pts.add(add, [0, -pan]);
-            if (app$1.key('arrowleft'))
-                add = pts.add(add, [-pan, 0]);
-            if (app$1.key('arrowright'))
-                add = pts.add(add, [pan, 0]);
-            if ((app$1.key('f') == 1 || app$1.wheel == -1) && this.zoomIndex > 0)
-                this.zoomIndex -= 1;
-            if ((app$1.key('r') == 1 || app$1.wheel == 1) && this.zoomIndex < this.zooms.length - 1)
-                this.zoomIndex += 1;
-            if (app$1.key('t') == 1) {
-                lod$1.ggrid.shrink();
-            }
-            if (app$1.key('g') == 1) {
-                lod$1.ggrid.grow();
-            }
-            this.zoom = this.zooms[this.zoomIndex];
-            add = pts.mult(add, this.zoom);
-            add = pts.floor(add);
-            this.rpos = pts.add(this.rpos, add);
-        }
-        stats() {
-            var _a;
-            if (app$1.key('h') == 1)
-                this.show = !this.show;
-            let crunch = ``;
-            crunch += `DPI_UPSCALED_RT: ${ren$1.DPI_UPSCALED_RT}<br />`;
-            crunch += '<br />';
-            crunch += `dpi: ${ren$1.ndpi}<br />`;
-            crunch += `fps: ${ren$1.fps}<br />`;
-            crunch += `delta: ${ren$1.delta.toPrecision(6)}<br />`;
-            crunch += '<br />';
-            crunch += `textures: ${ren$1.renderer.info.memory.textures}<br />`;
-            crunch += `programs: ${ren$1.renderer.info.programs.length}<br />`;
-            //crunch += `memory: ${Math.floor(ren.memory.usedJSHeapSize / 1000000)} / ${Math.floor(ren.memory.totalJSHeapSize / 1000000)}<br />`;
-            crunch += '<br />';
-            //crunch += `mouse: ${pts.to_string(App.mouse())}<br />`;
-            //crunch += `mpos: ${pts.to_string(pts.floor(this.mpos))}<br />`;
-            crunch += `mwpos: ${pts.to_string(pts.floor(this.mwpos))}<br />`;
-            crunch += `mrpos: ${pts.to_string(pts.floor(this.mrpos))}<br />`;
-            crunch += '<br />';
-            crunch += `lod grid size: ${lod$1.ggrid.spread * 2 + 1} / ${lod$1.ggrid.outside * 2 + 1}<br />`;
-            crunch += `mouse tile: ${pts.to_string(((_a = tiles$1.hovering) === null || _a === void 0 ? void 0 : _a.wpos) || [0, 0])}<br />`;
-            crunch += `view center: ${pts.to_string(pts.floor(this.wpos))}<br />`;
-            crunch += `view bigpos: ${pts.to_string(lod$1.ggalaxy.big(this.wpos))}<br />`;
-            crunch += `view zoom: ${this.zoom}<br />`;
-            crunch += `lod grid: ${lod$1.ggrid.spread}, ${lod$1.ggrid.outside}<br />`;
-            crunch += '<br />';
-            //crunch += `world wpos: ${pts.to_string(this.pos)}<br /><br />`;
-            crunch += `sectors: ${numbers.sectors[0]} / ${numbers.sectors[1]}<br />`;
-            crunch += `game objs: ${numbers.objs[0]} / ${numbers.objs[1]}<br />`;
-            crunch += `sprites: ${numbers.sprites[0]} / ${numbers.sprites[1]}<br />`;
-            crunch += `tiles: ${numbers.tiles[0]} / ${numbers.tiles[1]}<br />`;
-            crunch += `trees: ${numbers.trees[0]} / ${numbers.trees[1]}<br />`;
-            crunch += `leaves: ${numbers.leaves[0]} / ${numbers.leaves[1]}<br />`;
-            crunch += `floors: ${numbers.floors[0]} / ${numbers.floors[1]}<br />`;
-            crunch += `walls: ${numbers.walls[0]} / ${numbers.walls[1]}<br />`;
-            crunch += `roofs: ${numbers.roofs[0]} / ${numbers.roofs[1]}<br />`;
-            crunch += '<br />';
-            crunch += `controls:<br />
-		[right click] for context menu<br />
-		[w, a, s, d] or [click] to move<br />
-		[r, f] or [scrollwheel] to zoom<br />
-		[t, g] to change lod<br />
-		[v] to toggle camera<br />
-		[z] to toggle bit depth effect<br />
-		[shift] to aim<br />
-		[shift + click] to shoot<br />
-		[middle mouse] to pan<br />
-		[spacebar] to toggle roofs<br />
-		[h] to hide debug<br />
-		[c] for character menu<br />`;
-            let element = document.querySelectorAll('.stats')[0];
-            element.innerHTML = crunch;
-            element.style.visibility = this.show ? 'visible' : 'hidden';
-        }
-    }
-
-    var modeler;
-    (function (modeler) {
-        modeler.started = false;
-        const textures = [
-            'tex/stock/bricks3.jpg',
-            'tex/stock/whiteplanks.jpg',
-            'tex/stock/brick4.jpg',
-            'tex/stock/metalrooftiles.jpg',
-            'tex/stock/concrete1.jpg',
-            'tex/stock/treebark1.jpg',
-            'tex/stock/leaves.png',
-        ];
-        let currentTex = 0;
-        var gmesh;
-        var ggroup;
-        var rotation = 0;
-        let heightMod = 1;
-        var zooms = [0, 1, [1, 0.33, 0.25, 0.1]];
-        function register() {
-        }
-        modeler.register = register;
-        function start() {
-            modeler.started = true;
-            document.title = 'modeler';
-            gmesh = createMesh();
-            ggroup = new THREE.Group;
-            ggroup.rotation.set(Math.PI / 6, Math.PI / 4, 0);
-            ren$1.scene.add(ggroup);
-            let sun = new THREE.DirectionalLight(0xffffff, 0.4);
-            sun.position.set(-wastes.size, wastes.size * 2, wastes.size / 2);
-            //sun.add(new AxesHelper(100));
-            ggroup.add(sun);
-            ggroup.add(sun.target);
-        }
-        modeler.start = start;
-        function createMesh(size = wastes.size) {
-            const width = 18, height = 18 * 2;
-            let box = new THREE.BoxGeometry(width, height * heightMod, width, 1, 1, 1);
-            let materials = [];
-            const loader = new THREE.TextureLoader();
-            loader.load(textures[currentTex], function (texture) {
-                console.log(texture.magFilter);
-                console.log(texture.minFilter);
-                //texture.magFilter = texture.minFilter = THREE.NearestFilter;
-                texture.wrapS = texture.wrapT = THREE__default["default"].RepeatWrapping;
-                texture.generateMipmaps = true;
-                console.log('woo');
-                let alignments = [
-                    undefined,
-                    new THREE.Matrix3().setUvTransform(0, 0, 1, 1, rotation * Math.PI / 2, 0, 1),
-                    new THREE.Matrix3().setUvTransform(0, 0, 0.5, 1, rotation * Math.PI / 2, 0, 1),
-                    undefined,
-                    new THREE.Matrix3().setUvTransform(0, 0, 1, 1, rotation * Math.PI / 2, 0, 1), // right
-                ];
-                for (let i of [1, 2, 4]) {
-                    materials[i] = myboxmaterial({
-                        map: texture,
-                        transparent: true
-                    }, {
-                        myUvTransform: alignments[i]
-                    });
-                }
-                gmesh = new THREE.Mesh(box, materials);
-                gmesh.position.set(3, 0, 0);
-                ggroup.add(gmesh);
-            });
-        }
-        let show = true;
-        function tick() {
-            if (!modeler.started)
-                return;
-            if (app$1.wheel == -1 && zooms[0] > 0)
-                zooms[0] -= 1;
-            if (app$1.wheel == 1 && zooms[0] < zooms[2].length - 1)
-                zooms[0] += 1;
-            zooms[1] = zooms[2][zooms[0]];
-            ren$1.camera2.scale.set(zooms[1], zooms[1], zooms[1]);
-            let rebuild = false;
-            if (app$1.key('q') == 1) {
-                rotation -= 1;
-                rebuild = true;
-            }
-            if (app$1.key('e') == 1) {
-                rotation += 1;
-                rebuild = true;
-            }
-            if (app$1.key('arrowright') == 1) {
-                rebuild = true;
-                console.log('switch tex');
-                if (currentTex < textures.length - 1)
-                    currentTex++;
-            }
-            if (app$1.key('arrowleft') == 1) {
-                rebuild = true;
-                console.log('switch tex');
-                if (currentTex > 0)
-                    currentTex--;
-            }
-            if (app$1.key('arrowup') == 1) {
-                heightMod += 0.1;
-                rebuild = true;
-            }
-            if (app$1.key('arrowdown') == 1) {
-                heightMod -= 0.1;
-                rebuild = true;
-            }
-            rotation = rotation < 0 ? 3 : rotation > 3 ? 0 : rotation;
-            if (rebuild && gmesh) {
-                gmesh.geometry.dispose();
-                gmesh.material[1].dispose();
-                gmesh.material[2].dispose();
-                gmesh.material[4].dispose();
-                gmesh.parent.remove(gmesh);
-                gmesh = undefined;
-                createMesh();
-                //ggroup.add(gmesh);
-            }
-            if (app$1.key('h') == 1)
-                show = !show;
-            let crunch = ``;
-            crunch += `dpi: ${ren$1.ndpi}<br />`;
-            crunch += `fps: ${ren$1.fps} / ${ren$1.delta.toPrecision(3)}<br />`;
-            crunch += '<br />';
-            crunch += `zoom: ${zooms[1]}<br />`;
-            crunch += `rotation: ${rotation}<br />`;
-            crunch += `controls: mousewheel to zoom, Q, E to rotate texture<br />`;
-            let element = document.querySelectorAll('.stats')[0];
-            element.innerHTML = crunch;
-            element.style.visibility = show ? 'visible' : 'hidden';
-        }
-        modeler.tick = tick;
-        function myboxmaterial(parameters, uniforms) {
-            let material = new THREE.MeshLambertMaterial(parameters);
-            material.customProgramCacheKey = function () {
-                return 'boxmaterial';
-            };
-            material.name = "boxmaterial";
-            material.onBeforeCompile = function (shader) {
-                shader.defines = {};
-                shader.uniforms.myUvTransform = { value: uniforms.myUvTransform };
-                shader.vertexShader = shader.vertexShader.replace(`#include <common>`, `#include <common>
-				uniform mat3 myUvTransform;
-				`);
-                shader.vertexShader = shader.vertexShader.replace(`#include <uv_vertex>`, `
-				#ifdef USE_UV
-				vUv = ( myUvTransform * vec3( uv, 1 ) ).xy;
-				#endif
-				`);
-            };
-            return material;
-        }
-    })(modeler || (modeler = {}));
-    var modeler$1 = modeler;
-
-    var shear;
-    (function (shear) {
-        shear.started = false;
-        var canvas, ctx;
-        var spare, spareCtx;
-        var walls, goal, wallpapers, wallpaper;
-        function start() {
-            shear.started = true;
-            document.title = 'shear';
-            document.body.oncontextmenu = function () { };
-            spare = document.createElement("canvas");
-            spareCtx = spare.getContext('2d');
-            spare.width = 24;
-            spare.height = 40;
-            spare.style.position = 'relative';
-            spare.style.zoom = '3';
-            spare.style.display = 'block';
-            spare.style.zIndex = '2';
-            canvas = document.createElement("canvas");
-            canvas.width = 24 * 11;
-            canvas.height = 40;
-            canvas.id = "shear";
-            canvas.style.position = 'relative';
-            canvas.style.margin = '0px auto';
-            canvas.style.zoom = '3';
-            canvas.style.zIndex = '2';
-            ctx = canvas.getContext('2d');
-            let style = document.location.href.split('shear=')[1];
-            console.log(style);
-            walls = document.getElementById(style);
-            goal = document.getElementById('goal');
-            wallpaper = document.getElementById('wallpaper');
-            wallpapers = document.getElementById('wallpapers');
-            ctx.drawImage(walls, 0, 0);
-            ctx.globalCompositeOperation = 'source-atop';
-            ctx.drawImage(goal, 0, 0);
-            // -4, 8 for thin
-            // -3, 6 for thick
-            let x, y;
-            if (style == 'thin' || style == 'thinner') {
-                y = -4;
-                x = 8;
-            }
-            else if (style == 'thick') {
-                y = -3;
-                x = 6;
-            }
-            // half
-            ctx.drawImage(goal, 24, 0);
-            ctx.drawImage(goal, 24 * 5, 0);
-            ctx.drawImage(goal, 24 * 6, 0);
-            spareCtx.drawImage(canvas, -24 * 5, 0);
-            ctx.drawImage(spare, 24 * 2 + x, y);
-            ctx.drawImage(spare, 24 * 3 + x, y);
-            ctx.drawImage(spare, 24 * 7 + x, y);
-            spareCtx.clearRect(0, 0, 24, 40);
-            spareCtx.drawImage(canvas, -24 * 6, 0);
-            ctx.drawImage(spare, 24 * 2, 0);
-            spareCtx.clearRect(12 + x, 0, 24, 40);
-            ctx.drawImage(spare, 24 * 3 - x, y);
-            spareCtx.drawImage(canvas, -24 * 6, 0);
-            ctx.drawImage(spare, 24 * 4 - x, y);
-            ctx.drawImage(spare, 24 * 8 - x, y);
-            spareCtx.clearRect(0, 0, 24, 40);
-            spareCtx.drawImage(canvas, -24 * 5, 0);
-            ctx.drawImage(spare, 24 * 4, 0);
-            //ctx.drawImage(spare, 24 * 9 - x2, -y2);
-            spareCtx.clearRect(0, 0, 24, 40);
-            spareCtx.drawImage(canvas, -24 * 6, 0);
-            //ctx.drawImage(spare, 24 * 10 + x2, -y2);
-            document.body.append(canvas);
-            document.body.append(spare);
-            start_wallpaper();
-        }
-        shear.start = start;
-        function start_wallpaper() {
-            let style = document.location.href.split('shear=')[1];
-            let x, y;
-            if (style == 'thin' || style == 'thinner') {
-                y = -4;
-                x = 8;
-            }
-            else if (style == 'thick') {
-                y = -3;
-                x = 6;
-            }
-            let spare2Canvas, ctx2;
-            spare2Canvas = document.createElement("canvas");
-            ctx2 = spare2Canvas.getContext('2d');
-            spare2Canvas.width = 24 * 11;
-            spare2Canvas.height = 40;
-            spare2Canvas.style.position = 'relative';
-            spare2Canvas.style.zoom = '3';
-            spare2Canvas.style.display = 'block';
-            spare2Canvas.style.zIndex = '2';
-            ctx2.drawImage(wallpapers, 0, 0);
-            ctx2.globalCompositeOperation = 'source-atop';
-            let wallpaperCanvas;
-            wallpaperCanvas = document.createElement("canvas");
-            let ctx1 = wallpaperCanvas.getContext('2d');
-            wallpaperCanvas.width = 24 * 11;
-            wallpaperCanvas.height = 40;
-            wallpaperCanvas.style.position = 'relative';
-            wallpaperCanvas.style.zoom = '3';
-            wallpaperCanvas.style.display = 'block';
-            wallpaperCanvas.style.zIndex = '2';
-            ctx1.drawImage(walls, 0, 0);
-            ctx1.globalCompositeOperation = 'source-atop';
-            ctx1.drawImage(wallpaper, 0, 0);
-            ctx1.drawImage(wallpaper, 24, 0);
-            ctx1.drawImage(wallpaper, 24 * 5, 0);
-            ctx1.drawImage(wallpaper, 24 * 6, 0);
-            spareCtx.drawImage(wallpaperCanvas, -24 * 5, 0);
-            ctx1.drawImage(spare, 24 * 2 + x, y);
-            ctx1.drawImage(spare, 24 * 3 + x, y);
-            ctx1.drawImage(spare, 24 * 7 + x, y);
-            spareCtx.clearRect(0, 0, 24, 40);
-            spareCtx.drawImage(wallpaperCanvas, -24 * 6, 0);
-            ctx1.drawImage(spare, 24 * 2, 0);
-            spareCtx.clearRect(12 + x, 0, 24, 40);
-            ctx1.drawImage(spare, 24 * 3 - x, y);
-            spareCtx.drawImage(wallpaperCanvas, -24 * 6, 0);
-            ctx1.drawImage(spare, 24 * 4 - x, y);
-            ctx1.drawImage(spare, 24 * 8 - x, y);
-            spareCtx.clearRect(0, 0, 24, 40);
-            spareCtx.drawImage(wallpaperCanvas, -24 * 5, 0);
-            ctx1.drawImage(spare, 24 * 4, 0);
-            //ctx.drawImage(spare, 24 * 9 - x2, -y2);
-            spareCtx.clearRect(0, 0, 24, 40);
-            spareCtx.drawImage(wallpaperCanvas, -24 * 6, 0);
-            //ctx.drawImage(spare, 24 * 10 + x2, -y2);
-            ctx2.drawImage(wallpaperCanvas, 0, 0);
-            ctx.drawImage(spare2Canvas, 0, 0);
-            document.body.append(wallpaperCanvas);
-            document.body.append(spare2Canvas);
-        }
-        shear.start_wallpaper = start_wallpaper;
-        function tick() {
-            if (!shear.started)
-                return;
-            let crunch = `shear`;
-            let element = document.querySelectorAll('.stats')[0];
-            element.innerHTML = crunch;
-        }
-        shear.tick = tick;
-    })(shear || (shear = {}));
-    var shear$1 = shear;
-
     var rooms;
     (function (rooms) {
         new aabb2([41, 42], [30, 30]);
@@ -8232,7 +8234,8 @@ void main() {
         function tick() {
             if (!areas_1.started)
                 return;
-            let here = new aabb2(pawns$1.you.wpos, pawns$1.you.wpos);
+            let pos = wastes.gview.center.wpos;
+            let here = new aabb2(pos, pos);
             if (currentArea) {
                 if (currentArea && currentArea.bound.test(here) == aabb2.TEST.Outside) {
                     currentArea = undefined;
@@ -8256,6 +8259,7 @@ void main() {
     var client;
     (function (client) {
         client.pawnsId = {};
+        client.playerId = -1;
         function start() {
             client.socket = new WebSocket("ws://localhost:8080");
             client.socket.onopen = function (e) {
@@ -8264,33 +8268,63 @@ void main() {
                 //socket.send("My name is John");
             };
             client.socket.onmessage = function (event) {
+                var _a, _b;
                 const string = event.data;
                 const data = JSON.parse(string);
-                console.log(`received from server`, data);
-                if (Array.isArray(data)) {
-                    const packages = data;
-                    for (let sobj of packages) {
+                //console.log(`received from server`, data);
+                if (data.player) {
+                    const id = data.player.id.split('_')[1];
+                    console.log('got our player sent', id);
+                    client.playerId = id;
+                    wastes.gview.center.wpos = data.player.wpos;
+                }
+                if (data.removes && data.removes.length) {
+                    console.log('we have a remove', data.removes);
+                    for (let idString of data.removes) {
+                        const split = idString.split('_');
+                        if (split[0] == 'pawn') {
+                            let pawn = client.pawnsId[idString];
+                            delete client.pawnsId[idString];
+                            pawn.hide();
+                            pawn.finalize();
+                            lod$1.remove(pawn);
+                        }
+                    }
+                }
+                if (data.news) {
+                    //console.log('got news');
+                    for (let sobj of data.news) {
+                        const id = sobj.id.split('_')[1];
                         if (sobj.type == 'pawn') {
                             let pawn = client.pawnsId[sobj.id];
                             if (!pawn) {
-                                console.log('make a pawn');
-                                let pawn = client.pawnsId[sobj.id] = new pawns$1.pawn();
+                                pawn = client.pawnsId[sobj.id] = new pawns$1.pawn();
+                                console.log('new pawn ', sobj.id);
+                                if (id == client.playerId) {
+                                    pawns$1.you = pawn;
+                                    pawn.type = 'you';
+                                    console.log('we got our pawn');
+                                }
                                 pawn.wpos = sobj.wpos;
                                 pawn.angle = sobj.angle;
+                                (_a = pawn.sector) === null || _a === void 0 ? void 0 : _a.swap(pawn);
                                 lod$1.add(pawn);
                             }
-                            else {
+                            if (pawn && pawn.type != 'you') {
                                 pawn.wpos = sobj.wpos;
                                 pawn.angle = sobj.angle;
+                                (_b = pawn.sector) === null || _b === void 0 ? void 0 : _b.swap(pawn);
                             }
                         }
                     }
                 }
             };
             setInterval(() => {
-                const json = { player: { wpos: pawns$1.you.wpos, angle: pawns$1.you.angle } };
-                const string = JSON.stringify(json);
-                client.socket.send(string);
+                if (pawns$1.you) {
+                    const json = { player: { wpos: pawns$1.you.wpos, angle: pawns$1.you.angle } };
+                    const string = JSON.stringify(json);
+                    client.socket.send(string);
+                }
             }, 333);
         }
         client.start = start;
@@ -8377,7 +8411,9 @@ void main() {
                 win$1.start();
                 tests$1.start();
                 client.start();
-                pawns$1.make_you();
+                wastes.gview.center = new lod$1.obj();
+                wastes.gview.center.wpos = [44, 52];
+                //pawns.make_you();
                 let pos = [37.5, 48.5];
                 let vendor = new pawns$1.pawn();
                 vendor.pawntype = 'trader';

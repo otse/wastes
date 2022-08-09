@@ -18,33 +18,32 @@ export namespace numbers {
 	export var pawns: tally = [0, 0]
 };
 
+class toggle {
+	protected active = false;
+	isActive() { return this.active };
+	on() {
+		if (this.active) {
+			console.warn(' (toggle) already on ');
+			return true;
+			// it was on before
+		}
+		this.active = true;
+		return false;
+		// it wasn't on before
+	}
+	off() {
+		if (!this.active) {
+			console.warn(' (toggle) already off ');
+			return true;
+		}
+		this.active = false;
+		return false;
+	}
+}
+
 namespace slod {
 
 	const grid_crawl_makes_sectors = true;
-
-
-	class toggle {
-		protected active = false;
-		isActive() { return this.active };
-		on() {
-			if (this.active) {
-				console.warn(' (toggle) already on ');
-				return true;
-				// it was on before
-			}
-			this.active = true;
-			return false;
-			// it wasn't on before
-		}
-		off() {
-			if (!this.active) {
-				console.warn(' (toggle) already off ');
-				return true;
-			}
-			this.active = false;
-			return false;
-		}
-	}
 
 	export var gworld: sworld
 
@@ -92,6 +91,7 @@ namespace slod {
 	export class ssector extends toggle {
 		color?;
 		public observers = 0
+		public gridsArray: sgrid[] = []
 		static actives: ssector[] = []
 		readonly small: aabb2;
 		private readonly objs: sobj[] = [];
@@ -111,6 +111,12 @@ namespace slod {
 		}
 		objsro(): ReadonlyArray<sobj> {
 			return this.objs;
+		}
+		observe(grid: sgrid) {
+			this.gridsArray.push(grid);
+		}
+		unobserve(grid: sgrid) {
+			this.gridsArray.splice(this.gridsArray.indexOf(grid), 1);
 		}
 		add(obj: sobj) {
 			let i = this.objs.indexOf(obj);
@@ -135,20 +141,37 @@ namespace slod {
 				return !!this.objs.splice(i, 1).length;
 			}
 		}
+		hard_remove(obj: sobj) {
+			for (let grid of this.gridsArray)
+				grid.removes.push(obj.id);
+		}
+		is_observed_by(target: sgrid) {
+			for (let grid of this.gridsArray)
+				if (grid == target)
+					return true;
+			return false;
+		}
 		swap(obj: sobj) {
 			// Call me whenever you move
 			let newSector = this.world.at(this.world.big(pts.round(obj.wpos)));
 			if (obj.sector != newSector) {
 				obj.sector?.remove(obj);
 				newSector.add(obj);
-				if (!newSector.isActive())
+				if (!newSector.isActive()) {
 					obj.hide();
+					//console.warn('sobj move into hidden ssector');
+				}
+				for (let grid of this.gridsArray) {
+					if (!newSector.is_observed_by(grid)) {
+						grid.removes.push(obj.id);
+					}
+				}
 			}
 		}
 		gather() {
 			let packages: object[] = [];
 			for (let obj of this.objs) {
-				packages.push(obj.package());
+				packages.push(obj.gather());
 			}
 			return packages;
 		}
@@ -168,7 +191,7 @@ namespace slod {
 		show() {
 			if (this.on())
 				return;
-			console.log('ssector show');
+			//console.log('ssector show');
 
 			ssector.actives.push(this);
 			numbers.sectors[0]++;
@@ -179,6 +202,12 @@ namespace slod {
 		hide() {
 			if (this.observers >= 1) {
 				console.log('too many observers to hide');
+
+
+				/*if (!newSector.is_observed_by(grid)) {
+					grid.removes.push(obj.gather());
+				}*/
+
 				return;
 			}
 			if (this.off())
@@ -198,6 +227,7 @@ namespace slod {
 
 	export class sgrid {
 		big: vec2 = [0, 0];
+		removes: string[] = []
 		public shown: ssector[] = [];
 		all: sobj[] = []
 		constructor(
@@ -234,6 +264,7 @@ namespace slod {
 						continue;
 					if (this.shown.indexOf(sector) == -1) {
 						this.shown.push(sector);
+						sector.observe(this);
 						sector.observers++;
 						if (!sector.isActive())
 							sector.show();
@@ -246,7 +277,10 @@ namespace slod {
 			while (i--) {
 				let sector = this.shown[i];
 				if (sector.dist(this) > this.outside) {
+					sector.unobserve(this);
 					sector.observers--;
+					for (let obj of sector.objsro())
+						this.removes.push(obj.id);
 					sector.hide();
 					this.shown.splice(i, 1);
 				}
@@ -262,7 +296,7 @@ namespace slod {
 	}
 
 	export class sobj extends toggle {
-		id = 'sobj0'
+		id = 'sobj_0'
 		type = 'an sobj'
 		aabb: aabb2
 		wpos: vec2 = [0, 0]
@@ -274,9 +308,12 @@ namespace slod {
 			super();
 			this.counts[1]++;
 		}
-		finalize() { // finalzie is never used
-			this.hide();
+		finalize() {
+			//this.hide();
 			this.counts[1]--;
+		}
+		remove_for_observer(grid: sgrid) {
+			grid.removes.push(this.id);
 		}
 		show() {
 			if (this.on())
@@ -312,7 +349,7 @@ namespace slod {
 		is_type(types: string[]) {
 			return types.indexOf(this.type) != -1;
 		}
-		package() {
+		gather() {
 			return { id: this.id, type: this.type, wpos: this.wpos };
 		}
 	}
