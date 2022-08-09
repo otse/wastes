@@ -10,6 +10,14 @@ export namespace client {
 
 	export var playerId = -1;
 
+	export function tick() {
+		for (let id in pawnsId) {
+			let pawn = pawnsId[id];
+			if (pawn.type != 'you')
+				pawn.nettick();
+		}
+	}
+
 	export function start() {
 		socket = new WebSocket("ws://localhost:8080");
 
@@ -35,7 +43,7 @@ export namespace client {
 
 				for (let idString of data.removes) {
 					const split = idString.split('_');
-					
+
 					if (split[0] == 'pawn') {
 						let pawn = pawnsId[idString];
 						delete pawnsId[idString];
@@ -47,13 +55,13 @@ export namespace client {
 			}
 			if (data.news) {
 				//console.log('got news');
-				
+
 				for (let sobj of data.news) {
 					const id = sobj.id.split('_')[1];
 
 					if (sobj.type == 'pawn') {
 						let pawn = pawnsId[sobj.id];
-						
+
 						if (!pawn) {
 							pawn = pawnsId[sobj.id] = new pawns.pawn();
 							console.log('new pawn ', sobj.id);
@@ -71,7 +79,7 @@ export namespace client {
 							lod.add(pawn);
 						}
 						if (pawn && pawn.type != 'you') {
-							pawn.wpos = sobj.wpos;
+							pawn.netwpos = sobj.wpos;
 							pawn.angle = sobj.angle;
 							pawn.sector?.swap(pawn);
 						}

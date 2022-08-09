@@ -494,7 +494,7 @@ namespace objects {
 			}
 		}
 		special_leaves_stack() {
-			console.log('special stack');
+			//console.log('special stack');
 			const tree = this.hints.tree;
 			if (this.shape) {
 				this.z = tree.calc + tree.height;

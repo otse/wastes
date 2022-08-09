@@ -2075,7 +2075,7 @@ void main() {
                 }
             }
             special_leaves_stack() {
-                console.log('special stack');
+                //console.log('special stack');
                 const tree = this.hints.tree;
                 if (this.shape) {
                     this.z = tree.calc + tree.height;
@@ -7752,6 +7752,7 @@ void main() {
                     [`It can be hazardous around here. The purple for example is contaminated soil.`, 2],
                     [`Stay clear from the irradiated areas, marked by dead trees.`, -1],
                 ];
+                this.netwpos = [0, 0];
                 this.pawntype = 'generic';
                 this.trader = false;
                 this.items = [];
@@ -7965,11 +7966,6 @@ void main() {
                 this.groups.ground.position.set(0, -bodyHeight * 1.0, 0);
                 //mesh.rotation.set(Math.PI / 2, 0, 0);
                 this.scene.add(this.groups.ground);
-                collada$1.load_model('collada/revolver', (model) => {
-                    model.rotation.set(0, 0, Math.PI / 2);
-                    model.position.set(0, -armsHeight + armsSize / 2, 0);
-                    this.groups.armr.add(model);
-                });
             }
             render() {
                 ren$1.renderer.setRenderTarget(this.target);
@@ -8104,6 +8100,21 @@ void main() {
                     //
                 }
                 this.render();
+            }
+            nettick() {
+                if (!pts.together(this.netwpos))
+                    this.netwpos = this.wpos;
+                // tween netwpos into wpos
+                let tween = pts.mult(pts.subtract(this.netwpos, this.wpos), .05);
+                this.wpos = pts.add(this.wpos, tween);
+                const movement = pts.together(pts.abs(tween));
+                if (movement > 0.005) {
+                    //console.log('movement > 0.25');
+                    this.walkSmoother = 1;
+                }
+                else {
+                    this.walkSmoother = 0;
+                }
             }
             tick() {
                 var _a;
@@ -8260,6 +8271,14 @@ void main() {
     (function (client) {
         client.pawnsId = {};
         client.playerId = -1;
+        function tick() {
+            for (let id in client.pawnsId) {
+                let pawn = client.pawnsId[id];
+                if (pawn.type != 'you')
+                    pawn.nettick();
+            }
+        }
+        client.tick = tick;
         function start() {
             client.socket = new WebSocket("ws://localhost:8080");
             client.socket.onopen = function (e) {
@@ -8311,7 +8330,7 @@ void main() {
                                 lod$1.add(pawn);
                             }
                             if (pawn && pawn.type != 'you') {
-                                pawn.wpos = sobj.wpos;
+                                pawn.netwpos = sobj.wpos;
                                 pawn.angle = sobj.angle;
                                 (_b = pawn.sector) === null || _b === void 0 ? void 0 : _b.swap(pawn);
                             }
@@ -8461,6 +8480,7 @@ void main() {
             tiles$1.tick();
             shear$1.tick();
             collada$1.tick();
+            client.tick();
             objects$1.tick();
             rooms$1.tick();
             areas$1.tick();

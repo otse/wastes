@@ -43,6 +43,7 @@ export namespace pawns {
 			[`It can be hazardous around here. The purple for example is contaminated soil.`, 2],
 			[`Stay clear from the irradiated areas, marked by dead trees.`, -1],
 		]
+		netwpos: vec2 = [0, 0]
 		walkArea: aabb2
 		pawntype = 'generic'
 		trader = false
@@ -316,11 +317,14 @@ export namespace pawns {
 
 			this.scene.add(this.groups.ground);
 
-			const gun = collada.load_model('collada/revolver', (model) => {
-				model.rotation.set(0, 0, Math.PI / 2);
-				model.position.set(0, -armsHeight + armsSize / 2, 0);
-				this.groups.armr.add(model);
-			});
+			const loadGunAgain = false;
+			if (loadGunAgain) {
+				const gun = collada.load_model('collada/revolver', (model) => {
+					model.rotation.set(0, 0, Math.PI / 2);
+					model.position.set(0, -armsHeight + armsSize / 2, 0);
+					this.groups.armr.add(model);
+				});
+			}
 
 		}
 		render() {
@@ -366,7 +370,7 @@ export namespace pawns {
 				pos = pts.add(pos, pts.divide([1, 1], 2));
 				mouse = pts.subtract(mouse, pos);
 				mouse[1] = -mouse[1];
-				
+
 				const dist = pts.distsimple(pos, wastes.gview.mwpos);
 
 				if (dist > 0.5) {
@@ -494,6 +498,27 @@ export namespace pawns {
 		angle = 0
 		walkSmoother = 1
 		randomWalker = 0
+		nettick() {
+			
+			if (!pts.together(this.netwpos))
+				this.netwpos = this.wpos;
+
+			// tween netwpos into wpos
+			let tween = pts.mult(pts.subtract(this.netwpos, this.wpos), .05);
+			this.wpos = pts.add(this.wpos, tween);
+
+			const movement = pts.together(pts.abs(tween));
+			if (movement > 0.005) {
+				//console.log('movement > 0.25');
+				
+				this.walkSmoother = 1;
+			}
+			else
+			{
+				this.walkSmoother = 0;
+			}
+			
+		}
 		override tick() {
 
 			if (!this.shape)

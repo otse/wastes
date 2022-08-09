@@ -172,6 +172,7 @@ export namespace wastes {
 		tiles.tick();
 		shear.tick();
 		collada.tick();
+		client.tick();
 		objects.tick();
 		rooms.tick();
 		areas.tick();
