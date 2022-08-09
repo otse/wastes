@@ -48,7 +48,7 @@ class toggle {
 
 namespace lod {
 
-	const chunk_coloration = true;
+	const chunk_coloration = false;
 
 	const grid_crawl_makes_sectors = true;
 

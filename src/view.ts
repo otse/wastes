@@ -201,6 +201,7 @@ export class view {
 		crunch += '<br />';
 
 		crunch += `controls:<br />
+		[h] to hide debug<br />
 		[right click] for context menu<br />
 		[w, a, s, d] or [click] to move<br />
 		[r, f] or [scrollwheel] to zoom<br />
@@ -211,7 +212,7 @@ export class view {
 		[shift + click] to shoot<br />
 		[middle mouse] to pan<br />
 		[spacebar] to toggle roofs<br />
-		[h] to hide debug<br />
+		[x] to go fast<br />
 		[c] for character menu<br />`;
 
 		let element = document.querySelectorAll('.stats')[0] as any;

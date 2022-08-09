@@ -44,6 +44,7 @@ export namespace pawns {
 			[`Stay clear from the irradiated areas, marked by dead trees.`, -1],
 		]
 		netwpos: vec2 = [0, 0]
+		netangle = 0
 		walkArea: aabb2
 		pawntype = 'generic'
 		trader = false
@@ -504,18 +505,27 @@ export namespace pawns {
 				this.netwpos = this.wpos;
 
 			// tween netwpos into wpos
-			let tween = pts.mult(pts.subtract(this.netwpos, this.wpos), .05);
+			let tween = pts.mult(pts.subtract(this.netwpos, this.wpos), ren.delta * 2);
 			this.wpos = pts.add(this.wpos, tween);
+
+			if (this.netangle - this.angle > Math.PI)
+				this.angle += Math.PI * 2;
+			if (this.angle - this.netangle > Math.PI)
+				this.angle -= Math.PI * 2;
+				
+			let tweenAngle = (this.netangle - this.angle) * 0.1;
+			
+			this.angle += tweenAngle;
 
 			const movement = pts.together(pts.abs(tween));
 			if (movement > 0.005) {
 				//console.log('movement > 0.25');
 				
-				this.walkSmoother = 1;
+				this.walkSmoother += ren.delta * 10;
 			}
 			else
 			{
-				this.walkSmoother = 0;
+				this.walkSmoother -= ren.delta * 5;
 			}
 			
 		}
@@ -631,7 +641,7 @@ export namespace pawns {
 				}
 			}
 
-			this.stack(['pawn', 'you', 'leaves', 'door', 'roof', 'falsefront', 'panel']);
+			this.stack(['pawn', 'you', 'leaves', 'wall', 'door', 'roof', 'falsefront', 'panel']);
 			super.update();
 		}
 		//tick() {

@@ -629,7 +629,6 @@ void main() {
                 this.big = big;
                 this.galaxy = galaxy;
                 this.objs = [];
-                this.color = (['lightsalmon', 'lightblue', 'beige', 'pink'])[Math.floor(Math.random() * 4)];
                 let min = pts.mult(this.big, lod.SectorSpan);
                 let max = pts.add(min, [lod.SectorSpan - 1, lod.SectorSpan - 1]);
                 this.small = new aabb2(max, min);
@@ -1630,6 +1629,7 @@ void main() {
             crunch += `roofs: ${numbers.roofs[0]} / ${numbers.roofs[1]}<br />`;
             crunch += '<br />';
             crunch += `controls:<br />
+		[h] to hide debug<br />
 		[right click] for context menu<br />
 		[w, a, s, d] or [click] to move<br />
 		[r, f] or [scrollwheel] to zoom<br />
@@ -1640,7 +1640,7 @@ void main() {
 		[shift + click] to shoot<br />
 		[middle mouse] to pan<br />
 		[spacebar] to toggle roofs<br />
-		[h] to hide debug<br />
+		[x] to go fast<br />
 		[c] for character menu<br />`;
             let element = document.querySelectorAll('.stats')[0];
             element.innerHTML = crunch;
@@ -7727,6 +7727,21 @@ void main() {
             }
         }
         win_1.areatag = areatag;
+        class message {
+            constructor() {
+                this.duration = 5;
+            }
+            static push(duration, message) {
+                this.messages.push({ duration: duration, message: message });
+            }
+            static tick() {
+                if (this.current.duration <= 0)
+                    this.current.element.remove();
+                let element = document.createElement('div');
+                element.className = 'message';
+            }
+        }
+        win_1.message = message;
     })(win || (win = {}));
     var win$1 = win;
 
@@ -7753,6 +7768,7 @@ void main() {
                     [`Stay clear from the irradiated areas, marked by dead trees.`, -1],
                 ];
                 this.netwpos = [0, 0];
+                this.netangle = 0;
                 this.pawntype = 'generic';
                 this.trader = false;
                 this.items = [];
@@ -8105,15 +8121,21 @@ void main() {
                 if (!pts.together(this.netwpos))
                     this.netwpos = this.wpos;
                 // tween netwpos into wpos
-                let tween = pts.mult(pts.subtract(this.netwpos, this.wpos), .05);
+                let tween = pts.mult(pts.subtract(this.netwpos, this.wpos), ren$1.delta * 2);
                 this.wpos = pts.add(this.wpos, tween);
+                if (this.netangle - this.angle > Math.PI)
+                    this.angle += Math.PI * 2;
+                if (this.angle - this.netangle > Math.PI)
+                    this.angle -= Math.PI * 2;
+                let tweenAngle = (this.netangle - this.angle) * 0.1;
+                this.angle += tweenAngle;
                 const movement = pts.together(pts.abs(tween));
                 if (movement > 0.005) {
                     //console.log('movement > 0.25');
-                    this.walkSmoother = 1;
+                    this.walkSmoother += ren$1.delta * 10;
                 }
                 else {
-                    this.walkSmoother = 0;
+                    this.walkSmoother -= ren$1.delta * 5;
                 }
             }
             tick() {
@@ -8208,7 +8230,7 @@ void main() {
                         sprite.material.color.set('white');
                     }
                 }
-                this.stack(['pawn', 'you', 'leaves', 'door', 'roof', 'falsefront', 'panel']);
+                this.stack(['pawn', 'you', 'leaves', 'wall', 'door', 'roof', 'falsefront', 'panel']);
                 super.update();
             }
         }
@@ -8280,7 +8302,7 @@ void main() {
         }
         client.tick = tick;
         function start() {
-            client.socket = new WebSocket("ws://localhost:8080");
+            client.socket = new WebSocket("ws://86.93.147.154:8080");
             client.socket.onopen = function (e) {
                 //console.log("[open] Connection established");
                 //console.log("Sending to server");
@@ -8331,7 +8353,7 @@ void main() {
                             }
                             if (pawn && pawn.type != 'you') {
                                 pawn.netwpos = sobj.wpos;
-                                pawn.angle = sobj.angle;
+                                pawn.netangle = sobj.angle;
                                 (_b = pawn.sector) === null || _b === void 0 ? void 0 : _b.swap(pawn);
                             }
                         }

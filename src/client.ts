@@ -19,7 +19,7 @@ export namespace client {
 	}
 
 	export function start() {
-		socket = new WebSocket("ws://localhost:8080");
+		socket = new WebSocket("ws://86.93.147.154:8080");
 
 		socket.onopen = function (e) {
 			//console.log("[open] Connection established");
@@ -80,7 +80,7 @@ export namespace client {
 						}
 						if (pawn && pawn.type != 'you') {
 							pawn.netwpos = sobj.wpos;
-							pawn.angle = sobj.angle;
+							pawn.netangle = sobj.angle;
 							pawn.sector?.swap(pawn);
 						}
 					}

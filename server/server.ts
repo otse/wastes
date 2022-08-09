@@ -13,6 +13,8 @@ function start() {
 
 }
 
+const tick_rate = 333;
+
 new slod.sworld(10);
 
 const wss = new WebSocketServer({
@@ -104,7 +106,7 @@ class pawn extends slod.sobj {
 	}
 }
 
-setInterval(loop, 333);
+setInterval(loop, tick_rate);
 
 wss.on('connection', function connection(ws) {
 
