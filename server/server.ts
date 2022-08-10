@@ -11,6 +11,7 @@ function start() {
 
 	let peacekeeper = new npc;
 	peacekeeper.wpos = [45.5, 56.5];
+	//peacekeeper.outfit = []
 	peacekeeper.walkArea = new aabb2([43, 51], [46, 57]);
 	slod.add(peacekeeper);
 
@@ -62,8 +63,11 @@ class connection {
 		}
 	}
 	update_grid() {
-		if (this.you)
-			slod.gworld.update_grid(this.grid, this.you.wpos);
+		if (this.you) {
+			let pos = this.you.wpos;
+			pos = pts.add(pos, [.5, .5]);
+			slod.gworld.update_grid(this.grid, pos);
+		}
 	}
 	gather() {
 		let object: any = {};

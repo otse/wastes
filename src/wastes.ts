@@ -100,9 +100,6 @@ export namespace wastes {
 		else if (window.location.href.indexOf("#collada") != -1) {
 			collada.start();
 		}
-		//else if (window.location.href.indexOf("#tree") != -1) {
-		//	tree.start();
-		//}
 		else {
 			gview = view.make();
 			objects.register();
@@ -128,18 +125,12 @@ export namespace wastes {
 			vendor.wpos = pos;
 			lod.add(vendor);
 
-			/*let peacekeeper = new pawns.pawn();
-			peacekeeper.wpos = [45.5, 56.5];
-			peacekeeper.angle = Math.PI / 2;
-			peacekeeper.walkArea = new aabb2([43, 51], [46, 57]);*/
-			/*peacekeeper.dialog = [
+			/*
 				[`I'm on duty.`, 1],
 				[`I protect the civilized area here. It may not look that civil at first glance.`, 2],
 				[`But undernearth the filth theres beauty to behold.`, 3],
 				[`Just don't misbehave.`, -1]
-			]*/
-			//peacekeeper.dialogue = 'I protect the vicinity.'
-			//lod.add(peacekeeper);
+			*/
 		}
 	}
 

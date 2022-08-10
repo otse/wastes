@@ -40,11 +40,13 @@ export class view {
 			this.wpos = lod.unproject(this.rpos);
 		else {
 			let pos = this.follow.wpos;
+			// Why the .5 add
 			pos = pts.add(pos, [.5, .5]);
-			this.wpos = pts.clone(pos);
+			//this.wpos = pts.clone(pos);
 			this.rpos = lod.project(pos);
 		}
 		this.pan();
+		this.wpos = lod.unproject(this.rpos);
 		if (this.follow) {
 			this.rpos = pts.add(this.rpos, [0, this.follow.size[1] / 2]);
 		}

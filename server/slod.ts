@@ -148,7 +148,7 @@ namespace slod {
 		}
 		swap(obj: sobj) {
 			// Call me whenever you move
-			let newSector = this.world.at(this.world.big(pts.round(obj.wpos)));
+			let newSector = this.world.at(this.world.big(obj.wpos));
 			if (obj.sector != newSector) {
 				obj.sector?.remove(obj);
 				newSector.add(obj);

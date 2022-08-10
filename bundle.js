@@ -1491,11 +1491,13 @@ void main() {
                 this.wpos = lod$1.unproject(this.rpos);
             else {
                 let pos = this.follow.wpos;
+                // Why the .5 add
                 pos = pts.add(pos, [.5, .5]);
-                this.wpos = pts.clone(pos);
+                //this.wpos = pts.clone(pos);
                 this.rpos = lod$1.project(pos);
             }
             this.pan();
+            this.wpos = lod$1.unproject(this.rpos);
             if (this.follow) {
                 this.rpos = pts.add(this.rpos, [0, this.follow.size[1] / 2]);
             }
@@ -8417,9 +8419,6 @@ void main() {
             else if (window.location.href.indexOf("#collada") != -1) {
                 collada$1.start();
             }
-            //else if (window.location.href.indexOf("#tree") != -1) {
-            //	tree.start();
-            //}
             else {
                 wastes.gview = view.make();
                 objects$1.register();
@@ -8441,18 +8440,12 @@ void main() {
                 vendor.pawntype = 'trader';
                 vendor.wpos = pos;
                 lod$1.add(vendor);
-                /*let peacekeeper = new pawns.pawn();
-                peacekeeper.wpos = [45.5, 56.5];
-                peacekeeper.angle = Math.PI / 2;
-                peacekeeper.walkArea = new aabb2([43, 51], [46, 57]);*/
-                /*peacekeeper.dialog = [
+                /*
                     [`I'm on duty.`, 1],
                     [`I protect the civilized area here. It may not look that civil at first glance.`, 2],
                     [`But undernearth the filth theres beauty to behold.`, 3],
                     [`Just don't misbehave.`, -1]
-                ]*/
-                //peacekeeper.dialogue = 'I protect the vicinity.'
-                //lod.add(peacekeeper);
+                */
             }
         }
         function start() {
