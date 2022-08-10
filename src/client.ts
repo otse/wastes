@@ -32,12 +32,6 @@ export namespace client {
 			const data = JSON.parse(string);
 			//console.log(`received from server`, data);
 
-			if (data.player) {
-				const id = data.player.id.split('_')[1];
-				console.log('got our player sent', id);
-				playerId = id;
-				wastes.gview.center.wpos = data.player.wpos;
-			}
 			if (data.removes && data.removes.length) {
 				console.log('we have a remove', data.removes);
 
@@ -66,12 +60,6 @@ export namespace client {
 							pawn = pawnsId[sobj.id] = new pawns.pawn();
 							console.log('new pawn ', sobj.id);
 
-							if (id == playerId) {
-								pawns.you = pawn;
-								pawn.type = 'you';
-								console.log('we got our pawn');
-							}
-
 							pawn.wpos = sobj.wpos;
 							pawn.angle = sobj.angle;
 							pawn.outfit = sobj.outfit;
@@ -88,6 +76,19 @@ export namespace client {
 					}
 
 				}
+			}
+
+			if (data.player) {
+				const id = data.player.id.split('_')[1];
+				console.log('got our player sent', id);
+				playerId = id;
+				let pawn = pawnsId[data.player.id];
+				if (pawn) {
+					pawns.you = pawn;
+					pawn.type = 'you';
+					console.log('we got our pawn');
+				}
+				wastes.gview.center.wpos = data.player.wpos;
 			}
 
 		};

@@ -7779,11 +7779,10 @@ void main() {
                 this.groups = {};
                 this.meshes = {};
                 this.made = false;
-                this.aimTarget = [0, 0];
                 this.mousing = false;
                 this.swoop = 0;
                 this.angle = 0;
-                this.walkSmoother = 1;
+                this.walkSmoother = 0;
                 this.randomWalker = 0;
                 this.type = 'pawn';
                 this.height = 24;
@@ -8049,23 +8048,6 @@ void main() {
                         this.walkSmoother -= ren$1.delta * 5;
                     }
                 }
-                else if (this.type != 'you' && pts.together(this.aimTarget)) {
-                    let angle = pts.angle(this.wpos, this.aimTarget);
-                    //console.log(pts.subtract(this.wpos, this.aimTarget));
-                    this.angle = -angle + Math.PI;
-                    //this.wpos = this.aimTarget;
-                    //this.wpos = this.aimTarget;
-                    speed = 0.038 * ren$1.delta * 30;
-                    x = speed * Math.sin(this.angle);
-                    y = speed * Math.cos(this.angle);
-                    this.walkSmoother += ren$1.delta * 5;
-                    //this.wpos = [x, y];
-                    this.try_move_to([x, y]);
-                    const dist = pts.distsimple(this.wpos, this.aimTarget);
-                    if (dist < 0.5) {
-                        this.aimTarget = [0, 0];
-                    }
-                }
                 else
                     this.walkSmoother -= ren$1.delta * 5;
                 if (this.type == 'you') {
@@ -8150,16 +8132,6 @@ void main() {
                     return;
                 this.make();
                 let posr = pts.round(this.wpos);
-                if (this.type != 'you' && this.walkArea) {
-                    if (this.randomWalker++ > 60 * 4) {
-                        const target = this.walkArea.random_point();
-                        this.aimTarget = target;
-                        //this.try_move_to(target);
-                        //console.log('wee', target);
-                        //this.wpos = target;
-                        this.randomWalker = 0;
-                    }
-                }
                 if (this.type == 'you') {
                     /*
                     if (this.mousedSquare(wastes.gview.mrpos) && !this.mousing) {
@@ -8319,12 +8291,6 @@ void main() {
                 const string = event.data;
                 const data = JSON.parse(string);
                 //console.log(`received from server`, data);
-                if (data.player) {
-                    const id = data.player.id.split('_')[1];
-                    console.log('got our player sent', id);
-                    client.playerId = id;
-                    wastes.gview.center.wpos = data.player.wpos;
-                }
                 if (data.removes && data.removes.length) {
                     console.log('we have a remove', data.removes);
                     for (let idString of data.removes) {
@@ -8341,17 +8307,12 @@ void main() {
                 if (data.news) {
                     //console.log('got news');
                     for (let sobj of data.news) {
-                        const id = sobj.id.split('_')[1];
+                        sobj.id.split('_')[1];
                         if (sobj.type == 'pawn') {
                             let pawn = client.pawnsId[sobj.id];
                             if (!pawn) {
                                 pawn = client.pawnsId[sobj.id] = new pawns$1.pawn();
                                 console.log('new pawn ', sobj.id);
-                                if (id == client.playerId) {
-                                    pawns$1.you = pawn;
-                                    pawn.type = 'you';
-                                    console.log('we got our pawn');
-                                }
                                 pawn.wpos = sobj.wpos;
                                 pawn.angle = sobj.angle;
                                 pawn.outfit = sobj.outfit;
@@ -8366,6 +8327,18 @@ void main() {
                             }
                         }
                     }
+                }
+                if (data.player) {
+                    const id = data.player.id.split('_')[1];
+                    console.log('got our player sent', id);
+                    client.playerId = id;
+                    let pawn = client.pawnsId[data.player.id];
+                    if (pawn) {
+                        pawns$1.you = pawn;
+                        pawn.type = 'you';
+                        console.log('we got our pawn');
+                    }
+                    wastes.gview.center.wpos = data.player.wpos;
                 }
             };
             setInterval(() => {
@@ -8468,18 +8441,18 @@ void main() {
                 vendor.pawntype = 'trader';
                 vendor.wpos = pos;
                 lod$1.add(vendor);
-                let peacekeeper = new pawns$1.pawn();
+                /*let peacekeeper = new pawns.pawn();
                 peacekeeper.wpos = [45.5, 56.5];
                 peacekeeper.angle = Math.PI / 2;
-                peacekeeper.walkArea = new aabb2([43, 51], [46, 57]);
-                peacekeeper.dialog = [
+                peacekeeper.walkArea = new aabb2([43, 51], [46, 57]);*/
+                /*peacekeeper.dialog = [
                     [`I'm on duty.`, 1],
                     [`I protect the civilized area here. It may not look that civil at first glance.`, 2],
                     [`But undernearth the filth theres beauty to behold.`, 3],
                     [`Just don't misbehave.`, -1]
-                ];
+                ]*/
                 //peacekeeper.dialogue = 'I protect the vicinity.'
-                lod$1.add(peacekeeper);
+                //lod.add(peacekeeper);
             }
         }
         function start() {

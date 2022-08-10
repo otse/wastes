@@ -45,7 +45,6 @@ export namespace pawns {
 		]
 		netwpos: vec2 = [0, 0]
 		netangle = 0
-		walkArea: aabb2
 		pawntype = 'generic'
 		trader = false
 		inventory: objects.container
@@ -335,7 +334,6 @@ export namespace pawns {
 			ren.renderer.clear();
 			ren.renderer.render(this.scene, this.camera);
 		}
-		aimTarget: vec2 = [0, 0]
 		move() {
 
 			let speed = 0.038 * ren.delta * 60;
@@ -395,31 +393,6 @@ export namespace pawns {
 				}
 				else {
 					this.walkSmoother -= ren.delta * 5;
-				}
-			}
-			else if (this.type != 'you' && pts.together(this.aimTarget)) {
-
-				let angle = pts.angle(this.wpos, this.aimTarget);
-				//console.log(pts.subtract(this.wpos, this.aimTarget));
-
-				this.angle = -angle + Math.PI;
-
-				//this.wpos = this.aimTarget;
-				//this.wpos = this.aimTarget;
-
-				speed = 0.038 * ren.delta * 30;
-
-				x = speed * Math.sin(this.angle);
-				y = speed * Math.cos(this.angle);
-				this.walkSmoother += ren.delta * 5;
-
-				//this.wpos = [x, y];
-				this.try_move_to([x, y]);
-
-				const dist = pts.distsimple(this.wpos, this.aimTarget);
-
-				if (dist < 0.5) {
-					this.aimTarget = [0, 0];
 				}
 			}
 			else
@@ -494,7 +467,7 @@ export namespace pawns {
 		mousing = false
 		swoop = 0
 		angle = 0
-		walkSmoother = 1
+		walkSmoother = 0
 		randomWalker = 0
 		nettick() {
 
@@ -534,16 +507,6 @@ export namespace pawns {
 
 			let posr = pts.round(this.wpos);
 
-			if (this.type != 'you' && this.walkArea) {
-				if (this.randomWalker++ > 60 * 4) {
-					const target = this.walkArea.random_point();
-					this.aimTarget = target;
-					//this.try_move_to(target);
-					//console.log('wee', target);
-					//this.wpos = target;
-					this.randomWalker = 0;
-				}
-			}
 
 			if (this.type == 'you') {
 				/*

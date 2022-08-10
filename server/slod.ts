@@ -6,15 +6,11 @@ export namespace numbers {
 	export type tally = [active: number, total: number]
 
 	export var sectors: tally = [0, 0]
-	export var sprites: tally = [0, 0]
 	export var objs: tally = [0, 0]
 
 	export var tiles: tally = [0, 0]
-	export var floors: tally = [0, 0]
 	export var trees: tally = [0, 0]
-	export var leaves: tally = [0, 0]
 	export var walls: tally = [0, 0]
-	export var roofs: tally = [0, 0]
 	export var pawns: tally = [0, 0]
 };
 
@@ -60,7 +56,7 @@ namespace slod {
 
 	export class sworld {
 		readonly arrays: ssector[][] = []
-		constructor(span) {
+		constructor() {
 			gworld = this;
 		}
 		update_grid(grid: sgrid, wpos: vec2) {
@@ -90,8 +86,7 @@ namespace slod {
 
 	export class ssector extends toggle {
 		color?;
-		public observers = 0
-		public gridsArray: sgrid[] = []
+		public observers: sgrid[] = []
 		static actives: ssector[] = []
 		readonly small: aabb2;
 		private readonly objs: sobj[] = [];
@@ -113,10 +108,10 @@ namespace slod {
 			return this.objs;
 		}
 		observe(grid: sgrid) {
-			this.gridsArray.push(grid);
+			this.observers.push(grid);
 		}
 		unobserve(grid: sgrid) {
-			this.gridsArray.splice(this.gridsArray.indexOf(grid), 1);
+			this.observers.splice(this.observers.indexOf(grid), 1);
 		}
 		add(obj: sobj) {
 			let i = this.objs.indexOf(obj);
@@ -142,11 +137,11 @@ namespace slod {
 			}
 		}
 		hard_remove(obj: sobj) {
-			for (let grid of this.gridsArray)
+			for (let grid of this.observers)
 				grid.removes.push(obj.id);
 		}
 		is_observed_by(target: sgrid) {
-			for (let grid of this.gridsArray)
+			for (let grid of this.observers)
 				if (grid == target)
 					return true;
 			return false;
@@ -161,7 +156,7 @@ namespace slod {
 					obj.hide();
 					//console.warn('sobj move into hidden ssector');
 				}
-				for (let grid of this.gridsArray) {
+				for (let grid of this.observers) {
 					if (!newSector.is_observed_by(grid)) {
 						grid.removes.push(obj.id);
 					}
@@ -175,8 +170,8 @@ namespace slod {
 			}
 			return packages;
 		}
-		static tick() {
-			for (let sector of this.actives) {
+		static tick_all() {
+			for (let sector of ssector.actives) {
 				sector.tick();
 			}
 		}
@@ -192,7 +187,6 @@ namespace slod {
 			if (this.on())
 				return;
 			//console.log('ssector show');
-
 			ssector.actives.push(this);
 			numbers.sectors[0]++;
 			for (let obj of this.objs)
@@ -200,21 +194,14 @@ namespace slod {
 			hooks.call('sectorShow', this);
 		}
 		hide() {
-			if (this.observers >= 1) {
-				console.log('too many observers to hide');
-
-
-				/*if (!newSector.is_observed_by(grid)) {
-					grid.removes.push(obj.gather());
-				}*/
-
+			if (this.observers.length >= 1) {
 				return;
 			}
 			if (this.off())
 				return;
 			const i = ssector.actives.indexOf(this);
 			ssector.actives.splice(i, 1);
-			console.log('ssector hide, observers', this.observers);
+			console.log('ssector hide, observers', this.observers.length);
 			numbers.sectors[0]--;
 			for (let obj of this.objs)
 				obj.hide();
@@ -265,7 +252,6 @@ namespace slod {
 					if (this.shown.indexOf(sector) == -1) {
 						this.shown.push(sector);
 						sector.observe(this);
-						sector.observers++;
 						if (!sector.isActive())
 							sector.show();
 					}
@@ -278,7 +264,6 @@ namespace slod {
 				let sector = this.shown[i];
 				if (sector.dist(this) > this.outside) {
 					sector.unobserve(this);
-					sector.observers--;
 					for (let obj of sector.objsro())
 						this.removes.push(obj.id);
 					sector.hide();
