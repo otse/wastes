@@ -52,7 +52,7 @@ namespace lod {
 
 	const grid_crawl_makes_sectors = true;
 
-	export var ggalaxy: galaxy;
+	export var gworld: world;
 	export var ggrid: grid;
 
 	export var SectorSpan = 4;
@@ -74,7 +74,7 @@ namespace lod {
 	}
 
 	export function add(obj: obj) {
-		let sector = ggalaxy.at(ggalaxy.big(obj.wpos));
+		let sector = gworld.at(lod.world.big(obj.wpos));
 		sector.add(obj);
 	}
 
@@ -82,14 +82,14 @@ namespace lod {
 		obj.sector?.remove(obj);
 	}
 
-	export class galaxy {
+	export class world {
 		readonly arrays: sector[][] = []
 		constructor(span) {
-			ggalaxy = this;
+			gworld = this;
 			new grid(1, 1);
 		}
 		update(wpos: vec2) {
-			ggrid.big = this.big(wpos);
+			ggrid.big = lod.world.big(wpos);
 			ggrid.offs();
 			ggrid.crawl();
 		}
@@ -108,7 +108,7 @@ namespace lod {
 			s = this.arrays[big[1]][big[0]] = new sector(big, this);
 			return s;
 		}
-		big(units: vec2): vec2 {
+		static big(units: vec2): vec2 {
 			return pts.floor(pts.divide(units, SectorSpan));
 		}
 	}
@@ -120,7 +120,7 @@ namespace lod {
 		private readonly objs: obj[] = [];
 		constructor(
 			public readonly big: vec2,
-			readonly galaxy: galaxy
+			readonly world: world
 		) {
 			super();
 			if (chunk_coloration)
@@ -132,7 +132,7 @@ namespace lod {
 			this.group.frustumCulled = false;
 			this.group.matrixAutoUpdate = false;
 			numbers.sectors[1]++;
-			galaxy.arrays[this.big[1]][this.big[0]] = this;
+			world.arrays[this.big[1]][this.big[0]] = this;
 			//console.log('sector');
 
 			hooks.call('sectorCreate', this);
@@ -166,7 +166,7 @@ namespace lod {
 		}
 		swap(obj: obj) {
 			// Call me whenever you move
-			let newSector = this.galaxy.at(this.galaxy.big(pts.round(obj.wpos)));
+			let newSector = this.world.at(lod.world.big(pts.round(obj.wpos)));
 			if (obj.sector != newSector) {
 				obj.sector?.remove(obj);
 				newSector.add(obj);
@@ -234,7 +234,7 @@ namespace lod {
 			for (let y = -this.spread; y < this.spread + 1; y++) {
 				for (let x = -this.spread; x < this.spread + 1; x++) {
 					let pos = pts.add(this.big, [x, y]);
-					let sector = grid_crawl_makes_sectors ? ggalaxy.at(pos) : ggalaxy.lookup(pos);
+					let sector = grid_crawl_makes_sectors ? gworld.at(pos) : gworld.lookup(pos);
 					if (!sector)
 						continue;
 					if (!sector.isActive()) {

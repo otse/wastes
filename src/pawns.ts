@@ -20,21 +20,6 @@ export namespace pawns {
 
 	export var you: pawn;
 
-	export var mousing: pawn | undefined;
-
-	export function make_you() {
-		let pos: vec2 = [44, 52];
-		let paw = new pawn();
-		paw.type = 'you';
-		paw.wpos = pos;
-		you = paw;
-		lod.add(paw);
-	}
-
-	export function handle() {
-
-	}
-
 	const wasterSprite = false;
 
 	export class pawn extends objects.objected {
@@ -504,58 +489,6 @@ export namespace pawns {
 				return;
 
 			this.make();
-
-			let posr = pts.round(this.wpos);
-
-
-			if (this.type == 'you') {
-				/*
-				if (this.mousedSquare(wastes.gview.mrpos) && !this.mousing) {
-					this.mousing = true;
-					//this.shape.mesh.material.color.set('green');
-					console.log('mover');
-					win.character.anchor = this;
-					win.character.toggle(this.mousing);
-				}
-				else if (!this.mousedSquare(wastes.gview.mrpos) && this.mousing)
-				{
-					this.mousing = false;
-					win.character.toggle(this.mousing);
-				}
-				*/
-
-				let containers: objects.objected[] = [];
-				let pawns: pawns.pawn[] = [];
-				for (let y = -1; y <= 1; y++) {
-					for (let x = -1; x <= 1; x++) {
-						let pos = pts.add(posr, [x, y]);
-						let sector = lod.ggalaxy.at(lod.ggalaxy.big(pos));
-						let at = sector.stacked(pos);
-						for (let obj of at) {
-							if (obj.type == 'crate') {
-								containers.push(obj as objects.objected);
-							}
-							if (obj.type == 'pawn') {
-								pawns.push(obj as pawns.pawn);
-							}
-						}
-					}
-				}
-
-				containers.sort((a, b) => pts.distsimple(this.wpos, a.wpos) < pts.distsimple(this.wpos, b.wpos) ? -1 : 1)
-				pawns.sort((a, b) => pts.distsimple(this.wpos, a.wpos) < pts.distsimple(this.wpos, b.wpos) ? -1 : 1)
-
-				/*if (containers.length && pts.distsimple(containers[0].wpos, this.wpos) < 1.0) {
-					win.container.call(true, containers[0]);
-				}
-				else
-					win.container.call(false);*/
-
-				if (pawns.length && pts.distsimple(pawns[0].wpos, this.wpos) < 1.5) {
-					//win.contextmenu.focus = pawns[0];
-				}
-
-			}
 
 			this.move();
 

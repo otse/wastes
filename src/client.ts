@@ -87,8 +87,8 @@ export namespace client {
 					pawns.you = pawn;
 					pawn.type = 'you';
 					console.log('we got our pawn');
+					wastes.gview.center = pawn
 				}
-				wastes.gview.center.wpos = data.player.wpos;
 			}
 
 		};

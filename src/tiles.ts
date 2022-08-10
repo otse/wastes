@@ -56,7 +56,7 @@ export namespace tiles {
 
 		console.log(' tiles start ');
 
-		lod.ggalaxy.at(lod.ggalaxy.big(wastes.gview.wpos));
+		lod.gworld.at(lod.world.big(wastes.gview.wpos));
 	}
 
 	export function tick() {
@@ -161,7 +161,7 @@ export namespace tiles {
 				orderBias: -1.0
 			});
 			// if we have a deck, add it to heightAdd
-			let sector = lod.ggalaxy.at(lod.ggalaxy.big(this.wpos));
+			let sector = lod.gworld.at(lod.world.big(this.wpos));
 			let at = sector.stacked(this.wpos);
 			for (let obj of at) {
 				if (obj.type == 'deck' || obj.type == 'porch')
@@ -197,10 +197,10 @@ export namespace tiles {
 				this.hide();
 				this.show();
 			}
-			/*if (pts.equals(this.wpos, pts.round(pawns.you.wpos))) {
+			if (pawns.you && pts.equals(this.wpos, pts.round(pawns.you.wpos))) {
 				//console.log('boo');
-				//this.paint();
-			}*/
+				this.paint();
+			}
 		}
 	}
 

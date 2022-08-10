@@ -30,7 +30,7 @@ export class view {
 	chart(big: vec2) {
 	}
 	constructor() {
-		new lod.galaxy(10);
+		new lod.world(10);
 		this.rpos = lod.project(this.wpos);
 	}
 	tick() {
@@ -40,7 +40,7 @@ export class view {
 			this.wpos = lod.unproject(this.rpos);
 		else {
 			let pos = this.follow.wpos;
-			// Why the .5 add
+			// Why the .5, .5 ?
 			pos = pts.add(pos, [.5, .5]);
 			//this.wpos = pts.clone(pos);
 			this.rpos = lod.project(pos);
@@ -52,7 +52,7 @@ export class view {
 		}
 		this.set_camera();
 		this.stats();
-		lod.ggalaxy.update(this.wpos);
+		lod.gworld.update(this.wpos);
 		const zoom = wastes.gview.zoom;
 		// ren.renderer.domElement.style.transform = `scale(${1/zoom},${1/zoom})`;
 		ren.camera.scale.set(zoom, zoom, zoom);
@@ -185,7 +185,8 @@ export class view {
 		crunch += `lod grid size: ${lod.ggrid.spread * 2 + 1} / ${lod.ggrid.outside * 2 + 1}<br />`;
 		crunch += `mouse tile: ${pts.to_string(tiles.hovering?.wpos || [0, 0])}<br />`;
 		crunch += `view center: ${pts.to_string(pts.floor(this.wpos))}<br />`;
-		crunch += `view bigpos: ${pts.to_string(lod.ggalaxy.big(this.wpos))}<br />`;
+		crunch += `view bigpos: ${pts.to_string(lod.world.big(this.wpos))}<br />`;
+		crunch += `view center: ${pts.to_string(wastes.gview.center.wpos)}<br />`;
 		crunch += `view zoom: ${this.zoom}<br />`;
 		crunch += `lod grid: ${lod.ggrid.spread}, ${lod.ggrid.outside}<br />`;
 		crunch += '<br />';

@@ -176,7 +176,7 @@ namespace objects {
 	export function is_solid(pos: vec2) {
 		const passable = ['land', 'deck', 'shelves', 'porch', 'pawn', 'you', 'door', 'leaves', 'roof', 'falsefront', 'panel'];
 		pos = pts.round(pos);
-		let sector = lod.ggalaxy.at(lod.ggalaxy.big(pos));
+		let sector = lod.gworld.at(lod.world.big(pos));
 		let at = sector.stacked(pos);
 		for (let obj of at) {
 			if (!obj.is_type(passable)) {
@@ -331,7 +331,7 @@ namespace objects {
 		override tick() {
 			super.tick();
 			let pos = this.wpos;
-			let sector = lod.ggalaxy.at(lod.ggalaxy.big(pos));
+			let sector = lod.gworld.at(lod.world.big(pos));
 			let at = sector.stacked(pos);
 			for (let obj of at) {
 				if (obj.type == 'you') {
@@ -819,7 +819,7 @@ namespace objects {
 			if (!this.shape)
 				return;
 			let pos = this.wpos;
-			let sector = lod.ggalaxy.at(lod.ggalaxy.big(pos));
+			let sector = lod.gworld.at(lod.world.big(pos));
 			let at = sector.stacked(pos);
 			let pawning = false;
 			for (let obj of at) {
