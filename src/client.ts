@@ -1,25 +1,28 @@
 import lod from "./lod";
 import pawns from "./pawns";
 import wastes from "./wastes";
+import objects from "./objects";
 import win from "./win";
+import chickens from "./chickens";
 
 export namespace client {
 
-	export var pawnsId: { [id: string]: pawns.pawn } = {}
+	export var sobjs: { [id: string]: lod.obj } = {}
 
 	export var socket: WebSocket
 
 	export var playerId = -1;
 
 	export function tick() {
-		for (let id in pawnsId) {
-			let pawn = pawnsId[id];
-			if (pawn.type != 'you')
-				pawn.nettick();
+		for (let id in sobjs) {
+			let obj = sobjs[id] as objects.objected;
+			if (obj.type != 'you')
+				obj.nettick();
 		}
 	}
 
 	export function start() {
+
 		socket = new WebSocket("ws://86.93.147.154:8080");
 
 		socket.onopen = function (e) {
@@ -28,64 +31,73 @@ export namespace client {
 			//socket.send("My name is John");
 		};
 
+		function process_news<type extends objects.objected>(type: { new(): type }, typed: string, data: any, handle, update) {
+			for (let sobj of data.news) {
+				const { id } = sobj;
+				if (sobj.type != typed)
+					continue;
+				let obj = sobjs[id];
+				if (!obj) {
+					console.log('new sobj', typed, id);
+					obj = sobjs[id] = new type;
+					handle(obj, sobj);
+					lod.add(obj);
+				}
+				else if (obj) {		
+					update(obj, sobj);
+				}
+			}
+		}
+
 		socket.onmessage = function (event) {
-			const string = event.data;
-			const data = JSON.parse(string);
-			//console.log(`received from server`, data);
+			const data = JSON.parse(event.data);
 
 			if (data.removes && data.removes.length) {
 				console.log('we have a remove', data.removes);
-
-				for (let idString of data.removes) {
-					const split = idString.split('_');
-
-					if (split[0] == 'pawn') {
-						let pawn = pawnsId[idString];
-						delete pawnsId[idString];
-						pawn.hide();
-						pawn.finalize();
-						lod.remove(pawn);
-					}
+				for (let id of data.removes) {
+					let obj = sobjs[id];
+					delete sobjs[id];
+					obj.hide();
+					obj.finalize();
+					lod.remove(obj);
 				}
 			}
 			if (data.news) {
-				//console.log('got news');
+				process_news(pawns.pawn, 'pawn', data,
+					(obj, sobj) => {
+						const { wpos, angle, outfit } = sobj;
+						obj.wpos = wpos;
+						obj.angle = angle;
+						obj.outfit = outfit;
+					},
+					(obj, sobj) => {
+						if (obj.type == 'you')
+							return;
+						const { wpos, angle, aiming } = sobj;
+						obj.netwpos = wpos;
+						obj.netangle = angle;
+						obj.aiming = aiming;
+						//obj.sector?.swap(obj);
+					});
 
-				for (let sobj of data.news) {
-					const id = sobj.id.split('_')[1];
-
-					if (sobj.type == 'pawn') {
-						let pawn = pawnsId[sobj.id];
-
-						if (!pawn) {
-							pawn = pawnsId[sobj.id] = new pawns.pawn();
-							console.log('new pawn ', sobj.id);
-
-							pawn.wpos = sobj.wpos;
-							pawn.angle = sobj.angle;
-							pawn.outfit = sobj.outfit;
-							pawn.sector?.swap(pawn);
-
-							lod.add(pawn);
-						}
-						if (pawn && pawn.type != 'you') {
-							pawn.netwpos = sobj.wpos;
-							pawn.netangle = sobj.angle;
-							pawn.aiming = sobj.aiming;
-							pawn.sector?.swap(pawn);
-						}
-					}
-
-				}
+				process_news(chickens.chicken, 'chicken', data,
+					(obj, sobj) => {
+						const { wpos, angle } = sobj;
+						obj.wpos = wpos;
+						obj.angle = angle;
+					},
+					(obj, sobj) => {
+						const { wpos, angle } = sobj;						
+						obj.netwpos = wpos;
+						obj.netangle = angle;
+					});
 			}
 
 			if (data.player) {
-				const id = data.player.id.split('_')[1];
-				console.log('got our player sent', id);
-				playerId = id;
-				let pawn = pawnsId[data.player.id];
+				playerId = data.player.id;
+				let pawn = sobjs[data.player.id];
 				if (pawn) {
-					pawns.you = pawn;
+					pawns.you = pawn as pawns.pawn;
 					pawn.type = 'you';
 					console.log('we got our pawn');
 					wastes.gview.center = pawn

@@ -21,6 +21,7 @@ export namespace numbers {
 	export var walls: tally = [0, 0]
 	export var roofs: tally = [0, 0]
 	export var pawns: tally = [0, 0]
+	export var chickens: tally = [0, 0]
 };
 
 class toggle {
@@ -207,8 +208,8 @@ namespace lod {
 		public shown: sector[] = [];
 		all: obj[] = []
 		constructor(
-			public spread,
-			public outside
+			public spread: number,
+			public outside: number
 		) {
 			lod.ggrid = this;
 			if (this.outside < this.spread) {
@@ -221,8 +222,6 @@ namespace lod {
 			this.outside++;
 		}
 		shrink() {
-			console.log('shrink');
-
 			this.spread--;
 			this.outside--;
 		}

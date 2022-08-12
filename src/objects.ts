@@ -215,6 +215,8 @@ namespace objects {
 				this.paintedRed = true;
 			}
 		}
+		nettick() {
+		}
 		tick() {
 			if (this.paintedRed) {
 				this.paintTimer += ren.delta;

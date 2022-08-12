@@ -1,0 +1,390 @@
+import { default as THREE, Scene, Color, Group, AxesHelper, Mesh, BoxGeometry, DirectionalLight, AmbientLight, PlaneBufferGeometry, MeshLambertMaterial, Shader, Matrix3, Vector2 } from "three";
+import aabb2 from "./aabb2";
+
+import app from "./app";
+import collada from "./collada";
+import lod, { numbers } from "./lod";
+
+import objects from "./objects";
+import pts from "./pts";
+import ren from "./renderer";
+import shadows from "./shadows";
+import sprite, { SpriteMaterial } from "./sprite";
+import sprites from "./sprites";
+import tiles from "./tiles";
+import wastes from "./wastes";
+import win from "./win";
+
+
+export namespace chickens {
+
+	export function start() {
+		//let chicken = new chickens.chicken;
+		//chicken.wpos = [46, 49];
+		//lod.add(chicken);
+
+		/*let chicken2 = new chickens.chicken;
+		chicken2.wpos = [42, 53];
+		lod.add(chicken2);*/
+	}
+
+	export class chicken extends objects.objected {
+		netwpos: vec2 = [0, 0]
+		netangle = 0
+		group
+		mesh
+		target
+		scene
+		camera
+		created = false
+		constructor() {
+			super(numbers.chickens);
+			this.type = 'chicken';
+			this.height = 24;
+		}
+		override create() {
+
+			this.tiled();
+
+			this.size = pts.divide([25, 25], 1);
+			this.subsize = [25, 40];
+
+			let shape = new sprite({
+				binded: this,
+				tuple: sprites.test100,
+				orderBias: 1.3,
+			});
+			shape.rleft = -this.size[0] / 4;
+			shape.show();
+
+			if (!this.created) {
+				this.created = true;
+
+				console.log('creating chicken');
+
+				// Set scale to increase pixels exponentially
+				const scale = 1;
+
+				// make wee guy target
+				//this.group = new THREE.Group
+				let size = pts.mult(this.size, scale);
+
+				this.target = ren.make_render_target(size[0], size[1]);
+				this.camera = ren.make_orthographic_camera(size[0], size[1]);
+
+				this.scene = new Scene()
+				//this.scene.background = new Color('#333');
+				this.scene.rotation.set(Math.PI / 6, Math.PI / 4, 0);
+				this.scene.scale.set(scale, scale, scale);
+
+				this.scene.add(new AmbientLight('white'));
+
+				let sun = new DirectionalLight(0xffffff, 0.5);
+				// left up right
+				sun.position.set(-wastes.size, wastes.size * 1.5, wastes.size / 2);
+				//sun.add(new AxesHelper(100));
+
+				this.scene.add(sun);
+				this.scene.add(sun.target);
+			}
+
+			const spritee = this.shape as sprite;
+			spritee.material.map = this.target.texture;
+
+		}
+		try_move_to(pos: vec2) {
+			let venture = pts.add(this.wpos, pos);
+			if (!objects.is_solid(venture))
+				this.wpos = venture;
+
+		}
+		override update() {
+			this.tiled();
+			this.stack();
+			super.update();
+		}
+		//override setup_context() {
+		//	win.contextmenu.reset();
+		//}
+		groups: any = {}
+		meshes: any = {}
+		made = false
+		make() {
+			if (this.made)
+				return;
+			this.made = true;
+
+			const headWidth = 2.5;
+			const headHeight = 4;
+			const headLength = 2.5;
+
+			const combWidth = 1;
+			const combHeight = 2;
+			const combLength = 2;
+
+			const beakWidth = 1.5;
+			const beakHeight = 1.5;
+			const beakLength = 2;
+
+			const legsWidth = 1;
+			const legsHeight = 4;
+			const legsLength = 1;
+
+			const armsWidth = 1;
+			const armsLength = 5;
+			const armsHeight = 3;
+			const armsAngle = .0;
+
+			const bodyWidth = 4;
+			const bodyHeight = 5;
+			const bodyLength = 7;
+
+			const feetWidth = 1.5;
+			const feetHeight = 1;
+			const feetLength = 2;
+
+			let boxHead = new BoxGeometry(headWidth, headHeight, headLength);
+			let materialHead = new MeshLambertMaterial({
+				color: '#787a7a'
+			});
+
+			let boxComb = new BoxGeometry(combWidth, combHeight, combLength);
+			let materialComb = new MeshLambertMaterial({
+				color: '#a52c2c'
+			});
+
+			let boxBeak = new BoxGeometry(beakWidth, beakHeight, beakLength);
+			let materialBeak = new MeshLambertMaterial({
+				color: '#7f805f'
+			});
+
+			let boxBody = new BoxGeometry(bodyWidth, bodyHeight, bodyLength);
+			let materialBody = new MeshLambertMaterial({
+				color: '#787a7a'
+			});
+
+			let boxArms = new BoxGeometry(armsWidth, armsHeight, armsLength);
+			let materialArms = new MeshLambertMaterial({
+				color: '#787a7a'
+			});
+
+			let boxLegs = new BoxGeometry(legsWidth, legsHeight, legsLength);
+			let boxFeet = new BoxGeometry(feetWidth, feetHeight, feetLength);
+			let materialLegs = new MeshLambertMaterial({
+				color: '#7f805f'
+			});
+
+
+			this.meshes.head = new Mesh(boxHead, materialHead);
+			this.meshes.comb = new Mesh(boxComb, materialComb);
+			this.meshes.beak = new Mesh(boxBeak, materialBeak);
+
+			this.meshes.body = new Mesh(boxBody, materialBody);
+
+			this.meshes.arml = new Mesh(boxArms, materialArms);
+			this.meshes.armr = new Mesh(boxArms, materialArms);
+
+			this.meshes.legl = new Mesh(boxLegs, materialLegs);
+			this.meshes.legr = new Mesh(boxLegs, materialLegs);
+
+			this.meshes.footl = new Mesh(boxFeet, materialLegs);
+			this.meshes.footr = new Mesh(boxFeet, materialLegs);
+
+			this.groups.head = new Group;
+			this.groups.beak = new Group;
+			this.groups.comb = new Group;
+			this.groups.body = new Group;
+			this.groups.arml = new Group;
+			this.groups.armr = new Group;
+			this.groups.legl = new Group;
+			this.groups.legr = new Group;
+			this.groups.footl = new Group;
+			this.groups.footr = new Group;
+			this.groups.ground = new Group;
+
+			this.groups.head.add(this.meshes.head);
+			this.groups.beak.add(this.meshes.beak);
+			this.groups.comb.add(this.meshes.comb);
+			this.groups.body.add(this.meshes.body);
+			this.groups.arml.add(this.meshes.arml);
+			this.groups.armr.add(this.meshes.armr);
+			this.groups.legl.add(this.meshes.legl);
+			this.groups.legr.add(this.meshes.legr);
+			this.groups.footl.add(this.meshes.footl);
+			this.groups.footr.add(this.meshes.footr);
+
+			this.groups.head.add(this.groups.beak);
+			this.groups.head.add(this.groups.comb);
+			this.groups.legl.add(this.groups.footl);
+			this.groups.legr.add(this.groups.footr);
+
+			this.groups.body.add(this.groups.head);
+			this.groups.body.add(this.groups.arml);
+			this.groups.body.add(this.groups.armr);
+			this.groups.body.add(this.groups.legl);
+			this.groups.body.add(this.groups.legr);
+			this.groups.ground.add(this.groups.body);
+
+			this.groups.head.position.set(0, bodyHeight / 2 + headWidth / 2, bodyWidth / 2);
+			this.groups.comb.position.set(0, combHeight, combLength / 2);
+			this.groups.beak.position.set(0, 0, beakLength);
+			//this.groups.beak.rotation.set(-Math.PI / 4, 0, 0);
+			this.groups.body.position.set(0, bodyHeight, 0);
+
+			this.groups.armr.position.set(-bodyWidth / 2 - armsWidth / 2, bodyHeight / 2 - armsWidth / 2, 0);
+			this.groups.armr.rotation.set(0, 0, -armsAngle);
+			this.meshes.armr.position.set(0, -armsHeight / 2 + armsWidth / 2, 0);
+
+			this.groups.arml.position.set(bodyWidth / 2 + armsWidth / 2, bodyHeight / 2 - armsWidth / 2, 0);
+			this.groups.arml.rotation.set(0, 0, armsAngle);
+			this.meshes.arml.position.set(0, -armsHeight / 2 + armsWidth / 2, 0);
+
+			this.groups.legl.position.set(-legsWidth / 1, -bodyHeight / 2, 0);
+			this.meshes.legl.position.set(0, -legsHeight / 2, 0);
+
+			this.groups.legr.position.set(legsWidth / 1, -bodyHeight / 2, 0);
+			this.meshes.legr.position.set(0, -legsHeight / 2, 0);
+
+			this.groups.footl.position.set(0, -legsHeight, feetLength / 2);
+			this.groups.footr.position.set(0, -legsHeight, feetLength / 2);
+
+			this.groups.ground.position.set(0, -bodyHeight * 2, 0);
+			//mesh.rotation.set(Math.PI / 2, 0, 0);
+
+			this.scene.add(this.groups.ground);
+
+		}
+		render() {
+			ren.renderer.setRenderTarget(this.target);
+			ren.renderer.clear();
+			ren.renderer.render(this.scene, this.camera);
+		}
+		animateBodyParts() {
+			this.walkSmoother = wastes.clamp(this.walkSmoother, 0, 1);
+
+			const legsSwoop = 0.8;
+			const armsSwoop = 0.5;
+			
+			this.swoop += ren.delta * 2.75;
+			
+			const swoop1 = Math.cos(Math.PI * this.swoop);
+			const swoop2 = Math.cos(Math.PI * this.swoop - Math.PI);
+			
+			this.groups.legl.rotation.x = swoop1 * legsSwoop * this.walkSmoother;
+			this.groups.legr.rotation.x = swoop2 * legsSwoop * this.walkSmoother;
+			//this.groups.arml.rotation.x = swoop1 * armsSwoop * this.walkSmoother;
+			//this.groups.armr.rotation.x = swoop2 * armsSwoop * this.walkSmoother;
+			this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
+			
+			this.render();
+		}
+		mousing = false
+		swoop = 0
+		angle = 0
+		walkSmoother = 1
+		randomWalker = 0
+		nettick() {
+
+			if (!pts.together(this.netwpos))
+				this.netwpos = this.wpos;
+
+			// tween netwpos into wpos
+			let tween = pts.mult(pts.subtract(this.netwpos, this.wpos), ren.delta * 2);
+			this.wpos = pts.add(this.wpos, tween);
+
+			//console.log('chicken nettick', this.wpos);
+
+			if (this.netangle - this.angle > Math.PI)
+				this.angle += Math.PI * 2;
+			if (this.angle - this.netangle > Math.PI)
+				this.angle -= Math.PI * 2;
+
+			let tweenAngle = (this.netangle - this.angle) * 0.1;
+
+			this.angle += tweenAngle;
+
+			const movement = pts.together(pts.abs(tween));
+			if (movement > 0.005) {
+				//console.log('movement > 0.25');
+
+				this.walkSmoother += ren.delta * 10;
+			}
+			else {
+				this.walkSmoother -= ren.delta * 5;
+			}
+
+		}
+		override tick() {
+
+			if (!this.shape)
+				return;
+
+			this.make();
+			this.animateBodyParts();
+			this.tiled();
+			//this.tile?.paint();
+			this.sector?.swap(this);
+
+			const debug = false;
+
+			if (debug) {
+				let mouse = wastes.gview.mwpos;
+				let pos = this.wpos;
+				let x, y;
+				pos = pts.add(pos, pts.divide([1, 1], 2));
+				mouse = pts.subtract(mouse, pos);
+				mouse[1] = -mouse[1];
+
+				const dist = pts.distsimple(pos, wastes.gview.mwpos);
+
+				x = mouse[0];
+				y = mouse[1];
+				let angle = pts.angle([0, 0], [x, y]);
+				this.angle = angle;
+			}
+
+			// shade the pawn
+
+			let color = [1, 1, 1, 1] as vec4;
+
+			const sprite = this.shape as sprite;
+
+			// We could have been nulled due to a hide, dispose
+
+			/*
+			if (this.type != 'you' && this.mousedSquare(wastes.gview.mrpos2)) {
+				this.mousing = true;
+				sprite.material.color.set('#c1ffcd');
+				//console.log('mover');
+				if (this.type != 'you') {
+					win.contextmenu.focus = this;
+				}
+				//win.character.anchor = this;
+				//win.character.toggle(this.mousing);
+			}
+			else if (!this.mousedSquare(wastes.gview.mrpos2) && this.mousing) {
+				if (win.contextmenu.focus == this)
+					win.contextmenu.focus = undefined;
+				//sprite.material.color.set('white');
+				this.mousing = false;
+				//win.character.toggle(this.mousing);
+			}
+			else if (!this.mousing && !this.tile!.hasDeck) {
+				color = shadows.calc(color, pts.round(this.wpos));
+				sprite.material.color.setRGB(color[0], color[1], color[2]);
+			}
+			else {
+				sprite.material.color.set('white');
+			}
+			*/
+			this.stack(['pawn', 'you', 'leaves', 'wall', 'door', 'roof', 'falsefront', 'panel']);
+			super.update();
+		}
+		//tick() {
+		//}
+	}
+
+
+}
+
+export default chickens;

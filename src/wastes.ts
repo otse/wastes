@@ -17,6 +17,7 @@ import colormap from "./colormap";
 import { shadows } from "./shadows";
 import aabb2 from "./aabb2";
 import { client } from "./client";
+import chickens from "./chickens";
 
 export { win, pawns, objects }; // fixes creepy rollup error
 
@@ -113,6 +114,8 @@ export namespace wastes {
 			win.start();
 			tests.start();
 			client.start();
+
+			chickens.start();
 
 			gview.center = new lod.obj();
 			gview.center.wpos = [44, 52];

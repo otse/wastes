@@ -23,6 +23,7 @@ export namespace pawns {
 	const wasterSprite = false;
 
 	export class pawn extends objects.objected {
+		static noun = 'pawn'
 		dialog = [
 			[`I'm a commoner.`, 1],
 			[`It can be hazardous around here. The purple for example is contaminated soil.`, 2],
@@ -74,7 +75,7 @@ export namespace pawns {
 				this.created = true;
 
 				// Set scale to increase pixels exponentially
-				const scale = 10;
+				const scale = 1;
 
 				// make wee guy target
 				//this.group = new THREE.Group
@@ -115,7 +116,7 @@ export namespace pawns {
 		}
 		override update() {
 			this.tiled();
-			this.stack();
+			//this.stack();
 			super.update();
 		}
 		override setup_context() {
@@ -463,6 +464,8 @@ export namespace pawns {
 			let tween = pts.mult(pts.subtract(this.netwpos, this.wpos), ren.delta * 2);
 			this.wpos = pts.add(this.wpos, tween);
 
+			this.sector?.swap(this);
+
 			if (this.netangle - this.angle > Math.PI)
 				this.angle += Math.PI * 2;
 			if (this.angle - this.netangle > Math.PI)
@@ -533,7 +536,7 @@ export namespace pawns {
 				}
 			}
 
-			this.stack(['pawn', 'you', 'leaves', 'wall', 'door', 'roof', 'falsefront', 'panel']);
+			this.stack(['pawn', 'you', 'chicken', 'leaves', 'wall', 'door', 'roof', 'falsefront', 'panel']);
 			super.update();
 		}
 		//tick() {

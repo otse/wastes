@@ -9,17 +9,21 @@ var connections: connection[] = [];
 
 function start() {
 
+	new slod.sworld();
+
 	let peacekeeper = new npc;
 	peacekeeper.wpos = [45.5, 56.5];
 	//peacekeeper.outfit = []
 	peacekeeper.walkArea = new aabb2([43, 51], [46, 58]);
 	slod.add(peacekeeper);
-
+	
+	let chick = new chicken;
+	chick.wpos = [42, 53];
+	chick.walkArea = new aabb2([43, 52], [47, 48]);
+	slod.add(chick);
 }
 
 const tick_rate = 333;
-
-new slod.sworld();
 
 const wss = new WebSocketServer({
 	port: 8080
@@ -33,12 +37,13 @@ export function send_message_to_all(message, duration) {
 class connection {
 	you: pawn
 	messages: [text: string, duration: number][] = []
-	ourwpos: vec2 = [44, 52]
 	grid: slod.sgrid
 	sendDelay = 0
 	sentPlayer = false
 	constructor(public ws) {
 
+		console.log('new connection');
+		
 		send_message_to_all("New player joins", 3);
 
 		this.sendDelay = Date.now() + 1000;
@@ -132,7 +137,7 @@ class pawn extends slod.sobj {
 	override tick() {
 	}
 	override create() {
-		
+
 	}
 	override hide() {
 		console.log('ply-pawn should be impertinent');
@@ -189,6 +194,56 @@ class npc extends pawn {
 		}
 	}
 }
+
+class chicken extends slod.sobj {
+	static id = 0
+	walkArea: aabb2
+	aimTarget: vec2 = [0, 0]
+	angle = 0
+	randomWalker
+	constructor() {
+		super();
+		this.id = 'chicken_' + chicken.id++;
+		this.type = 'chicken';
+		this.randomWalker = Date.now();
+	}
+	override tick() {
+		if (this.walkArea) {
+			if (this.randomWalker - Date.now() <= 0) {
+				const target = this.walkArea.random_point();
+				this.aimTarget = target;
+
+				//this.wpos = target;
+				this.randomWalker = Date.now() + 2000;
+			}
+		}
+
+		if (pts.together(this.aimTarget)) {
+			let angle = pts.angle(this.wpos, this.aimTarget);
+
+			this.angle = -angle + Math.PI;
+
+			let speed = 0.25;
+
+			let x = speed * Math.sin(this.angle);
+			let y = speed * Math.cos(this.angle);
+
+			let venture = pts.add(this.wpos, [x, y]);
+			this.wpos = venture;
+
+			const dist = pts.distsimple(this.wpos, this.aimTarget);
+			if (dist < 0.5)
+				this.aimTarget = [0, 0];
+		}
+	}
+	gather() {
+		return { id: this.id, type: this.type, wpos: this.wpos, angle: this.angle };
+	}
+	//override gather() {
+
+	//}
+}
+
 
 start();
 

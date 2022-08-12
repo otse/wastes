@@ -302,7 +302,7 @@ uniform int compression;
 
 // 32 is nice
 // 48 is mild
-float factor = 48.0;
+float factor = 24.0;
 
 
 void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {
@@ -538,6 +538,7 @@ void main() {
         numbers.walls = [0, 0];
         numbers.roofs = [0, 0];
         numbers.pawns = [0, 0];
+        numbers.chickens = [0, 0];
     })(numbers || (numbers = {}));
     class toggle {
         constructor() {
@@ -723,7 +724,6 @@ void main() {
                 this.outside++;
             }
             shrink() {
-                console.log('shrink');
                 this.spread--;
                 this.outside--;
             }
@@ -6102,6 +6102,8 @@ void main() {
                     this.paintedRed = true;
                 }
             }
+            nettick() {
+            }
             tick() {
                 if (this.paintedRed) {
                     this.paintTimer += ren$1.delta;
@@ -7155,7 +7157,7 @@ void main() {
                 if (!this.created) {
                     this.created = true;
                     // Set scale to increase pixels exponentially
-                    const scale = 10;
+                    const scale = 1;
                     // make wee guy target
                     //this.group = new THREE.Group
                     let size = pts.mult(this.size, scale);
@@ -7187,7 +7189,7 @@ void main() {
             }
             update() {
                 this.tiled();
-                this.stack();
+                //this.stack();
                 super.update();
             }
             setup_context() {
@@ -7455,11 +7457,13 @@ void main() {
                 this.render();
             }
             nettick() {
+                var _a;
                 if (!pts.together(this.netwpos))
                     this.netwpos = this.wpos;
                 // tween netwpos into wpos
                 let tween = pts.mult(pts.subtract(this.netwpos, this.wpos), ren$1.delta * 2);
                 this.wpos = pts.add(this.wpos, tween);
+                (_a = this.sector) === null || _a === void 0 ? void 0 : _a.swap(this);
                 if (this.netangle - this.angle > Math.PI)
                     this.angle += Math.PI * 2;
                 if (this.angle - this.netangle > Math.PI)
@@ -7515,10 +7519,11 @@ void main() {
                         sprite.material.color.set('white');
                     }
                 }
-                this.stack(['pawn', 'you', 'leaves', 'wall', 'door', 'roof', 'falsefront', 'panel']);
+                this.stack(['pawn', 'you', 'chicken', 'leaves', 'wall', 'door', 'roof', 'falsefront', 'panel']);
                 super.update();
             }
         }
+        pawn.noun = 'pawn';
         pawns.pawn = pawn;
     })(pawns || (pawns = {}));
     var pawns$1 = pawns;
@@ -8227,15 +8232,290 @@ void main() {
     })(areas || (areas = {}));
     var areas$1 = areas;
 
+    var chickens;
+    (function (chickens) {
+        function start() {
+            //let chicken = new chickens.chicken;
+            //chicken.wpos = [46, 49];
+            //lod.add(chicken);
+            /*let chicken2 = new chickens.chicken;
+            chicken2.wpos = [42, 53];
+            lod.add(chicken2);*/
+        }
+        chickens.start = start;
+        class chicken extends objects$1.objected {
+            constructor() {
+                super(numbers.chickens);
+                this.netwpos = [0, 0];
+                this.netangle = 0;
+                this.created = false;
+                //override setup_context() {
+                //	win.contextmenu.reset();
+                //}
+                this.groups = {};
+                this.meshes = {};
+                this.made = false;
+                this.mousing = false;
+                this.swoop = 0;
+                this.angle = 0;
+                this.walkSmoother = 1;
+                this.randomWalker = 0;
+                this.type = 'chicken';
+                this.height = 24;
+            }
+            create() {
+                this.tiled();
+                this.size = pts.divide([25, 25], 1);
+                this.subsize = [25, 40];
+                let shape = new sprite({
+                    binded: this,
+                    tuple: sprites$1.test100,
+                    orderBias: 1.3,
+                });
+                shape.rleft = -this.size[0] / 4;
+                shape.show();
+                if (!this.created) {
+                    this.created = true;
+                    console.log('creating chicken');
+                    // Set scale to increase pixels exponentially
+                    const scale = 1;
+                    // make wee guy target
+                    //this.group = new THREE.Group
+                    let size = pts.mult(this.size, scale);
+                    this.target = ren$1.make_render_target(size[0], size[1]);
+                    this.camera = ren$1.make_orthographic_camera(size[0], size[1]);
+                    this.scene = new THREE.Scene();
+                    //this.scene.background = new Color('#333');
+                    this.scene.rotation.set(Math.PI / 6, Math.PI / 4, 0);
+                    this.scene.scale.set(scale, scale, scale);
+                    this.scene.add(new THREE.AmbientLight('white'));
+                    let sun = new THREE.DirectionalLight(0xffffff, 0.5);
+                    // left up right
+                    sun.position.set(-wastes.size, wastes.size * 1.5, wastes.size / 2);
+                    //sun.add(new AxesHelper(100));
+                    this.scene.add(sun);
+                    this.scene.add(sun.target);
+                }
+                const spritee = this.shape;
+                spritee.material.map = this.target.texture;
+            }
+            try_move_to(pos) {
+                let venture = pts.add(this.wpos, pos);
+                if (!objects$1.is_solid(venture))
+                    this.wpos = venture;
+            }
+            update() {
+                this.tiled();
+                this.stack();
+                super.update();
+            }
+            make() {
+                if (this.made)
+                    return;
+                this.made = true;
+                const headWidth = 2.5;
+                const headHeight = 4;
+                const headLength = 2.5;
+                const combWidth = 1;
+                const combHeight = 2;
+                const combLength = 2;
+                const beakWidth = 1.5;
+                const beakHeight = 1.5;
+                const beakLength = 2;
+                const legsWidth = 1;
+                const legsHeight = 4;
+                const legsLength = 1;
+                const armsWidth = 1;
+                const armsLength = 5;
+                const armsHeight = 3;
+                const armsAngle = .0;
+                const bodyWidth = 4;
+                const bodyHeight = 5;
+                const bodyLength = 7;
+                const feetWidth = 1.5;
+                const feetHeight = 1;
+                const feetLength = 2;
+                let boxHead = new THREE.BoxGeometry(headWidth, headHeight, headLength);
+                let materialHead = new THREE.MeshLambertMaterial({
+                    color: '#787a7a'
+                });
+                let boxComb = new THREE.BoxGeometry(combWidth, combHeight, combLength);
+                let materialComb = new THREE.MeshLambertMaterial({
+                    color: '#a52c2c'
+                });
+                let boxBeak = new THREE.BoxGeometry(beakWidth, beakHeight, beakLength);
+                let materialBeak = new THREE.MeshLambertMaterial({
+                    color: '#7f805f'
+                });
+                let boxBody = new THREE.BoxGeometry(bodyWidth, bodyHeight, bodyLength);
+                let materialBody = new THREE.MeshLambertMaterial({
+                    color: '#787a7a'
+                });
+                let boxArms = new THREE.BoxGeometry(armsWidth, armsHeight, armsLength);
+                let materialArms = new THREE.MeshLambertMaterial({
+                    color: '#787a7a'
+                });
+                let boxLegs = new THREE.BoxGeometry(legsWidth, legsHeight, legsLength);
+                let boxFeet = new THREE.BoxGeometry(feetWidth, feetHeight, feetLength);
+                let materialLegs = new THREE.MeshLambertMaterial({
+                    color: '#7f805f'
+                });
+                this.meshes.head = new THREE.Mesh(boxHead, materialHead);
+                this.meshes.comb = new THREE.Mesh(boxComb, materialComb);
+                this.meshes.beak = new THREE.Mesh(boxBeak, materialBeak);
+                this.meshes.body = new THREE.Mesh(boxBody, materialBody);
+                this.meshes.arml = new THREE.Mesh(boxArms, materialArms);
+                this.meshes.armr = new THREE.Mesh(boxArms, materialArms);
+                this.meshes.legl = new THREE.Mesh(boxLegs, materialLegs);
+                this.meshes.legr = new THREE.Mesh(boxLegs, materialLegs);
+                this.meshes.footl = new THREE.Mesh(boxFeet, materialLegs);
+                this.meshes.footr = new THREE.Mesh(boxFeet, materialLegs);
+                this.groups.head = new THREE.Group;
+                this.groups.beak = new THREE.Group;
+                this.groups.comb = new THREE.Group;
+                this.groups.body = new THREE.Group;
+                this.groups.arml = new THREE.Group;
+                this.groups.armr = new THREE.Group;
+                this.groups.legl = new THREE.Group;
+                this.groups.legr = new THREE.Group;
+                this.groups.footl = new THREE.Group;
+                this.groups.footr = new THREE.Group;
+                this.groups.ground = new THREE.Group;
+                this.groups.head.add(this.meshes.head);
+                this.groups.beak.add(this.meshes.beak);
+                this.groups.comb.add(this.meshes.comb);
+                this.groups.body.add(this.meshes.body);
+                this.groups.arml.add(this.meshes.arml);
+                this.groups.armr.add(this.meshes.armr);
+                this.groups.legl.add(this.meshes.legl);
+                this.groups.legr.add(this.meshes.legr);
+                this.groups.footl.add(this.meshes.footl);
+                this.groups.footr.add(this.meshes.footr);
+                this.groups.head.add(this.groups.beak);
+                this.groups.head.add(this.groups.comb);
+                this.groups.legl.add(this.groups.footl);
+                this.groups.legr.add(this.groups.footr);
+                this.groups.body.add(this.groups.head);
+                this.groups.body.add(this.groups.arml);
+                this.groups.body.add(this.groups.armr);
+                this.groups.body.add(this.groups.legl);
+                this.groups.body.add(this.groups.legr);
+                this.groups.ground.add(this.groups.body);
+                this.groups.head.position.set(0, bodyHeight / 2 + headWidth / 2, bodyWidth / 2);
+                this.groups.comb.position.set(0, combHeight, combLength / 2);
+                this.groups.beak.position.set(0, 0, beakLength);
+                //this.groups.beak.rotation.set(-Math.PI / 4, 0, 0);
+                this.groups.body.position.set(0, bodyHeight, 0);
+                this.groups.armr.position.set(-bodyWidth / 2 - armsWidth / 2, bodyHeight / 2 - armsWidth / 2, 0);
+                this.groups.armr.rotation.set(0, 0, -armsAngle);
+                this.meshes.armr.position.set(0, -armsHeight / 2 + armsWidth / 2, 0);
+                this.groups.arml.position.set(bodyWidth / 2 + armsWidth / 2, bodyHeight / 2 - armsWidth / 2, 0);
+                this.groups.arml.rotation.set(0, 0, armsAngle);
+                this.meshes.arml.position.set(0, -armsHeight / 2 + armsWidth / 2, 0);
+                this.groups.legl.position.set(-legsWidth / 1, -bodyHeight / 2, 0);
+                this.meshes.legl.position.set(0, -legsHeight / 2, 0);
+                this.groups.legr.position.set(legsWidth / 1, -bodyHeight / 2, 0);
+                this.meshes.legr.position.set(0, -legsHeight / 2, 0);
+                this.groups.footl.position.set(0, -legsHeight, feetLength / 2);
+                this.groups.footr.position.set(0, -legsHeight, feetLength / 2);
+                this.groups.ground.position.set(0, -bodyHeight * 2, 0);
+                //mesh.rotation.set(Math.PI / 2, 0, 0);
+                this.scene.add(this.groups.ground);
+            }
+            render() {
+                ren$1.renderer.setRenderTarget(this.target);
+                ren$1.renderer.clear();
+                ren$1.renderer.render(this.scene, this.camera);
+            }
+            animateBodyParts() {
+                this.walkSmoother = wastes.clamp(this.walkSmoother, 0, 1);
+                const legsSwoop = 0.8;
+                this.swoop += ren$1.delta * 2.75;
+                const swoop1 = Math.cos(Math.PI * this.swoop);
+                const swoop2 = Math.cos(Math.PI * this.swoop - Math.PI);
+                this.groups.legl.rotation.x = swoop1 * legsSwoop * this.walkSmoother;
+                this.groups.legr.rotation.x = swoop2 * legsSwoop * this.walkSmoother;
+                //this.groups.arml.rotation.x = swoop1 * armsSwoop * this.walkSmoother;
+                //this.groups.armr.rotation.x = swoop2 * armsSwoop * this.walkSmoother;
+                this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
+                this.render();
+            }
+            nettick() {
+                if (!pts.together(this.netwpos))
+                    this.netwpos = this.wpos;
+                // tween netwpos into wpos
+                let tween = pts.mult(pts.subtract(this.netwpos, this.wpos), ren$1.delta * 2);
+                this.wpos = pts.add(this.wpos, tween);
+                //console.log('chicken nettick', this.wpos);
+                if (this.netangle - this.angle > Math.PI)
+                    this.angle += Math.PI * 2;
+                if (this.angle - this.netangle > Math.PI)
+                    this.angle -= Math.PI * 2;
+                let tweenAngle = (this.netangle - this.angle) * 0.1;
+                this.angle += tweenAngle;
+                const movement = pts.together(pts.abs(tween));
+                if (movement > 0.005) {
+                    //console.log('movement > 0.25');
+                    this.walkSmoother += ren$1.delta * 10;
+                }
+                else {
+                    this.walkSmoother -= ren$1.delta * 5;
+                }
+            }
+            tick() {
+                var _a;
+                if (!this.shape)
+                    return;
+                this.make();
+                this.animateBodyParts();
+                this.tiled();
+                //this.tile?.paint();
+                (_a = this.sector) === null || _a === void 0 ? void 0 : _a.swap(this);
+                this.shape;
+                // We could have been nulled due to a hide, dispose
+                /*
+                if (this.type != 'you' && this.mousedSquare(wastes.gview.mrpos2)) {
+                    this.mousing = true;
+                    sprite.material.color.set('#c1ffcd');
+                    //console.log('mover');
+                    if (this.type != 'you') {
+                        win.contextmenu.focus = this;
+                    }
+                    //win.character.anchor = this;
+                    //win.character.toggle(this.mousing);
+                }
+                else if (!this.mousedSquare(wastes.gview.mrpos2) && this.mousing) {
+                    if (win.contextmenu.focus == this)
+                        win.contextmenu.focus = undefined;
+                    //sprite.material.color.set('white');
+                    this.mousing = false;
+                    //win.character.toggle(this.mousing);
+                }
+                else if (!this.mousing && !this.tile!.hasDeck) {
+                    color = shadows.calc(color, pts.round(this.wpos));
+                    sprite.material.color.setRGB(color[0], color[1], color[2]);
+                }
+                else {
+                    sprite.material.color.set('white');
+                }
+                */
+                this.stack(['pawn', 'you', 'leaves', 'wall', 'door', 'roof', 'falsefront', 'panel']);
+                super.update();
+            }
+        }
+        chickens.chicken = chicken;
+    })(chickens || (chickens = {}));
+    var chickens$1 = chickens;
+
     var client;
     (function (client) {
-        client.pawnsId = {};
+        client.sobjs = {};
         client.playerId = -1;
         function tick() {
-            for (let id in client.pawnsId) {
-                let pawn = client.pawnsId[id];
-                if (pawn.type != 'you')
-                    pawn.nettick();
+            for (let id in client.sobjs) {
+                let obj = client.sobjs[id];
+                if (obj.type != 'you')
+                    obj.nettick();
             }
         }
         client.tick = tick;
@@ -8246,53 +8526,63 @@ void main() {
                 //console.log("Sending to server");
                 //socket.send("My name is John");
             };
+            function process_news(type, typed, data, handle, update) {
+                for (let sobj of data.news) {
+                    const { id } = sobj;
+                    if (sobj.type != typed)
+                        continue;
+                    let obj = client.sobjs[id];
+                    if (!obj) {
+                        console.log('new sobj', typed, id);
+                        obj = client.sobjs[id] = new type;
+                        handle(obj, sobj);
+                        lod$1.add(obj);
+                    }
+                    else if (obj) {
+                        update(obj, sobj);
+                    }
+                }
+            }
             client.socket.onmessage = function (event) {
-                var _a, _b;
-                const string = event.data;
-                const data = JSON.parse(string);
-                //console.log(`received from server`, data);
+                const data = JSON.parse(event.data);
                 if (data.removes && data.removes.length) {
                     console.log('we have a remove', data.removes);
-                    for (let idString of data.removes) {
-                        const split = idString.split('_');
-                        if (split[0] == 'pawn') {
-                            let pawn = client.pawnsId[idString];
-                            delete client.pawnsId[idString];
-                            pawn.hide();
-                            pawn.finalize();
-                            lod$1.remove(pawn);
-                        }
+                    for (let id of data.removes) {
+                        let obj = client.sobjs[id];
+                        delete client.sobjs[id];
+                        obj.hide();
+                        obj.finalize();
+                        lod$1.remove(obj);
                     }
                 }
                 if (data.news) {
-                    //console.log('got news');
-                    for (let sobj of data.news) {
-                        sobj.id.split('_')[1];
-                        if (sobj.type == 'pawn') {
-                            let pawn = client.pawnsId[sobj.id];
-                            if (!pawn) {
-                                pawn = client.pawnsId[sobj.id] = new pawns$1.pawn();
-                                console.log('new pawn ', sobj.id);
-                                pawn.wpos = sobj.wpos;
-                                pawn.angle = sobj.angle;
-                                pawn.outfit = sobj.outfit;
-                                (_a = pawn.sector) === null || _a === void 0 ? void 0 : _a.swap(pawn);
-                                lod$1.add(pawn);
-                            }
-                            if (pawn && pawn.type != 'you') {
-                                pawn.netwpos = sobj.wpos;
-                                pawn.netangle = sobj.angle;
-                                pawn.aiming = sobj.aiming;
-                                (_b = pawn.sector) === null || _b === void 0 ? void 0 : _b.swap(pawn);
-                            }
-                        }
-                    }
+                    process_news(pawns$1.pawn, 'pawn', data, (obj, sobj) => {
+                        const { wpos, angle, outfit } = sobj;
+                        obj.wpos = wpos;
+                        obj.angle = angle;
+                        obj.outfit = outfit;
+                    }, (obj, sobj) => {
+                        if (obj.type == 'you')
+                            return;
+                        const { wpos, angle, aiming } = sobj;
+                        obj.netwpos = wpos;
+                        obj.netangle = angle;
+                        obj.aiming = aiming;
+                        //obj.sector?.swap(obj);
+                    });
+                    process_news(chickens$1.chicken, 'chicken', data, (obj, sobj) => {
+                        const { wpos, angle } = sobj;
+                        obj.wpos = wpos;
+                        obj.angle = angle;
+                    }, (obj, sobj) => {
+                        const { wpos, angle } = sobj;
+                        obj.netwpos = wpos;
+                        obj.netangle = angle;
+                    });
                 }
                 if (data.player) {
-                    const id = data.player.id.split('_')[1];
-                    console.log('got our player sent', id);
-                    client.playerId = id;
-                    let pawn = client.pawnsId[data.player.id];
+                    client.playerId = data.player.id;
+                    let pawn = client.sobjs[data.player.id];
                     if (pawn) {
                         pawns$1.you = pawn;
                         pawn.type = 'you';
@@ -8395,6 +8685,7 @@ void main() {
                 win$1.start();
                 tests$1.start();
                 client.start();
+                chickens$1.start();
                 wastes.gview.center = new lod$1.obj();
                 wastes.gview.center.wpos = [44, 52];
                 //pawns.make_you();

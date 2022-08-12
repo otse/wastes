@@ -223,8 +223,8 @@ namespace slod {
 		all: sobj[] = []
 		constructor(
 			public world: sworld,
-			public spread,
-			public outside
+			public spread: number,
+			public outside: number
 		) {
 			console.log(`new sgrid ${spread}`);
 
