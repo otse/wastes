@@ -20,7 +20,7 @@ uniform int compression;
 
 // 32 is nice
 // 48 is mild
-float factor = 32.0;
+float factor = 48.0;
 
 
 void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {

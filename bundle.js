@@ -302,7 +302,7 @@ uniform int compression;
 
 // 32 is nice
 // 48 is mild
-float factor = 32.0;
+float factor = 48.0;
 
 
 void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {
@@ -566,7 +566,7 @@ void main() {
     }
     var lod;
     (function (lod) {
-        lod.SectorSpan = 4;
+        lod.SectorSpan = 3;
         function register() {
             // hooks.create('sectorCreate')
             // hooks.create('sectorShow')
@@ -6557,11 +6557,11 @@ void main() {
                 shape.rup = 29;
                 if (!this.shaded) {
                     this.shaded = true;
-                    const shadow = .8;
+                    const shadow = .75;
                     shadows$1.shade_matrix(this.wpos, [
                         [0, 0, 0, 0, 0],
                         [0, 0, 0, 0, 0],
-                        [0, 0, shadow, 0, 0],
+                        [0, 0, 0, 0, 0],
                         [0, 0, 0, shadow, 0],
                         [0, 0, 0, 0, shadow]
                     ], true);
@@ -6706,6 +6706,9 @@ void main() {
             win_1.started = true;
             win = document.getElementById('win');
             contextmenu.init();
+            setTimeout(() => {
+                //message.message("Welcome", 1000);
+            }, 1000);
         }
         win_1.start = start;
         function tick() {
@@ -6721,6 +6724,7 @@ void main() {
             container.tick();
             dialogue.tick();
             contextmenu.tick();
+            message.tick();
         }
         win_1.tick = tick;
         class modal {
@@ -7078,16 +7082,26 @@ void main() {
             constructor() {
                 this.duration = 5;
             }
-            static push(duration, message) {
-                this.messages.push({ duration: duration, message: message });
+            static message(message, duration) {
+                this.messages.push({ message: message, duration: duration });
             }
             static tick() {
-                if (this.current.duration <= 0)
-                    this.current.element.remove();
-                let element = document.createElement('div');
-                element.className = 'message';
+                if (this.messages.length) {
+                    let shift = this.messages.shift();
+                    let element = document.createElement('div');
+                    element.className = 'message';
+                    element.innerHTML = shift.message;
+                    document.getElementById('messages').append(element);
+                    setTimeout(() => {
+                        element.classList.add('fade');
+                    }, shift.duration);
+                    setTimeout(() => {
+                        element.remove();
+                    }, shift.duration + 2000);
+                }
             }
         }
+        message.messages = [];
         win_1.message = message;
     })(win || (win = {}));
     var win$1 = win;
@@ -7663,10 +7677,7 @@ void main() {
                     this.hide();
                     this.show();
                 }
-                if (pawns$1.you && pts.equals(this.wpos, pts.round(pawns$1.you.wpos))) {
-                    //console.log('boo');
-                    this.paint();
-                }
+                if (pawns$1.you && pts.equals(this.wpos, pts.round(pawns$1.you.wpos))) ;
             }
         }
         tiles.tile = tile;
@@ -8287,6 +8298,11 @@ void main() {
                         pawn.type = 'you';
                         console.log('we got our pawn');
                         wastes.gview.center = pawn;
+                    }
+                }
+                if (data.messages) {
+                    for (let message of data.messages) {
+                        win$1.message.message(message[0], message[1] * 1000);
                     }
                 }
             };

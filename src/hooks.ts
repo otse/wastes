@@ -1,7 +1,7 @@
 
 // inspired by gmod lua !
 
-// calls the last registered hook first, this lets you override behavior
+// calls the last registered hook first, this lets you override or cancel behavior
 
 type func = (any) => boolean
 

@@ -1,6 +1,7 @@
 import lod from "./lod";
 import pawns from "./pawns";
 import wastes from "./wastes";
+import win from "./win";
 
 export namespace client {
 
@@ -88,6 +89,12 @@ export namespace client {
 					pawn.type = 'you';
 					console.log('we got our pawn');
 					wastes.gview.center = pawn
+				}
+			}
+
+			if (data.messages) {
+				for (let message of data.messages) {
+					win.message.message(message[0], message[1] * 1000);
 				}
 			}
 

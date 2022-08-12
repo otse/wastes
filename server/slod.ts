@@ -46,12 +46,17 @@ namespace slod {
 	export var SectorSpan = 4;
 
 	export function add(obj: sobj) {
-		let sector = gworld.at(gworld.big(obj.wpos));
+		let sector = gworld.at(slod.sworld.big(obj.wpos));
 		sector.add(obj);
 	}
 
 	export function remove(obj: sobj) {
-		obj.sector?.remove(obj);
+		const { sector } = obj;
+		if (sector) {
+			sector.remove(obj);
+			for (let grid of sector.observers)
+				grid.removes.push(obj.id);
+		}
 	}
 
 	export class sworld {
@@ -60,7 +65,7 @@ namespace slod {
 			gworld = this;
 		}
 		update_grid(grid: sgrid, wpos: vec2) {
-			grid.big = this.big(wpos);
+			grid.big = slod.sworld.big(wpos);
 			grid.offs();
 			grid.crawl();
 		}
@@ -79,7 +84,7 @@ namespace slod {
 			s = this.arrays[big[1]][big[0]] = new ssector(big, this);
 			return s;
 		}
-		big(units: vec2): vec2 {
+		static big(units: vec2): vec2 {
 			return pts.floor(pts.divide(units, SectorSpan));
 		}
 	}
@@ -101,8 +106,7 @@ namespace slod {
 			this.small = new aabb2(max, min);
 			numbers.sectors[1]++;
 			world.arrays[this.big[1]][this.big[0]] = this;
-			hooks.call('sectorCreate', this);
-
+			hooks.call('ssectorCreate', this);
 		}
 		objsro(): ReadonlyArray<sobj> {
 			return this.objs;
@@ -136,10 +140,10 @@ namespace slod {
 				return !!this.objs.splice(i, 1).length;
 			}
 		}
-		hard_remove(obj: sobj) {
-			for (let grid of this.observers)
-				grid.removes.push(obj.id);
-		}
+		//hard_remove(obj: sobj) {
+		//	for (let grid of this.observers)
+		//		grid.removes.push(obj.id);
+		//}
 		is_observed_by(target: sgrid) {
 			for (let grid of this.observers)
 				if (grid == target)
@@ -148,7 +152,7 @@ namespace slod {
 		}
 		swap(obj: sobj) {
 			// Call me whenever you move
-			let newSector = this.world.at(this.world.big(pts.round(obj.wpos)));
+			let newSector = this.world.at(slod.sworld.big(pts.round(obj.wpos)));
 			if (obj.sector != newSector) {
 				obj.sector?.remove(obj);
 				newSector.add(obj);
@@ -179,7 +183,7 @@ namespace slod {
 			for (let obj of this.objs) {
 				obj.tick();
 			}
-			hooks.call('sectorTick', this);
+			hooks.call('ssectorTick', this);
 			//for (let obj of this.objs)
 			//	obj.tick();
 		}
@@ -191,7 +195,7 @@ namespace slod {
 			numbers.sectors[0]++;
 			for (let obj of this.objs)
 				obj.show();
-			hooks.call('sectorShow', this);
+			hooks.call('ssectorShow', this);
 		}
 		hide() {
 			if (this.observers.length >= 1) {
@@ -205,7 +209,7 @@ namespace slod {
 			numbers.sectors[0]--;
 			for (let obj of this.objs)
 				obj.hide();
-			hooks.call('sectorHide', this);
+			hooks.call('ssectorHide', this);
 		}
 		dist(grid: sgrid) {
 			return pts.distsimple(this.big, grid.big);

@@ -27,33 +27,31 @@
 
 .modal .item img {
 	display: inline-block;
-    width: 40px;
-    height: 40px;
-    mmargin: 2px;
+	width: 40px;
+	height: 40px;
+	mmargin: 2px;
 	margin-right: 4px;
-    float: left;
+	float: left;
 	image-rendering: pixelated;
 }
 
 .modal.contextmenu .option {
-    display: block;
-    border-top: 1px #848484 solid;
-    /* background: #bbbbbb; */
-    cursor: pointer;
+	display: block;
+	border-top: 1px #848484 solid;
+	/* background: #bbbbbb; */
+	cursor: pointer;
 	padding: 3px;
-    /* margin: 1px; */
+	/* margin: 1px; */
 }
 
 .option.disabled {
 	background: #585858;
 	color: #2f2f2f;
-    font-style: italic;
+	font-style: italic;
 	font-weight: bold;
 }
 
-option.disabled:hover {
-	
-}
+option.disabled:hover {}
 
 .modal.contextmenu .option:not(.disabled):hover {
 	background: #d4d4d4;
@@ -96,7 +94,7 @@ option.disabled:hover {
 	lline-height: 34px;
 }
 
-.modal .item > span {
+.modal .item>span {
 	display: inline-block;
 }
 
@@ -128,7 +126,29 @@ option.disabled:hover {
 	width: auto;
 }
 
-.modal.you .title{
+.modal.you .title {
 	bbackground: #7e6868;
 	bbackground: #9e8e7a;
+}
+
+#messages {
+	position: absolute;
+	display: inline-block;
+	left: 50px;
+	top: 100px;
+}
+
+#messages .message {
+	position: relative;
+	display: block;
+	color: white;
+	font-size: 1.5em;
+	margin: 10px;
+	width: 300px;
+	left: 0;
+	transition: left 2s ease-in-out;
+}
+
+#messages .message.fade {
+	left: -300px;
 }

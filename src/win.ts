@@ -27,6 +27,10 @@ namespace win {
 
 		contextmenu.init();
 
+		setTimeout(() => {
+			//message.message("Welcome", 1000);
+		}, 1000);
+
 	}
 
 	export function tick() {
@@ -48,6 +52,7 @@ namespace win {
 		container.tick();
 		dialogue.tick();
 		contextmenu.tick();
+		message.tick();
 	}
 
 	class modal {
@@ -447,6 +452,37 @@ namespace win {
 						element.remove();
 					}, 3000)
 				}, 1000)
+			}
+		}
+	}
+
+	interface imessage {
+
+	}
+
+	export class message {
+		duration = 5
+		static messages: any[] = []
+		static message(message: string, duration: number) {
+			this.messages.push({ message: message, duration: duration });
+		}
+		static tick() {
+			if (this.messages.length) {
+				let shift = this.messages.shift();
+
+				let element = document.createElement('div');
+				element.className = 'message';
+				element.innerHTML = shift.message;
+
+				document.getElementById('messages')!.append(element);
+
+				setTimeout(() => {
+					element.classList.add('fade');
+				}, shift.duration);
+
+				setTimeout(() => {
+					element.remove();
+				}, shift.duration + 2000);
 			}
 		}
 	}

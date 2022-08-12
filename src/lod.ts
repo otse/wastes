@@ -55,7 +55,7 @@ namespace lod {
 	export var gworld: world;
 	export var ggrid: grid;
 
-	export var SectorSpan = 4;
+	export var SectorSpan = 3;
 
 	export function register() {
 		// hooks.create('sectorCreate')

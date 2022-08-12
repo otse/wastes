@@ -12,7 +12,7 @@ function start() {
 	let peacekeeper = new npc;
 	peacekeeper.wpos = [45.5, 56.5];
 	//peacekeeper.outfit = []
-	peacekeeper.walkArea = new aabb2([43, 51], [46, 57]);
+	peacekeeper.walkArea = new aabb2([43, 51], [46, 58]);
 	slod.add(peacekeeper);
 
 }
@@ -25,13 +25,22 @@ const wss = new WebSocketServer({
 	port: 8080
 });
 
+export function send_message_to_all(message, duration) {
+	for (let con of connections)
+		con.messages.push([message, duration]);
+}
+
 class connection {
 	you: pawn
+	messages: [text: string, duration: number][] = []
 	ourwpos: vec2 = [44, 52]
 	grid: slod.sgrid
 	sendDelay = 0
 	sentPlayer = false
 	constructor(public ws) {
+
+		send_message_to_all("New player joins", 3);
+
 		this.sendDelay = Date.now() + 1000;
 
 		this.grid = new slod.sgrid(slod.gworld, 2, 2);
@@ -48,9 +57,9 @@ class connection {
 		this.grid.outside = -1;
 		this.grid.offs();
 		this.you.hide();
-		this.you.sector?.hard_remove(this.you);
 		slod.remove(this.you);
 		this.you.finalize();
+		send_message_to_all("A player disconnected", 3);
 	}
 	receive(json: any) {
 		if (json.player) {
@@ -82,8 +91,12 @@ class connection {
 		//}
 
 		object.news = this.grid.gather();
-		object.removes = this.grid.removes;
+		if (this.grid.removes.length)
+			object.removes = this.grid.removes;
 		this.grid.removes = [];
+		if (this.messages.length)
+			object.messages = this.messages;
+		this.messages = [];
 
 		const string = JSON.stringify(object);
 
@@ -119,7 +132,7 @@ class pawn extends slod.sobj {
 	override tick() {
 	}
 	override create() {
-
+		
 	}
 	override hide() {
 		console.log('ply-pawn should be impertinent');
