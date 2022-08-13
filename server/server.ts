@@ -11,16 +11,16 @@ function start() {
 
 	new slod.sworld();
 
-	let peacekeeper = new npc;
-	peacekeeper.wpos = [45.5, 56.5];
+	let peacekeeper = new pawn;
+	peacekeeper.wpos = [45, 56];
 	//peacekeeper.outfit = []
 	peacekeeper.walkArea = new aabb2([43, 51], [46, 58]);
 	slod.add(peacekeeper);
-	
-	let chick = new chicken;
-	chick.wpos = [42, 53];
-	chick.walkArea = new aabb2([41, 54], [43, 51]);
-	slod.add(chick);
+
+	let shadowChicken = new chicken;
+	shadowChicken.wpos = [42, 53];
+	shadowChicken.walkArea = new aabb2([41, 54], [43, 51]);
+	slod.add(shadowChicken);
 }
 
 const tick_rate = 333;
@@ -37,7 +37,7 @@ export function send_message_to_all(message, duration) {
 }
 
 class connection {
-	you: pawn
+	you: player
 	messages: [text: string, duration: number][] = []
 	grid: slod.sgrid
 	sendDelay = 0
@@ -45,14 +45,14 @@ class connection {
 	constructor(public ws) {
 
 		console.log('new connection');
-		
+
 		send_message_to_all("New player joins", 3);
 
 		this.sendDelay = Date.now() + 1000;
 
 		this.grid = new slod.sgrid(slod.gworld, 2, 2);
 
-		this.you = new pawn;
+		this.you = new player;
 		this.you.wpos = [44, 52];
 		this.you.impertinent = true;
 		slod.add(this.you);
@@ -125,45 +125,17 @@ const outfits: [string, string, string, string][] = [
 	['#484847', '#484847', '#44443f', '#2c3136']
 ]
 
-class pawn extends slod.sobj {
-	static id = 0
-	angle = 0
-	aiming = false
-	outfit: string[] = []
-	constructor() {
-		super();
-		this.id = 'pawn_' + pawn.id++;
-		this.type = 'pawn';
-		this.outfit = outfits[Math.floor(Math.random() * outfits.length)];
-	}
-	override tick() {
-	}
-	override create() {
-
-	}
-	override hide() {
-		console.log('ply-pawn should be impertinent');
-	}
-	override gather() {
-		return {
-			id: this.id,
-			type: this.type,
-			wpos: this.wpos,
-			angle: this.angle,
-			outfit: this.outfit,
-			aiming: this.aiming
-		};
-	}
-}
-
-class npc extends pawn {
+class npc extends slod.sobj {
+	static id = 0;
 	isNpc = true
+	angle = 0
 	walkArea: aabb2
 	aimTarget: vec2 = [0, 0]
 	randomWalker
+	speed = 1.0
 	constructor() {
 		super();
-
+		this.id = 'npc_' + npc.id++;
 		this.randomWalker = Date.now();
 	}
 	override tick() {
@@ -182,7 +154,7 @@ class npc extends pawn {
 
 			this.angle = -angle + Math.PI;
 
-			let speed = 1.0 * delta;
+			let speed = this.speed * delta;
 
 			let x = speed * Math.sin(this.angle);
 			let y = speed * Math.cos(this.angle);
@@ -195,51 +167,76 @@ class npc extends pawn {
 				this.aimTarget = [0, 0];
 		}
 	}
+	override gather() {
+		return {
+			id: this.id,
+			type: this.type,
+			wpos: this.wpos,
+			angle: this.angle
+		};
+	}
 }
 
-class chicken extends slod.sobj {
+class pawn extends npc {
 	static id = 0
-	walkArea: aabb2
-	aimTarget: vec2 = [0, 0]
-	angle = 0
+	outfit: string[] = []
+	aiming = false
+	constructor() {
+		super();
+		this.type = 'pawn';
+		this.id = 'pawn_' + pawn.id++;
+		this.outfit = outfits[Math.floor(Math.random() * outfits.length)];
+	}
+	override gather() {
+		let upper = super.gather();
+		return {
+			...upper,
+			outfit: this.outfit,
+			aiming: this.aiming
+		};
+	}
+}
+
+class player extends pawn {
+	constructor() {
+		super();
+		this.type = 'pawn';
+	}
+	override tick() {
+	}
+	override create() {
+
+	}
+	override hide() {
+		console.log('ply-pawn should be impertinent');
+	}
+	override gather() {
+		let upper = super.gather();
+		return {
+			...upper,
+		};
+	}
+}
+
+class npc_pawn extends player {
+
+}
+
+class chicken extends npc {
+	static id = 0
 	randomWalker
 	constructor() {
 		super();
-		this.id = 'chicken_' + chicken.id++;
 		this.type = 'chicken';
+		this.id = 'chicken_' + chicken.id++;
 		this.randomWalker = Date.now();
-	}
-	override tick() {
-		if (this.walkArea) {
-			if (this.randomWalker - Date.now() <= 0) {
-				const target = this.walkArea.random_point();
-				this.aimTarget = target;
-
-				//this.wpos = target;
-				this.randomWalker = Date.now() + 2000;
-			}
-		}
-
-		if (pts.together(this.aimTarget)) {
-			let angle = pts.angle(this.wpos, this.aimTarget);
-
-			this.angle = -angle + Math.PI;
-
-			let speed = 0.75 * delta;
-
-			let x = speed * Math.sin(this.angle);
-			let y = speed * Math.cos(this.angle);
-
-			let venture = pts.add(this.wpos, [x, y]);
-			this.wpos = venture;
-
-			const dist = pts.distsimple(this.wpos, this.aimTarget);
-			if (dist < 0.15)
-				this.aimTarget = [0, 0];
-		}
+		this.speed = 0.75
 	}
 	gather() {
-		return { id: this.id, type: this.type, wpos: this.wpos, angle: this.angle };
+		let upper = super.gather();
+		return {
+			...upper,
+		};
 	}
 	//override gather() {
 

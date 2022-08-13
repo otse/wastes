@@ -99,7 +99,7 @@ export namespace client {
 				if (pawn) {
 					pawns.you = pawn as pawns.pawn;
 					pawn.type = 'you';
-					console.log('we got our pawn');
+					console.log('we got our pawn', playerId);
 					wastes.gview.center = pawn
 				}
 			}

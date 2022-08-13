@@ -8285,7 +8285,7 @@ void main() {
                     binded: this,
                     tuple: sprites$1.test100,
                     //opacity: 0.5,
-                    orderBias: 1.3,
+                    orderBias: 1.0,
                 });
                 shape.dimetric = false;
                 shape.rleft = this.size[0] / 2;
@@ -8446,10 +8446,10 @@ void main() {
             }
             animateBodyParts() {
                 this.walkSmoother = wastes.clamp(this.walkSmoother, 0, 1);
-                const legsSwoop = 0.5;
+                const legsSwoop = 0.6;
                 const headBob = 1.0;
                 const riser = 0.75;
-                this.swoop += ren$1.delta * 1.75;
+                this.swoop += ren$1.delta * 2.5;
                 const swoop1 = Math.cos(Math.PI * this.swoop);
                 const swoop2 = Math.cos(Math.PI * this.swoop - Math.PI);
                 this.groups.legl.rotation.x = swoop1 * legsSwoop * this.walkSmoother;
@@ -8615,7 +8615,7 @@ void main() {
                     if (pawn) {
                         pawns$1.you = pawn;
                         pawn.type = 'you';
-                        console.log('we got our pawn');
+                        console.log('we got our pawn', client.playerId);
                         wastes.gview.center = pawn;
                     }
                 }

@@ -53,7 +53,7 @@ export namespace chickens {
 				binded: this,
 				tuple: sprites.test100,
 				//opacity: 0.5,
-				orderBias: 1.3,
+				orderBias: 1.0,
 			});
 			shape.dimetric = false;
 			shape.rleft = this.size[0] / 2;
@@ -266,12 +266,12 @@ export namespace chickens {
 		animateBodyParts() {
 			this.walkSmoother = wastes.clamp(this.walkSmoother, 0, 1);
 
-			const legsSwoop = 0.5;
+			const legsSwoop = 0.6;
 			const armsSwoop = 0.5;
 			const headBob = 1.0;
 			const riser = 0.75;
 			
-			this.swoop += ren.delta * 1.75;
+			this.swoop += ren.delta * 2.5;
 			
 			const swoop1 = Math.cos(Math.PI * this.swoop);
 			const swoop2 = Math.cos(Math.PI * this.swoop - Math.PI);
