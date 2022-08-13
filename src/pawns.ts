@@ -66,7 +66,8 @@ export namespace pawns {
 				binded: this,
 				tuple: wasterSprite ? sprites.pchris : sprites.test100,
 				cell: this.cell,
-				orderBias: 1.3,
+				//opacity: .5,
+				orderBias: 1.0,
 			});
 			shape.rleft = -this.size[0] / 4;
 			shape.show();
@@ -82,10 +83,11 @@ export namespace pawns {
 				let size = pts.mult(this.size, scale);
 
 				this.target = ren.make_render_target(size[0], size[1]);
+				
 				this.camera = ren.make_orthographic_camera(size[0], size[1]);
 
 				this.scene = new Scene()
-				//this.scene.background = new Color('#333');
+				//this.scene.background = new Color('gray');
 				this.scene.rotation.set(Math.PI / 6, Math.PI / 4, 0);
 				this.scene.position.set(0, 0, 0);
 				this.scene.scale.set(scale, scale, scale);
@@ -406,8 +408,9 @@ export namespace pawns {
 		animateBodyParts() {
 			const legsSwoop = 0.8;
 			const armsSwoop = 0.5;
+			const rise = 0.1;
 
-			this.swoop += ren.delta * 2.75;
+			this.swoop += ren.delta * 2.5;
 
 			const swoop1 = Math.cos(Math.PI * this.swoop);
 			const swoop2 = Math.cos(Math.PI * this.swoop - Math.PI);
@@ -416,6 +419,7 @@ export namespace pawns {
 			this.groups.legr.rotation.x = swoop2 * legsSwoop * this.walkSmoother;
 			this.groups.arml.rotation.x = swoop1 * armsSwoop * this.walkSmoother;
 			this.groups.armr.rotation.x = swoop2 * armsSwoop * this.walkSmoother;
+			//this.groups.ground.position.y = swoop1 * rise * this.walkSmoother;
 			this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
 
 			if (this.type == 'you') {
@@ -457,6 +461,8 @@ export namespace pawns {
 		randomWalker = 0
 		nettick() {
 
+			//this.wpos = tiles.hovering!.wpos;
+
 			if (!pts.together(this.netwpos))
 				this.netwpos = this.wpos;
 
@@ -491,6 +497,9 @@ export namespace pawns {
 			if (!this.shape)
 				return;
 
+			//if (this.type == 'you')
+			//	this.wpos = tiles.hovering!.wpos;
+
 			this.make();
 
 			this.move();
@@ -510,7 +519,7 @@ export namespace pawns {
 			// We could have been nulled due to a hide, dispose
 			if (sprite) {
 
-				if (this.type != 'you' && this.mousedSquare(wastes.gview.mrpos2) /*&& !this.mousing*/) {
+				if (this.type != 'you' && this.mousedSquare(wastes.gview.mrpos) /*&& !this.mousing*/) {
 					this.mousing = true;
 					sprite.material.color.set('#c1ffcd');
 					//console.log('mover');
@@ -520,7 +529,7 @@ export namespace pawns {
 					//win.character.anchor = this;
 					//win.character.toggle(this.mousing);
 				}
-				else if (!this.mousedSquare(wastes.gview.mrpos2) && this.mousing) {
+				else if (!this.mousedSquare(wastes.gview.mrpos) && this.mousing) {
 					if (win.contextmenu.focus == this)
 						win.contextmenu.focus = undefined;
 					//sprite.material.color.set('white');
@@ -534,6 +543,10 @@ export namespace pawns {
 				else {
 					sprite.material.color.set('white');
 				}
+			}
+
+			if (this.type == 'you') {
+				//this.wpos = tiles.hovering!.wpos;
 			}
 
 			this.stack(['pawn', 'you', 'chicken', 'leaves', 'wall', 'door', 'roof', 'falsefront', 'panel']);

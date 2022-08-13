@@ -199,7 +199,7 @@ export namespace tiles {
 			}
 			if (pawns.you && pts.equals(this.wpos, pts.round(pawns.you.wpos))) {
 				//console.log('boo');
-				//this.paint();
+				//this.hover();
 			}
 		}
 	}

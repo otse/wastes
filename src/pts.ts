@@ -21,6 +21,12 @@ class pts {
 		return `${a[0]}, ${a[1]}` + pr(a[2]) + pr(a[3]);
 	}
 
+	static to_string_fixed(a: vec2 | vec3 | vec4) {
+		const pr = (b) => b != undefined ? `, ${b}` : '';
+
+		return `${a[0].toFixed(1)}, ${a[1].toFixed(1)}` + pr(a[2]) + pr(a[3]);
+	}
+
 	static func(bb: aabb2, callback: (pos: vec2) => any) {
 		let y = bb.min[1];
 		for (; y <= bb.max[1]; y++) {

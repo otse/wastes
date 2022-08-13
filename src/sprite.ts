@@ -59,16 +59,19 @@ export class sprite extends lod.shape {
 		if (this.dimetric)
 			// move bottom left corner
 			calc = pts.add(obj.rpos, pts.divide(obj.size, 2));
-		else
-			calc = pts.add(obj.rpos, [0, obj.size[1]]);
+		//else
+		//	calc = pts.add(obj.rpos, [0, obj.size[1]]);
 
-		let pos = pts.round(obj.wpos);
 		calc = pts.add(calc, [this.rleft, this.rup + this.rup2]);
+		
 		this.calc = calc;
+
 		if (this.mesh) {
 			this.retransform();
 			this.mesh.position.fromArray([...calc, 0]);
 			this.mesh.updateMatrix();
+			// Not rounding gives us better depth
+			let pos = obj.wpos; // pts.round(obj.wpos);
 			this.mesh.renderOrder = -pos[1] + pos[0] + this.vars.orderBias!;
 			this.mesh.rotation.z = this.vars.binded.ro;
 		}
@@ -78,7 +81,7 @@ export class sprite extends lod.shape {
 	}
 	override create() {
 		//console.log('create');
-		
+
 		const obj = this.vars.binded;
 
 		this.retransform();

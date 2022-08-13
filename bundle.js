@@ -19,6 +19,10 @@ var wastes = (function (exports, THREE) {
             const pr = (b) => b != undefined ? `, ${b}` : '';
             return `${a[0]}, ${a[1]}` + pr(a[2]) + pr(a[3]);
         }
+        static to_string_fixed(a) {
+            const pr = (b) => b != undefined ? `, ${b}` : '';
+            return `${a[0].toFixed(1)}, ${a[1].toFixed(1)}` + pr(a[2]) + pr(a[3]);
+        }
         static func(bb, callback) {
             let y = bb.min[1];
             for (; y <= bb.max[1]; y++) {
@@ -967,15 +971,16 @@ void main() {
             if (this.dimetric)
                 // move bottom left corner
                 calc = pts.add(obj.rpos, pts.divide(obj.size, 2));
-            else
-                calc = pts.add(obj.rpos, [0, obj.size[1]]);
-            let pos = pts.round(obj.wpos);
+            //else
+            //	calc = pts.add(obj.rpos, [0, obj.size[1]]);
             calc = pts.add(calc, [this.rleft, this.rup + this.rup2]);
             this.calc = calc;
             if (this.mesh) {
                 this.retransform();
                 this.mesh.position.fromArray([...calc, 0]);
                 this.mesh.updateMatrix();
+                // Not rounding gives us better depth
+                let pos = obj.wpos; // pts.round(obj.wpos);
                 this.mesh.renderOrder = -pos[1] + pos[0] + this.vars.orderBias;
                 this.mesh.rotation.z = this.vars.binded.ro;
             }
@@ -6067,7 +6072,11 @@ void main() {
         }
         objects.tick = tick;
         function is_solid(pos) {
-            const passable = ['land', 'deck', 'shelves', 'porch', 'pawn', 'you', 'door', 'leaves', 'roof', 'falsefront', 'panel'];
+            const passable = [
+                'land', 'deck', 'shelves', 'porch',
+                'pawn', 'you', 'chicken', 'door',
+                'leaves', 'roof', 'falsefront', 'panel'
+            ];
             pos = pts.round(pos);
             let sector = lod$1.gworld.at(lod$1.world.big(pos));
             let at = sector.stacked(pos);
@@ -6499,13 +6508,13 @@ void main() {
             }
             tick() {
                 const sprite = this.shape;
-                if (this.mousedSquare(wastes.gview.mrpos2) /*&& !this.mousing*/) {
+                if (this.mousedSquare(wastes.gview.mrpos) /*&& !this.mousing*/) {
                     this.mousing = true;
                     sprite.material.color.set('#c1ffcd');
                     console.log('mover');
                     win$1.contextmenu.focus = this;
                 }
-                else if (!this.mousedSquare(wastes.gview.mrpos2) && this.mousing) {
+                else if (!this.mousedSquare(wastes.gview.mrpos) && this.mousing) {
                     if (win$1.contextmenu.focus == this)
                         win$1.contextmenu.focus = undefined;
                     sprite.material.color.set('white');
@@ -7150,7 +7159,8 @@ void main() {
                     binded: this,
                     tuple: sprites$1.test100,
                     cell: this.cell,
-                    orderBias: 1.3,
+                    //opacity: .5,
+                    orderBias: 1.0,
                 });
                 shape.rleft = -this.size[0] / 4;
                 shape.show();
@@ -7164,7 +7174,7 @@ void main() {
                     this.target = ren$1.make_render_target(size[0], size[1]);
                     this.camera = ren$1.make_orthographic_camera(size[0], size[1]);
                     this.scene = new THREE.Scene();
-                    //this.scene.background = new Color('#333');
+                    //this.scene.background = new Color('gray');
                     this.scene.rotation.set(Math.PI / 6, Math.PI / 4, 0);
                     this.scene.position.set(0, 0, 0);
                     this.scene.scale.set(scale, scale, scale);
@@ -7420,13 +7430,14 @@ void main() {
             animateBodyParts() {
                 const legsSwoop = 0.8;
                 const armsSwoop = 0.5;
-                this.swoop += ren$1.delta * 2.75;
+                this.swoop += ren$1.delta * 2.5;
                 const swoop1 = Math.cos(Math.PI * this.swoop);
                 const swoop2 = Math.cos(Math.PI * this.swoop - Math.PI);
                 this.groups.legl.rotation.x = swoop1 * legsSwoop * this.walkSmoother;
                 this.groups.legr.rotation.x = swoop2 * legsSwoop * this.walkSmoother;
                 this.groups.arml.rotation.x = swoop1 * armsSwoop * this.walkSmoother;
                 this.groups.armr.rotation.x = swoop2 * armsSwoop * this.walkSmoother;
+                //this.groups.ground.position.y = swoop1 * rise * this.walkSmoother;
                 this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
                 if (this.type == 'you') {
                     if (app$1.key('shift')) {
@@ -7457,6 +7468,7 @@ void main() {
                 this.render();
             }
             nettick() {
+                //this.wpos = tiles.hovering!.wpos;
                 var _a;
                 if (!pts.together(this.netwpos))
                     this.netwpos = this.wpos;
@@ -7483,6 +7495,8 @@ void main() {
                 var _a;
                 if (!this.shape)
                     return;
+                //if (this.type == 'you')
+                //	this.wpos = tiles.hovering!.wpos;
                 this.make();
                 this.move();
                 this.animateBodyParts();
@@ -7494,7 +7508,7 @@ void main() {
                 const sprite = this.shape;
                 // We could have been nulled due to a hide, dispose
                 if (sprite) {
-                    if (this.type != 'you' && this.mousedSquare(wastes.gview.mrpos2) /*&& !this.mousing*/) {
+                    if (this.type != 'you' && this.mousedSquare(wastes.gview.mrpos) /*&& !this.mousing*/) {
                         this.mousing = true;
                         sprite.material.color.set('#c1ffcd');
                         //console.log('mover');
@@ -7504,7 +7518,7 @@ void main() {
                         //win.character.anchor = this;
                         //win.character.toggle(this.mousing);
                     }
-                    else if (!this.mousedSquare(wastes.gview.mrpos2) && this.mousing) {
+                    else if (!this.mousedSquare(wastes.gview.mrpos) && this.mousing) {
                         if (win$1.contextmenu.focus == this)
                             win$1.contextmenu.focus = undefined;
                         //sprite.material.color.set('white');
@@ -7519,6 +7533,7 @@ void main() {
                         sprite.material.color.set('white');
                     }
                 }
+                if (this.type == 'you') ;
                 this.stack(['pawn', 'you', 'chicken', 'leaves', 'wall', 'door', 'roof', 'falsefront', 'panel']);
                 super.update();
             }
@@ -7700,7 +7715,6 @@ void main() {
             this.mpos = [0, 0];
             this.mwpos = [0, 0];
             this.mrpos = [0, 0];
-            this.mrpos2 = [0, 0];
             this.begin = [0, 0];
             this.before = [0, 0];
             this.show = true;
@@ -7777,7 +7791,7 @@ void main() {
             mouse = pts.mult(mouse, this.zoom);
             mouse[1] = -mouse[1];
             this.mrpos = pts.add(mouse, this.rpos);
-            this.mrpos2 = pts.subtract(this.mrpos, [0, 3]); // why minus 3 ?
+            //this.mrpos2 = pts.subtract(this.mrpos, [0, 3]); // why minus 3 ?
             this.mrpos = pts.add(this.mrpos, lod$1.project([.5, -.5])); // correction
             this.mwpos = lod$1.unproject(this.mrpos);
             //this.mwpos = pts.add(this.mwpos, [.5, -.5])
@@ -7837,7 +7851,7 @@ void main() {
             crunch += '<br />';
             //crunch += `mouse: ${pts.to_string(App.mouse())}<br />`;
             //crunch += `mpos: ${pts.to_string(pts.floor(this.mpos))}<br />`;
-            crunch += `mwpos: ${pts.to_string(pts.floor(this.mwpos))}<br />`;
+            crunch += `mwpos: ${pts.to_string_fixed((this.mwpos))}<br />`;
             crunch += `mrpos: ${pts.to_string(pts.floor(this.mrpos))}<br />`;
             crunch += '<br />';
             crunch += `lod grid size: ${lod$1.ggrid.spread * 2 + 1} / ${lod$1.ggrid.outside * 2 + 1}<br />`;
@@ -8265,14 +8279,17 @@ void main() {
             }
             create() {
                 this.tiled();
-                this.size = pts.divide([25, 25], 1);
+                this.size = pts.divide([25, 30], 1);
                 this.subsize = [25, 40];
                 let shape = new sprite({
                     binded: this,
                     tuple: sprites$1.test100,
+                    //opacity: 0.5,
                     orderBias: 1.3,
                 });
-                shape.rleft = -this.size[0] / 4;
+                shape.dimetric = false;
+                shape.rleft = this.size[0] / 2;
+                shape.rup2 = this.size[1] / 2;
                 shape.show();
                 if (!this.created) {
                     this.created = true;
@@ -8418,7 +8435,7 @@ void main() {
                 this.meshes.legr.position.set(0, -legsHeight / 2, 0);
                 this.groups.footl.position.set(0, -legsHeight, feetLength / 2);
                 this.groups.footr.position.set(0, -legsHeight, feetLength / 2);
-                this.groups.ground.position.set(0, -bodyHeight * 2, 0);
+                this.groups.ground.position.set(0, -bodyHeight * 3, 0);
                 //mesh.rotation.set(Math.PI / 2, 0, 0);
                 this.scene.add(this.groups.ground);
             }
@@ -8429,18 +8446,24 @@ void main() {
             }
             animateBodyParts() {
                 this.walkSmoother = wastes.clamp(this.walkSmoother, 0, 1);
-                const legsSwoop = 0.8;
-                this.swoop += ren$1.delta * 2.75;
+                const legsSwoop = 0.5;
+                const headBob = 1.0;
+                const riser = 0.75;
+                this.swoop += ren$1.delta * 1.75;
                 const swoop1 = Math.cos(Math.PI * this.swoop);
                 const swoop2 = Math.cos(Math.PI * this.swoop - Math.PI);
                 this.groups.legl.rotation.x = swoop1 * legsSwoop * this.walkSmoother;
                 this.groups.legr.rotation.x = swoop2 * legsSwoop * this.walkSmoother;
                 //this.groups.arml.rotation.x = swoop1 * armsSwoop * this.walkSmoother;
                 //this.groups.armr.rotation.x = swoop2 * armsSwoop * this.walkSmoother;
+                this.groups.head.position.z = 3 + swoop1 * swoop2 * -headBob * this.walkSmoother;
+                this.groups.ground.position.y = -7 + swoop1 * swoop2 * riser * this.walkSmoother;
                 this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
                 this.render();
             }
             nettick() {
+                //this.wpos = tiles.hovering!.wpos;
+                //this.wpos = wastes.gview.mwpos;
                 if (!pts.together(this.netwpos))
                     this.netwpos = this.wpos;
                 // tween netwpos into wpos
@@ -8466,12 +8489,14 @@ void main() {
                 var _a;
                 if (!this.shape)
                     return;
+                //this.wpos = wastes.gview.mwpos;
                 this.make();
                 this.animateBodyParts();
                 this.tiled();
                 //this.tile?.paint();
                 (_a = this.sector) === null || _a === void 0 ? void 0 : _a.swap(this);
-                this.shape;
+                let color = [1, 1, 1, 1];
+                const sprite = this.shape;
                 // We could have been nulled due to a hide, dispose
                 /*
                 if (this.type != 'you' && this.mousedSquare(wastes.gview.mrpos2)) {
@@ -8499,7 +8524,11 @@ void main() {
                     sprite.material.color.set('white');
                 }
                 */
-                this.stack(['pawn', 'you', 'leaves', 'wall', 'door', 'roof', 'falsefront', 'panel']);
+                color = shadows$1.calc(color, pts.round(this.wpos));
+                sprite.material.color.setRGB(color[0], color[1], color[2]);
+                this.stack(['pawn', 'you', 'chicken', 'leaves', 'wall', 'door', 'roof', 'falsefront', 'panel']);
+                //sprite.roffset = [.5, .5];
+                //this.tile!.paint();
                 super.update();
             }
         }

@@ -46,15 +46,19 @@ export namespace chickens {
 
 			this.tiled();
 
-			this.size = pts.divide([25, 25], 1);
+			this.size = pts.divide([25, 30], 1);
 			this.subsize = [25, 40];
 
 			let shape = new sprite({
 				binded: this,
 				tuple: sprites.test100,
+				//opacity: 0.5,
 				orderBias: 1.3,
 			});
-			shape.rleft = -this.size[0] / 4;
+			shape.dimetric = false;
+			shape.rleft = this.size[0] / 2;
+			shape.rup2 = this.size[1] / 2;
+
 			shape.show();
 
 			if (!this.created) {
@@ -248,7 +252,7 @@ export namespace chickens {
 			this.groups.footl.position.set(0, -legsHeight, feetLength / 2);
 			this.groups.footr.position.set(0, -legsHeight, feetLength / 2);
 
-			this.groups.ground.position.set(0, -bodyHeight * 2, 0);
+			this.groups.ground.position.set(0, -bodyHeight * 3, 0);
 			//mesh.rotation.set(Math.PI / 2, 0, 0);
 
 			this.scene.add(this.groups.ground);
@@ -262,10 +266,12 @@ export namespace chickens {
 		animateBodyParts() {
 			this.walkSmoother = wastes.clamp(this.walkSmoother, 0, 1);
 
-			const legsSwoop = 0.8;
+			const legsSwoop = 0.5;
 			const armsSwoop = 0.5;
+			const headBob = 1.0;
+			const riser = 0.75;
 			
-			this.swoop += ren.delta * 2.75;
+			this.swoop += ren.delta * 1.75;
 			
 			const swoop1 = Math.cos(Math.PI * this.swoop);
 			const swoop2 = Math.cos(Math.PI * this.swoop - Math.PI);
@@ -274,6 +280,9 @@ export namespace chickens {
 			this.groups.legr.rotation.x = swoop2 * legsSwoop * this.walkSmoother;
 			//this.groups.arml.rotation.x = swoop1 * armsSwoop * this.walkSmoother;
 			//this.groups.armr.rotation.x = swoop2 * armsSwoop * this.walkSmoother;
+			this.groups.head.position.z = 3 + swoop1 * swoop2 * -headBob * this.walkSmoother;
+			this.groups.ground.position.y = -7 + swoop1 * swoop2 * riser * this.walkSmoother;
+			
 			this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
 			
 			this.render();
@@ -284,6 +293,9 @@ export namespace chickens {
 		walkSmoother = 1
 		randomWalker = 0
 		nettick() {
+
+			//this.wpos = tiles.hovering!.wpos;
+			//this.wpos = wastes.gview.mwpos;
 
 			if (!pts.together(this.netwpos))
 				this.netwpos = this.wpos;
@@ -319,31 +331,13 @@ export namespace chickens {
 			if (!this.shape)
 				return;
 
+			//this.wpos = wastes.gview.mwpos;
+
 			this.make();
 			this.animateBodyParts();
 			this.tiled();
 			//this.tile?.paint();
 			this.sector?.swap(this);
-
-			const debug = false;
-
-			if (debug) {
-				let mouse = wastes.gview.mwpos;
-				let pos = this.wpos;
-				let x, y;
-				pos = pts.add(pos, pts.divide([1, 1], 2));
-				mouse = pts.subtract(mouse, pos);
-				mouse[1] = -mouse[1];
-
-				const dist = pts.distsimple(pos, wastes.gview.mwpos);
-
-				x = mouse[0];
-				y = mouse[1];
-				let angle = pts.angle([0, 0], [x, y]);
-				this.angle = angle;
-			}
-
-			// shade the pawn
 
 			let color = [1, 1, 1, 1] as vec4;
 
@@ -377,7 +371,13 @@ export namespace chickens {
 				sprite.material.color.set('white');
 			}
 			*/
-			this.stack(['pawn', 'you', 'leaves', 'wall', 'door', 'roof', 'falsefront', 'panel']);
+
+			color = shadows.calc(color, pts.round(this.wpos));
+			sprite.material.color.setRGB(color[0], color[1], color[2]);
+
+			this.stack(['pawn', 'you', 'chicken', 'leaves', 'wall', 'door', 'roof', 'falsefront', 'panel']);
+			//sprite.roffset = [.5, .5];
+			//this.tile!.paint();
 			super.update();
 		}
 		//tick() {

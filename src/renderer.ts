@@ -287,7 +287,6 @@ namespace ren {
 	export function make_orthographic_camera(w, h) {
 		let camera = new OrthographicCamera(w / - 2, w / 2, h / 2, h / - 2, - 10000, 10000);
 		camera.updateProjectionMatrix();
-
 		return camera;
 	}
 

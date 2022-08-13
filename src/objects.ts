@@ -174,7 +174,10 @@ namespace objects {
 	}
 
 	export function is_solid(pos: vec2) {
-		const passable = ['land', 'deck', 'shelves', 'porch', 'pawn', 'you', 'door', 'leaves', 'roof', 'falsefront', 'panel'];
+		const passable = [
+			'land', 'deck', 'shelves', 'porch',
+			'pawn', 'you', 'chicken', 'door',
+			'leaves', 'roof', 'falsefront', 'panel'];
 		pos = pts.round(pos);
 		let sector = lod.gworld.at(lod.world.big(pos));
 		let at = sector.stacked(pos);
@@ -660,13 +663,13 @@ namespace objects {
 		override tick() {
 			const sprite = this.shape as sprite;
 
-			if (this.mousedSquare(wastes.gview.mrpos2) /*&& !this.mousing*/) {
+			if (this.mousedSquare(wastes.gview.mrpos) /*&& !this.mousing*/) {
 				this.mousing = true;
 				sprite.material.color.set('#c1ffcd');
 				console.log('mover');
 				win.contextmenu.focus = this;
 			}
-			else if (!this.mousedSquare(wastes.gview.mrpos2) && this.mousing) {
+			else if (!this.mousedSquare(wastes.gview.mrpos) && this.mousing) {
 				if (win.contextmenu.focus == this)
 					win.contextmenu.focus = undefined;
 				sprite.material.color.set('white');

@@ -19,11 +19,13 @@ function start() {
 	
 	let chick = new chicken;
 	chick.wpos = [42, 53];
-	chick.walkArea = new aabb2([43, 52], [47, 48]);
+	chick.walkArea = new aabb2([41, 54], [43, 51]);
 	slod.add(chick);
 }
 
 const tick_rate = 333;
+
+var delta = tick_rate / 1000;
 
 const wss = new WebSocketServer({
 	port: 8080
@@ -180,7 +182,7 @@ class npc extends pawn {
 
 			this.angle = -angle + Math.PI;
 
-			let speed = 0.5;
+			let speed = 1.0 * delta;
 
 			let x = speed * Math.sin(this.angle);
 			let y = speed * Math.cos(this.angle);
@@ -189,7 +191,7 @@ class npc extends pawn {
 			this.wpos = venture;
 
 			const dist = pts.distsimple(this.wpos, this.aimTarget);
-			if (dist < 0.5)
+			if (dist < 0.25)
 				this.aimTarget = [0, 0];
 		}
 	}
@@ -223,7 +225,7 @@ class chicken extends slod.sobj {
 
 			this.angle = -angle + Math.PI;
 
-			let speed = 0.25;
+			let speed = 0.75 * delta;
 
 			let x = speed * Math.sin(this.angle);
 			let y = speed * Math.cos(this.angle);
@@ -232,7 +234,7 @@ class chicken extends slod.sobj {
 			this.wpos = venture;
 
 			const dist = pts.distsimple(this.wpos, this.aimTarget);
-			if (dist < 0.5)
+			if (dist < 0.15)
 				this.aimTarget = [0, 0];
 		}
 	}
