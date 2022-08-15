@@ -18,8 +18,9 @@ import { shadows } from "./shadows";
 import aabb2 from "./aabb2";
 import { client } from "./client";
 import chickens from "./chickens";
+import fences from "./fences";
 
-export { win, pawns, objects }; // fixes creepy rollup error
+export { win, pawns, objects, fences }; // fixes creepy rollup error
 
 
 export namespace wastes {

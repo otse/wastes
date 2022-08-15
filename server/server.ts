@@ -142,7 +142,7 @@ class npc extends slod.sobj {
 		if (this.walkArea) {
 			if (this.randomWalker - Date.now() <= 0) {
 				const target = this.walkArea.random_point();
-				this.aimTarget = target;
+				this.aimTarget = pts.round(target);
 
 				//this.wpos = target;
 				this.randomWalker = Date.now() + 2000;
@@ -163,7 +163,7 @@ class npc extends slod.sobj {
 			this.wpos = venture;
 
 			const dist = pts.distsimple(this.wpos, this.aimTarget);
-			if (dist < 0.25)
+			if (dist < 0.2)
 				this.aimTarget = [0, 0];
 		}
 	}

@@ -269,11 +269,10 @@ namespace lod {
 
 	export class obj extends toggle {
 		type = 'an obj'
-		aabbScreen: aabb2
 		wpos: vec2 = [0, 0]
 		rpos: vec2 = [0, 0]
 		size: vec2 = [100, 100]
-		subsize: vec2 = [0, 0]
+		//subsize: vec2 = [0, 0]
 		shape: shape | null
 		sector: sector | null
 		ro = 0
@@ -323,21 +322,7 @@ namespace lod {
 		}
 		update() { // implement me
 			this.wtorpos();
-			this.bound();
 			this.shape?.update();
-		}
-		bound() {
-			let size = this.size;
-
-			if (pts.together(this.subsize))
-				size = this.subsize;
-
-			this.aabbScreen = new aabb2([0, 0], size);
-			this.aabbScreen.translate(this.rpos);
-		}
-		mousedSquare(mouse: Vec2) {
-			if (this.aabbScreen?.test(new aabb2(mouse, mouse)))
-				return true;
 		}
 		is_type(types: string[]) {
 			return types.indexOf(this.type) != -1;
@@ -368,6 +353,8 @@ namespace lod {
 			// this.hide();
 			this.counts[1]--;
 			this.bindObj.shape = null;
+			console.warn('finalize!');
+			
 		}
 		show() {
 			if (this.on())

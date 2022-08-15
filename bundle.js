@@ -777,7 +777,6 @@ void main() {
                 this.wpos = [0, 0];
                 this.rpos = [0, 0];
                 this.size = [100, 100];
-                this.subsize = [0, 0];
                 this.ro = 0;
                 this.z = 0; // z is only used by tiles
                 this.height = 0;
@@ -825,20 +824,7 @@ void main() {
             update() {
                 var _a;
                 this.wtorpos();
-                this.bound();
                 (_a = this.shape) === null || _a === void 0 ? void 0 : _a.update();
-            }
-            bound() {
-                let size = this.size;
-                if (pts.together(this.subsize))
-                    size = this.subsize;
-                this.aabbScreen = new aabb2([0, 0], size);
-                this.aabbScreen.translate(this.rpos);
-            }
-            mousedSquare(mouse) {
-                var _a;
-                if ((_a = this.aabbScreen) === null || _a === void 0 ? void 0 : _a.test(new aabb2(mouse, mouse)))
-                    return true;
             }
             is_type(types) {
                 return types.indexOf(this.type) != -1;
@@ -863,6 +849,7 @@ void main() {
                 // this.hide();
                 this.counts[1]--;
                 this.bindObj.shape = null;
+                console.warn('finalize!');
             }
             show() {
                 if (this.on())
@@ -889,6 +876,7 @@ void main() {
         sprites.start = start;
         sprites.test100 = [[100, 100], [100, 100], 0, 'tex/test100'];
         sprites.asteroid = [[512, 512], [512, 512], 0, 'tex/pngwing.com'];
+        sprites.dfence = [[72, 30], [24, 30], 0, 'tex/dfence'];
         sprites.shrubs = [[24, 15], [24, 15], 0, 'tex/shrubs'];
         sprites.dtile = [[24, 12], [24, 12], 0, 'tex/dtile'];
         sprites.dwater = [[24, 12], [24, 12], 0, 'tex/8bit/dwater'];
@@ -941,6 +929,7 @@ void main() {
             super(vars.binded, numbers.sprites);
             this.vars = vars;
             this.dimetric = true;
+            this.subsize = [0, 0];
             this.rup = 0;
             this.rup2 = 0;
             this.rleft = 0;
@@ -954,6 +943,20 @@ void main() {
                 this.vars.opacity = 1;
             this.myUvTransform = new THREE.Matrix3;
             this.myUvTransform.setUvTransform(0, 0, 1, 1, 0, 0, 1);
+        }
+        bound() {
+            let size = this.vars.binded.size;
+            if (pts.together(this.subsize))
+                size = this.subsize;
+            this.aabbScreen = new aabb2([0, 0], size);
+            let calc = this.calc;
+            calc = pts.subtract(calc, pts.divide(size, 2));
+            this.aabbScreen.translate(calc);
+        }
+        mousedSquare(mouse) {
+            var _a;
+            if ((_a = this.aabbScreen) === null || _a === void 0 ? void 0 : _a.test(new aabb2(mouse, mouse)))
+                return true;
         }
         dispose() {
             var _a, _b, _c;
@@ -975,14 +978,15 @@ void main() {
             //	calc = pts.add(obj.rpos, [0, obj.size[1]]);
             calc = pts.add(calc, [this.rleft, this.rup + this.rup2]);
             this.calc = calc;
+            this.bound();
             if (this.mesh) {
                 this.retransform();
                 this.mesh.position.fromArray([...calc, 0]);
-                this.mesh.updateMatrix();
-                // Not rounding gives us better depth
+                // Not rounding gives us much better depth
                 let pos = obj.wpos; // pts.round(obj.wpos);
                 this.mesh.renderOrder = -pos[1] + pos[0] + this.vars.orderBias;
                 this.mesh.rotation.z = this.vars.binded.ro;
+                this.mesh.updateMatrix();
             }
         }
         retransform() {
@@ -1013,9 +1017,9 @@ void main() {
             this.mesh = new THREE.Mesh(this.geometry, this.material);
             this.mesh.frustumCulled = false;
             this.mesh.matrixAutoUpdate = false;
-            this.update();
             (_a = this.vars.binded.sector) === null || _a === void 0 ? void 0 : _a.group.add(this.mesh);
             ren$1.groups.axisSwap.add(this.mesh);
+            this.update();
         }
     }
     function SpriteMaterial(parameters, uniforms) {
@@ -1122,7 +1126,7 @@ void main() {
             }
             tick() {
                 let shape = this.shape;
-                if (this.mousedSquare(wastes.gview.mrpos))
+                if (shape.mousedSquare(wastes.gview.mrpos))
                     shape.mesh.material.color.set('green');
                 else
                     shape.material.color.set('white');
@@ -5949,9 +5953,11 @@ void main() {
         const color_grass = [40, 90, 40];
         const color_wheat = [130, 130, 0];
         const color_scrappy_wall = [20, 70, 50];
+        const color_fence = [89, 89, 58];
         const color_plywood_wall = [20, 84, 87];
         const color_overgrown_wall = [35, 105, 63];
         const color_deringer_wall = [80, 44, 27];
+        const color_medieval_wall = [128, 128, 128];
         const color_deck_and_roof = [114, 128, 124];
         const color_porch = [110, 120, 120];
         const color_rails = [110, 100, 120];
@@ -6018,12 +6024,15 @@ void main() {
                         factory(objects.wall, pixel, pos, { type: 'sideroom' });
                         factory(objects.roof, pixel, pos);
                     }
-                    //else if (pixel.is_color(color_medieval_wall)) {
-                    //	factory(objects.wall, pixel, pos, { type: 'medieval' });
-                    //}
+                    else if (pixel.is_color(color_medieval_wall)) {
+                        factory(objects.wall, pixel, pos, { type: 'medieval' });
+                    }
                     else if (pixel.is_color(color_scrappy_wall)) {
                         factory(objects.wall, pixel, pos, { type: 'scrappy' });
                         //factory(objects.roof, pixel, pos);
+                    }
+                    else if (pixel.is_color(color_fence)) {
+                        factory(fences$1.fence, pixel, pos);
                     }
                     else if (pixel.is_color(color_decidtree)) {
                         factory(objects.decidtree, pixel, pos, { type: 'decid' });
@@ -6177,7 +6186,7 @@ void main() {
                     binded: this,
                     tuple: tuple,
                     cell: this.cell,
-                    orderBias: .6,
+                    orderBias: 1.0,
                 });
                 this.stack();
             }
@@ -6422,7 +6431,14 @@ void main() {
                 this.size = [24, 30];
                 //let color =  tiles.get(this.wpos)!.color;
                 //this.cell = [Math.floor(Math.random() * 2), 0];
-                return;
+                new sprite({
+                    binded: this,
+                    tuple: sprites$1.dwheat,
+                    cell: this.cell,
+                    //color: color,
+                    orderBias: .6
+                });
+                this.stack();
             }
         }
         objects.wheat = wheat;
@@ -6502,19 +6518,21 @@ void main() {
                     tuple: sprites$1.dcrate,
                     cell: this.cell,
                     //color: color,
-                    orderBias: .6
+                    orderBias: 1.0
                 });
                 this.stack(['roof', 'wall']);
             }
             tick() {
                 const sprite = this.shape;
-                if (this.mousedSquare(wastes.gview.mrpos) /*&& !this.mousing*/) {
+                if (!sprite)
+                    return;
+                if (sprite.mousedSquare(wastes.gview.mrpos) /*&& !this.mousing*/) {
                     this.mousing = true;
                     sprite.material.color.set('#c1ffcd');
                     console.log('mover');
                     win$1.contextmenu.focus = this;
                 }
-                else if (!this.mousedSquare(wastes.gview.mrpos) && this.mousing) {
+                else if (!sprite.mousedSquare(wastes.gview.mrpos) && this.mousing) {
                     if (win$1.contextmenu.focus == this)
                         win$1.contextmenu.focus = undefined;
                     sprite.material.color.set('white');
@@ -6537,14 +6555,55 @@ void main() {
             constructor() {
                 super(numbers.objs);
                 this.container = new container;
+                this.mousing = false;
                 this.type = 'shelves';
-                this.height = 0;
+                this.height = 25;
+                this.container.obj = this;
             }
             create() {
                 this.tiled();
                 this.size = [20, 31];
                 //this.cell = [255 - this.pixel!.array[3], 0];
-                return;
+                //return
+                let shape = new sprite({
+                    binded: this,
+                    tuple: sprites$1.dshelves,
+                    //cell: this.cell,
+                    orderBias: 0
+                });
+                shape.rup2 = 9;
+                shape.rleft = 6;
+                this.stack(['roof']);
+            }
+            tick() {
+                const sprite = this.shape;
+                if (sprite.mousedSquare(wastes.gview.mrpos) /*&& !this.mousing*/) {
+                    this.mousing = true;
+                    sprite.material.color.set('#c1ffcd');
+                    win$1.contextmenu.focus = this;
+                }
+                else if (!sprite.mousedSquare(wastes.gview.mrpos) && this.mousing) {
+                    if (win$1.contextmenu.focus == this)
+                        win$1.contextmenu.focus = undefined;
+                    sprite.material.color.set('white');
+                    this.mousing = false;
+                }
+            }
+            setup_context() {
+                console.log('setup context');
+                win$1.contextmenu.reset();
+                win$1.contextmenu.options.options.push(["See contents", () => {
+                        return pts.distsimple(pawns$1.you.wpos, this.wpos) < 1;
+                    }, () => {
+                        win$1.container.crate = this;
+                        win$1.container.call_once();
+                    }]);
+                win$1.contextmenu.options.options.push(["Store", () => {
+                        return pts.distsimple(pawns$1.you.wpos, this.wpos) < 1;
+                    }, () => {
+                        //win.container.crate = this;
+                        //win.container.call_once();
+                    }]);
             }
         }
         objects.shelves = shelves;
@@ -6858,22 +6917,35 @@ void main() {
                 hooks.register('viewMClick', (view) => {
                     var _a;
                     (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
+                    //this.modal = undefined;
                     this.focus = undefined;
                     return false;
                 });
                 hooks.register('viewRClick', (view) => {
                     var _a, _b;
                     console.log('contextmenu on ?', this.focus);
-                    if (this.focus) {
+                    // We have a focus, but no modal
+                    if (this.focus && !this.modal) {
                         this.focus.setup_context();
                         this.focusCur = this.focus;
-                        (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
                         this.open();
                     }
-                    else {
+                    else if (this.modal && this.focus && this.focus != this.focusCur) {
+                        (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
+                        this.focus.setup_context();
+                        this.focusCur = this.focus;
+                        this.open();
+                    }
+                    else if (this.modal) { // || this.focus == this.focusCur
                         (_b = this.modal) === null || _b === void 0 ? void 0 : _b.deletor();
+                        this.modal = undefined;
+                        //this.focus = undefined;
                         this.focusCur = undefined;
                     }
+                    //else {
+                    //	this.modal?.deletor();
+                    //	this.focusCur = undefined;
+                    //}
                     return false;
                 });
             }
@@ -7153,7 +7225,6 @@ void main() {
                 this.tiled();
                 {
                     this.size = pts.divide([50, 40], 1);
-                    this.subsize = [25, 40];
                 }
                 let shape = new sprite({
                     binded: this,
@@ -7162,6 +7233,7 @@ void main() {
                     //opacity: .5,
                     orderBias: 1.0,
                 });
+                shape.subsize = [20, 40];
                 shape.rleft = -this.size[0] / 4;
                 shape.show();
                 if (!this.created) {
@@ -7430,6 +7502,7 @@ void main() {
             animateBodyParts() {
                 const legsSwoop = 0.8;
                 const armsSwoop = 0.5;
+                const rise = 0.5;
                 this.swoop += ren$1.delta * 2.5;
                 const swoop1 = Math.cos(Math.PI * this.swoop);
                 const swoop2 = Math.cos(Math.PI * this.swoop - Math.PI);
@@ -7437,7 +7510,7 @@ void main() {
                 this.groups.legr.rotation.x = swoop2 * legsSwoop * this.walkSmoother;
                 this.groups.arml.rotation.x = swoop1 * armsSwoop * this.walkSmoother;
                 this.groups.armr.rotation.x = swoop2 * armsSwoop * this.walkSmoother;
-                //this.groups.ground.position.y = swoop1 * rise * this.walkSmoother;
+                this.groups.ground.position.y = -12 + swoop1 * swoop2 * rise * this.walkSmoother;
                 this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
                 if (this.type == 'you') {
                     if (app$1.key('shift')) {
@@ -7508,22 +7581,17 @@ void main() {
                 const sprite = this.shape;
                 // We could have been nulled due to a hide, dispose
                 if (sprite) {
-                    if (this.type != 'you' && this.mousedSquare(wastes.gview.mrpos) /*&& !this.mousing*/) {
+                    if (this.type != 'you' && sprite.mousedSquare(wastes.gview.mrpos) /*&& !this.mousing*/) {
                         this.mousing = true;
-                        sprite.material.color.set('#c1ffcd');
-                        //console.log('mover');
+                        sprite.material.color.set('#6dc97f');
                         if (this.type != 'you') {
                             win$1.contextmenu.focus = this;
                         }
-                        //win.character.anchor = this;
-                        //win.character.toggle(this.mousing);
                     }
-                    else if (!this.mousedSquare(wastes.gview.mrpos) && this.mousing) {
+                    else if (!sprite.mousedSquare(wastes.gview.mrpos) && this.mousing) {
                         if (win$1.contextmenu.focus == this)
                             win$1.contextmenu.focus = undefined;
-                        //sprite.material.color.set('white');
                         this.mousing = false;
-                        //win.character.toggle(this.mousing);
                     }
                     else if (!this.mousing && !this.tile.hasDeck) {
                         color = shadows$1.calc(color, pts.round(this.wpos));
@@ -7534,7 +7602,7 @@ void main() {
                     }
                 }
                 if (this.type == 'you') ;
-                this.stack(['pawn', 'you', 'chicken', 'leaves', 'wall', 'door', 'roof', 'falsefront', 'panel']);
+                this.stack(['pawn', 'you', 'chicken', 'shelves', 'leaves', 'wall', 'door', 'roof', 'falsefront', 'panel']);
                 super.update();
             }
         }
@@ -7659,7 +7727,7 @@ void main() {
                     cell: this.cell,
                     color: this.color,
                     opacity: this.opacity,
-                    orderBias: -1.0
+                    orderBias: -.5
                 });
                 // if we have a deck, add it to heightAdd
                 let sector = lod$1.gworld.at(lod$1.world.big(this.wpos));
@@ -8280,7 +8348,7 @@ void main() {
             create() {
                 this.tiled();
                 this.size = pts.divide([25, 30], 1);
-                this.subsize = [25, 40];
+                //this.subsize = [25, 40];
                 let shape = new sprite({
                     binded: this,
                     tuple: sprites$1.test100,
@@ -8340,18 +8408,18 @@ void main() {
                 const beakHeight = 1.5;
                 const beakLength = 2;
                 const legsWidth = 1;
-                const legsHeight = 4;
+                const legsHeight = 3;
                 const legsLength = 1;
                 const armsWidth = 1;
                 const armsLength = 5;
                 const armsHeight = 3;
                 const armsAngle = .0;
                 const bodyWidth = 4;
-                const bodyHeight = 5;
+                const bodyHeight = 4;
                 const bodyLength = 7;
                 const feetWidth = 1.5;
                 const feetHeight = 1;
-                const feetLength = 2;
+                const feetLength = 1.5;
                 let boxHead = new THREE.BoxGeometry(headWidth, headHeight, headLength);
                 let materialHead = new THREE.MeshLambertMaterial({
                     color: '#787a7a'
@@ -8423,6 +8491,9 @@ void main() {
                 this.groups.beak.position.set(0, 0, beakLength);
                 //this.groups.beak.rotation.set(-Math.PI / 4, 0, 0);
                 this.groups.body.position.set(0, bodyHeight, 0);
+                this.meshes.body.rotation.set(-0.3, 0, 0);
+                this.meshes.arml.rotation.set(-0.3, 0, 0);
+                this.meshes.armr.rotation.set(-0.3, 0, 0);
                 this.groups.armr.position.set(-bodyWidth / 2 - armsWidth / 2, bodyHeight / 2 - armsWidth / 2, 0);
                 this.groups.armr.rotation.set(0, 0, -armsAngle);
                 this.meshes.armr.position.set(0, -armsHeight / 2 + armsWidth / 2, 0);
@@ -8448,7 +8519,7 @@ void main() {
                 this.walkSmoother = wastes.clamp(this.walkSmoother, 0, 1);
                 const legsSwoop = 0.6;
                 const headBob = 1.0;
-                const riser = 0.75;
+                const riser = 0.5;
                 this.swoop += ren$1.delta * 2.5;
                 const swoop1 = Math.cos(Math.PI * this.swoop);
                 const swoop2 = Math.cos(Math.PI * this.swoop - Math.PI);
@@ -8457,11 +8528,13 @@ void main() {
                 //this.groups.arml.rotation.x = swoop1 * armsSwoop * this.walkSmoother;
                 //this.groups.armr.rotation.x = swoop2 * armsSwoop * this.walkSmoother;
                 this.groups.head.position.z = 3 + swoop1 * swoop2 * -headBob * this.walkSmoother;
-                this.groups.ground.position.y = -7 + swoop1 * swoop2 * riser * this.walkSmoother;
+                this.groups.ground.position.y = -10 + swoop1 * swoop2 * riser * this.walkSmoother;
                 this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
                 this.render();
             }
             nettick() {
+                // Net tick can happen offscreen
+                var _a;
                 //this.wpos = tiles.hovering!.wpos;
                 //this.wpos = wastes.gview.mwpos;
                 if (!pts.together(this.netwpos))
@@ -8469,6 +8542,7 @@ void main() {
                 // tween netwpos into wpos
                 let tween = pts.mult(pts.subtract(this.netwpos, this.wpos), ren$1.delta * 2);
                 this.wpos = pts.add(this.wpos, tween);
+                (_a = this.sector) === null || _a === void 0 ? void 0 : _a.swap(this);
                 //console.log('chicken nettick', this.wpos);
                 if (this.netangle - this.angle > Math.PI)
                     this.angle += Math.PI * 2;
@@ -8485,8 +8559,12 @@ void main() {
                     this.walkSmoother -= ren$1.delta * 5;
                 }
             }
+            setup_context() {
+                win$1.contextmenu.reset();
+            }
             tick() {
-                var _a;
+                // We are assumed to be onscreen
+                // If we are visible
                 if (!this.shape)
                     return;
                 //this.wpos = wastes.gview.mwpos;
@@ -8494,38 +8572,38 @@ void main() {
                 this.animateBodyParts();
                 this.tiled();
                 //this.tile?.paint();
-                (_a = this.sector) === null || _a === void 0 ? void 0 : _a.swap(this);
+                //this.sector?.swap(this);
                 let color = [1, 1, 1, 1];
                 const sprite = this.shape;
                 // We could have been nulled due to a hide, dispose
-                /*
-                if (this.type != 'you' && this.mousedSquare(wastes.gview.mrpos2)) {
-                    this.mousing = true;
-                    sprite.material.color.set('#c1ffcd');
-                    //console.log('mover');
-                    if (this.type != 'you') {
-                        win.contextmenu.focus = this;
+                if (sprite) {
+                    if (sprite.mousedSquare(wastes.gview.mrpos) && !this.mousing) {
+                        this.mousing = true;
+                        sprite.material.color.set('#6dc97f');
+                        win$1.contextmenu.focus = this;
                     }
-                    //win.character.anchor = this;
-                    //win.character.toggle(this.mousing);
-                }
-                else if (!this.mousedSquare(wastes.gview.mrpos2) && this.mousing) {
-                    if (win.contextmenu.focus == this)
-                        win.contextmenu.focus = undefined;
-                    //sprite.material.color.set('white');
-                    this.mousing = false;
-                    //win.character.toggle(this.mousing);
-                }
-                else if (!this.mousing && !this.tile!.hasDeck) {
-                    color = shadows.calc(color, pts.round(this.wpos));
-                    sprite.material.color.setRGB(color[0], color[1], color[2]);
+                    else if (!sprite.mousedSquare(wastes.gview.mrpos) && this.mousing) {
+                        if (win$1.contextmenu.focus == this)
+                            win$1.contextmenu.focus = undefined;
+                        //sprite.material.color.set('white');
+                        this.mousing = false;
+                        //win.character.toggle(this.mousing);
+                    }
+                    else if (!this.mousing && !this.tile.hasDeck) {
+                        color = shadows$1.calc(color, pts.round(this.wpos));
+                        sprite.material.color.setRGB(color[0], color[1], color[2]);
+                    }
+                    else {
+                        sprite.material.color.set('white');
+                    }
                 }
                 else {
-                    sprite.material.color.set('white');
+                    console.warn('no chicken sprite?');
                 }
-                */
-                color = shadows$1.calc(color, pts.round(this.wpos));
-                sprite.material.color.setRGB(color[0], color[1], color[2]);
+                if (sprite) {
+                    color = shadows$1.calc(color, pts.round(this.wpos));
+                    sprite.material.color.setRGB(color[0], color[1], color[2]);
+                }
                 this.stack(['pawn', 'you', 'chicken', 'leaves', 'wall', 'door', 'roof', 'falsefront', 'panel']);
                 //sprite.roffset = [.5, .5];
                 //this.tile!.paint();
@@ -8635,6 +8713,39 @@ void main() {
         }
         client.start = start;
     })(client || (client = {}));
+
+    var fences;
+    (function (fences) {
+        class fence extends objects$1.objected {
+            constructor() {
+                super(numbers.walls);
+                this.type = 'wall';
+                this.height = 24;
+            }
+            create() {
+                this.tiled();
+                this.size = [24, 30];
+                this.cell = [255 - this.pixel.array[3], 0];
+                sprites$1.dscrappywalls;
+                new sprite({
+                    binded: this,
+                    tuple: sprites$1.dfence,
+                    cell: this.cell,
+                    orderBias: .6,
+                });
+                fence.make();
+                this.stack();
+            }
+            static make() {
+                if (!this.made) {
+                    this.made = true;
+                }
+            }
+        }
+        fence.made = false;
+        fences.fence = fence;
+    })(fences || (fences = {}));
+    var fences$1 = fences;
 
     exports.wastes = void 0;
     (function (wastes) {
@@ -8770,6 +8881,7 @@ void main() {
     var wastes = exports.wastes;
 
     exports["default"] = wastes;
+    exports.fences = fences$1;
     exports.objects = objects$1;
     exports.pawns = pawns$1;
     exports.win = win$1;

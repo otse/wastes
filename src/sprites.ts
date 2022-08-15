@@ -11,6 +11,7 @@ export namespace sprites {
 
 	export const test100: tuple = [[100, 100], [100, 100], 0, 'tex/test100']
 	export const asteroid: tuple = [[512, 512], [512, 512], 0, 'tex/pngwing.com']
+	export const dfence: tuple = [[72, 30], [24, 30], 0, 'tex/dfence']
 	export const shrubs: tuple = [[24, 15], [24, 15], 0, 'tex/shrubs']
 	export const dtile: tuple = [[24, 12], [24, 12], 0, 'tex/dtile']
 	export const dwater: tuple = [[24, 12], [24, 12], 0, 'tex/8bit/dwater']

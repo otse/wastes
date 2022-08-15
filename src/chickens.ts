@@ -47,7 +47,7 @@ export namespace chickens {
 			this.tiled();
 
 			this.size = pts.divide([25, 30], 1);
-			this.subsize = [25, 40];
+			//this.subsize = [25, 40];
 
 			let shape = new sprite({
 				binded: this,
@@ -131,7 +131,7 @@ export namespace chickens {
 			const beakLength = 2;
 
 			const legsWidth = 1;
-			const legsHeight = 4;
+			const legsHeight = 3;
 			const legsLength = 1;
 
 			const armsWidth = 1;
@@ -140,12 +140,12 @@ export namespace chickens {
 			const armsAngle = .0;
 
 			const bodyWidth = 4;
-			const bodyHeight = 5;
+			const bodyHeight = 4;
 			const bodyLength = 7;
 
 			const feetWidth = 1.5;
 			const feetHeight = 1;
-			const feetLength = 2;
+			const feetLength = 1.5;
 
 			let boxHead = new BoxGeometry(headWidth, headHeight, headLength);
 			let materialHead = new MeshLambertMaterial({
@@ -233,7 +233,11 @@ export namespace chickens {
 			this.groups.comb.position.set(0, combHeight, combLength / 2);
 			this.groups.beak.position.set(0, 0, beakLength);
 			//this.groups.beak.rotation.set(-Math.PI / 4, 0, 0);
+
 			this.groups.body.position.set(0, bodyHeight, 0);
+			this.meshes.body.rotation.set(-0.3, 0, 0);
+			this.meshes.arml.rotation.set(-0.3, 0, 0);
+			this.meshes.armr.rotation.set(-0.3, 0, 0);
 
 			this.groups.armr.position.set(-bodyWidth / 2 - armsWidth / 2, bodyHeight / 2 - armsWidth / 2, 0);
 			this.groups.armr.rotation.set(0, 0, -armsAngle);
@@ -269,22 +273,22 @@ export namespace chickens {
 			const legsSwoop = 0.6;
 			const armsSwoop = 0.5;
 			const headBob = 1.0;
-			const riser = 0.75;
-			
+			const riser = 0.5;
+
 			this.swoop += ren.delta * 2.5;
-			
+
 			const swoop1 = Math.cos(Math.PI * this.swoop);
 			const swoop2 = Math.cos(Math.PI * this.swoop - Math.PI);
-			
+
 			this.groups.legl.rotation.x = swoop1 * legsSwoop * this.walkSmoother;
 			this.groups.legr.rotation.x = swoop2 * legsSwoop * this.walkSmoother;
 			//this.groups.arml.rotation.x = swoop1 * armsSwoop * this.walkSmoother;
 			//this.groups.armr.rotation.x = swoop2 * armsSwoop * this.walkSmoother;
 			this.groups.head.position.z = 3 + swoop1 * swoop2 * -headBob * this.walkSmoother;
-			this.groups.ground.position.y = -7 + swoop1 * swoop2 * riser * this.walkSmoother;
-			
+			this.groups.ground.position.y = -10 + swoop1 * swoop2 * riser * this.walkSmoother;
+
 			this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
-			
+
 			this.render();
 		}
 		mousing = false
@@ -293,6 +297,8 @@ export namespace chickens {
 		walkSmoother = 1
 		randomWalker = 0
 		nettick() {
+
+			// Net tick can happen offscreen
 
 			//this.wpos = tiles.hovering!.wpos;
 			//this.wpos = wastes.gview.mwpos;
@@ -303,6 +309,8 @@ export namespace chickens {
 			// tween netwpos into wpos
 			let tween = pts.mult(pts.subtract(this.netwpos, this.wpos), ren.delta * 2);
 			this.wpos = pts.add(this.wpos, tween);
+
+			this.sector?.swap(this);
 
 			//console.log('chicken nettick', this.wpos);
 
@@ -326,8 +334,15 @@ export namespace chickens {
 			}
 
 		}
+		override setup_context() {
+			win.contextmenu.reset();
+
+		}
 		override tick() {
 
+			// We are assumed to be onscreen
+
+			// If we are visible
 			if (!this.shape)
 				return;
 
@@ -337,7 +352,7 @@ export namespace chickens {
 			this.animateBodyParts();
 			this.tiled();
 			//this.tile?.paint();
-			this.sector?.swap(this);
+			//this.sector?.swap(this);
 
 			let color = [1, 1, 1, 1] as vec4;
 
@@ -345,36 +360,37 @@ export namespace chickens {
 
 			// We could have been nulled due to a hide, dispose
 
-			/*
-			if (this.type != 'you' && this.mousedSquare(wastes.gview.mrpos2)) {
-				this.mousing = true;
-				sprite.material.color.set('#c1ffcd');
-				//console.log('mover');
-				if (this.type != 'you') {
+			if (sprite) {
+				if (sprite.mousedSquare(wastes.gview.mrpos) && !this.mousing) {
+					this.mousing = true;
+					sprite.material.color.set('#6dc97f');
 					win.contextmenu.focus = this;
 				}
-				//win.character.anchor = this;
-				//win.character.toggle(this.mousing);
+				else if (!sprite.mousedSquare(wastes.gview.mrpos) && this.mousing) {
+					if (win.contextmenu.focus == this)
+						win.contextmenu.focus = undefined;
+					//sprite.material.color.set('white');
+					this.mousing = false;
+					//win.character.toggle(this.mousing);
+				}
+				else if (!this.mousing && !this.tile!.hasDeck) {
+					color = shadows.calc(color, pts.round(this.wpos));
+					sprite.material.color.setRGB(color[0], color[1], color[2]);
+				}
+				else {
+					sprite.material.color.set('white');
+				}
 			}
-			else if (!this.mousedSquare(wastes.gview.mrpos2) && this.mousing) {
-				if (win.contextmenu.focus == this)
-					win.contextmenu.focus = undefined;
-				//sprite.material.color.set('white');
-				this.mousing = false;
-				//win.character.toggle(this.mousing);
+			else
+			{
+				console.warn('no chicken sprite?');				
 			}
-			else if (!this.mousing && !this.tile!.hasDeck) {
+
+
+			if (sprite) {
 				color = shadows.calc(color, pts.round(this.wpos));
 				sprite.material.color.setRGB(color[0], color[1], color[2]);
 			}
-			else {
-				sprite.material.color.set('white');
-			}
-			*/
-
-			color = shadows.calc(color, pts.round(this.wpos));
-			sprite.material.color.setRGB(color[0], color[1], color[2]);
-
 			this.stack(['pawn', 'you', 'chicken', 'leaves', 'wall', 'door', 'roof', 'falsefront', 'panel']);
 			//sprite.roffset = [.5, .5];
 			//this.tile!.paint();

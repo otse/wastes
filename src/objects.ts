@@ -3,7 +3,8 @@ import { THREE, Group, Mesh, Shader, BoxGeometry, ConeGeometry, CylinderGeometry
 import { ColladaLoader } from "three/examples/jsm/loaders/ColladaLoader";
 
 import lod, { numbers } from "./lod";
-import wastes, { win, pawns } from "./wastes";
+import wastes, { win, pawns, fences } from "./wastes";
+
 import ren from "./renderer";
 import pts from "./pts";
 import aabb2 from "./aabb2";
@@ -25,6 +26,7 @@ namespace objects {
 	const color_wheat: vec3 = [130, 130, 0];
 	const color_scrappy_wall: vec3 = [20, 70, 50];
 	const color_woody_wall: vec3 = [87, 57, 20];
+	const color_fence: vec3 = [89, 89, 58];
 
 	const color_plywood_wall: vec3 = [20, 84, 87];
 	const color_overgrown_wall: vec3 = [35, 105, 63];
@@ -113,12 +115,15 @@ namespace objects {
 					factory(objects.wall, pixel, pos, { type: 'sideroom' });
 					factory(objects.roof, pixel, pos);
 				}
-				//else if (pixel.is_color(color_medieval_wall)) {
-				//	factory(objects.wall, pixel, pos, { type: 'medieval' });
-				//}
+				else if (pixel.is_color(color_medieval_wall)) {
+					factory(objects.wall, pixel, pos, { type: 'medieval' });
+				}
 				else if (pixel.is_color(color_scrappy_wall)) {
 					factory(objects.wall, pixel, pos, { type: 'scrappy' });
 					//factory(objects.roof, pixel, pos);
+				}
+				else if (pixel.is_color(color_fence)) {
+					factory(fences.fence, pixel, pos);
 				}
 				else if (pixel.is_color(color_decidtree)) {
 					factory(objects.decidtree, pixel, pos, { type: 'decid' });
@@ -257,6 +262,7 @@ namespace objects {
 		setup_context() { // override me
 		}
 	}
+	
 	export class wall extends objected {
 		constructor() {
 			super(numbers.walls);
@@ -288,7 +294,7 @@ namespace objects {
 				binded: this,
 				tuple: tuple,
 				cell: this.cell,
-				orderBias: .6,
+				orderBias: 1.0,
 			});
 
 			this.stack();
@@ -546,7 +552,7 @@ namespace objects {
 			this.size = [24, 30];
 			//let color =  tiles.get(this.wpos)!.color;
 			//this.cell = [Math.floor(Math.random() * 2), 0];
-			return
+			
 			let shape = new sprite({
 				binded: this,
 				tuple: sprites.dwheat,
@@ -655,7 +661,7 @@ namespace objects {
 				tuple: sprites.dcrate,
 				cell: this.cell,
 				//color: color,
-				orderBias: .6
+				orderBias: 1.0
 			});
 			this.stack(['roof', 'wall']);
 		}
@@ -663,13 +669,16 @@ namespace objects {
 		override tick() {
 			const sprite = this.shape as sprite;
 
-			if (this.mousedSquare(wastes.gview.mrpos) /*&& !this.mousing*/) {
+			if (!sprite)
+				return;
+
+			if (sprite.mousedSquare(wastes.gview.mrpos) /*&& !this.mousing*/) {
 				this.mousing = true;
 				sprite.material.color.set('#c1ffcd');
 				console.log('mover');
 				win.contextmenu.focus = this;
 			}
-			else if (!this.mousedSquare(wastes.gview.mrpos) && this.mousing) {
+			else if (!sprite.mousedSquare(wastes.gview.mrpos) && this.mousing) {
 				if (win.contextmenu.focus == this)
 					win.contextmenu.focus = undefined;
 				sprite.material.color.set('white');
@@ -693,13 +702,14 @@ namespace objects {
 		constructor() {
 			super(numbers.objs);
 			this.type = 'shelves'
-			this.height = 0;
+			this.height = 25;
+			this.container.obj = this;
 		}
 		override create() {
 			this.tiled();
 			this.size = [20, 31];
 			//this.cell = [255 - this.pixel!.array[3], 0];
-			return
+			//return
 			let shape = new sprite({
 				binded: this,
 				tuple: sprites.dshelves,
@@ -709,6 +719,39 @@ namespace objects {
 			shape.rup2 = 9;
 			shape.rleft = 6;
 			this.stack(['roof']);
+		}
+		mousing = false;
+		override tick() {
+			const sprite = this.shape as sprite;
+
+			if (sprite.mousedSquare(wastes.gview.mrpos) /*&& !this.mousing*/) {
+				this.mousing = true;
+				sprite.material.color.set('#c1ffcd');
+				win.contextmenu.focus = this;
+			}
+			else if (!sprite.mousedSquare(wastes.gview.mrpos) && this.mousing) {
+				if (win.contextmenu.focus == this)
+					win.contextmenu.focus = undefined;
+				sprite.material.color.set('white');
+				this.mousing = false;
+			}
+		}
+		override setup_context() {
+			console.log('setup context');
+
+			win.contextmenu.reset();
+			win.contextmenu.options.options.push(["See contents", () => {
+				return pts.distsimple(pawns.you.wpos, this.wpos) < 1;
+			}, () => {
+				win.container.crate = this;
+				win.container.call_once();
+			}]);
+			win.contextmenu.options.options.push(["Store", () => {
+				return pts.distsimple(pawns.you.wpos, this.wpos) < 1;
+			}, () => {
+				//win.container.crate = this;
+				//win.container.call_once();
+			}]);
 		}
 	}
 	export class roof extends objected {

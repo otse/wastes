@@ -210,6 +210,7 @@ namespace win {
 		static init() {
 			hooks.register('viewMClick', (view) => {
 				this.modal?.deletor();
+				//this.modal = undefined;
 				this.focus = undefined;
 				return false;
 			});
@@ -217,16 +218,28 @@ namespace win {
 			hooks.register('viewRClick', (view) => {
 				console.log('contextmenu on ?', this.focus);
 
-				if (this.focus) {
+				// We have a focus, but no modal
+				if (this.focus && !this.modal) {
 					this.focus.setup_context();
 					this.focusCur = this.focus;
-					this.modal?.deletor();
 					this.open();
 				}
-				else {
+				else if (this.modal && this.focus && this.focus != this.focusCur) {
 					this.modal?.deletor();
+					this.focus.setup_context();
+					this.focusCur = this.focus;
+					this.open();
+				}
+				else if (this.modal) { // || this.focus == this.focusCur
+					this.modal?.deletor();
+					this.modal = undefined;
+					//this.focus = undefined;
 					this.focusCur = undefined;
 				}
+				//else {
+				//	this.modal?.deletor();
+				//	this.focusCur = undefined;
+				//}
 
 				return false;
 			});

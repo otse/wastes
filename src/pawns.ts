@@ -59,9 +59,8 @@ export namespace pawns {
 				this.size = pts.divide([90, 180], 5);
 			else {
 				this.size = pts.divide([50, 40], 1);
-				this.subsize = [25, 40];
 			}
-
+			
 			let shape = new sprite({
 				binded: this,
 				tuple: wasterSprite ? sprites.pchris : sprites.test100,
@@ -69,6 +68,7 @@ export namespace pawns {
 				//opacity: .5,
 				orderBias: 1.0,
 			});
+			shape.subsize = [20, 40];
 			shape.rleft = -this.size[0] / 4;
 			shape.show();
 
@@ -408,7 +408,7 @@ export namespace pawns {
 		animateBodyParts() {
 			const legsSwoop = 0.8;
 			const armsSwoop = 0.5;
-			const rise = 0.1;
+			const rise = 0.5;
 
 			this.swoop += ren.delta * 2.5;
 
@@ -419,7 +419,7 @@ export namespace pawns {
 			this.groups.legr.rotation.x = swoop2 * legsSwoop * this.walkSmoother;
 			this.groups.arml.rotation.x = swoop1 * armsSwoop * this.walkSmoother;
 			this.groups.armr.rotation.x = swoop2 * armsSwoop * this.walkSmoother;
-			//this.groups.ground.position.y = swoop1 * rise * this.walkSmoother;
+			this.groups.ground.position.y = -12 + swoop1 * swoop2 * rise * this.walkSmoother;
 			this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
 
 			if (this.type == 'you') {
@@ -519,22 +519,17 @@ export namespace pawns {
 			// We could have been nulled due to a hide, dispose
 			if (sprite) {
 
-				if (this.type != 'you' && this.mousedSquare(wastes.gview.mrpos) /*&& !this.mousing*/) {
+				if (this.type != 'you' && sprite.mousedSquare(wastes.gview.mrpos) /*&& !this.mousing*/) {
 					this.mousing = true;
-					sprite.material.color.set('#c1ffcd');
-					//console.log('mover');
+					sprite.material.color.set('#6dc97f');
 					if (this.type != 'you') {
 						win.contextmenu.focus = this;
 					}
-					//win.character.anchor = this;
-					//win.character.toggle(this.mousing);
 				}
-				else if (!this.mousedSquare(wastes.gview.mrpos) && this.mousing) {
+				else if (!sprite.mousedSquare(wastes.gview.mrpos) && this.mousing) {
 					if (win.contextmenu.focus == this)
 						win.contextmenu.focus = undefined;
-					//sprite.material.color.set('white');
 					this.mousing = false;
-					//win.character.toggle(this.mousing);
 				}
 				else if (!this.mousing && !this.tile!.hasDeck) {
 					color = shadows.calc(color, pts.round(this.wpos));
@@ -549,7 +544,7 @@ export namespace pawns {
 				//this.wpos = tiles.hovering!.wpos;
 			}
 
-			this.stack(['pawn', 'you', 'chicken', 'leaves', 'wall', 'door', 'roof', 'falsefront', 'panel']);
+			this.stack(['pawn', 'you', 'chicken', 'shelves', 'leaves', 'wall', 'door', 'roof', 'falsefront', 'panel']);
 			super.update();
 		}
 		//tick() {
