@@ -645,9 +645,6 @@ void main() {
                 //console.log('sector');
                 hooks.call('sectorCreate', this);
             }
-            objsro() {
-                return this.objs;
-            }
             add(obj) {
                 let i = this.objs.indexOf(obj);
                 if (i == -1) {
@@ -716,7 +713,7 @@ void main() {
                 this.outside = outside;
                 this.big = [0, 0];
                 this.shown = [];
-                this.all = [];
+                this.visibleObjs = [];
                 lod.ggrid = this;
                 if (this.outside < this.spread) {
                     console.warn(' outside less than spread ', this.spread, this.outside);
@@ -750,7 +747,7 @@ void main() {
                 }
             }
             offs() {
-                this.all = [];
+                this.visibleObjs = [];
                 let i = this.shown.length;
                 while (i--) {
                     let sector;
@@ -761,10 +758,10 @@ void main() {
                         this.shown.splice(i, 1);
                     }
                     else {
-                        this.all = this.all.concat(sector.objsro());
+                        this.visibleObjs = this.visibleObjs.concat(sector.objs);
                     }
                 }
-                for (let obj of this.all)
+                for (let obj of this.visibleObjs)
                     obj.tick();
             }
         }
@@ -1173,10 +1170,11 @@ void main() {
     (function (colormap_1) {
         colormap_1.mapSpan = 100;
         class pixel {
-            constructor(context, pos, array) {
+            constructor(context, pos, arrayRef) {
                 this.context = context;
                 this.pos = pos;
-                this.array = array;
+                this.arrayRef = arrayRef;
+                // Todo is array really a ref
             }
             left() {
                 return this.context.pixel(pts.add(this.pos, [-1, 0]));
@@ -1191,18 +1189,24 @@ void main() {
                 return this.context.pixel(pts.add(this.pos, [0, -1]));
             }
             same(pixel) {
-                return this.is_color(pixel.array);
+                return this.is_color(pixel.arrayRef);
             }
             is_color(vec) {
-                return vec[0] == this.array[0] && vec[1] == this.array[1] && vec[2] == this.array[2];
+                return vec[0] == this.arrayRef[0] && vec[1] == this.arrayRef[1] && vec[2] == this.arrayRef[2];
             }
             is_color_range(a, b) {
-                return this.array[0] >= a[0] && this.array[0] <= b[0] &&
-                    this.array[1] >= a[1] && this.array[1] <= b[1] &&
-                    this.array[2] >= a[2] && this.array[2] <= b[2];
+                return this.arrayRef[0] >= a[0] && this.arrayRef[0] <= b[0] &&
+                    this.arrayRef[1] >= a[1] && this.arrayRef[1] <= b[1] &&
+                    this.arrayRef[2] >= a[2] && this.arrayRef[2] <= b[2];
+            }
+            is_shallow_water() {
+                return this.is_color([50, 50, 50]);
             }
             is_black() {
                 return this.is_color([0, 0, 0]);
+            }
+            is_invalid_pixel() {
+                return this.is_color([0, 0, 0]) && this.arrayRef[3] == 0;
             }
             is_white() {
                 return this.is_color([255, 255, 255]);
@@ -6081,16 +6085,16 @@ void main() {
         }
         objects.tick = tick;
         function is_solid(pos) {
-            const passable = [
-                'land', 'deck', 'shelves', 'porch',
-                'pawn', 'you', 'chicken', 'door',
-                'leaves', 'roof', 'falsefront', 'panel'
-            ];
+            // If the pos has anything other than the following,
+            // then we are solid (walls)
+            const impassable = ['wall', 'fence', 'deep water'];
             pos = pts.round(pos);
+            if (tiles$1.get(pos) == undefined)
+                return true;
             let sector = lod$1.gworld.at(lod$1.world.big(pos));
             let at = sector.stacked(pos);
             for (let obj of at) {
-                if (!obj.is_type(passable)) {
+                if (obj.is_type(impassable)) {
                     return true;
                 }
             }
@@ -6167,7 +6171,7 @@ void main() {
                 var _a, _b, _c, _d, _e, _f;
                 this.tiled();
                 this.size = [24, 40];
-                this.cell = [255 - this.pixel.array[3], 0];
+                this.cell = [255 - this.pixel.arrayRef[3], 0];
                 let tuple = sprites$1.dscrappywalls;
                 if (((_a = this.hints) === null || _a === void 0 ? void 0 : _a.type) == 'plywood')
                     tuple = sprites$1.dderingerwalls;
@@ -6349,7 +6353,7 @@ void main() {
                 //	this.cell = [240 - this.pixel!.array[3], 0];
                 let color = this.hints.color || [255, 255, 255, 255];
                 let color2 = wastes.colormap.pixel(this.wpos);
-                if (!(255 - color2.array[3])) {
+                if (!(255 - color2.arrayRef[3])) {
                     if (this.hints.color) {
                         color = [
                             Math.floor(color[0] * 1.6),
@@ -6408,7 +6412,7 @@ void main() {
                     Math.floor(color[2] * 2.0),
                     color[3],
                 ];
-                this.cell = [255 - this.pixel.array[3], 0];
+                this.cell = [255 - this.pixel.arrayRef[3], 0];
                 new sprite({
                     binded: this,
                     tuple: sprites$1.dgrass,
@@ -6657,7 +6661,7 @@ void main() {
             }
             create() {
                 this.tiled();
-                this.cell = [255 - this.pixel.array[3], 0];
+                this.cell = [255 - this.pixel.arrayRef[3], 0];
                 this.size = [24, 40];
                 new sprite({
                     binded: this,
@@ -6707,7 +6711,7 @@ void main() {
             create() {
                 this.tiled();
                 this.size = [24, 40];
-                this.cell = [255 - this.pixel.array[3], 0];
+                this.cell = [255 - this.pixel.arrayRef[3], 0];
                 new sprite({
                     binded: this,
                     tuple: sprites$1.ddoor,
@@ -7349,6 +7353,17 @@ void main() {
                 let materialLegs = new THREE.MeshLambertMaterial({
                     color: this.outfit[2]
                 });
+                // https://www.andersriggelsen.dk/glblendfunc.php
+                let planeWater = new THREE.PlaneGeometry(wastes.size * 2, wastes.size * 2);
+                let materialWater = new THREE.MeshLambertMaterial({
+                    color: new THREE__default["default"].Color('rgba(32, 64, 64, 255)'),
+                    opacity: 0.5,
+                    transparent: true,
+                    blending: THREE__default["default"].CustomBlending,
+                    blendEquation: THREE__default["default"].AddEquation,
+                    blendSrc: THREE__default["default"].DstAlphaFactor,
+                    blendDst: THREE__default["default"].OneMinusDstAlphaFactor
+                });
                 /*let boxGunGrip = new BoxGeometry(2, 5, 2, 1, 1, 1);
                 let materialGunGrip = new MeshLambertMaterial({
                     color: '#768383'
@@ -7358,6 +7373,10 @@ void main() {
                 let materialGunBarrel = new MeshLambertMaterial({
                     color: '#768383'
                 });*/
+                this.meshes.water = new THREE.Mesh(planeWater, materialWater);
+                this.meshes.water.rotation.x = -Math.PI / 2;
+                this.meshes.water.position.y = -bodyHeight * 1.25;
+                this.meshes.water.visible = false;
                 this.meshes.head = new THREE.Mesh(boxHead, materialHead);
                 this.meshes.gasMask = new THREE.Mesh(boxGasMask, materialGasMask);
                 this.meshes.body = new THREE.Mesh(boxBody, materialBody);
@@ -7375,6 +7394,7 @@ void main() {
                 this.groups.legl = new THREE.Group;
                 this.groups.legr = new THREE.Group;
                 this.groups.ground = new THREE.Group;
+                this.groups.basis = new THREE.Group;
                 /*this.groups.gungrip = new Group;
                 this.groups.gunbarrel = new Group;*/
                 this.groups.head.add(this.meshes.head);
@@ -7395,6 +7415,8 @@ void main() {
                 this.groups.body.add(this.groups.legl);
                 this.groups.body.add(this.groups.legr);
                 this.groups.ground.add(this.groups.body);
+                this.groups.basis.add(this.groups.ground);
+                this.groups.basis.add(this.meshes.water);
                 this.groups.head.position.set(0, bodyHeight / 2 + headSize / 2, 0);
                 this.groups.gasMask.position.set(0, -headSize / 2, headSize / 1.5);
                 this.groups.gasMask.rotation.set(-Math.PI / 4, 0, 0);
@@ -7415,7 +7437,7 @@ void main() {
                 this.meshes.legr.position.set(0, -legsHeight / 2, 0);
                 this.groups.ground.position.set(0, -bodyHeight * 1.0, 0);
                 //mesh.rotation.set(Math.PI / 2, 0, 0);
-                this.scene.add(this.groups.ground);
+                this.scene.add(this.groups.basis);
                 {
                     collada$1.load_model('collada/revolver', (model) => {
                         model.rotation.set(0, 0, Math.PI / 2);
@@ -7500,6 +7522,7 @@ void main() {
                 this.walkSmoother = wastes.clamp(this.walkSmoother, 0, 1);
             }
             animateBodyParts() {
+                var _a;
                 const legsSwoop = 0.8;
                 const armsSwoop = 0.5;
                 const rise = 0.5;
@@ -7517,7 +7540,7 @@ void main() {
                         this.aiming = true;
                         if (app$1.button(0) == 1) {
                             console.log('shoot');
-                            for (let obj of lod$1.ggrid.all) {
+                            for (let obj of lod$1.ggrid.visibleObjs) {
                                 const objected = obj;
                                 if (objected.isObjected) {
                                     const test = objected.tileBound.ray({
@@ -7537,6 +7560,12 @@ void main() {
                 }
                 if (this.aiming) {
                     this.groups.armr.rotation.x = -Math.PI / 2;
+                }
+                if (((_a = this.tile) === null || _a === void 0 ? void 0 : _a.type) == 'shallow water') {
+                    this.meshes.water.visible = true;
+                }
+                else {
+                    this.meshes.water.visible = false;
                 }
                 this.render();
             }
@@ -7593,7 +7622,7 @@ void main() {
                             win$1.contextmenu.focus = undefined;
                         this.mousing = false;
                     }
-                    else if (!this.mousing && !this.tile.hasDeck) {
+                    else if (!this.mousing && this.tile && !this.tile.hasDeck) {
                         color = shadows$1.calc(color, pts.round(this.wpos));
                         sprite.material.color.setRGB(color[0], color[1], color[2]);
                     }
@@ -7630,6 +7659,9 @@ void main() {
                     let y = pos[1];
                     if (arrays[y] == undefined)
                         arrays[y] = [];
+                    let pixel = wastes.colormap.pixel([x, y]);
+                    if (pixel.arrayRef[3] == 0)
+                        return;
                     let tile = new tiles.tile([x, y]);
                     arrays[y][x] = tile;
                     lod$1.add(tile);
@@ -7662,7 +7694,8 @@ void main() {
             }
         }
         tiles.tick = tick;
-        const color_purple_water = [40, 120, 130, 255];
+        const color_shallow_water = [40, 120, 130, 255];
+        const color_deep_water = [20, 100, 110, 255];
         class tile extends lod$1.obj {
             constructor(wpos) {
                 super(numbers.tiles);
@@ -7671,16 +7704,35 @@ void main() {
                 this.refresh = false;
                 this.opacity = 1;
                 this.wpos = wpos;
-                let colour = wastes.colormap.pixel(this.wpos);
-                if (colour.is_black()) {
-                    // We are a water
-                    this.type = 'water';
+                let pixel = wastes.colormap.pixel(this.wpos);
+                if (pixel.is_invalid_pixel()) {
+                    // We are fog of war
+                    console.log('invalid pixel');
+                    this.type = 'land';
+                    this.size = [24, 30];
+                    this.tuple = sprites$1.dgraveltiles;
+                    this.color = [60, 60, 60, 255];
+                    this.height = 6;
+                    this.cell = [1, 0];
+                }
+                else if (pixel.is_shallow_water()) {
+                    // We are a shallow water
+                    this.type = 'shallow water';
+                    this.size = [24, 12];
+                    this.tuple = sprites$1.dwater;
+                    //this.height = -5;
+                    this.opacity = .5;
+                    this.color = color_shallow_water;
+                }
+                else if (pixel.is_black()) {
+                    // We are a deep water
+                    this.type = 'deep water';
                     this.size = [24, 12];
                     this.tuple = sprites$1.dwater;
                     this.opacity = .5;
-                    this.color = color_purple_water;
+                    this.color = color_deep_water;
                 }
-                if (!colour.is_black()) {
+                else if (!pixel.is_black()) {
                     // We're a land tile
                     this.isLand = true;
                     this.type = 'land';
@@ -7690,21 +7742,21 @@ void main() {
                     this.cell = [1, 0];
                     {
                         let biome = wastes.roughmap.pixel(this.wpos);
-                        if (biome.array[0] > 70) {
+                        if (biome.arrayRef[0] > 70) {
                             this.tuple = sprites$1.dswamptiles;
                             //this.z -= 1;
                         }
                     }
                     const divisor = 3;
                     let height = wastes.heightmap.pixel(this.wpos);
-                    this.z += Math.floor(height.array[0] / divisor);
+                    this.z += Math.floor(height.arrayRef[0] / divisor);
                     this.z -= 3; // so we dip the water
                     //this.z += Math.random() * 24;
                 }
             }
             get_stack() {
                 var _a;
-                (_a = this.sector) === null || _a === void 0 ? void 0 : _a.objsro();
+                (_a = this.sector) === null || _a === void 0 ? void 0 : _a.objs;
             }
             /*stack(obj: lod.obj) {
                 let i = this.objs.indexOf(obj);
@@ -7718,7 +7770,7 @@ void main() {
             }*/
             create() {
                 if (this.isLand) {
-                    this.color = wastes.colormap.pixel(this.wpos).array;
+                    this.color = wastes.colormap.pixel(this.wpos).arrayRef;
                     this.color = shadows$1.calc(this.color, this.wpos);
                 }
                 let shape = new sprite({
@@ -8577,32 +8629,25 @@ void main() {
                 const sprite = this.shape;
                 // We could have been nulled due to a hide, dispose
                 if (sprite) {
-                    if (sprite.mousedSquare(wastes.gview.mrpos) && !this.mousing) {
+                    if (sprite.mousedSquare(wastes.gview.mrpos)) {
+                        sprite.material.color.set('gray');
+                        if (!this.mousing)
+                            win$1.contextmenu.focus = this;
                         this.mousing = true;
-                        sprite.material.color.set('#6dc97f');
-                        win$1.contextmenu.focus = this;
                     }
                     else if (!sprite.mousedSquare(wastes.gview.mrpos) && this.mousing) {
                         if (win$1.contextmenu.focus == this)
                             win$1.contextmenu.focus = undefined;
-                        //sprite.material.color.set('white');
                         this.mousing = false;
                         //win.character.toggle(this.mousing);
                     }
-                    else if (!this.mousing && !this.tile.hasDeck) {
+                    if (!this.mousing && this.tile && this.tile.hasDeck) {
                         color = shadows$1.calc(color, pts.round(this.wpos));
                         sprite.material.color.setRGB(color[0], color[1], color[2]);
                     }
-                    else {
-                        sprite.material.color.set('white');
-                    }
                 }
                 else {
-                    console.warn('no chicken sprite?');
-                }
-                if (sprite) {
-                    color = shadows$1.calc(color, pts.round(this.wpos));
-                    sprite.material.color.setRGB(color[0], color[1], color[2]);
+                    console.warn('no chicken sprite?????');
                 }
                 this.stack(['pawn', 'you', 'chicken', 'leaves', 'wall', 'door', 'roof', 'falsefront', 'panel']);
                 //sprite.roffset = [.5, .5];
@@ -8725,7 +8770,7 @@ void main() {
             create() {
                 this.tiled();
                 this.size = [24, 30];
-                this.cell = [255 - this.pixel.array[3], 0];
+                this.cell = [255 - this.pixel.arrayRef[3], 0];
                 sprites$1.dscrappywalls;
                 new sprite({
                     binded: this,

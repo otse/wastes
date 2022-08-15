@@ -361,36 +361,27 @@ export namespace chickens {
 			// We could have been nulled due to a hide, dispose
 
 			if (sprite) {
-				if (sprite.mousedSquare(wastes.gview.mrpos) && !this.mousing) {
+				if (sprite.mousedSquare(wastes.gview.mrpos)) {
+					sprite.material.color.set('gray');
+					if (!this.mousing)
+						win.contextmenu.focus = this;
 					this.mousing = true;
-					sprite.material.color.set('#6dc97f');
-					win.contextmenu.focus = this;
 				}
 				else if (!sprite.mousedSquare(wastes.gview.mrpos) && this.mousing) {
 					if (win.contextmenu.focus == this)
 						win.contextmenu.focus = undefined;
-					//sprite.material.color.set('white');
 					this.mousing = false;
 					//win.character.toggle(this.mousing);
 				}
-				else if (!this.mousing && !this.tile!.hasDeck) {
+				if (!this.mousing && this.tile && this.tile!.hasDeck) {
 					color = shadows.calc(color, pts.round(this.wpos));
 					sprite.material.color.setRGB(color[0], color[1], color[2]);
 				}
-				else {
-					sprite.material.color.set('white');
-				}
 			}
-			else
-			{
-				console.warn('no chicken sprite?');				
+			else {
+				console.warn('no chicken sprite?????');
 			}
 
-
-			if (sprite) {
-				color = shadows.calc(color, pts.round(this.wpos));
-				sprite.material.color.setRGB(color[0], color[1], color[2]);
-			}
 			this.stack(['pawn', 'you', 'chicken', 'leaves', 'wall', 'door', 'roof', 'falsefront', 'panel']);
 			//sprite.roffset = [.5, .5];
 			//this.tile!.paint();

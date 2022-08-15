@@ -23,7 +23,8 @@ namespace colormap {
 		constructor(
 			public context: colormap,
 			public pos: vec2,
-			public array: vec4) {
+			public arrayRef: vec4) {
+				// Todo is array really a ref
 		}
 		left() {
 			return this.context.pixel(pts.add(this.pos, [-1, 0]));
@@ -38,18 +39,24 @@ namespace colormap {
 			return this.context.pixel(pts.add(this.pos, [0, -1]));
 		}
 		same(pixel: pixel) {
-			return this.is_color(<vec3><unknown>pixel.array);
+			return this.is_color(<vec3><unknown>pixel.arrayRef);
 		}
 		is_color(vec: vec3) {
-			return vec[0] == this.array[0] && vec[1] == this.array[1] && vec[2] == this.array[2];
+			return vec[0] == this.arrayRef[0] && vec[1] == this.arrayRef[1] && vec[2] == this.arrayRef[2];
 		}
 		is_color_range(a: vec3, b: vec3) {
-			return this.array[0] >= a[0] && this.array[0] <= b[0] &&
-				this.array[1] >= a[1] && this.array[1] <= b[1] &&
-				this.array[2] >= a[2] && this.array[2] <= b[2]
+			return this.arrayRef[0] >= a[0] && this.arrayRef[0] <= b[0] &&
+				this.arrayRef[1] >= a[1] && this.arrayRef[1] <= b[1] &&
+				this.arrayRef[2] >= a[2] && this.arrayRef[2] <= b[2]
+		}
+		is_shallow_water() {
+			return this.is_color([50, 50, 50]);
 		}
 		is_black() {
 			return this.is_color([0, 0, 0]);
+		}
+		is_invalid_pixel() {
+			return this.is_color([0, 0, 0]) && this.arrayRef[3] == 0;
 		}
 		is_white() {
 			return this.is_color([255, 255, 255]);

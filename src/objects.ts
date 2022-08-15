@@ -179,15 +179,16 @@ namespace objects {
 	}
 
 	export function is_solid(pos: vec2) {
-		const passable = [
-			'land', 'deck', 'shelves', 'porch',
-			'pawn', 'you', 'chicken', 'door',
-			'leaves', 'roof', 'falsefront', 'panel'];
+		// If the pos has anything other than the following,
+		// then we are solid (walls)
+		const impassable = ['wall', 'fence', 'deep water'];
 		pos = pts.round(pos);
+		if (tiles.get(pos) == undefined)
+			return true;
 		let sector = lod.gworld.at(lod.world.big(pos));
 		let at = sector.stacked(pos);
 		for (let obj of at) {
-			if (!obj.is_type(passable)) {
+			if (obj.is_type(impassable)) {
 				return true;
 			}
 		}
@@ -228,18 +229,17 @@ namespace objects {
 		tick() {
 			if (this.paintedRed) {
 				this.paintTimer += ren.delta;
-				if (this.paintTimer > 1)
-				{
+				if (this.paintTimer > 1) {
 					const sprite = this.shape as sprite;
 					sprite.material.color.set('white');
 					console.log('beo');
-					
+
 					this.paintedRed = false;
 					this.paintTimer = 0;
 				}
 			}
 			//console.log('oo');
-				
+
 		}
 		//update(): void {
 		//	this.tiled();
@@ -262,7 +262,7 @@ namespace objects {
 		setup_context() { // override me
 		}
 	}
-	
+
 	export class wall extends objected {
 		constructor() {
 			super(numbers.walls);
@@ -272,7 +272,7 @@ namespace objects {
 		override create() {
 			this.tiled();
 			this.size = [24, 40];
-			this.cell = [255 - this.pixel!.array[3], 0];
+			this.cell = [255 - this.pixel!.arrayRef[3], 0];
 			let tuple = sprites.dscrappywalls;
 			if (this.hints?.type == 'plywood')
 				tuple = sprites.dderingerwalls;
@@ -322,7 +322,7 @@ namespace objects {
 			this.type = 'deck'
 			this.height = 3;
 		}
-		override onhit() {}
+		override onhit() { }
 
 		override create() {
 			this.tiled();
@@ -359,7 +359,7 @@ namespace objects {
 			this.type = 'porch'
 			this.height = 3;
 		}
-		override onhit() {}
+		override onhit() { }
 
 		override create() {
 			this.tiled();
@@ -460,7 +460,7 @@ namespace objects {
 			this.type = 'leaves'
 			this.height = 14;
 		}
-		override onhit() {}
+		override onhit() { }
 
 		override create() {
 			this.tiled();
@@ -471,7 +471,7 @@ namespace objects {
 
 			let color2 = wastes.colormap.pixel(this.wpos);
 
-			if (!(255 - color2.array[3])) {
+			if (!(255 - color2.arrayRef[3])) {
 				if (this.hints.color) {
 					color = [
 						Math.floor(color[0] * 1.6),
@@ -530,7 +530,7 @@ namespace objects {
 				Math.floor(color[2] * 2.0),
 				color[3],
 			]
-			this.cell = [255 - this.pixel!.array[3], 0];
+			this.cell = [255 - this.pixel!.arrayRef[3], 0];
 			let shape = new sprite({
 				binded: this,
 				tuple: sprites.dgrass,
@@ -552,7 +552,7 @@ namespace objects {
 			this.size = [24, 30];
 			//let color =  tiles.get(this.wpos)!.color;
 			//this.cell = [Math.floor(Math.random() * 2), 0];
-			
+
 			let shape = new sprite({
 				binded: this,
 				tuple: sprites.dwheat,
@@ -761,7 +761,7 @@ namespace objects {
 			this.type = 'roof';
 			this.height = 3;
 		}
-		override onhit() {}
+		override onhit() { }
 		override create() {
 			//return;
 			this.tiled();
@@ -802,7 +802,7 @@ namespace objects {
 		}
 		override create() {
 			this.tiled();
-			this.cell = [255 - this.pixel!.array[3], 0];
+			this.cell = [255 - this.pixel!.arrayRef[3], 0];
 			this.size = [24, 40];
 			let shape = new sprite({
 				binded: this,
@@ -853,7 +853,7 @@ namespace objects {
 		override create() {
 			this.tiled();
 			this.size = [24, 40];
-			this.cell = [255 - this.pixel!.array[3], 0];
+			this.cell = [255 - this.pixel!.arrayRef[3], 0];
 			let shape = new sprite({
 				binded: this,
 				tuple: sprites.ddoor,

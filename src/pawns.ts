@@ -1,4 +1,4 @@
-import { default as THREE, Scene, Color, Group, AxesHelper, Mesh, BoxGeometry, DirectionalLight, AmbientLight, PlaneBufferGeometry, MeshLambertMaterial, Shader, Matrix3, Vector2 } from "three";
+import { default as THREE, Scene, Color, Group, AxesHelper, Mesh, BoxGeometry, PlaneGeometry, DirectionalLight, AmbientLight, PlaneBufferGeometry, MeshLambertMaterial, Shader, Matrix3, Vector2 } from "three";
 import aabb2 from "./aabb2";
 
 import app from "./app";
@@ -60,7 +60,7 @@ export namespace pawns {
 			else {
 				this.size = pts.divide([50, 40], 1);
 			}
-			
+
 			let shape = new sprite({
 				binded: this,
 				tuple: wasterSprite ? sprites.pchris : sprites.test100,
@@ -83,7 +83,7 @@ export namespace pawns {
 				let size = pts.mult(this.size, scale);
 
 				this.target = ren.make_render_target(size[0], size[1]);
-				
+
 				this.camera = ren.make_orthographic_camera(size[0], size[1]);
 
 				this.scene = new Scene()
@@ -219,6 +219,18 @@ export namespace pawns {
 				color: this.outfit[2]
 			});
 
+			// https://www.andersriggelsen.dk/glblendfunc.php
+			let planeWater = new PlaneGeometry(wastes.size * 2, wastes.size * 2);
+			let materialWater = new MeshLambertMaterial({
+				color: new THREE.Color('rgba(32, 64, 64, 255)'),
+				opacity: 0.5,
+				transparent: true,
+				blending: THREE.CustomBlending,
+				blendEquation: THREE.AddEquation,
+				blendSrc: THREE.DstAlphaFactor,
+				blendDst: THREE.OneMinusDstAlphaFactor
+			})
+
 			/*let boxGunGrip = new BoxGeometry(2, 5, 2, 1, 1, 1);
 			let materialGunGrip = new MeshLambertMaterial({
 				color: '#768383'
@@ -229,6 +241,10 @@ export namespace pawns {
 				color: '#768383'
 			});*/
 
+			this.meshes.water = new Mesh(planeWater, materialWater);
+			this.meshes.water.rotation.x = -Math.PI / 2;
+			this.meshes.water.position.y = -bodyHeight * 1.25;
+			this.meshes.water.visible = false;
 
 			this.meshes.head = new Mesh(boxHead, materialHead);
 			this.meshes.gasMask = new Mesh(boxGasMask, materialGasMask);
@@ -251,6 +267,7 @@ export namespace pawns {
 			this.groups.legl = new Group;
 			this.groups.legr = new Group;
 			this.groups.ground = new Group;
+			this.groups.basis = new Group;
 
 			/*this.groups.gungrip = new Group;
 			this.groups.gunbarrel = new Group;*/
@@ -277,6 +294,9 @@ export namespace pawns {
 			this.groups.body.add(this.groups.legl);
 			this.groups.body.add(this.groups.legr);
 			this.groups.ground.add(this.groups.body);
+
+			this.groups.basis.add(this.groups.ground);
+			this.groups.basis.add(this.meshes.water);
 
 			this.groups.head.position.set(0, bodyHeight / 2 + headSize / 2, 0);
 			this.groups.gasMask.position.set(0, -headSize / 2, headSize / 1.5);
@@ -305,7 +325,7 @@ export namespace pawns {
 			this.groups.ground.position.set(0, -bodyHeight * 1.0, 0);
 			//mesh.rotation.set(Math.PI / 2, 0, 0);
 
-			this.scene.add(this.groups.ground);
+			this.scene.add(this.groups.basis);
 
 			const loadGunAgain = true;
 			if (loadGunAgain) {
@@ -429,7 +449,7 @@ export namespace pawns {
 					if (app.button(0) == 1) {
 						console.log('shoot');
 
-						for (let obj of lod.ggrid.all) {
+						for (let obj of lod.ggrid.visibleObjs) {
 							const objected = obj as objects.objected;
 							if (objected.isObjected) {
 								const test = objected.tileBound.ray(
@@ -450,6 +470,13 @@ export namespace pawns {
 			}
 			if (this.aiming) {
 				this.groups.armr.rotation.x = -Math.PI / 2;
+			}
+
+			if (this.tile?.type == 'shallow water') {
+				this.meshes.water.visible = true;
+			}
+			else {
+				this.meshes.water.visible = false;
 			}
 
 			this.render();
@@ -531,7 +558,7 @@ export namespace pawns {
 						win.contextmenu.focus = undefined;
 					this.mousing = false;
 				}
-				else if (!this.mousing && !this.tile!.hasDeck) {
+				else if (!this.mousing && this.tile && !this.tile.hasDeck) {
 					color = shadows.calc(color, pts.round(this.wpos));
 					sprite.material.color.setRGB(color[0], color[1], color[2]);
 				}

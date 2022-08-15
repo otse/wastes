@@ -24,7 +24,7 @@ export namespace tiles {
 
 	export var hovering: tile | undefined = undefined
 
-	export function get(pos: vec2) {
+	export function get(pos: vec2) : tile | undefined {
 		if (arrays[pos[1]])
 			return arrays[pos[1]][pos[0]];
 	}
@@ -41,6 +41,9 @@ export namespace tiles {
 				let y = pos[1];
 				if (arrays[y] == undefined)
 					arrays[y] = [];
+				let pixel = wastes.colormap.pixel([x, y]);
+				if (pixel.arrayRef[3] == 0)
+					return;
 				let tile = new tiles.tile([x, y]);
 				arrays[y][x] = tile;
 				lod.add(tile);
@@ -80,7 +83,8 @@ export namespace tiles {
 
 	}
 
-	const color_purple_water: vec4 = [40, 120, 130, 255];
+	const color_shallow_water: vec4 = [40, 120, 130, 255];
+	const color_deep_water: vec4 = [20, 100, 110, 255];
 
 	export class tile extends lod.obj {
 		hasDeck = false
@@ -98,17 +102,36 @@ export namespace tiles {
 
 			this.wpos = wpos;
 
-			let colour = wastes.colormap.pixel(this.wpos);
-
-			if (colour.is_black()) {
-				// We are a water
-				this.type = 'water';
+			let pixel = wastes.colormap.pixel(this.wpos);
+			
+			if (pixel.is_invalid_pixel()) {
+				// We are fog of war
+				console.log('invalid pixel');
+				this.type = 'land';
+				this.size = [24, 30];
+				this.tuple = sprites.dgraveltiles;
+				this.color = [60, 60, 60, 255]
+				this.height = 6;
+				this.cell = [1, 0];
+			}
+			else if (pixel.is_shallow_water()) {
+				// We are a shallow water
+				this.type = 'shallow water';
+				this.size = [24, 12];
+				this.tuple = sprites.dwater;
+				//this.height = -5;
+				this.opacity = .5;
+				this.color = color_shallow_water;
+			}
+			else if (pixel.is_black()) {
+				// We are a deep water
+				this.type = 'deep water';
 				this.size = [24, 12];
 				this.tuple = sprites.dwater;
 				this.opacity = .5;
-				this.color = color_purple_water;
+				this.color = color_deep_water;
 			}
-			if (!colour.is_black()) {
+			else if (!pixel.is_black()) {
 				// We're a land tile
 				this.isLand = true;
 				this.type = 'land';
@@ -121,7 +144,7 @@ export namespace tiles {
 
 				if (useRoughMap) {
 					let biome = wastes.roughmap.pixel(this.wpos);
-					if (biome.array[0] > 70) {
+					if (biome.arrayRef[0] > 70) {
 						this.tuple = sprites.dswamptiles;
 						//this.z -= 1;
 					}
@@ -129,13 +152,13 @@ export namespace tiles {
 
 				const divisor = 3;
 				let height = wastes.heightmap.pixel(this.wpos);
-				this.z += Math.floor(height.array[0] / divisor);
+				this.z += Math.floor(height.arrayRef[0] / divisor);
 				this.z -= 3; // so we dip the water
 				//this.z += Math.random() * 24;
 			}
 		}
 		get_stack() {
-			const objs = this.sector?.objsro();
+			const objs = this.sector?.objs;
 		}
 		/*stack(obj: lod.obj) {
 			let i = this.objs.indexOf(obj);
@@ -149,7 +172,7 @@ export namespace tiles {
 		}*/
 		override create() {
 			if (this.isLand) {
-				this.color = wastes.colormap.pixel(this.wpos).array;
+				this.color = wastes.colormap.pixel(this.wpos).arrayRef;
 				this.color = shadows.calc(this.color, this.wpos);
 			}
 			let shape = new sprite({

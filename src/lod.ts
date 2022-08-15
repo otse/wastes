@@ -118,7 +118,7 @@ namespace lod {
 		color?;
 		group: Group;
 		readonly small: aabb2;
-		private readonly objs: obj[] = [];
+		readonly objs: obj[] = [];
 		constructor(
 			public readonly big: vec2,
 			readonly world: world
@@ -138,9 +138,6 @@ namespace lod {
 
 			hooks.call('sectorCreate', this);
 
-		}
-		objsro(): ReadonlyArray<obj> {
-			return this.objs;
 		}
 		add(obj: obj) {
 			let i = this.objs.indexOf(obj);
@@ -206,7 +203,7 @@ namespace lod {
 	export class grid {
 		big: vec2 = [0, 0];
 		public shown: sector[] = [];
-		all: obj[] = []
+		visibleObjs: obj[] = []
 		constructor(
 			public spread: number,
 			public outside: number
@@ -244,7 +241,7 @@ namespace lod {
 			}
 		}
 		offs() {
-			this.all = [];
+			this.visibleObjs = [];
 			let i = this.shown.length;
 			while (i--) {
 				let sector: sector;
@@ -255,10 +252,10 @@ namespace lod {
 					this.shown.splice(i, 1);
 				}
 				else {
-					this.all = this.all.concat(sector.objsro());
+					this.visibleObjs = this.visibleObjs.concat(sector.objs);
 				}
 			}
-			for (let obj of this.all)
+			for (let obj of this.visibleObjs)
 				obj.tick();
 		}
 	}
