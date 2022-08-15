@@ -97,7 +97,10 @@ export class sprite extends lod.shape {
 			this.mesh.position.fromArray([...calc, 0]);
 			// Not rounding gives us much better depth
 			let pos = obj.wpos; // pts.round(obj.wpos);
-			this.mesh.renderOrder = -pos[1] + pos[0] + this.vars.orderBias!;
+			// Experimental z elevation based bias!
+			let zBasedBias = 0;
+			//zBasedBias = this.vars.binded.z / 3;
+			this.mesh.renderOrder = -pos[1] + pos[0] + this.vars.orderBias! + zBasedBias;
 			this.mesh.rotation.z = this.vars.binded.ro;
 			this.mesh.updateMatrix();
 			if (useWireframe) {

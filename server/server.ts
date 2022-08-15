@@ -4,6 +4,7 @@ import { WebSocketServer } from 'ws';
 import pts from "../src/pts"
 import aabb2 from "../src/aabb2"
 import slod from "./slod"
+import { timeStamp } from 'console';
 
 var connections: connection[] = [];
 
@@ -36,6 +37,18 @@ export function send_message_to_all(message, duration) {
 		con.messages.push([message, duration]);
 }
 
+class timer {
+	time = 0
+	constructor(seed: number) {
+		this.time = Date.now() + seed;
+	}
+	started() {
+		this.time > 0;
+	}
+	elapsed(elapsed: number) {
+		return Date.now() - this.time > elapsed;
+	}
+}
 class connection {
 	you: player
 	messages: [text: string, duration: number][] = []
@@ -131,21 +144,21 @@ class npc extends slod.sobj {
 	angle = 0
 	walkArea: aabb2
 	aimTarget: vec2 = [0, 0]
-	randomWalker
+	timer: timer
 	speed = 1.0
 	constructor() {
 		super();
 		this.id = 'npc_' + npc.id++;
-		this.randomWalker = Date.now();
+		this.timer = new timer(0);
 	}
-	override tick() {
+	wander() {
 		if (this.walkArea) {
-			if (this.randomWalker - Date.now() <= 0) {
+			if (this.timer.elapsed(2000)) {
 				const target = this.walkArea.random_point();
 				this.aimTarget = pts.round(target);
 
 				//this.wpos = target;
-				this.randomWalker = Date.now() + 2000;
+				this.timer = new timer(0);
 			}
 		}
 
@@ -166,6 +179,9 @@ class npc extends slod.sobj {
 			if (dist < 0.2)
 				this.aimTarget = [0, 0];
 		}
+	}
+	override tick() {
+		this.wander();
 	}
 	override gather() {
 		return {
@@ -224,19 +240,36 @@ class npc_pawn extends player {
 
 class chicken extends npc {
 	static id = 0
+	walkAgain: timer
+	peckChance = 0
 	randomWalker
+	pecking = false
 	constructor() {
 		super();
 		this.type = 'chicken';
 		this.id = 'chicken_' + chicken.id++;
 		this.randomWalker = Date.now();
 		this.speed = 0.75
+		this.walkAgain = new timer(0);
 	}
 	gather() {
 		let upper = super.gather();
 		return {
 			...upper,
+			pecking: this.pecking
 		};
+	}
+	override tick() {
+		if (pts.together(this.aimTarget) == 0 && this.walkAgain?.elapsed(4000)) {
+			this.pecking = true;
+			this.walkAgain = new timer(0);
+		}
+		
+		if (this.walkAgain?.elapsed(500)) {
+			this.pecking = false;
+			this.wander();
+		}
+		//this.pecking = false;
 	}
 	//override gather() {
 

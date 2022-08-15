@@ -87,9 +87,10 @@ export namespace client {
 						obj.angle = angle;
 					},
 					(obj, sobj) => {
-						const { wpos, angle } = sobj;						
+						const { wpos, angle, pecking } = sobj;						
 						obj.netwpos = wpos;
 						obj.netangle = angle;
+						obj.pecking = pecking;
 					});
 			}
 

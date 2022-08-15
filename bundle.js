@@ -981,7 +981,10 @@ void main() {
                 this.mesh.position.fromArray([...calc, 0]);
                 // Not rounding gives us much better depth
                 let pos = obj.wpos; // pts.round(obj.wpos);
-                this.mesh.renderOrder = -pos[1] + pos[0] + this.vars.orderBias;
+                // Experimental z elevation based bias!
+                let zBasedBias = 0;
+                //zBasedBias = this.vars.binded.z / 3;
+                this.mesh.renderOrder = -pos[1] + pos[0] + this.vars.orderBias + zBasedBias;
                 this.mesh.rotation.z = this.vars.binded.ro;
                 this.mesh.updateMatrix();
             }
@@ -5948,6 +5951,9 @@ void main() {
     })(collada || (collada = {}));
     var collada$1 = collada;
 
+    // allows you to venture far from inclusion hell by letting you assign arbitrary values
+    var GLOB = {};
+
     var objects;
     (function (objects) {
         const color_door = [210, 210, 210];
@@ -6085,9 +6091,7 @@ void main() {
         }
         objects.tick = tick;
         function is_solid(pos) {
-            // If the pos has anything other than the following,
-            // then we are solid (walls)
-            const impassable = ['wall', 'fence', 'deep water'];
+            const impassable = ['wall', 'tree', 'fence', 'deep water'];
             pos = pts.round(pos);
             if (tiles$1.get(pos) == undefined)
                 return true;
@@ -6292,7 +6296,7 @@ void main() {
             constructor() {
                 super(numbers.floors);
                 this.type = 'tree';
-                this.height = 3;
+                this.height = 24;
             }
             create() {
                 this.tiled();
@@ -6300,7 +6304,7 @@ void main() {
                 new sprite({
                     binded: this,
                     tuple: sprites$1.ddeadtreetrunk,
-                    orderBias: 0.6,
+                    orderBias: 0.7,
                 });
                 this.stack();
             }
@@ -6311,7 +6315,7 @@ void main() {
             constructor() {
                 super(numbers.trees);
                 this.flowered = false;
-                this.type = 'decid tree';
+                this.type = 'tree';
                 this.height = 24;
             }
             create() {
@@ -6322,7 +6326,7 @@ void main() {
                 new sprite({
                     binded: this,
                     tuple: sprites$1.ddecidtreetrunk,
-                    orderBias: 0.6,
+                    orderBias: 0.7,
                 });
                 this.stack();
                 const tile = tiles$1.get(this.wpos);
@@ -6799,6 +6803,7 @@ void main() {
             dialogue.tick();
             contextmenu.tick();
             message.tick();
+            descriptor.tick();
         }
         win_1.tick = tick;
         class modal {
@@ -7006,6 +7011,33 @@ void main() {
         contextmenu.buttons = [];
         contextmenu.options = { options: [] };
         win_1.contextmenu = contextmenu;
+        class descriptor {
+            static call_once(text = 'Examined') {
+                if (this.modal !== undefined) {
+                    this.modal.deletor();
+                    this.modal = undefined;
+                }
+                if (this.modal == undefined) {
+                    this.modal = new modal('descriptor');
+                    //this.modal.content.remove();
+                    this.modal.content.innerHTML = text;
+                    this.focusCur = this.focus;
+                    this.timer = Date.now();
+                }
+            }
+            static tick() {
+                var _a, _b;
+                if (((_a = this.focus) === null || _a === void 0 ? void 0 : _a.isActive()) && this.modal !== undefined) {
+                    this.modal.float(this.focusCur, [0, 0]);
+                }
+                if (Date.now() - this.timer > 3 * 1000) {
+                    (_b = this.modal) === null || _b === void 0 ? void 0 : _b.deletor();
+                    this.modal = undefined;
+                }
+            }
+        }
+        descriptor.timer = 0;
+        win_1.descriptor = descriptor;
         class dialogue {
             static call_once() {
                 var _a;
@@ -7243,7 +7275,7 @@ void main() {
                 if (!this.created) {
                     this.created = true;
                     // Set scale to increase pixels exponentially
-                    const scale = 1;
+                    const scale = 10;
                     // make wee guy target
                     //this.group = new THREE.Group
                     let size = pts.mult(this.size, scale);
@@ -7357,7 +7389,7 @@ void main() {
                 let planeWater = new THREE.PlaneGeometry(wastes.size * 2, wastes.size * 2);
                 let materialWater = new THREE.MeshLambertMaterial({
                     color: new THREE__default["default"].Color('rgba(32, 64, 64, 255)'),
-                    opacity: 0.5,
+                    opacity: 0.4,
                     transparent: true,
                     blending: THREE__default["default"].CustomBlending,
                     blendEquation: THREE__default["default"].AddEquation,
@@ -7561,10 +7593,13 @@ void main() {
                 if (this.aiming) {
                     this.groups.armr.rotation.x = -Math.PI / 2;
                 }
+                const sprite = this.shape;
                 if (((_a = this.tile) === null || _a === void 0 ? void 0 : _a.type) == 'shallow water') {
+                    sprite.vars.orderBias = 0.25;
                     this.meshes.water.visible = true;
                 }
                 else {
+                    sprite.vars.orderBias = 1.0;
                     this.meshes.water.visible = false;
                 }
                 this.render();
@@ -7610,9 +7645,13 @@ void main() {
                 const sprite = this.shape;
                 // We could have been nulled due to a hide, dispose
                 if (sprite) {
+                    const setShadow = () => {
+                        color = shadows$1.calc(color, pts.round(this.wpos));
+                        sprite.material.color.setRGB(color[0], color[1], color[2]);
+                    };
                     if (this.type != 'you' && sprite.mousedSquare(wastes.gview.mrpos) /*&& !this.mousing*/) {
                         this.mousing = true;
-                        sprite.material.color.set('#6dc97f');
+                        sprite.material.color.set(GLOB.HOVER_COLOR);
                         if (this.type != 'you') {
                             win$1.contextmenu.focus = this;
                         }
@@ -7620,11 +7659,11 @@ void main() {
                     else if (!sprite.mousedSquare(wastes.gview.mrpos) && this.mousing) {
                         if (win$1.contextmenu.focus == this)
                             win$1.contextmenu.focus = undefined;
+                        setShadow();
                         this.mousing = false;
                     }
-                    else if (!this.mousing && this.tile && !this.tile.hasDeck) {
-                        color = shadows$1.calc(color, pts.round(this.wpos));
-                        sprite.material.color.setRGB(color[0], color[1], color[2]);
+                    else if (this.tile && this.tile.hasDeck == false) {
+                        setShadow();
                     }
                     else {
                         sprite.material.color.set('white');
@@ -7703,6 +7742,7 @@ void main() {
                 this.isLand = false;
                 this.refresh = false;
                 this.opacity = 1;
+                this.myOrderBias = 1;
                 this.wpos = wpos;
                 let pixel = wastes.colormap.pixel(this.wpos);
                 if (pixel.is_invalid_pixel()) {
@@ -7773,13 +7813,14 @@ void main() {
                     this.color = wastes.colormap.pixel(this.wpos).arrayRef;
                     this.color = shadows$1.calc(this.color, this.wpos);
                 }
+                this.myOrderBias = -0.5; // + (this.z / 4);// + (this.height / 10);
                 let shape = new sprite({
                     binded: this,
                     tuple: this.tuple,
                     cell: this.cell,
                     color: this.color,
                     opacity: this.opacity,
-                    orderBias: -.5
+                    orderBias: this.myOrderBias
                 });
                 // if we have a deck, add it to heightAdd
                 let sector = lod$1.gworld.at(lod$1.world.big(this.wpos));
@@ -7812,6 +7853,7 @@ void main() {
                 sprite.mesh.material.color.set('red');
             }
             tick() {
+                this.shape;
                 if (this.refresh) {
                     this.refresh = false;
                     this.hide();
@@ -8383,13 +8425,13 @@ void main() {
                 this.netwpos = [0, 0];
                 this.netangle = 0;
                 this.created = false;
+                this.pecking = false;
                 //override setup_context() {
                 //	win.contextmenu.reset();
                 //}
                 this.groups = {};
                 this.meshes = {};
                 this.made = false;
-                this.mousing = false;
                 this.swoop = 0;
                 this.angle = 0;
                 this.walkSmoother = 1;
@@ -8451,7 +8493,7 @@ void main() {
                     return;
                 this.made = true;
                 const headWidth = 2.5;
-                const headHeight = 4;
+                const headHeight = 5;
                 const headLength = 2.5;
                 const combWidth = 1;
                 const combHeight = 2;
@@ -8497,6 +8539,20 @@ void main() {
                 let materialLegs = new THREE.MeshLambertMaterial({
                     color: '#7f805f'
                 });
+                let planeWater = new THREE.PlaneGeometry(wastes.size * 2, wastes.size * 2);
+                let materialWater = new THREE.MeshLambertMaterial({
+                    color: new THREE__default["default"].Color('rgba(32, 64, 64, 255)'),
+                    opacity: 0.4,
+                    transparent: true,
+                    blending: THREE__default["default"].CustomBlending,
+                    blendEquation: THREE__default["default"].AddEquation,
+                    blendSrc: THREE__default["default"].DstAlphaFactor,
+                    blendDst: THREE__default["default"].OneMinusSrcAlphaFactor
+                });
+                this.meshes.water = new THREE.Mesh(planeWater, materialWater);
+                this.meshes.water.rotation.x = -Math.PI / 2;
+                this.meshes.water.position.y = -bodyHeight * 1.5;
+                this.meshes.water.visible = false;
                 this.meshes.head = new THREE.Mesh(boxHead, materialHead);
                 this.meshes.comb = new THREE.Mesh(boxComb, materialComb);
                 this.meshes.beak = new THREE.Mesh(boxBeak, materialBeak);
@@ -8507,6 +8563,7 @@ void main() {
                 this.meshes.legr = new THREE.Mesh(boxLegs, materialLegs);
                 this.meshes.footl = new THREE.Mesh(boxFeet, materialLegs);
                 this.meshes.footr = new THREE.Mesh(boxFeet, materialLegs);
+                this.groups.neck = new THREE.Group;
                 this.groups.head = new THREE.Group;
                 this.groups.beak = new THREE.Group;
                 this.groups.comb = new THREE.Group;
@@ -8518,6 +8575,8 @@ void main() {
                 this.groups.footl = new THREE.Group;
                 this.groups.footr = new THREE.Group;
                 this.groups.ground = new THREE.Group;
+                this.groups.basis = new THREE.Group;
+                this.groups.neck.add(this.meshes.head);
                 this.groups.head.add(this.meshes.head);
                 this.groups.beak.add(this.meshes.beak);
                 this.groups.comb.add(this.meshes.comb);
@@ -8530,15 +8589,19 @@ void main() {
                 this.groups.footr.add(this.meshes.footr);
                 this.groups.head.add(this.groups.beak);
                 this.groups.head.add(this.groups.comb);
+                this.groups.neck.add(this.groups.head);
                 this.groups.legl.add(this.groups.footl);
                 this.groups.legr.add(this.groups.footr);
-                this.groups.body.add(this.groups.head);
+                this.groups.body.add(this.groups.neck);
                 this.groups.body.add(this.groups.arml);
                 this.groups.body.add(this.groups.armr);
-                this.groups.body.add(this.groups.legl);
-                this.groups.body.add(this.groups.legr);
+                this.groups.ground.add(this.groups.legl);
+                this.groups.ground.add(this.groups.legr);
                 this.groups.ground.add(this.groups.body);
-                this.groups.head.position.set(0, bodyHeight / 2 + headWidth / 2, bodyWidth / 2);
+                this.groups.basis.add(this.groups.ground);
+                this.groups.basis.add(this.meshes.water);
+                this.groups.neck.position.set(0, bodyHeight / 2, bodyLength / 3);
+                this.groups.head.position.set(0, headHeight / 2, 0);
                 this.groups.comb.position.set(0, combHeight, combLength / 2);
                 this.groups.beak.position.set(0, 0, beakLength);
                 //this.groups.beak.rotation.set(-Math.PI / 4, 0, 0);
@@ -8552,15 +8615,15 @@ void main() {
                 this.groups.arml.position.set(bodyWidth / 2 + armsWidth / 2, bodyHeight / 2 - armsWidth / 2, 0);
                 this.groups.arml.rotation.set(0, 0, armsAngle);
                 this.meshes.arml.position.set(0, -armsHeight / 2 + armsWidth / 2, 0);
-                this.groups.legl.position.set(-legsWidth / 1, -bodyHeight / 2, 0);
+                this.groups.legl.position.set(-legsWidth / 1, bodyHeight / 2, 0);
                 this.meshes.legl.position.set(0, -legsHeight / 2, 0);
-                this.groups.legr.position.set(legsWidth / 1, -bodyHeight / 2, 0);
+                this.groups.legr.position.set(legsWidth / 1, bodyHeight / 2, 0);
                 this.meshes.legr.position.set(0, -legsHeight / 2, 0);
                 this.groups.footl.position.set(0, -legsHeight, feetLength / 2);
                 this.groups.footr.position.set(0, -legsHeight, feetLength / 2);
                 this.groups.ground.position.set(0, -bodyHeight * 3, 0);
                 //mesh.rotation.set(Math.PI / 2, 0, 0);
-                this.scene.add(this.groups.ground);
+                this.scene.add(this.groups.basis);
             }
             render() {
                 ren$1.renderer.setRenderTarget(this.target);
@@ -8568,6 +8631,7 @@ void main() {
                 ren$1.renderer.render(this.scene, this.camera);
             }
             animateBodyParts() {
+                var _a;
                 this.walkSmoother = wastes.clamp(this.walkSmoother, 0, 1);
                 const legsSwoop = 0.6;
                 const headBob = 1.0;
@@ -8579,16 +8643,37 @@ void main() {
                 this.groups.legr.rotation.x = swoop2 * legsSwoop * this.walkSmoother;
                 //this.groups.arml.rotation.x = swoop1 * armsSwoop * this.walkSmoother;
                 //this.groups.armr.rotation.x = swoop2 * armsSwoop * this.walkSmoother;
-                this.groups.head.position.z = 3 + swoop1 * swoop2 * -headBob * this.walkSmoother;
+                this.groups.head.position.z = swoop1 * swoop2 * -headBob * this.walkSmoother;
                 this.groups.ground.position.y = -10 + swoop1 * swoop2 * riser * this.walkSmoother;
                 this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
+                if (this.pecking || app$1.key('q')) {
+                    this.groups.neck.rotation.x = 1.0;
+                    this.groups.body.rotation.x = 0.6;
+                }
+                else {
+                    this.groups.neck.rotation.x = 0;
+                    this.groups.body.rotation.x = 0;
+                }
+                const sprite = this.shape;
+                if (((_a = this.tile) === null || _a === void 0 ? void 0 : _a.type) == 'shallow water') {
+                    sprite.vars.orderBias = 0.25;
+                    this.meshes.water.visible = true;
+                }
+                else {
+                    sprite.vars.orderBias = 1.0;
+                    this.meshes.water.visible = false;
+                }
                 this.render();
             }
             nettick() {
+                //this.netangle = Math.PI / 4;
                 // Net tick can happen offscreen
                 var _a;
                 //this.wpos = tiles.hovering!.wpos;
                 //this.wpos = wastes.gview.mwpos;
+                if (this.pecking) {
+                    console.log('we are pecking');
+                }
                 if (!pts.together(this.netwpos))
                     this.netwpos = this.wpos;
                 // tween netwpos into wpos
@@ -8613,6 +8698,12 @@ void main() {
             }
             setup_context() {
                 win$1.contextmenu.reset();
+                win$1.contextmenu.options.options.push(["Examine", () => {
+                        return true;
+                    }, () => {
+                        win$1.descriptor.focus = this;
+                        win$1.descriptor.call_once("Just a chicken!");
+                    }]);
             }
             tick() {
                 // We are assumed to be onscreen
@@ -8629,22 +8720,23 @@ void main() {
                 const sprite = this.shape;
                 // We could have been nulled due to a hide, dispose
                 if (sprite) {
-                    if (sprite.mousedSquare(wastes.gview.mrpos)) {
-                        sprite.material.color.set('gray');
-                        if (!this.mousing)
-                            win$1.contextmenu.focus = this;
-                        this.mousing = true;
-                    }
-                    else if (!sprite.mousedSquare(wastes.gview.mrpos) && this.mousing) {
-                        if (win$1.contextmenu.focus == this)
-                            win$1.contextmenu.focus = undefined;
-                        this.mousing = false;
-                        //win.character.toggle(this.mousing);
-                    }
-                    if (!this.mousing && this.tile && this.tile.hasDeck) {
+                    const setShadow = () => {
                         color = shadows$1.calc(color, pts.round(this.wpos));
                         sprite.material.color.setRGB(color[0], color[1], color[2]);
+                    };
+                    if (sprite.mousedSquare(wastes.gview.mrpos)) {
+                        sprite.material.color.set(GLOB.HOVER_COLOR);
+                        win$1.contextmenu.focus = this;
                     }
+                    else if (!sprite.mousedSquare(wastes.gview.mrpos)) {
+                        if (win$1.contextmenu.focus == this)
+                            win$1.contextmenu.focus = undefined;
+                        setShadow();
+                    }
+                    else if (this.tile && this.tile.hasDeck == false) {
+                        setShadow();
+                    }
+                    else if (!this.tile) ;
                 }
                 else {
                     console.warn('no chicken sprite?????');
@@ -8727,9 +8819,10 @@ void main() {
                         obj.wpos = wpos;
                         obj.angle = angle;
                     }, (obj, sobj) => {
-                        const { wpos, angle } = sobj;
+                        const { wpos, angle, pecking } = sobj;
                         obj.netwpos = wpos;
                         obj.netangle = angle;
+                        obj.pecking = pecking;
                     });
                 }
                 if (data.player) {
@@ -8892,6 +8985,7 @@ void main() {
                 return;
             started = true;
             console.log(' wastes starting ');
+            GLOB.HOVER_COLOR = '#95ca90';
             starts();
         }
         function init() {

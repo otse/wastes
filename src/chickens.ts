@@ -1,8 +1,9 @@
-import { default as THREE, Scene, Color, Group, AxesHelper, Mesh, BoxGeometry, DirectionalLight, AmbientLight, PlaneBufferGeometry, MeshLambertMaterial, Shader, Matrix3, Vector2 } from "three";
+import { default as THREE, Scene, Color, Group, AxesHelper, Mesh, BoxGeometry, PlaneGeometry, DirectionalLight, AmbientLight, PlaneBufferGeometry, MeshLambertMaterial, Shader, Matrix3, Vector2 } from "three";
 import aabb2 from "./aabb2";
 
 import app from "./app";
 import collada from "./collada";
+import GLOB from "./glob";
 import lod, { numbers } from "./lod";
 
 import objects from "./objects";
@@ -37,6 +38,7 @@ export namespace chickens {
 		scene
 		camera
 		created = false
+		pecking = false
 		constructor() {
 			super(numbers.chickens);
 			this.type = 'chicken';
@@ -119,7 +121,7 @@ export namespace chickens {
 			this.made = true;
 
 			const headWidth = 2.5;
-			const headHeight = 4;
+			const headHeight = 5;
 			const headLength = 2.5;
 
 			const combWidth = 1;
@@ -178,6 +180,21 @@ export namespace chickens {
 				color: '#7f805f'
 			});
 
+			let planeWater = new PlaneGeometry(wastes.size * 2, wastes.size * 2);
+			let materialWater = new MeshLambertMaterial({
+				color: new THREE.Color('rgba(32, 64, 64, 255)'),
+				opacity: 0.4,
+				transparent: true,
+				blending: THREE.CustomBlending,
+				blendEquation: THREE.AddEquation,
+				blendSrc: THREE.DstAlphaFactor,
+				blendDst: THREE.OneMinusSrcAlphaFactor
+			})
+
+			this.meshes.water = new Mesh(planeWater, materialWater);
+			this.meshes.water.rotation.x = -Math.PI / 2;
+			this.meshes.water.position.y = -bodyHeight * 1.5;
+			this.meshes.water.visible = false;
 
 			this.meshes.head = new Mesh(boxHead, materialHead);
 			this.meshes.comb = new Mesh(boxComb, materialComb);
@@ -194,6 +211,7 @@ export namespace chickens {
 			this.meshes.footl = new Mesh(boxFeet, materialLegs);
 			this.meshes.footr = new Mesh(boxFeet, materialLegs);
 
+			this.groups.neck = new Group;
 			this.groups.head = new Group;
 			this.groups.beak = new Group;
 			this.groups.comb = new Group;
@@ -205,7 +223,9 @@ export namespace chickens {
 			this.groups.footl = new Group;
 			this.groups.footr = new Group;
 			this.groups.ground = new Group;
+			this.groups.basis = new Group;
 
+			this.groups.neck.add(this.meshes.head);
 			this.groups.head.add(this.meshes.head);
 			this.groups.beak.add(this.meshes.beak);
 			this.groups.comb.add(this.meshes.comb);
@@ -219,17 +239,22 @@ export namespace chickens {
 
 			this.groups.head.add(this.groups.beak);
 			this.groups.head.add(this.groups.comb);
+			this.groups.neck.add(this.groups.head);
 			this.groups.legl.add(this.groups.footl);
 			this.groups.legr.add(this.groups.footr);
 
-			this.groups.body.add(this.groups.head);
+			this.groups.body.add(this.groups.neck);
 			this.groups.body.add(this.groups.arml);
 			this.groups.body.add(this.groups.armr);
-			this.groups.body.add(this.groups.legl);
-			this.groups.body.add(this.groups.legr);
+			this.groups.ground.add(this.groups.legl);
+			this.groups.ground.add(this.groups.legr);
 			this.groups.ground.add(this.groups.body);
 
-			this.groups.head.position.set(0, bodyHeight / 2 + headWidth / 2, bodyWidth / 2);
+			this.groups.basis.add(this.groups.ground);
+			this.groups.basis.add(this.meshes.water);
+
+			this.groups.neck.position.set(0, bodyHeight / 2, bodyLength / 3);
+			this.groups.head.position.set(0, headHeight / 2, 0);
 			this.groups.comb.position.set(0, combHeight, combLength / 2);
 			this.groups.beak.position.set(0, 0, beakLength);
 			//this.groups.beak.rotation.set(-Math.PI / 4, 0, 0);
@@ -247,10 +272,10 @@ export namespace chickens {
 			this.groups.arml.rotation.set(0, 0, armsAngle);
 			this.meshes.arml.position.set(0, -armsHeight / 2 + armsWidth / 2, 0);
 
-			this.groups.legl.position.set(-legsWidth / 1, -bodyHeight / 2, 0);
+			this.groups.legl.position.set(-legsWidth / 1, bodyHeight / 2, 0);
 			this.meshes.legl.position.set(0, -legsHeight / 2, 0);
 
-			this.groups.legr.position.set(legsWidth / 1, -bodyHeight / 2, 0);
+			this.groups.legr.position.set(legsWidth / 1, bodyHeight / 2, 0);
 			this.meshes.legr.position.set(0, -legsHeight / 2, 0);
 
 			this.groups.footl.position.set(0, -legsHeight, feetLength / 2);
@@ -259,7 +284,7 @@ export namespace chickens {
 			this.groups.ground.position.set(0, -bodyHeight * 3, 0);
 			//mesh.rotation.set(Math.PI / 2, 0, 0);
 
-			this.scene.add(this.groups.ground);
+			this.scene.add(this.groups.basis);
 
 		}
 		render() {
@@ -284,24 +309,49 @@ export namespace chickens {
 			this.groups.legr.rotation.x = swoop2 * legsSwoop * this.walkSmoother;
 			//this.groups.arml.rotation.x = swoop1 * armsSwoop * this.walkSmoother;
 			//this.groups.armr.rotation.x = swoop2 * armsSwoop * this.walkSmoother;
-			this.groups.head.position.z = 3 + swoop1 * swoop2 * -headBob * this.walkSmoother;
+			this.groups.head.position.z = swoop1 * swoop2 * -headBob * this.walkSmoother;
 			this.groups.ground.position.y = -10 + swoop1 * swoop2 * riser * this.walkSmoother;
 
 			this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
+			
+			if (this.pecking || app.key('q')) {
+				this.groups.neck.rotation.x = 1.0;
+				this.groups.body.rotation.x = 0.6;
+			}
+			else {
+				this.groups.neck.rotation.x = 0;
+				this.groups.body.rotation.x = 0;
+			}
+
+			const sprite = this.shape as sprite;
+			if (this.tile?.type == 'shallow water') {
+				sprite.vars.orderBias = 0.25
+				this.meshes.water.visible = true;
+			}
+			else
+			{
+				sprite.vars.orderBias = 1.0;
+				this.meshes.water.visible = false;
+			}
 
 			this.render();
 		}
-		mousing = false
 		swoop = 0
 		angle = 0
 		walkSmoother = 1
 		randomWalker = 0
+		
 		nettick() {
 
+			//this.netangle = Math.PI / 4;
 			// Net tick can happen offscreen
 
 			//this.wpos = tiles.hovering!.wpos;
 			//this.wpos = wastes.gview.mwpos;
+
+			if (this.pecking) {
+				console.log('we are pecking');
+			}
 
 			if (!pts.together(this.netwpos))
 				this.netwpos = this.wpos;
@@ -337,6 +387,13 @@ export namespace chickens {
 		override setup_context() {
 			win.contextmenu.reset();
 
+			win.contextmenu.options.options.push(["Examine", () => {
+				return true;
+			}, () => {
+				win.descriptor.focus = this;
+				win.descriptor.call_once("Just a chicken!");
+			}]);
+
 		}
 		override tick() {
 
@@ -360,22 +417,25 @@ export namespace chickens {
 
 			// We could have been nulled due to a hide, dispose
 
+
 			if (sprite) {
-				if (sprite.mousedSquare(wastes.gview.mrpos)) {
-					sprite.material.color.set('gray');
-					if (!this.mousing)
-						win.contextmenu.focus = this;
-					this.mousing = true;
-				}
-				else if (!sprite.mousedSquare(wastes.gview.mrpos) && this.mousing) {
-					if (win.contextmenu.focus == this)
-						win.contextmenu.focus = undefined;
-					this.mousing = false;
-					//win.character.toggle(this.mousing);
-				}
-				if (!this.mousing && this.tile && this.tile!.hasDeck) {
+				const setShadow = () => {
 					color = shadows.calc(color, pts.round(this.wpos));
 					sprite.material.color.setRGB(color[0], color[1], color[2]);
+				}
+				if (sprite.mousedSquare(wastes.gview.mrpos)) {
+					sprite.material.color.set(GLOB.HOVER_COLOR);
+					win.contextmenu.focus = this;
+				}
+				else if (!sprite.mousedSquare(wastes.gview.mrpos)) {
+					if (win.contextmenu.focus == this)
+						win.contextmenu.focus = undefined;
+					setShadow();
+				}
+				else if (this.tile && this.tile.hasDeck == false) {
+					setShadow();
+				}
+				else if (!this.tile) {
 				}
 			}
 			else {

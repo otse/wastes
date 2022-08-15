@@ -179,9 +179,7 @@ namespace objects {
 	}
 
 	export function is_solid(pos: vec2) {
-		// If the pos has anything other than the following,
-		// then we are solid (walls)
-		const impassable = ['wall', 'fence', 'deep water'];
+		const impassable = ['wall', 'tree', 'fence', 'deep water'];
 		pos = pts.round(pos);
 		if (tiles.get(pos) == undefined)
 			return true;
@@ -410,7 +408,7 @@ namespace objects {
 		constructor() {
 			super(numbers.floors);
 			this.type = 'tree'
-			this.height = 3;
+			this.height = 24;
 		}
 		override create() {
 			this.tiled();
@@ -418,7 +416,7 @@ namespace objects {
 			let shape = new sprite({
 				binded: this,
 				tuple: sprites.ddeadtreetrunk,
-				orderBias: 0.6,
+				orderBias: 0.7,
 			});
 			this.stack();
 		}
@@ -427,7 +425,7 @@ namespace objects {
 		flowered = false
 		constructor() {
 			super(numbers.trees);
-			this.type = 'decid tree'
+			this.type = 'tree'
 			this.height = 24;
 		}
 		override create() {
@@ -438,7 +436,7 @@ namespace objects {
 			let shape = new sprite({
 				binded: this,
 				tuple: sprites.ddecidtreetrunk,
-				orderBias: 0.6,
+				orderBias: 0.7,
 			});
 			this.stack();
 			const tile = tiles.get(this.wpos)!;

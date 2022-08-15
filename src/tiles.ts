@@ -96,6 +96,7 @@ export namespace tiles {
 		// objs: lod.obj[] = []
 		color: vec4
 		opacity = 1
+		myOrderBias = 1
 		colorPrev
 		constructor(wpos: vec2) {
 			super(numbers.tiles);
@@ -175,13 +176,15 @@ export namespace tiles {
 				this.color = wastes.colormap.pixel(this.wpos).arrayRef;
 				this.color = shadows.calc(this.color, this.wpos);
 			}
+			this.myOrderBias = -0.5;// + (this.z / 4);// + (this.height / 10);
+
 			let shape = new sprite({
 				binded: this,
 				tuple: this.tuple,
 				cell: this.cell,
 				color: this.color,
 				opacity: this.opacity,
-				orderBias: -.5
+				orderBias: this.myOrderBias
 			});
 			// if we have a deck, add it to heightAdd
 			let sector = lod.gworld.at(lod.world.big(this.wpos));
@@ -215,6 +218,7 @@ export namespace tiles {
 			sprite.mesh.material.color.set('red');
 		}
 		tick() {
+			const sprite = this.shape as sprite;
 			if (this.refresh) {
 				this.refresh = false;
 				this.hide();

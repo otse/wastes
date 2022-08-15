@@ -53,6 +53,7 @@ namespace win {
 		dialogue.tick();
 		contextmenu.tick();
 		message.tick();
+		descriptor.tick();
 	}
 
 	class modal {
@@ -292,6 +293,35 @@ namespace win {
 				this.modal.float(this.focusCur, [0, 10]);
 			}
 
+		}
+	}
+
+	export class descriptor {
+		static focus?: lod.obj
+		static focusCur?: lod.obj
+		static modal?: modal
+		static timer = 0
+		static call_once(text: string = 'Examined') {
+			if (this.modal !== undefined) {
+				this.modal.deletor();
+				this.modal = undefined;
+			}
+			if (this.modal == undefined) {
+				this.modal = new modal('descriptor');
+				//this.modal.content.remove();
+				this.modal.content.innerHTML = text;
+				this.focusCur = this.focus;
+				this.timer = Date.now();
+			}
+		}
+		static tick() {
+			if (this.focus?.isActive() && this.modal !== undefined) {
+				this.modal.float(this.focusCur!, [0, 0]);
+			}
+			if (Date.now() - this.timer > 3 * 1000) {
+				this.modal?.deletor();
+				this.modal = undefined;
+			}
 		}
 	}
 

@@ -3,6 +3,7 @@ import aabb2 from "./aabb2";
 
 import app from "./app";
 import collada from "./collada";
+import GLOB from "./glob";
 import lod, { numbers } from "./lod";
 
 import objects from "./objects";
@@ -76,7 +77,7 @@ export namespace pawns {
 				this.created = true;
 
 				// Set scale to increase pixels exponentially
-				const scale = 1;
+				const scale = 10;
 
 				// make wee guy target
 				//this.group = new THREE.Group
@@ -223,7 +224,7 @@ export namespace pawns {
 			let planeWater = new PlaneGeometry(wastes.size * 2, wastes.size * 2);
 			let materialWater = new MeshLambertMaterial({
 				color: new THREE.Color('rgba(32, 64, 64, 255)'),
-				opacity: 0.5,
+				opacity: 0.4,
 				transparent: true,
 				blending: THREE.CustomBlending,
 				blendEquation: THREE.AddEquation,
@@ -472,10 +473,14 @@ export namespace pawns {
 				this.groups.armr.rotation.x = -Math.PI / 2;
 			}
 
+			const sprite = this.shape as sprite;
 			if (this.tile?.type == 'shallow water') {
+				sprite.vars.orderBias = 0.25
 				this.meshes.water.visible = true;
 			}
-			else {
+			else
+			{
+				sprite.vars.orderBias = 1.0;
 				this.meshes.water.visible = false;
 			}
 
@@ -545,10 +550,14 @@ export namespace pawns {
 
 			// We could have been nulled due to a hide, dispose
 			if (sprite) {
+				const setShadow = () => {
+					color = shadows.calc(color, pts.round(this.wpos));
+					sprite.material.color.setRGB(color[0], color[1], color[2]);
+				}
 
 				if (this.type != 'you' && sprite.mousedSquare(wastes.gview.mrpos) /*&& !this.mousing*/) {
 					this.mousing = true;
-					sprite.material.color.set('#6dc97f');
+					sprite.material.color.set(GLOB.HOVER_COLOR);
 					if (this.type != 'you') {
 						win.contextmenu.focus = this;
 					}
@@ -556,11 +565,11 @@ export namespace pawns {
 				else if (!sprite.mousedSquare(wastes.gview.mrpos) && this.mousing) {
 					if (win.contextmenu.focus == this)
 						win.contextmenu.focus = undefined;
+					setShadow();
 					this.mousing = false;
 				}
-				else if (!this.mousing && this.tile && !this.tile.hasDeck) {
-					color = shadows.calc(color, pts.round(this.wpos));
-					sprite.material.color.setRGB(color[0], color[1], color[2]);
+				else if (this.tile && this.tile.hasDeck == false) {
+					setShadow();
 				}
 				else {
 					sprite.material.color.set('white');
