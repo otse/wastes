@@ -67,8 +67,8 @@ export namespace tiles {
 		if (!started)
 			return;
 
-		for (let i = 40; i >= 0; i--) {
-			// pretention grid
+		for (let i = 100; i >= 0; i--) {
+			// The great pretention grid
 			let pos = lod.unproject(pts.add(wastes.gview.mrpos, [0, -i]));
 			pos = pts.floor(pos);
 			const tile = get(pos);

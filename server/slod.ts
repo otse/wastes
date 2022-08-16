@@ -94,7 +94,7 @@ namespace slod {
 		public observers: sgrid[] = []
 		static actives: ssector[] = []
 		readonly small: aabb2;
-		private readonly objs: sobj[] = [];
+		readonly objs: sobj[] = [];
 		constructor(
 			public readonly big: vec2,
 			readonly world: sworld
@@ -107,9 +107,6 @@ namespace slod {
 			numbers.sectors[1]++;
 			world.arrays[this.big[1]][this.big[0]] = this;
 			hooks.call('ssectorCreate', this);
-		}
-		objsro(): ReadonlyArray<sobj> {
-			return this.objs;
 		}
 		observe(grid: sgrid) {
 			this.observers.push(grid);
@@ -268,7 +265,7 @@ namespace slod {
 				let sector = this.shown[i];
 				if (sector.dist(this) > this.outside) {
 					sector.unobserve(this);
-					for (let obj of sector.objsro())
+					for (let obj of sector.objs)
 						this.removes.push(obj.id);
 					sector.hide();
 					this.shown.splice(i, 1);

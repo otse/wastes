@@ -197,6 +197,7 @@ class pawn extends npc {
 	static id = 0
 	outfit: string[] = []
 	aiming = false
+	isPlayer = false
 	constructor() {
 		super();
 		this.type = 'pawn';
@@ -217,6 +218,7 @@ class player extends pawn {
 	constructor() {
 		super();
 		this.type = 'pawn';
+		this.isPlayer = true;
 	}
 	override tick() {
 	}
@@ -230,6 +232,7 @@ class player extends pawn {
 		let upper = super.gather();
 		return {
 			...upper,
+			isPlayer: true
 		};
 	}
 }
@@ -244,6 +247,7 @@ class chicken extends npc {
 	peckChance = 0
 	randomWalker
 	pecking = false
+	sitting = false
 	constructor() {
 		super();
 		this.type = 'chicken';
@@ -256,17 +260,33 @@ class chicken extends npc {
 		let upper = super.gather();
 		return {
 			...upper,
-			pecking: this.pecking
+			pecking: this.pecking,
+			sitting: this.sitting
 		};
 	}
 	override tick() {
-		if (pts.together(this.aimTarget) == 0 && this.walkAgain?.elapsed(4000)) {
-			this.pecking = true;
+		if (pts.together(this.aimTarget) == 0) {
+			if (!this.pecking && !this.sitting && this.walkAgain?.elapsed(5000)) {
+				if (Math.random() > .25) {
+					this.pecking = true;
+					this.walkAgain = new timer(0);
+				}
+				else {
+					this.sitting = true;
+					this.walkAgain = new timer(0);
+				}
+			}
+		}
+
+		if (this.pecking && this.walkAgain?.elapsed(500)) {
+			this.pecking = false;
 			this.walkAgain = new timer(0);
 		}
-		
-		if (this.walkAgain?.elapsed(500)) {
-			this.pecking = false;
+		else if (this.sitting && this.walkAgain?.elapsed(6000)) {
+			this.sitting = false;
+			this.walkAgain = new timer(0);
+		}
+		else if (!this.pecking && !this.sitting) {
 			this.wander();
 		}
 		//this.pecking = false;

@@ -2,22 +2,32 @@
 	z-index: 1;
 	display: block;
 	position: absolute;
-	font-family: 'Poppins', sans-serif;
+	font-family: 'Caveat', 'Shadows Into Light', 'Poppins', sans-serif;
+	font-size: 24px;
 	width: 100%;
 	height: 100%;
 }
 
 .modal {
 	position: absolute;
-	width: 300px;
+	width: 250px;
 	color: black;
 	bborder: 2px gray inset;
 }
 
-.modal.contextmenu {
-	bbackground: red;
-	border: 0;
-	width: 200px;
+.modal .title {
+    margin: 0px;
+    padding: 0px;
+    color: white;
+    border: 2px #d9d9d9 outset;
+    background: #8b8b8b;
+    background: #5454a7;
+}
+
+.modal .content {
+	padding: 6px;
+	background: darkgray;
+	background: #cfcfcf;
 }
 
 .modal.contextmenu .content {
@@ -59,20 +69,6 @@ option.disabled:hover {}
 
 .modal :first-child::before {
 	content: '';
-}
-
-.modal .title {
-	margin: 0px;
-	padding: 4px;
-	color: black;
-	bborder: 1px gray inset;
-	background: #8b8b8b;
-	bbackground: midnightblue;
-}
-
-.modal .content {
-	padding: 4px;
-	background: darkgray;
 }
 
 .modal .button {

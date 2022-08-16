@@ -39,6 +39,7 @@ export namespace chickens {
 		camera
 		created = false
 		pecking = false
+		sitting = false
 		constructor() {
 			super(numbers.chickens);
 			this.type = 'chicken';
@@ -314,7 +315,24 @@ export namespace chickens {
 
 			this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
 			
-			if (this.pecking || app.key('q')) {
+			if (this.sitting || app.key('q')) {
+				this.groups.legl.visible = false;
+				this.groups.legr.visible = false;
+				this.groups.ground.position.y -= 4;
+				this.meshes.body.rotation.set(0.0, 0, 0);
+				this.meshes.arml.rotation.set(0.0, 0, 0);
+				this.meshes.armr.rotation.set(0.0, 0, 0);
+			}
+			else
+			{
+				this.groups.legl.visible = true;
+				this.groups.legr.visible = true;
+				this.meshes.body.rotation.set(-0.3, 0, 0);
+				this.meshes.arml.rotation.set(-0.3, 0, 0);
+				this.meshes.armr.rotation.set(-0.3, 0, 0);
+			}
+
+			if (this.pecking) {
 				this.groups.neck.rotation.x = 1.0;
 				this.groups.body.rotation.x = 0.6;
 			}
@@ -391,7 +409,8 @@ export namespace chickens {
 				return true;
 			}, () => {
 				win.descriptor.focus = this;
-				win.descriptor.call_once("Just a chicken!");
+				win.descriptor.call_once("Just really a chicken.");
+				//win.contextmenu.focus = undefined;
 			}]);
 
 		}

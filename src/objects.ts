@@ -123,7 +123,7 @@ namespace objects {
 					//factory(objects.roof, pixel, pos);
 				}
 				else if (pixel.is_color(color_fence)) {
-					factory(fences.fence, pixel, pos);
+					//factory(fences.fence, pixel, pos);
 				}
 				else if (pixel.is_color(color_decidtree)) {
 					factory(objects.decidtree, pixel, pos, { type: 'decid' });
@@ -444,25 +444,70 @@ namespace objects {
 				this.flowered = true;
 				for (let y = -1; y <= 1; y++)
 					for (let x = -1; x <= 1; x++)
-						if (!(x == 0 && y == 0) /*&& Math.random() > .3*/)
-							factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [x, y]), { type: this.hints.type, tree: this, color: tile.color });
-				factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [0, 0]), { type: this.hints.type, color: tile.color });
-				factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [0, 0]), { type: this.hints.type, color: tile.color });
+						if (!(x == 0 && y == 0))
+							factory(
+								objects.treeleaves,
+								this.pixel,
+								pts.add(this.wpos, [x, y]),
+								{
+									type: this.hints.type,
+									tree: this,
+									color: tile.color,
+									grid: [x, y]
+								});
+				factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [0, 0]), { type: this.hints.type, color: tile.color, noVines: true });
+				factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [0, 0]), { type: this.hints.type, color: tile.color, noVines: true });
 			}
 		}
 	}
 	export class treeleaves extends objected {
 		shaded = false
+		hasVines = false
 		constructor() {
 			super(numbers.leaves);
 			this.type = 'leaves'
 			this.height = 14;
-		}
-		override onhit() { }
 
+			/*if (!this.hints.noVines || Math.random() > 0.5)
+				this.hasVines = true;*/
+		}
+
+		override onhit() {
+
+		}
 		override create() {
+			let pixel = wastes.buildingmap.pixel(this.wpos);
+
+			if (!this.hints.noVines && pixel.arrayRef[3] == 254)
+				this.hasVines = false // true;
+
+			if (pixel.arrayRef[3] == 253)
+				return;
+
 			this.tiled();
-			this.size = [24, 31];
+
+			let tuple = sprites.dtreeleaves;
+
+			if (this.hasVines) {
+				this.size = [24, 64];
+				const grid = this.hints.grid || [0, 0];
+				if (pts.equals(grid, [1, 0]) || pts.equals(grid, [1, 1])) {
+					tuple = sprites.dvines2;
+					//this.hints.color = [0, 0, 0, 255]
+					console.log(' !! using dvines 2 !!');
+				}
+				else if (pts.equals(grid, [0, -1]) || pts.equals(grid, [-1, -1])) {
+					tuple = sprites.dvines3;
+					//this.hints.color = [0, 0, 0, 255]
+				}
+				else {
+					tuple = sprites.dvines;
+				}
+			}
+			else {
+				this.size = [24, 31];
+			}
+			//this.try_create_vines();
 			//if (this.pixel!.array[3] < 240)
 			//	this.cell = [240 - this.pixel!.array[3], 0];
 			let color = this.hints.color || [255, 255, 255, 255];
@@ -478,7 +523,6 @@ namespace objects {
 						color[3],
 					]
 				}
-				let tuple = sprites.dtreeleaves;
 				let shape = new sprite({
 					binded: this,
 					tuple: tuple,
@@ -506,8 +550,13 @@ namespace objects {
 			//console.log('special stack');
 			const tree = this.hints.tree;
 			if (this.shape) {
+				const sprite = this.shape as sprite;
 				this.z = tree.calc + tree.height;
-				(this.shape as sprite).rup = this.z;
+				sprite.rup = this.z;
+
+				if (this.hasVines) {
+					sprite.rup2 = -33;
+				}
 			}
 		}
 	}
@@ -749,6 +798,12 @@ namespace objects {
 			}, () => {
 				//win.container.crate = this;
 				//win.container.call_once();
+			}]);
+			win.contextmenu.options.options.push(["Examine", () => {
+				return pts.distsimple(pawns.you.wpos, this.wpos) < 10;
+			}, () => {
+				win.descriptor.focus = this;
+				win.descriptor.call_once("A shelves with not much on it.");
 			}]);
 		}
 	}

@@ -771,6 +771,7 @@ void main() {
                 super();
                 this.counts = counts;
                 this.type = 'an obj';
+                this.netObj = false;
                 this.wpos = [0, 0];
                 this.rpos = [0, 0];
                 this.size = [100, 100];
@@ -887,6 +888,9 @@ void main() {
         sprites.ddeadtreetrunk = [[24, 50], [24, 50], 0, 'tex/8bit/dtreetrunkdead'];
         sprites.ddecidtreetrunk = [[24, 50], [24, 50], 0, 'tex/8bit/dtreetrunk'];
         sprites.dtreeleaves = [[24, 31], [24, 31], 0, 'tex/8bit/dtreeleaves'];
+        sprites.dvines = [[24, 31], [24, 31], 0, 'tex/8bit/dvines'];
+        sprites.dvines2 = [[24, 31], [24, 31], 0, 'tex/8bit/dvines2'];
+        sprites.dvines3 = [[24, 31], [24, 31], 0, 'tex/8bit/dvines3'];
         //export const dwall: tuple = [[96, 40], [24, 40], 0, 'tex/dwalls']
         sprites.dporch = [[72, 17], [24, 17], 0, 'tex/8bit/dporch'];
         sprites.drails = [[72, 17], [24, 17], 0, 'tex/8bit/drails'];
@@ -5951,6 +5955,22 @@ void main() {
     })(collada || (collada = {}));
     var collada$1 = collada;
 
+    const dialogues = [
+        [
+        //['I spent some of my time sewing suits for wasters.', 3]
+        ],
+        [
+            [`I'm a trader.`, 1],
+            [`It can be hazardous around here. The purple for example is contaminated soil.`, 2],
+            [`It won't hurt, but be wary, the more blighted, the more danger that can usually be found.`, -1],
+        ],
+        [
+            [`I'm a vendor of sifty town.`, 1],
+            [`I trade in most forms of scraps.`, 2],
+            [`.`, 3]
+        ]
+    ];
+
     // allows you to venture far from inclusion hell by letting you assign arbitrary values
     var GLOB = {};
 
@@ -6041,9 +6061,7 @@ void main() {
                         factory(objects.wall, pixel, pos, { type: 'scrappy' });
                         //factory(objects.roof, pixel, pos);
                     }
-                    else if (pixel.is_color(color_fence)) {
-                        factory(fences$1.fence, pixel, pos);
-                    }
+                    else if (pixel.is_color(color_fence)) ;
                     else if (pixel.is_color(color_decidtree)) {
                         factory(objects.decidtree, pixel, pos, { type: 'decid' });
                     }
@@ -6334,10 +6352,15 @@ void main() {
                     this.flowered = true;
                     for (let y = -1; y <= 1; y++)
                         for (let x = -1; x <= 1; x++)
-                            if (!(x == 0 && y == 0) /*&& Math.random() > .3*/)
-                                factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [x, y]), { type: this.hints.type, tree: this, color: tile.color });
-                    factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [0, 0]), { type: this.hints.type, color: tile.color });
-                    factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [0, 0]), { type: this.hints.type, color: tile.color });
+                            if (!(x == 0 && y == 0))
+                                factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [x, y]), {
+                                    type: this.hints.type,
+                                    tree: this,
+                                    color: tile.color,
+                                    grid: [x, y]
+                                });
+                    factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [0, 0]), { type: this.hints.type, color: tile.color, noVines: true });
+                    factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [0, 0]), { type: this.hints.type, color: tile.color, noVines: true });
                 }
             }
         }
@@ -6346,13 +6369,42 @@ void main() {
             constructor() {
                 super(numbers.leaves);
                 this.shaded = false;
+                this.hasVines = false;
                 this.type = 'leaves';
                 this.height = 14;
+                /*if (!this.hints.noVines || Math.random() > 0.5)
+                    this.hasVines = true;*/
             }
-            onhit() { }
+            onhit() {
+            }
             create() {
+                let pixel = wastes.buildingmap.pixel(this.wpos);
+                if (!this.hints.noVines && pixel.arrayRef[3] == 254)
+                    this.hasVines = false; // true;
+                if (pixel.arrayRef[3] == 253)
+                    return;
                 this.tiled();
-                this.size = [24, 31];
+                let tuple = sprites$1.dtreeleaves;
+                if (this.hasVines) {
+                    this.size = [24, 64];
+                    const grid = this.hints.grid || [0, 0];
+                    if (pts.equals(grid, [1, 0]) || pts.equals(grid, [1, 1])) {
+                        tuple = sprites$1.dvines2;
+                        //this.hints.color = [0, 0, 0, 255]
+                        console.log(' !! using dvines 2 !!');
+                    }
+                    else if (pts.equals(grid, [0, -1]) || pts.equals(grid, [-1, -1])) {
+                        tuple = sprites$1.dvines3;
+                        //this.hints.color = [0, 0, 0, 255]
+                    }
+                    else {
+                        tuple = sprites$1.dvines;
+                    }
+                }
+                else {
+                    this.size = [24, 31];
+                }
+                //this.try_create_vines();
                 //if (this.pixel!.array[3] < 240)
                 //	this.cell = [240 - this.pixel!.array[3], 0];
                 let color = this.hints.color || [255, 255, 255, 255];
@@ -6366,7 +6418,6 @@ void main() {
                             color[3],
                         ];
                     }
-                    let tuple = sprites$1.dtreeleaves;
                     new sprite({
                         binded: this,
                         tuple: tuple,
@@ -6393,8 +6444,12 @@ void main() {
                 //console.log('special stack');
                 const tree = this.hints.tree;
                 if (this.shape) {
+                    const sprite = this.shape;
                     this.z = tree.calc + tree.height;
-                    this.shape.rup = this.z;
+                    sprite.rup = this.z;
+                    if (this.hasVines) {
+                        sprite.rup2 = -33;
+                    }
                 }
             }
         }
@@ -6611,6 +6666,12 @@ void main() {
                     }, () => {
                         //win.container.crate = this;
                         //win.container.call_once();
+                    }]);
+                win$1.contextmenu.options.options.push(["Examine", () => {
+                        return pts.distsimple(pawns$1.you.wpos, this.wpos) < 10;
+                    }, () => {
+                        win$1.descriptor.focus = this;
+                        win$1.descriptor.call_once("A shelves with not much on it.");
                     }]);
             }
         }
@@ -6926,30 +6987,38 @@ void main() {
                 hooks.register('viewMClick', (view) => {
                     var _a;
                     (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
-                    //this.modal = undefined;
+                    this.modal = undefined;
                     this.focus = undefined;
                     return false;
                 });
                 hooks.register('viewRClick', (view) => {
-                    var _a, _b;
+                    var _a, _b, _c;
                     console.log('contextmenu on ?', this.focus);
-                    // We have a focus, but no modal
+                    // We have a focus, but no window! This is the easiest scenario.
                     if (this.focus && !this.modal) {
                         this.focus.setup_context();
                         this.focusCur = this.focus;
                         this.open();
                     }
-                    else if (this.modal && this.focus && this.focus != this.focusCur) {
+                    // We click away from any sprites and we have a window: break it
+                    else if (!this.focus && this.modal) { // || this.focus == this.focusCur
                         (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
+                        this.modal = undefined;
+                        this.focusCur = undefined;
+                    }
+                    // We clicked on the already focussed sprite: break it
+                    else if (this.modal && this.focus && this.focus == this.focusCur) {
+                        (_b = this.modal) === null || _b === void 0 ? void 0 : _b.deletor();
+                        this.modal = undefined;
+                        this.focusCur = undefined;
+                    }
+                    // We have an open modal, but focus on a different sprite: recreate it
+                    else if (this.modal && this.focus && this.focus != this.focusCur) {
+                        (_c = this.modal) === null || _c === void 0 ? void 0 : _c.deletor();
+                        this.modal = undefined;
                         this.focus.setup_context();
                         this.focusCur = this.focus;
                         this.open();
-                    }
-                    else if (this.modal) { // || this.focus == this.focusCur
-                        (_b = this.modal) === null || _b === void 0 ? void 0 : _b.deletor();
-                        this.modal = undefined;
-                        //this.focus = undefined;
-                        this.focusCur = undefined;
                     }
                     //else {
                     //	this.modal?.deletor();
@@ -6978,6 +7047,7 @@ void main() {
                         var _a;
                         if (option[1]()) {
                             (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
+                            this.modal = undefined;
                             win_1.hoveringClickableElement = false;
                             option[2]();
                         }
@@ -7004,7 +7074,7 @@ void main() {
             static tick() {
                 if (this.modal && this.focusCur) {
                     this.update();
-                    this.modal.float(this.focusCur, [0, 10]);
+                    this.modal.float(this.focusCur, [0, 0]);
                 }
             }
         }
@@ -7019,6 +7089,7 @@ void main() {
                 }
                 if (this.modal == undefined) {
                     this.modal = new modal('descriptor');
+                    this.modal.title.remove();
                     //this.modal.content.remove();
                     this.modal.content.innerHTML = text;
                     this.focusCur = this.focus;
@@ -7026,12 +7097,12 @@ void main() {
                 }
             }
             static tick() {
-                var _a, _b;
-                if (((_a = this.focus) === null || _a === void 0 ? void 0 : _a.isActive()) && this.modal !== undefined) {
+                var _a;
+                if (this.modal !== undefined) {
                     this.modal.float(this.focusCur, [0, 0]);
                 }
                 if (Date.now() - this.timer > 3 * 1000) {
-                    (_b = this.modal) === null || _b === void 0 ? void 0 : _b.deletor();
+                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
                     this.modal = undefined;
                 }
             }
@@ -7230,11 +7301,8 @@ void main() {
         class pawn extends objects$1.objected {
             constructor() {
                 super(numbers.pawns);
-                this.dialog = [
-                    [`I'm a commoner.`, 1],
-                    [`It can be hazardous around here. The purple for example is contaminated soil.`, 2],
-                    [`Stay clear from the irradiated areas, marked by dead trees.`, -1],
-                ];
+                this.isPlayer = false;
+                this.dialog = dialogues[1];
                 this.netwpos = [0, 0];
                 this.netangle = 0;
                 this.pawntype = 'generic';
@@ -7275,7 +7343,7 @@ void main() {
                 if (!this.created) {
                     this.created = true;
                     // Set scale to increase pixels exponentially
-                    const scale = 10;
+                    const scale = 1;
                     // make wee guy target
                     //this.group = new THREE.Group
                     let size = pts.mult(this.size, scale);
@@ -7312,17 +7380,18 @@ void main() {
             }
             setup_context() {
                 win$1.contextmenu.reset();
-                if (this.type != 'you')
+                if (!this.isPlayer && this.type != 'you') {
                     win$1.contextmenu.options.options.push(["Talk to", () => {
                             return pts.distsimple(pawns.you.wpos, this.wpos) < 1;
                         }, () => {
                             win$1.dialogue.talkingTo = this;
                             win$1.dialogue.call_once();
                         }]);
-                if (this.pawntype == 'trader') {
-                    win$1.contextmenu.options.options.push(["Trade", () => {
-                            return pts.distsimple(pawns.you.wpos, this.wpos) < 1;
-                        }, () => { }]);
+                    if (this.pawntype == 'trader') {
+                        win$1.contextmenu.options.options.push(["Trade", () => {
+                                return pts.distsimple(pawns.you.wpos, this.wpos) < 1;
+                            }, () => { }]);
+                    }
                 }
             }
             make() {
@@ -7400,7 +7469,7 @@ void main() {
                 let materialGunGrip = new MeshLambertMaterial({
                     color: '#768383'
                 });
-
+        
                 let boxGunBarrel = new BoxGeometry(2, gunBarrelHeight, 2, 1, 1, 1);
                 let materialGunBarrel = new MeshLambertMaterial({
                     color: '#768383'
@@ -7484,6 +7553,7 @@ void main() {
                 ren$1.renderer.render(this.scene, this.camera);
             }
             move() {
+                var _a;
                 let speed = 0.038 * ren$1.delta * 60;
                 let x = 0;
                 let y = 0;
@@ -7508,7 +7578,17 @@ void main() {
                         speed *= 5;
                     }
                 }
-                if (this.type == 'you' && (!x && !y) && (app$1.button(0) >= 1 || app$1.key('shift')) && !win$1.hoveringClickableElement) {
+                // We snap to aim onto tiles
+                if (this.type == 'you' && app$1.key('shift') && !win$1.hoveringClickableElement) {
+                    let pos = ((_a = tiles$1.hovering) === null || _a === void 0 ? void 0 : _a.wpos) || [0, 0];
+                    pos = pts.subtract(pos, pawns.you.wpos);
+                    const dist = pts.distsimple(pos, wastes.gview.mwpos);
+                    if (dist > 0.5) {
+                        x = pos[0];
+                        y = -pos[1];
+                    }
+                }
+                else if (this.type == 'you' && (!x && !y) && app$1.button(0) >= 1 && !win$1.hoveringClickableElement) {
                     let mouse = wastes.gview.mwpos;
                     let pos = this.wpos;
                     pos = pts.add(pos, pts.divide([1, 1], 2));
@@ -7718,8 +7798,8 @@ void main() {
         function tick() {
             if (!tiles.started)
                 return;
-            for (let i = 40; i >= 0; i--) {
-                // pretention grid
+            for (let i = 100; i >= 0; i--) {
+                // The great pretention grid
                 let pos = lod$1.unproject(pts.add(wastes.gview.mrpos, [0, -i]));
                 pos = pts.floor(pos);
                 const tile = get(pos);
@@ -8426,6 +8506,7 @@ void main() {
                 this.netangle = 0;
                 this.created = false;
                 this.pecking = false;
+                this.sitting = false;
                 //override setup_context() {
                 //	win.contextmenu.reset();
                 //}
@@ -8646,7 +8727,22 @@ void main() {
                 this.groups.head.position.z = swoop1 * swoop2 * -headBob * this.walkSmoother;
                 this.groups.ground.position.y = -10 + swoop1 * swoop2 * riser * this.walkSmoother;
                 this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
-                if (this.pecking || app$1.key('q')) {
+                if (this.sitting || app$1.key('q')) {
+                    this.groups.legl.visible = false;
+                    this.groups.legr.visible = false;
+                    this.groups.ground.position.y -= 4;
+                    this.meshes.body.rotation.set(0.0, 0, 0);
+                    this.meshes.arml.rotation.set(0.0, 0, 0);
+                    this.meshes.armr.rotation.set(0.0, 0, 0);
+                }
+                else {
+                    this.groups.legl.visible = true;
+                    this.groups.legr.visible = true;
+                    this.meshes.body.rotation.set(-0.3, 0, 0);
+                    this.meshes.arml.rotation.set(-0.3, 0, 0);
+                    this.meshes.armr.rotation.set(-0.3, 0, 0);
+                }
+                if (this.pecking) {
                     this.groups.neck.rotation.x = 1.0;
                     this.groups.body.rotation.x = 0.6;
                 }
@@ -8702,7 +8798,8 @@ void main() {
                         return true;
                     }, () => {
                         win$1.descriptor.focus = this;
-                        win$1.descriptor.call_once("Just a chicken!");
+                        win$1.descriptor.call_once("Just really a chicken.");
+                        //win.contextmenu.focus = undefined;
                     }]);
             }
             tick() {
@@ -8805,6 +8902,8 @@ void main() {
                         obj.wpos = wpos;
                         obj.angle = angle;
                         obj.outfit = outfit;
+                        if (sobj.isPlayer)
+                            obj.isPlayer = true;
                     }, (obj, sobj) => {
                         if (obj.type == 'you')
                             return;
@@ -8815,14 +8914,16 @@ void main() {
                         //obj.sector?.swap(obj);
                     });
                     process_news(chickens$1.chicken, 'chicken', data, (obj, sobj) => {
-                        const { wpos, angle } = sobj;
+                        const { wpos, angle, sitting } = sobj;
                         obj.wpos = wpos;
                         obj.angle = angle;
+                        obj.sitting = sitting;
                     }, (obj, sobj) => {
-                        const { wpos, angle, pecking } = sobj;
+                        const { wpos, angle, pecking, sitting } = sobj;
                         obj.netwpos = wpos;
                         obj.netangle = angle;
                         obj.pecking = pecking;
+                        obj.sitting = sitting;
                     });
                 }
                 if (data.player) {
@@ -8843,7 +8944,13 @@ void main() {
             };
             setInterval(() => {
                 if (pawns$1.you) {
-                    const json = { player: { wpos: pawns$1.you.wpos, angle: pawns$1.you.angle, aiming: pawns$1.you.aiming } };
+                    const json = {
+                        player: {
+                            wpos: pawns$1.you.wpos,
+                            angle: pawns$1.you.angle,
+                            aiming: pawns$1.you.aiming
+                        }
+                    };
                     const string = JSON.stringify(json);
                     client.socket.send(string);
                 }
@@ -8863,16 +8970,7 @@ void main() {
             create() {
                 this.tiled();
                 this.size = [24, 30];
-                this.cell = [255 - this.pixel.arrayRef[3], 0];
-                sprites$1.dscrappywalls;
-                new sprite({
-                    binded: this,
-                    tuple: sprites$1.dfence,
-                    cell: this.cell,
-                    orderBias: .6,
-                });
-                fence.make();
-                this.stack();
+                return;
             }
             static make() {
                 if (!this.made) {

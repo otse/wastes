@@ -26,6 +26,11 @@ export namespace sprites {
 	export const ddeadtreetrunk: tuple = [[24, 50], [24, 50], 0, 'tex/8bit/dtreetrunkdead']
 	export const ddecidtreetrunk: tuple = [[24, 50], [24, 50], 0, 'tex/8bit/dtreetrunk']
 	export const dtreeleaves: tuple = [[24, 31], [24, 31], 0, 'tex/8bit/dtreeleaves']
+
+	export const dvines: tuple = [[24, 31], [24, 31], 0, 'tex/8bit/dvines']
+	export const dvines2: tuple = [[24, 31], [24, 31], 0, 'tex/8bit/dvines2']
+	export const dvines3: tuple = [[24, 31], [24, 31], 0, 'tex/8bit/dvines3']
+	
 	//export const dwall: tuple = [[96, 40], [24, 40], 0, 'tex/dwalls']
 	export const dporch: tuple = [[72, 17], [24, 17], 0, 'tex/8bit/dporch']
 	export const drails: tuple = [[72, 17], [24, 17], 0, 'tex/8bit/drails']

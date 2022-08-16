@@ -43,7 +43,7 @@ export namespace client {
 					handle(obj, sobj);
 					lod.add(obj);
 				}
-				else if (obj) {		
+				else if (obj) {
 					update(obj, sobj);
 				}
 			}
@@ -69,6 +69,8 @@ export namespace client {
 						obj.wpos = wpos;
 						obj.angle = angle;
 						obj.outfit = outfit;
+						if (sobj.isPlayer)
+							obj.isPlayer = true;
 					},
 					(obj, sobj) => {
 						if (obj.type == 'you')
@@ -82,15 +84,17 @@ export namespace client {
 
 				process_news(chickens.chicken, 'chicken', data,
 					(obj, sobj) => {
-						const { wpos, angle } = sobj;
+						const { wpos, angle, sitting } = sobj;
 						obj.wpos = wpos;
 						obj.angle = angle;
+						obj.sitting = sitting;
 					},
 					(obj, sobj) => {
-						const { wpos, angle, pecking } = sobj;						
+						const { wpos, angle, pecking, sitting } = sobj;
 						obj.netwpos = wpos;
 						obj.netangle = angle;
 						obj.pecking = pecking;
+						obj.sitting = sitting;
 					});
 			}
 
@@ -115,7 +119,14 @@ export namespace client {
 
 		setInterval(() => {
 			if (pawns.you) {
-				const json = { player: { wpos: pawns.you.wpos, angle: pawns.you.angle, aiming: pawns.you.aiming } };
+				const json = {
+					player:
+					{
+						wpos: pawns.you.wpos,
+						angle: pawns.you.angle,
+						aiming: pawns.you.aiming
+					}
+				};
 				const string = JSON.stringify(json);
 				socket.send(string);
 			}

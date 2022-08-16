@@ -16,6 +16,7 @@ export namespace fences {
 		override create() {
 			this.tiled();
 			this.size = [24, 30];
+			return;
 			this.cell = [255 - this.pixel!.arrayRef[3], 0];
 			let tuple = sprites.dscrappywalls;
 			let shape = new sprite({

@@ -153,24 +153,6 @@ namespace win {
 		}
 	}
 
-	type speech = [text: string, follow: number]
-
-	const dialogues: speech[][] = [
-		[
-			//['I spent some of my time sewing suits for wasters.', 3]
-		],
-		[
-			[`I'm a trader.`, 1],
-			[`It can be hazardous around here. The purple for example is contaminated soil.`, 2],
-			[`Stay clear from the irradiated areas, marked by dead trees.`, -1],
-		],
-		[
-			[`I'm a vendor of sifty town.`, 1],
-			[`I trade in most forms of scraps.`, 2],
-			[`.`, 3]
-		]
-	]
-
 	export class you {
 		static modal?: modal
 		static call(open: boolean) {
@@ -211,7 +193,7 @@ namespace win {
 		static init() {
 			hooks.register('viewMClick', (view) => {
 				this.modal?.deletor();
-				//this.modal = undefined;
+				this.modal = undefined;
 				this.focus = undefined;
 				return false;
 			});
@@ -219,23 +201,31 @@ namespace win {
 			hooks.register('viewRClick', (view) => {
 				console.log('contextmenu on ?', this.focus);
 
-				// We have a focus, but no modal
+				// We have a focus, but no window! This is the easiest scenario.
 				if (this.focus && !this.modal) {
 					this.focus.setup_context();
 					this.focusCur = this.focus;
 					this.open();
 				}
-				else if (this.modal && this.focus && this.focus != this.focusCur) {
-					this.modal?.deletor();
-					this.focus.setup_context();
-					this.focusCur = this.focus;
-					this.open();
-				}
-				else if (this.modal) { // || this.focus == this.focusCur
+				// We click away from any sprites and we have a window: break it
+				else if (!this.focus && this.modal) { // || this.focus == this.focusCur
 					this.modal?.deletor();
 					this.modal = undefined;
-					//this.focus = undefined;
 					this.focusCur = undefined;
+				}
+				// We clicked on the already focussed sprite: break it
+				else if (this.modal && this.focus && this.focus == this.focusCur) {
+					this.modal?.deletor();
+					this.modal = undefined;
+					this.focusCur = undefined;
+				}
+				// We have an open modal, but focus on a different sprite: recreate it
+				else if (this.modal && this.focus && this.focus != this.focusCur) {
+					this.modal?.deletor();
+					this.modal = undefined;
+					this.focus!.setup_context();
+					this.focusCur = this.focus;
+					this.open();
 				}
 				//else {
 				//	this.modal?.deletor();
@@ -264,6 +254,7 @@ namespace win {
 				button.onclick = (e) => {
 					if (option[1]()) {
 						this.modal?.deletor();
+						this.modal = undefined;
 						hoveringClickableElement = false;
 						option[2]();
 					}
@@ -290,7 +281,7 @@ namespace win {
 		static tick() {
 			if (this.modal && this.focusCur) {
 				this.update();
-				this.modal.float(this.focusCur, [0, 10]);
+				this.modal.float(this.focusCur, [0, 0]);
 			}
 
 		}
@@ -308,6 +299,7 @@ namespace win {
 			}
 			if (this.modal == undefined) {
 				this.modal = new modal('descriptor');
+				this.modal.title.remove();
 				//this.modal.content.remove();
 				this.modal.content.innerHTML = text;
 				this.focusCur = this.focus;
@@ -315,7 +307,7 @@ namespace win {
 			}
 		}
 		static tick() {
-			if (this.focus?.isActive() && this.modal !== undefined) {
+			if (this.modal !== undefined) {
 				this.modal.float(this.focusCur!, [0, 0]);
 			}
 			if (Date.now() - this.timer > 3 * 1000) {

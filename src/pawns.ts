@@ -3,6 +3,7 @@ import aabb2 from "./aabb2";
 
 import app from "./app";
 import collada from "./collada";
+import dialogues from "./dialogue";
 import GLOB from "./glob";
 import lod, { numbers } from "./lod";
 
@@ -25,11 +26,8 @@ export namespace pawns {
 
 	export class pawn extends objects.objected {
 		static noun = 'pawn'
-		dialog = [
-			[`I'm a commoner.`, 1],
-			[`It can be hazardous around here. The purple for example is contaminated soil.`, 2],
-			[`Stay clear from the irradiated areas, marked by dead trees.`, -1],
-		]
+		isPlayer = false
+		dialog = dialogues[1]
 		netwpos: vec2 = [0, 0]
 		netangle = 0
 		pawntype = 'generic'
@@ -77,7 +75,7 @@ export namespace pawns {
 				this.created = true;
 
 				// Set scale to increase pixels exponentially
-				const scale = 10;
+				const scale = 1;
 
 				// make wee guy target
 				//this.group = new THREE.Group
@@ -124,21 +122,22 @@ export namespace pawns {
 		}
 		override setup_context() {
 			win.contextmenu.reset();
-			if (this.type != 'you')
+			if (!this.isPlayer && this.type != 'you') {
 				win.contextmenu.options.options.push(["Talk to", () => {
 					return pts.distsimple(you.wpos, this.wpos) < 1;
 				}, () => {
 					win.dialogue.talkingTo = this;
 					win.dialogue.call_once();
 				}]);
-			if (this.pawntype == 'trader') {
-				win.contextmenu.options.options.push(["Trade", () => {
-					return pts.distsimple(you.wpos, this.wpos) < 1;
-				}, () => { }]);
-			}
-			else {
+				if (this.pawntype == 'trader') {
+					win.contextmenu.options.options.push(["Trade", () => {
+						return pts.distsimple(you.wpos, this.wpos) < 1;
+					}, () => { }]);
+				}
+				else {
 
-				//win.contextmenu.options.options.push("See inventory");
+					//win.contextmenu.options.options.push("See inventory");
+				}
 			}
 		}
 		groups: any = {}
@@ -236,7 +235,7 @@ export namespace pawns {
 			let materialGunGrip = new MeshLambertMaterial({
 				color: '#768383'
 			});
-
+	
 			let boxGunBarrel = new BoxGeometry(2, gunBarrelHeight, 2, 1, 1, 1);
 			let materialGunBarrel = new MeshLambertMaterial({
 				color: '#768383'
@@ -372,7 +371,21 @@ export namespace pawns {
 				}
 			}
 
-			if (this.type == 'you' && (!x && !y) && (app.button(0) >= 1 || app.key('shift')) && !win.hoveringClickableElement) {
+			const wposBasedAiming = true;
+
+
+			// We snap to aim onto tiles
+			if (this.type == 'you' && app.key('shift') && !win.hoveringClickableElement) {
+				wasd = false;
+				let pos = tiles.hovering?.wpos || [0, 0];
+				pos = pts.subtract(pos, pawns.you.wpos);
+				const dist = pts.distsimple(pos, wastes.gview.mwpos);
+				if (dist > 0.5) {
+					x = pos[0];
+					y = -pos[1];
+				}
+			}
+			else if (this.type == 'you' && (!x && !y) && app.button(0) >= 1 && !win.hoveringClickableElement) {
 				// Deduce x and y from click moving
 				wasd = false;
 				let mouse = wastes.gview.mwpos;
@@ -478,8 +491,7 @@ export namespace pawns {
 				sprite.vars.orderBias = 0.25
 				this.meshes.water.visible = true;
 			}
-			else
-			{
+			else {
 				sprite.vars.orderBias = 1.0;
 				this.meshes.water.visible = false;
 			}
