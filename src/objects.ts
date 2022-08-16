@@ -195,6 +195,7 @@ namespace objects {
 
 	export class objected extends lod.obj {
 		static focus: objected
+		id = 'an_objected_0'
 		isObjected = true
 		paintTimer = 0
 		paintedRed = false
@@ -739,7 +740,7 @@ namespace objects {
 			win.contextmenu.options.options.push(["See contents", () => {
 				return pts.distsimple(pawns.you.wpos, this.wpos) < 1;
 			}, () => {
-				win.container.crate = this;
+				win.container.focus = this;
 				win.container.call_once();
 			}]);
 		}
@@ -790,7 +791,7 @@ namespace objects {
 			win.contextmenu.options.options.push(["See contents", () => {
 				return pts.distsimple(pawns.you.wpos, this.wpos) < 1;
 			}, () => {
-				win.container.crate = this;
+				win.container.focus = this;
 				win.container.call_once();
 			}]);
 			win.contextmenu.options.options.push(["Store", () => {

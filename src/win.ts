@@ -373,24 +373,33 @@ namespace win {
 	}
 
 	export class container {
-		static crate?: objects.objected
-		static crateCur?: objects.objected
+		static focus?: objects.objected
+		static focusCur?: objects.objected
 		//static obj?: lod.obj
 		static modal?: modal
 		static call_once() {
-			if (this.crate != this.crateCur) {
+
+			// We are trying to open a different container
+			if (this.modal !== undefined)
+			{
 				this.modal?.deletor();
 				this.modal = undefined;
-				this.crateCur = undefined;
+				this.focusCur = undefined;
 			}
 
-			if (this.crate) {
-				this.crateCur = this.crate;
+			/*if (this.modal !== undefined && this.focus != this.focusCur) {
+				this.modal?.deletor();
+				this.modal = undefined;
+				this.focusCur = undefined;
+			}*/
+
+			if (this.focus) {
+				this.focusCur = this.focus;
 
 				this.modal = new modal('container');
 				this.modal.content.innerHTML = ''
 
-				const cast = this.crate as objects.crate;
+				const cast = this.focus as objects.crate;
 
 				for (let tuple of cast.container.tuples) {
 					let item = document.createElement('div');
@@ -461,11 +470,11 @@ namespace win {
 			}
 		}*/
 		static tick() {
-			if (this.modal && this.crateCur) {
-				this.modal.float(this.crateCur);
+			if (this.modal && this.focusCur) {
+				this.modal.float(this.focusCur);
 			}
-			if (this.crateCur && pts.distsimple(pawns.you.wpos, this.crateCur.wpos) > 1) {
-				this.crateCur = undefined;
+			if (this.focusCur && pts.distsimple(pawns.you.wpos, this.focusCur.wpos) > 1) {
+				this.focusCur = undefined;
 				this.modal?.deletor();
 				this.modal = undefined;
 			}

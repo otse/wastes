@@ -13,6 +13,8 @@ export namespace client {
 
 	export var playerId = -1;
 
+	export var talkingToId = ''
+
 	export function tick() {
 		for (let id in sobjs) {
 			let obj = sobjs[id] as objects.objected;
@@ -40,6 +42,8 @@ export namespace client {
 				if (!obj) {
 					console.log('new sobj', typed, id);
 					obj = sobjs[id] = new type;
+					obj.id = id;
+					obj.netObj = true;
 					handle(obj, sobj);
 					lod.add(obj);
 				}
@@ -84,7 +88,8 @@ export namespace client {
 
 				process_news(chickens.chicken, 'chicken', data,
 					(obj, sobj) => {
-						const { wpos, angle, sitting } = sobj;
+						const { id, wpos, angle, sitting } = sobj;
+						obj.id = id;
 						obj.wpos = wpos;
 						obj.angle = angle;
 						obj.sitting = sitting;
@@ -105,7 +110,7 @@ export namespace client {
 					pawns.you = pawn as pawns.pawn;
 					pawn.type = 'you';
 					console.log('we got our pawn', playerId);
-					wastes.gview.center = pawn
+					wastes.gview.center = pawn;
 				}
 			}
 
@@ -119,14 +124,18 @@ export namespace client {
 
 		setInterval(() => {
 			if (pawns.you) {
-				const json = {
+				let json: any = {
 					player:
 					{
 						wpos: pawns.you.wpos,
 						angle: pawns.you.angle,
-						aiming: pawns.you.aiming
+						aiming: pawns.you.aiming,
 					}
 				};
+				if (talkingToId) {
+					json.talkingToId = talkingToId;
+					talkingToId = '';
+				}
 				const string = JSON.stringify(json);
 				socket.send(string);
 			}

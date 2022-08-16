@@ -770,6 +770,7 @@ void main() {
             constructor(counts = numbers.objs) {
                 super();
                 this.counts = counts;
+                this.id = '';
                 this.type = 'an obj';
                 this.netObj = false;
                 this.wpos = [0, 0];
@@ -1316,6 +1317,1817 @@ void main() {
         shadows.tick = tick;
     })(shadows || (shadows = {}));
     var shadows$1 = shadows;
+
+    var win;
+    (function (win_1) {
+        var win;
+        var toggle_character = false;
+        win_1.hoveringClickableElement = false;
+        win_1.started = false;
+        function start() {
+            win_1.started = true;
+            win = document.getElementById('win');
+            contextmenu.init();
+            setTimeout(() => {
+                //message.message("Welcome", 1000);
+            }, 1000);
+        }
+        win_1.start = start;
+        function tick() {
+            if (!win_1.started)
+                return;
+            if (app$1.key('c') == 1) {
+                toggle_character = !toggle_character;
+                character.call(toggle_character);
+            }
+            if (app$1.key('b') == 1) ;
+            you.tick();
+            character.tick();
+            container.tick();
+            dialogue.tick();
+            contextmenu.tick();
+            message.tick();
+            descriptor.tick();
+        }
+        win_1.tick = tick;
+        class modal {
+            constructor(title) {
+                this.element = document.createElement('div');
+                this.element.className = 'modal';
+                //this.element.append('inventory')
+                if (title) {
+                    this.title = document.createElement('div');
+                    this.title.innerHTML = title;
+                    this.title.className = 'title';
+                    this.element.append(this.title);
+                }
+                this.content = document.createElement('div');
+                this.content.className = 'content';
+                this.content.innerHTML = 'content';
+                this.element.append(this.content);
+                win.append(this.element);
+            }
+            update(title) {
+                if (title)
+                    this.title.innerHTML = title;
+            }
+            reposition(pos) {
+                const round = pts.floor(pos);
+                this.element.style.top = round[1];
+                this.element.style.left = round[0];
+            }
+            deletor() {
+                this.element.remove();
+            }
+            float(anchor, add = [0, 0]) {
+                //let pos = this.anchor.rtospos([-1.5, 2.5]);
+                let pos = anchor.rtospos();
+                pos = pts.add(pos, add);
+                pos = pts.add(pos, pts.divide(anchor.size, 2));
+                //pos = pts.add(pos, this.anchor.size);
+                //let pos = this.anchor.aabbScreen.center();
+                //let pos = lod.project(wastes.gview.mwpos);
+                pos = pts.subtract(pos, wastes.gview.rpos);
+                pos = pts.divide(pos, wastes.gview.zoom);
+                pos = pts.divide(pos, ren$1.ndpi);
+                //pos = pts.add(pos, pts.divide(ren.screenCorrected, 2));
+                //pos[1] -= ren.screenCorrected[1] / 2;
+                this.reposition([ren$1.screen[0] / 2 + pos[0], ren$1.screen[1] / 2 - pos[1]]);
+            }
+        }
+        class character {
+            static call(open) {
+                var _a, _b;
+                this.open = open;
+                if (open && !this.modal) {
+                    this.modal = new modal('you');
+                    //this.modal.reposition(['100px', '30%']);
+                    this.modal.content.innerHTML = 'stats:<br />effectiveness: 100%<br /><hr>';
+                    this.modal.content.innerHTML += 'inventory:<br />';
+                    //inventory
+                    const inventory = (_a = pawns$1.you) === null || _a === void 0 ? void 0 : _a.inventory;
+                    if (inventory) {
+                        for (let tuple of inventory.tuples) {
+                            let button = document.createElement('div');
+                            //button.innerHTML = `<img width="20" height="20" src="tex/items/${tuple[0]}.png">`;
+                            button.innerHTML += tuple[0];
+                            if (tuple[1] > 1) {
+                                button.innerHTML += ` <span>×${tuple[1]}</span>`;
+                            }
+                            button.className = 'item';
+                            this.modal.content.append(button);
+                        }
+                    }
+                    this.modal.content.innerHTML += '<hr>guns:<br />';
+                    if (pawns$1.you.gun)
+                        this.modal.content.innerHTML += `<img class="gun" src="tex/guns/${pawns$1.you.gun}.png">`;
+                }
+                else if (!open && this.modal) {
+                    (_b = this.modal) === null || _b === void 0 ? void 0 : _b.deletor();
+                    this.modal = undefined;
+                }
+            }
+            static tick() {
+                var _a;
+                if (this.open) {
+                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.float(pawns$1.you, [15, 20]);
+                }
+            }
+        }
+        character.open = false;
+        win_1.character = character;
+        class you {
+            static call(open) {
+                var _a;
+                if (open && !this.modal) {
+                    this.modal = new modal('you');
+                    this.modal.element.classList.add('you');
+                    this.modal.content.remove();
+                }
+                else if (!open && this.modal) {
+                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
+                    this.modal = undefined;
+                }
+            }
+            static tick() {
+                if (pawns$1.you && !pawns$1.you.isActive()) {
+                    this.call(true);
+                    this.modal.float(pawns$1.you, [-5, 5]);
+                    console.log('call and float');
+                }
+                else {
+                    this.call(false);
+                }
+            }
+        }
+        win_1.you = you;
+        class contextmenu {
+            static reset() {
+                this.buttons = [];
+                this.options.options = [];
+            }
+            static init() {
+                hooks.register('viewMClick', (view) => {
+                    var _a;
+                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
+                    this.modal = undefined;
+                    this.focus = undefined;
+                    return false;
+                });
+                hooks.register('viewRClick', (view) => {
+                    var _a, _b, _c;
+                    console.log('contextmenu on ?', this.focus);
+                    // We have a focus, but no window! This is the easiest scenario.
+                    if (this.focus && !this.modal) {
+                        this.focus.setup_context();
+                        this.focusCur = this.focus;
+                        this.open();
+                    }
+                    // We click away from any sprites and we have a window: break it
+                    else if (!this.focus && this.modal) { // || this.focus == this.focusCur
+                        (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
+                        this.modal = undefined;
+                        this.focusCur = undefined;
+                    }
+                    // We clicked on the already focussed sprite: break it
+                    else if (this.modal && this.focus && this.focus == this.focusCur) {
+                        (_b = this.modal) === null || _b === void 0 ? void 0 : _b.deletor();
+                        this.modal = undefined;
+                        this.focusCur = undefined;
+                    }
+                    // We have an open modal, but focus on a different sprite: recreate it
+                    else if (this.modal && this.focus && this.focus != this.focusCur) {
+                        (_c = this.modal) === null || _c === void 0 ? void 0 : _c.deletor();
+                        this.modal = undefined;
+                        this.focus.setup_context();
+                        this.focusCur = this.focus;
+                        this.open();
+                    }
+                    //else {
+                    //	this.modal?.deletor();
+                    //	this.focusCur = undefined;
+                    //}
+                    return false;
+                });
+            }
+            static destroy() {
+                var _a;
+                (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
+                //this.focusCur = undefined;
+            }
+            static open() {
+                this.modal = new modal(this.focus.type);
+                this.modal.content.innerHTML = '';
+                this.modal.element.classList.add('contextmenu');
+                for (let option of this.options.options) {
+                    let button = document.createElement('div');
+                    button.innerHTML = option[0] + "&nbsp;";
+                    //if (tuple[1] > 1) {
+                    //	button.innerHTML += ` <span>×${tuple[1]}</span>`
+                    //}
+                    button.className = 'option';
+                    button.onclick = (e) => {
+                        var _a;
+                        if (option[1]()) {
+                            (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
+                            this.modal = undefined;
+                            win_1.hoveringClickableElement = false;
+                            option[2]();
+                        }
+                    };
+                    button.onmouseover = () => { win_1.hoveringClickableElement = true; };
+                    button.onmouseleave = () => { win_1.hoveringClickableElement = false; };
+                    this.modal.content.append(button);
+                    this.buttons.push([button, option]);
+                }
+            }
+            static update() {
+                //console.log('focusCur', this.focusCur);
+                for (let button of this.buttons) {
+                    const element = button[0];
+                    const option = button[1];
+                    if (!option[1]()) {
+                        element.classList.add('disabled');
+                    }
+                    else {
+                        element.classList.remove('disabled');
+                    }
+                }
+            }
+            static tick() {
+                if (this.modal && this.focusCur) {
+                    this.update();
+                    this.modal.float(this.focusCur, [0, 0]);
+                }
+            }
+        }
+        contextmenu.buttons = [];
+        contextmenu.options = { options: [] };
+        win_1.contextmenu = contextmenu;
+        class descriptor {
+            static call_once(text = 'Examined') {
+                if (this.modal !== undefined) {
+                    this.modal.deletor();
+                    this.modal = undefined;
+                }
+                if (this.modal == undefined) {
+                    this.modal = new modal('descriptor');
+                    this.modal.title.remove();
+                    //this.modal.content.remove();
+                    this.modal.content.innerHTML = text;
+                    this.focusCur = this.focus;
+                    this.timer = Date.now();
+                }
+            }
+            static tick() {
+                var _a;
+                if (this.modal !== undefined) {
+                    this.modal.float(this.focusCur, [0, 0]);
+                }
+                if (Date.now() - this.timer > 3 * 1000) {
+                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
+                    this.modal = undefined;
+                }
+            }
+        }
+        descriptor.timer = 0;
+        win_1.descriptor = descriptor;
+        class dialogue {
+            static call_once() {
+                var _a;
+                if (this.talkingTo != this.talkingToCur) {
+                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
+                    this.modal = undefined;
+                    this.talkingToCur = undefined;
+                }
+                if (this.talkingTo && !this.modal) {
+                    this.talkingToCur = this.talkingTo;
+                    this.modal = new modal();
+                    this.where[1] = 0;
+                    this.change();
+                }
+            }
+            static change() {
+                this.modal.content.innerHTML = this.talkingToCur.dialog[this.where[1]][0] + "&nbsp;";
+                const next = this.talkingToCur.dialog[this.where[1]][1];
+                if (next != -1) {
+                    let button = document.createElement('div');
+                    button.innerHTML = '>>';
+                    button.className = 'button';
+                    this.modal.content.append(button);
+                    button.onclick = (e) => {
+                        console.log('woo');
+                        this.where[1] = next;
+                        win_1.hoveringClickableElement = false;
+                        this.change();
+                        //button.remove();
+                    };
+                    button.onmouseover = () => { win_1.hoveringClickableElement = true; };
+                    button.onmouseleave = () => { win_1.hoveringClickableElement = false; };
+                }
+            }
+            static tick() {
+                var _a;
+                if (this.modal && this.talkingToCur) {
+                    this.modal.float(this.talkingToCur, [0, 10]);
+                }
+                if (this.talkingToCur && pts.distsimple(pawns$1.you.wpos, this.talkingToCur.wpos) > 1) {
+                    this.talkingToCur = undefined;
+                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
+                    this.modal = undefined;
+                }
+            }
+        }
+        dialogue.where = [0, 0];
+        win_1.dialogue = dialogue;
+        class container {
+            static call_once() {
+                var _a;
+                // We are trying to open a different container
+                if (this.modal !== undefined) {
+                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
+                    this.modal = undefined;
+                    this.focusCur = undefined;
+                }
+                /*if (this.modal !== undefined && this.focus != this.focusCur) {
+                    this.modal?.deletor();
+                    this.modal = undefined;
+                    this.focusCur = undefined;
+                }*/
+                if (this.focus) {
+                    this.focusCur = this.focus;
+                    this.modal = new modal('container');
+                    this.modal.content.innerHTML = '';
+                    const cast = this.focus;
+                    for (let tuple of cast.container.tuples) {
+                        let item = document.createElement('div');
+                        item.innerHTML = tuple[0];
+                        if (tuple[1] > 1) {
+                            item.innerHTML += ` <span>×${tuple[1]}</span>`;
+                        }
+                        item.className = 'item';
+                        this.modal.content.append(item);
+                        item.onclick = (e) => {
+                            var _a;
+                            console.log('woo');
+                            item.remove();
+                            cast.container.remove(tuple[0]);
+                            (_a = pawns$1.you) === null || _a === void 0 ? void 0 : _a.inventory.add(tuple[0]);
+                            win_1.hoveringClickableElement = false;
+                        };
+                        item.onmouseover = () => { win_1.hoveringClickableElement = true; };
+                        item.onmouseleave = () => { win_1.hoveringClickableElement = false; };
+                        //this.modal.content.innerHTML += item + '<br />';
+                    }
+                }
+            }
+            /*static call(open: boolean, obj?: lod.obj, refresh = false) {
+                //this.anchor = obj;
+                if (!this.obj) {
+                    this.obj = new lod.obj;
+                    this.obj.size = [24, 40];
+                    this.obj.wpos = [38, 49];
+                }
+
+                if (open && !this.modal) {
+                    this.modal = new modal('container');
+                }
+                else if (!open && this.modal) {
+                    this.modal?.deletor();
+                    this.obj = undefined;
+                    this.modal = undefined;
+                }
+
+                if (this.modal && obj != this.obj) {
+                    if (obj) {
+                        this.obj = obj;
+                        this.modal.update(obj.type + ' contents');
+                    }
+                    this.modal.content.innerHTML = ''
+
+                    const cast = this.obj as objects.crate;
+                    for (let tuple of cast.container.tuples) {
+                        let button = document.createElement('div');
+                        button.innerHTML = tuple[0];
+                        if (tuple[1] > 1) {
+                            button.innerHTML += ` <span>×${tuple[1]}</span>`
+                        }
+                        button.className = 'item';
+                        this.modal.content.append(button);
+
+                        button.onclick = (e) => {
+                            console.log('woo');
+                            button.remove();
+                            cast.container.remove(tuple[0]);
+                            pawns.you?.inventory.add(tuple[0]);
+                        };
+
+                        //this.modal.content.innerHTML += item + '<br />';
+                    }
+                }
+            }*/
+            static tick() {
+                var _a;
+                if (this.modal && this.focusCur) {
+                    this.modal.float(this.focusCur);
+                }
+                if (this.focusCur && pts.distsimple(pawns$1.you.wpos, this.focusCur.wpos) > 1) {
+                    this.focusCur = undefined;
+                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
+                    this.modal = undefined;
+                }
+            }
+        }
+        win_1.container = container;
+        class areatag {
+            static call(open, area, refresh = false) {
+                if (open) {
+                    console.log('boo');
+                    let element = document.createElement('div');
+                    element.className = 'area';
+                    element.innerHTML = ` ${(area === null || area === void 0 ? void 0 : area.name) || ''} `;
+                    win.append(element);
+                    setTimeout(() => {
+                        element.classList.add('fade');
+                        setTimeout(() => {
+                            element.remove();
+                        }, 3000);
+                    }, 1000);
+                }
+            }
+        }
+        win_1.areatag = areatag;
+        class message {
+            constructor() {
+                this.duration = 5;
+            }
+            static message(message, duration) {
+                this.messages.push({ message: message, duration: duration });
+            }
+            static tick() {
+                if (this.messages.length) {
+                    let shift = this.messages.shift();
+                    let element = document.createElement('div');
+                    element.className = 'message';
+                    element.innerHTML = shift.message;
+                    document.getElementById('messages').append(element);
+                    setTimeout(() => {
+                        element.classList.add('fade');
+                    }, shift.duration);
+                    setTimeout(() => {
+                        element.remove();
+                    }, shift.duration + 2000);
+                }
+            }
+        }
+        message.messages = [];
+        win_1.message = message;
+    })(win || (win = {}));
+    var win$1 = win;
+
+    // allows you to venture far from inclusion hell by letting you assign arbitrary values
+    var GLOB = {};
+
+    var objects;
+    (function (objects) {
+        const color_door = [210, 210, 210];
+        const color_wooden_door_and_deck = [24, 93, 61];
+        const color_decidtree = [20, 70, 20];
+        const color_deadtree = [60, 70, 60];
+        const color_grass = [40, 90, 40];
+        const color_wheat = [130, 130, 0];
+        const color_scrappy_wall = [20, 70, 50];
+        const color_fence = [89, 89, 58];
+        const color_plywood_wall = [20, 84, 87];
+        const color_overgrown_wall = [35, 105, 63];
+        const color_deringer_wall = [80, 44, 27];
+        const color_medieval_wall = [128, 128, 128];
+        const color_deck_and_roof = [114, 128, 124];
+        const color_porch = [110, 120, 120];
+        const color_rails = [110, 100, 120];
+        const color_false_front = [255, 255, 255];
+        const color_acid_barrel = [61, 118, 48];
+        const color_wall_chest = [130, 100, 50];
+        const color_shelves = [130, 80, 50];
+        const color_panel = [78, 98, 98];
+        function factory(type, pixel, pos, hints = {}) {
+            let obj = new type;
+            obj.hints = hints;
+            obj.pixel = pixel;
+            obj.wpos = pos;
+            lod$1.add(obj);
+            return obj;
+        }
+        objects.factory = factory;
+        function register() {
+            console.log(' objects register ');
+            wastes.heightmap = new colormap$1.colormap('heightmap');
+            wastes.objectmap = new colormap$1.colormap('objectmap');
+            wastes.buildingmap = new colormap$1.colormap('buildingmap');
+            wastes.colormap = new colormap$1.colormap('colormap');
+            wastes.roughmap = new colormap$1.colormap('roughmap');
+            wastes.roofmap = new colormap$1.colormap('roofmap');
+            hooks.register('sectorCreate', (sector) => {
+                pts.func(sector.small, (pos) => {
+                    let pixel = wastes.objectmap.pixel(pos);
+                    if (pixel.is_color(color_acid_barrel)) ;
+                    else if (pixel.is_color(color_wall_chest)) {
+                        factory(objects.crate, pixel, pos);
+                    }
+                    else if (pixel.is_color(color_shelves)) {
+                        factory(objects.shelves, pixel, pos);
+                    }
+                    else if (pixel.is_color(color_panel)) {
+                        factory(objects.panel, pixel, pos);
+                    }
+                });
+                return false;
+            });
+            hooks.register('sectorCreate', (sector) => {
+                pts.func(sector.small, (pos) => {
+                    let pixel = wastes.roofmap.pixel(pos);
+                    if (pixel.is_color(color_false_front)) ;
+                });
+                return false;
+            });
+            hooks.register('sectorCreate', (sector) => {
+                pts.func(sector.small, (pos) => {
+                    let pixel = wastes.buildingmap.pixel(pos);
+                    if (pixel.is_color(color_plywood_wall)) {
+                        factory(objects.deck, pixel, pos);
+                        factory(objects.wall, pixel, pos, { type: 'plywood' });
+                        factory(objects.roof, pixel, pos);
+                    }
+                    else if (pixel.is_color(color_overgrown_wall)) {
+                        factory(objects.deck, pixel, pos);
+                        factory(objects.wall, pixel, pos, { type: 'overgrown' });
+                        factory(objects.roof, pixel, pos);
+                    }
+                    else if (pixel.is_color(color_deringer_wall)) {
+                        factory(objects.deck, pixel, pos);
+                        factory(objects.wall, pixel, pos, { type: 'sideroom' });
+                        factory(objects.roof, pixel, pos);
+                    }
+                    else if (pixel.is_color(color_medieval_wall)) {
+                        factory(objects.wall, pixel, pos, { type: 'medieval' });
+                    }
+                    else if (pixel.is_color(color_scrappy_wall)) {
+                        factory(objects.wall, pixel, pos, { type: 'scrappy' });
+                        //factory(objects.roof, pixel, pos);
+                    }
+                    else if (pixel.is_color(color_fence)) ;
+                    else if (pixel.is_color(color_decidtree)) {
+                        factory(objects.decidtree, pixel, pos, { type: 'decid' });
+                    }
+                    else if (pixel.is_color(color_deadtree)) {
+                        factory(objects.deadtree, pixel, pos);
+                    }
+                    else if (pixel.is_color(color_grass)) ;
+                    else if (pixel.is_color(color_wheat)) {
+                        factory(objects.wheat, pixel, pos);
+                    }
+                    else if (pixel.is_color(color_deck_and_roof)) {
+                        factory(objects.deck, pixel, pos);
+                        factory(objects.roof, pixel, pos);
+                    }
+                    else if (pixel.is_color(color_porch)) {
+                        factory(objects.porch, pixel, pos);
+                    }
+                    else if (pixel.is_color(color_rails)) {
+                        factory(objects.rails, pixel, pos);
+                    }
+                    else if (pixel.is_color(color_door)) {
+                        factory(objects.deck, pixel, pos);
+                        factory(objects.door, pixel, pos);
+                        factory(objects.roof, pixel, pos);
+                    }
+                    else if (pixel.is_color(color_wooden_door_and_deck)) {
+                        factory(objects.deck, pixel, pos);
+                        factory(objects.door, pixel, pos);
+                        //factory(objects.roof, pixel, pos);
+                    }
+                });
+                return false;
+            });
+        }
+        objects.register = register;
+        function start() {
+            console.log(' objects start ');
+        }
+        objects.start = start;
+        function tick() {
+            if (app$1.key(' ') == 1) {
+                wastes.HIDE_ROOFS = !wastes.HIDE_ROOFS;
+                console.log('hide roofs', wastes.HIDE_ROOFS);
+            }
+        }
+        objects.tick = tick;
+        function is_solid(pos) {
+            const impassable = ['wall', 'tree', 'fence', 'deep water'];
+            pos = pts.round(pos);
+            if (tiles$1.get(pos) == undefined)
+                return true;
+            let sector = lod$1.gworld.at(lod$1.world.big(pos));
+            let at = sector.stacked(pos);
+            for (let obj of at) {
+                if (obj.is_type(impassable)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        objects.is_solid = is_solid;
+        class objected extends lod$1.obj {
+            constructor(counts) {
+                super(counts);
+                this.id = 'an_objected_0';
+                this.isObjected = true;
+                this.paintTimer = 0;
+                this.paintedRed = false;
+                this.solid = true;
+                this.cell = [0, 0];
+                this.heightAdd = 0;
+                this.calc = 0; // used for tree leaves
+            }
+            tiled() {
+                this.tile = tiles$1.get(pts.round(this.wpos));
+                this.tileBound = new aabb2([-.5, -.5], [.5, .5]);
+                this.tileBound.translate(this.wpos);
+            }
+            onhit() {
+                const sprite = this.shape;
+                if (sprite) {
+                    sprite.material.color.set('red');
+                    this.paintedRed = true;
+                }
+            }
+            nettick() {
+            }
+            tick() {
+                if (this.paintedRed) {
+                    this.paintTimer += ren$1.delta;
+                    if (this.paintTimer > 1) {
+                        const sprite = this.shape;
+                        sprite.material.color.set('white');
+                        console.log('beo');
+                        this.paintedRed = false;
+                        this.paintTimer = 0;
+                    }
+                }
+                //console.log('oo');
+            }
+            //update(): void {
+            //	this.tiled();
+            //	super.update();
+            //}
+            stack(fallthru = []) {
+                let calc = 0;
+                let stack = this.sector.stacked(pts.round(this.wpos));
+                for (let obj of stack) {
+                    if (obj.is_type(fallthru))
+                        continue;
+                    if (obj == this)
+                        break;
+                    calc += obj.z + obj.height;
+                }
+                this.calc = calc;
+                if (this.shape)
+                    this.shape.rup = calc + this.heightAdd;
+            }
+            setup_context() {
+            }
+        }
+        objects.objected = objected;
+        class wall extends objected {
+            constructor() {
+                super(numbers.walls);
+                this.type = 'wall';
+                this.height = 24;
+            }
+            create() {
+                var _a, _b, _c, _d, _e, _f;
+                this.tiled();
+                this.size = [24, 40];
+                this.cell = [255 - this.pixel.arrayRef[3], 0];
+                let tuple = sprites$1.dscrappywalls;
+                if (((_a = this.hints) === null || _a === void 0 ? void 0 : _a.type) == 'plywood')
+                    tuple = sprites$1.dderingerwalls;
+                if (((_b = this.hints) === null || _b === void 0 ? void 0 : _b.type) == 'overgrown')
+                    tuple = sprites$1.dovergrownwalls;
+                if (((_c = this.hints) === null || _c === void 0 ? void 0 : _c.type) == 'deringer')
+                    tuple = sprites$1.dderingerwalls;
+                if (((_d = this.hints) === null || _d === void 0 ? void 0 : _d.type) == 'woody')
+                    tuple = sprites$1.dwoodywalls;
+                if (((_e = this.hints) === null || _e === void 0 ? void 0 : _e.type) == 'medieval')
+                    tuple = sprites$1.dmedievalwalls;
+                else if (((_f = this.hints) === null || _f === void 0 ? void 0 : _f.type) == 'ruddy')
+                    tuple = sprites$1.druddywalls;
+                else ;
+                new sprite({
+                    binded: this,
+                    tuple: tuple,
+                    cell: this.cell,
+                    orderBias: 1.0,
+                });
+                this.stack();
+            }
+            adapt() {
+                // change sprite to surrounding walls
+            }
+        }
+        objects.wall = wall;
+        class deck extends objected {
+            constructor() {
+                super(numbers.floors);
+                this.type = 'deck';
+                this.height = 3;
+            }
+            onhit() { }
+            create() {
+                this.tiled();
+                this.tile.hasDeck = true;
+                //this.tile!.z -= 24;
+                this.size = [24, 17];
+                //if (this.pixel!.array[3] < 240)
+                //	this.cell = [240 - this.pixel!.array[3], 0];
+                new sprite({
+                    binded: this,
+                    tuple: sprites$1.ddeck,
+                    cell: this.cell,
+                    orderBias: .4,
+                });
+                this.stack();
+            }
+            tick() {
+                super.tick();
+                let pos = this.wpos;
+                let sector = lod$1.gworld.at(lod$1.world.big(pos));
+                let at = sector.stacked(pos);
+                for (let obj of at) {
+                    if (obj.type == 'you') {
+                        wastes.HIDE_ROOFS = true;
+                        break;
+                    }
+                }
+            }
+        }
+        deck.timer = 0;
+        objects.deck = deck;
+        class porch extends objected {
+            constructor() {
+                super(numbers.floors);
+                this.type = 'porch';
+                this.height = 3;
+            }
+            onhit() { }
+            create() {
+                this.tiled();
+                //this.tile!.z -= 24;
+                this.size = [24, 17];
+                //if (this.pixel!.array[3] < 240)
+                //	this.cell = [240 - this.pixel!.array[3], 0];
+                let color = [255, 255, 255, 255];
+                color = shadows$1.calc(color, this.wpos);
+                new sprite({
+                    binded: this,
+                    tuple: sprites$1.dporch,
+                    cell: this.cell,
+                    orderBias: .0,
+                    color: color
+                });
+                this.stack();
+            }
+        }
+        porch.timer = 0;
+        objects.porch = porch;
+        class rails extends objected {
+            constructor() {
+                super(numbers.floors);
+                this.type = 'porch';
+                this.height = 3;
+            }
+            create() {
+                this.tiled();
+                //this.tile!.z -= 24;
+                this.size = [24, 17];
+                //if (this.pixel!.array[3] < 240)
+                //	this.cell = [240 - this.pixel!.array[3], 0];
+                new sprite({
+                    binded: this,
+                    tuple: sprites$1.drails,
+                    cell: this.cell,
+                    orderBias: .4,
+                });
+                this.stack();
+            }
+            tick() {
+            }
+        }
+        rails.timer = 0;
+        objects.rails = rails;
+        class deadtree extends objected {
+            constructor() {
+                super(numbers.floors);
+                this.type = 'tree';
+                this.height = 24;
+            }
+            create() {
+                this.tiled();
+                this.size = [24, 50];
+                new sprite({
+                    binded: this,
+                    tuple: sprites$1.ddeadtreetrunk,
+                    orderBias: 0.7,
+                });
+                this.stack();
+            }
+        }
+        deadtree.timer = 0;
+        objects.deadtree = deadtree;
+        class decidtree extends objected {
+            constructor() {
+                super(numbers.trees);
+                this.flowered = false;
+                this.type = 'tree';
+                this.height = 24;
+            }
+            create() {
+                this.tiled();
+                this.size = [24, 50];
+                //if (this.pixel!.array[3] < 240)
+                //	this.cell = [240 - this.pixel!.array[3], 0];
+                new sprite({
+                    binded: this,
+                    tuple: sprites$1.ddecidtreetrunk,
+                    orderBias: 0.7,
+                });
+                this.stack();
+                const tile = tiles$1.get(this.wpos);
+                if (!this.flowered) {
+                    this.flowered = true;
+                    for (let y = -1; y <= 1; y++)
+                        for (let x = -1; x <= 1; x++)
+                            if (!(x == 0 && y == 0))
+                                factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [x, y]), {
+                                    type: this.hints.type,
+                                    tree: this,
+                                    color: tile.color,
+                                    grid: [x, y]
+                                });
+                    factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [0, 0]), { type: this.hints.type, color: tile.color, noVines: true });
+                    factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [0, 0]), { type: this.hints.type, color: tile.color, noVines: true });
+                }
+            }
+        }
+        objects.decidtree = decidtree;
+        class treeleaves extends objected {
+            constructor() {
+                super(numbers.leaves);
+                this.shaded = false;
+                this.hasVines = false;
+                this.type = 'leaves';
+                this.height = 14;
+                /*if (!this.hints.noVines || Math.random() > 0.5)
+                    this.hasVines = true;*/
+            }
+            onhit() {
+            }
+            create() {
+                let pixel = wastes.buildingmap.pixel(this.wpos);
+                if (!this.hints.noVines && pixel.arrayRef[3] == 254)
+                    this.hasVines = false; // true;
+                if (pixel.arrayRef[3] == 253)
+                    return;
+                this.tiled();
+                let tuple = sprites$1.dtreeleaves;
+                if (this.hasVines) {
+                    this.size = [24, 64];
+                    const grid = this.hints.grid || [0, 0];
+                    if (pts.equals(grid, [1, 0]) || pts.equals(grid, [1, 1])) {
+                        tuple = sprites$1.dvines2;
+                        //this.hints.color = [0, 0, 0, 255]
+                        console.log(' !! using dvines 2 !!');
+                    }
+                    else if (pts.equals(grid, [0, -1]) || pts.equals(grid, [-1, -1])) {
+                        tuple = sprites$1.dvines3;
+                        //this.hints.color = [0, 0, 0, 255]
+                    }
+                    else {
+                        tuple = sprites$1.dvines;
+                    }
+                }
+                else {
+                    this.size = [24, 31];
+                }
+                //this.try_create_vines();
+                //if (this.pixel!.array[3] < 240)
+                //	this.cell = [240 - this.pixel!.array[3], 0];
+                let color = this.hints.color || [255, 255, 255, 255];
+                let color2 = wastes.colormap.pixel(this.wpos);
+                if (!(255 - color2.arrayRef[3])) {
+                    if (this.hints.color) {
+                        color = [
+                            Math.floor(color[0] * 1.6),
+                            Math.floor(color[1] * 1.6),
+                            Math.floor(color[2] * 1.6),
+                            color[3],
+                        ];
+                    }
+                    new sprite({
+                        binded: this,
+                        tuple: tuple,
+                        orderBias: 0.7,
+                        color: color
+                    });
+                    //shadows.shade(this.wpos, 0.1);
+                    if (!this.shaded) {
+                        this.shaded = true;
+                        const shadow = 0.03;
+                        shadows$1.shade_matrix(this.wpos, [
+                            [shadow / 2, shadow, shadow / 2],
+                            [shadow, shadow, shadow],
+                            [shadow / 2, shadow, shadow / 2]
+                        ]);
+                    }
+                    if (this.hints.tree)
+                        this.special_leaves_stack();
+                    else
+                        this.stack();
+                }
+            }
+            special_leaves_stack() {
+                //console.log('special stack');
+                const tree = this.hints.tree;
+                if (this.shape) {
+                    const sprite = this.shape;
+                    this.z = tree.calc + tree.height;
+                    sprite.rup = this.z;
+                    if (this.hasVines) {
+                        sprite.rup2 = -33;
+                    }
+                }
+            }
+        }
+        objects.treeleaves = treeleaves;
+        class grass extends objected {
+            constructor() {
+                super(numbers.roofs);
+                this.type = 'grass';
+                this.height = 4;
+                this.solid = false;
+            }
+            create() {
+                this.tiled();
+                this.size = [24, 30];
+                let color = tiles$1.get(this.wpos).color;
+                color = [
+                    Math.floor(color[0] * 1.5),
+                    Math.floor(color[1] * 1.5),
+                    Math.floor(color[2] * 2.0),
+                    color[3],
+                ];
+                this.cell = [255 - this.pixel.arrayRef[3], 0];
+                new sprite({
+                    binded: this,
+                    tuple: sprites$1.dgrass,
+                    cell: this.cell,
+                    orderBias: .6,
+                    color: color
+                });
+                this.stack();
+            }
+        }
+        objects.grass = grass;
+        class wheat extends objected {
+            constructor() {
+                super(numbers.roofs);
+                this.type = 'wheat';
+                this.height = 4;
+            }
+            create() {
+                this.tiled();
+                this.size = [24, 30];
+                //let color =  tiles.get(this.wpos)!.color;
+                //this.cell = [Math.floor(Math.random() * 2), 0];
+                new sprite({
+                    binded: this,
+                    tuple: sprites$1.dwheat,
+                    cell: this.cell,
+                    //color: color,
+                    orderBias: .6
+                });
+                this.stack();
+            }
+        }
+        objects.wheat = wheat;
+        class panel extends objected {
+            constructor() {
+                super(numbers.roofs);
+                this.ticker = 0;
+                this.type = 'panel';
+                this.height = 10;
+            }
+            create() {
+                this.tiled();
+                this.size = [8, 10];
+                //let color =  tiles.get(this.wpos)!.color;
+                //this.cell = [Math.floor(Math.random() * 2), 0];
+                return;
+            }
+            tick() {
+                return;
+                //console.log('boo');
+            }
+        }
+        objects.panel = panel;
+        class container {
+            constructor() {
+                this.tuples = [];
+                if (Math.random() > .5)
+                    this.add('beer');
+                if (Math.random() > .5)
+                    this.add('string');
+                if (Math.random() > .5)
+                    this.add('stone');
+            }
+            add(item) {
+                let found = false;
+                for (let tuple of this.tuples) {
+                    if (tuple[0] == item) {
+                        tuple[1] += 1;
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    this.tuples.push([item, 1]);
+                }
+                this.tuples.sort();
+            }
+            remove(name) {
+                for (let i = this.tuples.length - 1; i >= 0; i--) {
+                    const tuple = this.tuples[i];
+                    if (tuple[0] == name) {
+                        tuple[1] -= 1;
+                        if (tuple[1] <= 0)
+                            this.tuples.splice(i, 1);
+                        break;
+                    }
+                }
+            }
+        }
+        objects.container = container;
+        class crate extends objected {
+            constructor() {
+                super(numbers.objs);
+                this.container = new container;
+                this.mousing = false;
+                this.type = 'crate';
+                this.height = 17;
+                this.container.obj = this;
+            }
+            create() {
+                this.tiled();
+                this.size = [24, 40];
+                //let color =  tiles.get(this.wpos)!.color;
+                //this.cell = [Math.floor(Math.random() * 2), 0];
+                new sprite({
+                    binded: this,
+                    tuple: sprites$1.dcrate,
+                    cell: this.cell,
+                    //color: color,
+                    orderBias: 1.0
+                });
+                this.stack(['roof', 'wall']);
+            }
+            tick() {
+                const sprite = this.shape;
+                if (!sprite)
+                    return;
+                if (sprite.mousedSquare(wastes.gview.mrpos) /*&& !this.mousing*/) {
+                    this.mousing = true;
+                    sprite.material.color.set('#c1ffcd');
+                    console.log('mover');
+                    win$1.contextmenu.focus = this;
+                }
+                else if (!sprite.mousedSquare(wastes.gview.mrpos) && this.mousing) {
+                    if (win$1.contextmenu.focus == this)
+                        win$1.contextmenu.focus = undefined;
+                    sprite.material.color.set('white');
+                    this.mousing = false;
+                }
+            }
+            setup_context() {
+                console.log('setup context');
+                win$1.contextmenu.reset();
+                win$1.contextmenu.options.options.push(["See contents", () => {
+                        return pts.distsimple(pawns$1.you.wpos, this.wpos) < 1;
+                    }, () => {
+                        win$1.container.focus = this;
+                        win$1.container.call_once();
+                    }]);
+            }
+        }
+        objects.crate = crate;
+        class shelves extends objected {
+            constructor() {
+                super(numbers.objs);
+                this.container = new container;
+                this.mousing = false;
+                this.type = 'shelves';
+                this.height = 25;
+                this.container.obj = this;
+            }
+            create() {
+                this.tiled();
+                this.size = [20, 31];
+                //this.cell = [255 - this.pixel!.array[3], 0];
+                //return
+                let shape = new sprite({
+                    binded: this,
+                    tuple: sprites$1.dshelves,
+                    //cell: this.cell,
+                    orderBias: 0
+                });
+                shape.rup2 = 9;
+                shape.rleft = 6;
+                this.stack(['roof']);
+            }
+            tick() {
+                const sprite = this.shape;
+                if (sprite.mousedSquare(wastes.gview.mrpos) /*&& !this.mousing*/) {
+                    this.mousing = true;
+                    sprite.material.color.set('#c1ffcd');
+                    win$1.contextmenu.focus = this;
+                }
+                else if (!sprite.mousedSquare(wastes.gview.mrpos) && this.mousing) {
+                    if (win$1.contextmenu.focus == this)
+                        win$1.contextmenu.focus = undefined;
+                    sprite.material.color.set('white');
+                    this.mousing = false;
+                }
+            }
+            setup_context() {
+                console.log('setup context');
+                win$1.contextmenu.reset();
+                win$1.contextmenu.options.options.push(["See contents", () => {
+                        return pts.distsimple(pawns$1.you.wpos, this.wpos) < 1;
+                    }, () => {
+                        win$1.container.focus = this;
+                        win$1.container.call_once();
+                    }]);
+                win$1.contextmenu.options.options.push(["Store", () => {
+                        return pts.distsimple(pawns$1.you.wpos, this.wpos) < 1;
+                    }, () => {
+                        //win.container.crate = this;
+                        //win.container.call_once();
+                    }]);
+                win$1.contextmenu.options.options.push(["Examine", () => {
+                        return pts.distsimple(pawns$1.you.wpos, this.wpos) < 10;
+                    }, () => {
+                        win$1.descriptor.focus = this;
+                        win$1.descriptor.call_once("A shelves with not much on it.");
+                    }]);
+            }
+        }
+        objects.shelves = shelves;
+        class roof extends objected {
+            constructor() {
+                super(numbers.roofs);
+                this.shaded = false;
+                this.type = 'roof';
+                this.height = 3;
+            }
+            onhit() { }
+            create() {
+                //return;
+                this.tiled();
+                this.size = [24, 17];
+                let shape = new sprite({
+                    binded: this,
+                    tuple: sprites$1.droof,
+                    orderBias: 1.6,
+                });
+                shape.rup = 29;
+                if (!this.shaded) {
+                    this.shaded = true;
+                    const shadow = .75;
+                    shadows$1.shade_matrix(this.wpos, [
+                        [0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0],
+                        [0, 0, 0, shadow, 0],
+                        [0, 0, 0, 0, shadow]
+                    ], true);
+                }
+            }
+            tick() {
+                super.tick();
+                const sprite = this.shape;
+                if (!sprite)
+                    return;
+                if (wastes.HIDE_ROOFS)
+                    sprite.mesh.visible = false;
+                else if (!wastes.HIDE_ROOFS)
+                    sprite.mesh.visible = true;
+            }
+        }
+        objects.roof = roof;
+        class falsefront extends objected {
+            constructor() {
+                super(numbers.roofs);
+                this.type = 'falsefront';
+                this.height = 5;
+            }
+            create() {
+                this.tiled();
+                this.cell = [255 - this.pixel.arrayRef[3], 0];
+                this.size = [24, 40];
+                new sprite({
+                    binded: this,
+                    tuple: sprites$1.dfalsefronts,
+                    cell: this.cell,
+                    orderBias: 1.6,
+                });
+                this.stack();
+                //this.z = 29+4;
+            }
+            tick() {
+                const sprite = this.shape;
+                if (!sprite)
+                    return;
+                if (wastes.HIDE_ROOFS)
+                    sprite.mesh.visible = false;
+                else if (!wastes.HIDE_ROOFS)
+                    sprite.mesh.visible = true;
+            }
+        }
+        objects.falsefront = falsefront;
+        class acidbarrel extends objected {
+            constructor() {
+                super(numbers.objs);
+                this.type = 'acidbarrel';
+                this.height = 4;
+            }
+            create() {
+                this.tiled();
+                this.size = [24, 35];
+                new sprite({
+                    binded: this,
+                    tuple: sprites$1.dacidbarrel,
+                    orderBias: .4,
+                });
+                this.stack();
+            }
+        }
+        objects.acidbarrel = acidbarrel;
+        class door extends objected {
+            constructor() {
+                super(numbers.walls);
+                this.open = false;
+                this.type = 'door';
+                this.height = 23;
+            }
+            create() {
+                this.tiled();
+                this.size = [24, 40];
+                this.cell = [255 - this.pixel.arrayRef[3], 0];
+                new sprite({
+                    binded: this,
+                    tuple: sprites$1.ddoor,
+                    cell: this.cell,
+                    orderBias: door.order,
+                });
+                this.stack();
+            }
+            tick() {
+                super.tick();
+                if (!this.shape)
+                    return;
+                let pos = this.wpos;
+                let sector = lod$1.gworld.at(lod$1.world.big(pos));
+                let at = sector.stacked(pos);
+                let pawning = false;
+                for (let obj of at) {
+                    if (obj.is_type(['pawn', 'you'])) {
+                        pawning = true;
+                        let sprite = this.shape;
+                        sprite.vars.cell = pts.subtract(this.cell, [1, 0]);
+                        sprite.vars.orderBias = 1.55;
+                        sprite.retransform();
+                        sprite.update();
+                        this.open = true;
+                        break;
+                    }
+                }
+                if (!pawning) {
+                    let sprite = this.shape;
+                    sprite.vars.cell = this.cell;
+                    sprite.vars.orderBias = door.order;
+                    sprite.retransform();
+                    sprite.update();
+                    this.open = false;
+                }
+            }
+        }
+        door.order = .7;
+        objects.door = door;
+        class shrubs extends objected {
+            constructor() {
+                super(numbers.trees);
+                this.type = 'shrubs';
+            }
+            create() {
+                this.size = [24, 15];
+                new sprite({
+                    binded: this,
+                    tuple: sprites$1.shrubs,
+                    orderBias: .5
+                });
+            }
+        }
+        objects.shrubs = shrubs;
+    })(objects || (objects = {}));
+    var objects$1 = objects;
+
+    var chickens;
+    (function (chickens) {
+        function start() {
+            //let chicken = new chickens.chicken;
+            //chicken.wpos = [46, 49];
+            //lod.add(chicken);
+            /*let chicken2 = new chickens.chicken;
+            chicken2.wpos = [42, 53];
+            lod.add(chicken2);*/
+        }
+        chickens.start = start;
+        class chicken extends objects$1.objected {
+            constructor() {
+                super(numbers.chickens);
+                this.netwpos = [0, 0];
+                this.netangle = 0;
+                this.created = false;
+                this.pecking = false;
+                this.sitting = false;
+                //override setup_context() {
+                //	win.contextmenu.reset();
+                //}
+                this.groups = {};
+                this.meshes = {};
+                this.made = false;
+                this.swoop = 0;
+                this.angle = 0;
+                this.walkSmoother = 1;
+                this.randomWalker = 0;
+                this.type = 'chicken';
+                this.height = 24;
+            }
+            create() {
+                this.tiled();
+                this.size = pts.divide([25, 30], 1);
+                //this.subsize = [25, 40];
+                let shape = new sprite({
+                    binded: this,
+                    tuple: sprites$1.test100,
+                    //opacity: 0.5,
+                    orderBias: 1.0,
+                });
+                shape.dimetric = false;
+                shape.rleft = this.size[0] / 2;
+                shape.rup2 = this.size[1] / 2;
+                shape.show();
+                if (!this.created) {
+                    this.created = true;
+                    console.log('creating chicken');
+                    // Set scale to increase pixels exponentially
+                    const scale = 1;
+                    // make wee guy target
+                    //this.group = new THREE.Group
+                    let size = pts.mult(this.size, scale);
+                    this.target = ren$1.make_render_target(size[0], size[1]);
+                    this.camera = ren$1.make_orthographic_camera(size[0], size[1]);
+                    this.scene = new THREE.Scene();
+                    //this.scene.background = new Color('#333');
+                    this.scene.rotation.set(Math.PI / 6, Math.PI / 4, 0);
+                    this.scene.scale.set(scale, scale, scale);
+                    this.scene.add(new THREE.AmbientLight('white'));
+                    let sun = new THREE.DirectionalLight(0xffffff, 0.5);
+                    // left up right
+                    sun.position.set(-wastes.size, wastes.size * 1.5, wastes.size / 2);
+                    //sun.add(new AxesHelper(100));
+                    this.scene.add(sun);
+                    this.scene.add(sun.target);
+                }
+                const spritee = this.shape;
+                spritee.material.map = this.target.texture;
+            }
+            try_move_to(pos) {
+                let venture = pts.add(this.wpos, pos);
+                if (!objects$1.is_solid(venture))
+                    this.wpos = venture;
+            }
+            update() {
+                this.tiled();
+                this.stack();
+                super.update();
+            }
+            make() {
+                if (this.made)
+                    return;
+                this.made = true;
+                const headWidth = 2.5;
+                const headHeight = 5;
+                const headLength = 2.5;
+                const combWidth = 1;
+                const combHeight = 2;
+                const combLength = 2;
+                const beakWidth = 1.5;
+                const beakHeight = 1.5;
+                const beakLength = 2;
+                const legsWidth = 1;
+                const legsHeight = 3;
+                const legsLength = 1;
+                const armsWidth = 1;
+                const armsLength = 5;
+                const armsHeight = 3;
+                const armsAngle = .0;
+                const bodyWidth = 4;
+                const bodyHeight = 4;
+                const bodyLength = 7;
+                const feetWidth = 1.5;
+                const feetHeight = 1;
+                const feetLength = 1.5;
+                let boxHead = new THREE.BoxGeometry(headWidth, headHeight, headLength);
+                let materialHead = new THREE.MeshLambertMaterial({
+                    color: '#787a7a'
+                });
+                let boxComb = new THREE.BoxGeometry(combWidth, combHeight, combLength);
+                let materialComb = new THREE.MeshLambertMaterial({
+                    color: '#a52c2c'
+                });
+                let boxBeak = new THREE.BoxGeometry(beakWidth, beakHeight, beakLength);
+                let materialBeak = new THREE.MeshLambertMaterial({
+                    color: '#7f805f'
+                });
+                let boxBody = new THREE.BoxGeometry(bodyWidth, bodyHeight, bodyLength);
+                let materialBody = new THREE.MeshLambertMaterial({
+                    color: '#787a7a'
+                });
+                let boxArms = new THREE.BoxGeometry(armsWidth, armsHeight, armsLength);
+                let materialArms = new THREE.MeshLambertMaterial({
+                    color: '#787a7a'
+                });
+                let boxLegs = new THREE.BoxGeometry(legsWidth, legsHeight, legsLength);
+                let boxFeet = new THREE.BoxGeometry(feetWidth, feetHeight, feetLength);
+                let materialLegs = new THREE.MeshLambertMaterial({
+                    color: '#7f805f'
+                });
+                let planeWater = new THREE.PlaneGeometry(wastes.size * 2, wastes.size * 2);
+                let materialWater = new THREE.MeshLambertMaterial({
+                    color: new THREE__default["default"].Color('rgba(32, 64, 64, 255)'),
+                    opacity: 0.4,
+                    transparent: true,
+                    blending: THREE__default["default"].CustomBlending,
+                    blendEquation: THREE__default["default"].AddEquation,
+                    blendSrc: THREE__default["default"].DstAlphaFactor,
+                    blendDst: THREE__default["default"].OneMinusSrcAlphaFactor
+                });
+                this.meshes.water = new THREE.Mesh(planeWater, materialWater);
+                this.meshes.water.rotation.x = -Math.PI / 2;
+                this.meshes.water.position.y = -bodyHeight * 1.5;
+                this.meshes.water.visible = false;
+                this.meshes.head = new THREE.Mesh(boxHead, materialHead);
+                this.meshes.comb = new THREE.Mesh(boxComb, materialComb);
+                this.meshes.beak = new THREE.Mesh(boxBeak, materialBeak);
+                this.meshes.body = new THREE.Mesh(boxBody, materialBody);
+                this.meshes.arml = new THREE.Mesh(boxArms, materialArms);
+                this.meshes.armr = new THREE.Mesh(boxArms, materialArms);
+                this.meshes.legl = new THREE.Mesh(boxLegs, materialLegs);
+                this.meshes.legr = new THREE.Mesh(boxLegs, materialLegs);
+                this.meshes.footl = new THREE.Mesh(boxFeet, materialLegs);
+                this.meshes.footr = new THREE.Mesh(boxFeet, materialLegs);
+                this.groups.neck = new THREE.Group;
+                this.groups.head = new THREE.Group;
+                this.groups.beak = new THREE.Group;
+                this.groups.comb = new THREE.Group;
+                this.groups.body = new THREE.Group;
+                this.groups.arml = new THREE.Group;
+                this.groups.armr = new THREE.Group;
+                this.groups.legl = new THREE.Group;
+                this.groups.legr = new THREE.Group;
+                this.groups.footl = new THREE.Group;
+                this.groups.footr = new THREE.Group;
+                this.groups.ground = new THREE.Group;
+                this.groups.basis = new THREE.Group;
+                this.groups.neck.add(this.meshes.head);
+                this.groups.head.add(this.meshes.head);
+                this.groups.beak.add(this.meshes.beak);
+                this.groups.comb.add(this.meshes.comb);
+                this.groups.body.add(this.meshes.body);
+                this.groups.arml.add(this.meshes.arml);
+                this.groups.armr.add(this.meshes.armr);
+                this.groups.legl.add(this.meshes.legl);
+                this.groups.legr.add(this.meshes.legr);
+                this.groups.footl.add(this.meshes.footl);
+                this.groups.footr.add(this.meshes.footr);
+                this.groups.head.add(this.groups.beak);
+                this.groups.head.add(this.groups.comb);
+                this.groups.neck.add(this.groups.head);
+                this.groups.legl.add(this.groups.footl);
+                this.groups.legr.add(this.groups.footr);
+                this.groups.body.add(this.groups.neck);
+                this.groups.body.add(this.groups.arml);
+                this.groups.body.add(this.groups.armr);
+                this.groups.ground.add(this.groups.legl);
+                this.groups.ground.add(this.groups.legr);
+                this.groups.ground.add(this.groups.body);
+                this.groups.basis.add(this.groups.ground);
+                this.groups.basis.add(this.meshes.water);
+                this.groups.neck.position.set(0, bodyHeight / 2, bodyLength / 3);
+                this.groups.head.position.set(0, headHeight / 2, 0);
+                this.groups.comb.position.set(0, combHeight, combLength / 2);
+                this.groups.beak.position.set(0, 0, beakLength);
+                //this.groups.beak.rotation.set(-Math.PI / 4, 0, 0);
+                this.groups.body.position.set(0, bodyHeight, 0);
+                this.meshes.body.rotation.set(-0.3, 0, 0);
+                this.meshes.arml.rotation.set(-0.3, 0, 0);
+                this.meshes.armr.rotation.set(-0.3, 0, 0);
+                this.groups.armr.position.set(-bodyWidth / 2 - armsWidth / 2, bodyHeight / 2 - armsWidth / 2, 0);
+                this.groups.armr.rotation.set(0, 0, -armsAngle);
+                this.meshes.armr.position.set(0, -armsHeight / 2 + armsWidth / 2, 0);
+                this.groups.arml.position.set(bodyWidth / 2 + armsWidth / 2, bodyHeight / 2 - armsWidth / 2, 0);
+                this.groups.arml.rotation.set(0, 0, armsAngle);
+                this.meshes.arml.position.set(0, -armsHeight / 2 + armsWidth / 2, 0);
+                this.groups.legl.position.set(-legsWidth / 1, bodyHeight / 2, 0);
+                this.meshes.legl.position.set(0, -legsHeight / 2, 0);
+                this.groups.legr.position.set(legsWidth / 1, bodyHeight / 2, 0);
+                this.meshes.legr.position.set(0, -legsHeight / 2, 0);
+                this.groups.footl.position.set(0, -legsHeight, feetLength / 2);
+                this.groups.footr.position.set(0, -legsHeight, feetLength / 2);
+                this.groups.ground.position.set(0, -bodyHeight * 3, 0);
+                //mesh.rotation.set(Math.PI / 2, 0, 0);
+                this.scene.add(this.groups.basis);
+            }
+            render() {
+                ren$1.renderer.setRenderTarget(this.target);
+                ren$1.renderer.clear();
+                ren$1.renderer.render(this.scene, this.camera);
+            }
+            animateBodyParts() {
+                var _a;
+                this.walkSmoother = wastes.clamp(this.walkSmoother, 0, 1);
+                const legsSwoop = 0.6;
+                const headBob = 1.0;
+                const riser = 0.5;
+                this.swoop += ren$1.delta * 2.5;
+                const swoop1 = Math.cos(Math.PI * this.swoop);
+                const swoop2 = Math.cos(Math.PI * this.swoop - Math.PI);
+                this.groups.legl.rotation.x = swoop1 * legsSwoop * this.walkSmoother;
+                this.groups.legr.rotation.x = swoop2 * legsSwoop * this.walkSmoother;
+                //this.groups.arml.rotation.x = swoop1 * armsSwoop * this.walkSmoother;
+                //this.groups.armr.rotation.x = swoop2 * armsSwoop * this.walkSmoother;
+                this.groups.head.position.z = swoop1 * swoop2 * -headBob * this.walkSmoother;
+                this.groups.ground.position.y = -10 + swoop1 * swoop2 * riser * this.walkSmoother;
+                this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
+                if (this.sitting || app$1.key('q')) {
+                    this.groups.legl.visible = false;
+                    this.groups.legr.visible = false;
+                    this.groups.ground.position.y -= 4;
+                    this.meshes.body.rotation.set(0.0, 0, 0);
+                    this.meshes.arml.rotation.set(0.0, 0, 0);
+                    this.meshes.armr.rotation.set(0.0, 0, 0);
+                }
+                else {
+                    this.groups.legl.visible = true;
+                    this.groups.legr.visible = true;
+                    this.meshes.body.rotation.set(-0.3, 0, 0);
+                    this.meshes.arml.rotation.set(-0.3, 0, 0);
+                    this.meshes.armr.rotation.set(-0.3, 0, 0);
+                }
+                if (this.pecking) {
+                    this.groups.neck.rotation.x = 1.0;
+                    this.groups.body.rotation.x = 0.6;
+                }
+                else {
+                    this.groups.neck.rotation.x = 0;
+                    this.groups.body.rotation.x = 0;
+                }
+                const sprite = this.shape;
+                if (((_a = this.tile) === null || _a === void 0 ? void 0 : _a.type) == 'shallow water') {
+                    sprite.vars.orderBias = 0.25;
+                    this.meshes.water.visible = true;
+                }
+                else {
+                    sprite.vars.orderBias = 1.0;
+                    this.meshes.water.visible = false;
+                }
+                this.render();
+            }
+            nettick() {
+                //this.netangle = Math.PI / 4;
+                // Net tick can happen offscreen
+                var _a;
+                //this.wpos = tiles.hovering!.wpos;
+                //this.wpos = wastes.gview.mwpos;
+                if (this.pecking) {
+                    console.log('we are pecking');
+                }
+                if (!pts.together(this.netwpos))
+                    this.netwpos = this.wpos;
+                // tween netwpos into wpos
+                let tween = pts.mult(pts.subtract(this.netwpos, this.wpos), ren$1.delta * 2);
+                this.wpos = pts.add(this.wpos, tween);
+                (_a = this.sector) === null || _a === void 0 ? void 0 : _a.swap(this);
+                //console.log('chicken nettick', this.wpos);
+                if (this.netangle - this.angle > Math.PI)
+                    this.angle += Math.PI * 2;
+                if (this.angle - this.netangle > Math.PI)
+                    this.angle -= Math.PI * 2;
+                let tweenAngle = (this.netangle - this.angle) * 0.1;
+                this.angle += tweenAngle;
+                const movement = pts.together(pts.abs(tween));
+                if (movement > 0.005) {
+                    //console.log('movement > 0.25');
+                    this.walkSmoother += ren$1.delta * 10;
+                }
+                else {
+                    this.walkSmoother -= ren$1.delta * 5;
+                }
+            }
+            setup_context() {
+                win$1.contextmenu.reset();
+                win$1.contextmenu.options.options.push(["Examine", () => {
+                        return true;
+                    }, () => {
+                        win$1.descriptor.focus = this;
+                        win$1.descriptor.call_once("Just really a chicken.");
+                        //win.contextmenu.focus = undefined;
+                    }]);
+            }
+            tick() {
+                // We are assumed to be onscreen
+                // If we are visible
+                if (!this.shape)
+                    return;
+                //this.wpos = wastes.gview.mwpos;
+                this.make();
+                this.animateBodyParts();
+                this.tiled();
+                //this.tile?.paint();
+                //this.sector?.swap(this);
+                let color = [1, 1, 1, 1];
+                const sprite = this.shape;
+                // We could have been nulled due to a hide, dispose
+                if (sprite) {
+                    const setShadow = () => {
+                        color = shadows$1.calc(color, pts.round(this.wpos));
+                        sprite.material.color.setRGB(color[0], color[1], color[2]);
+                    };
+                    if (sprite.mousedSquare(wastes.gview.mrpos)) {
+                        sprite.material.color.set(GLOB.HOVER_COLOR);
+                        win$1.contextmenu.focus = this;
+                    }
+                    else if (!sprite.mousedSquare(wastes.gview.mrpos)) {
+                        if (win$1.contextmenu.focus == this)
+                            win$1.contextmenu.focus = undefined;
+                        setShadow();
+                    }
+                    else if (this.tile && this.tile.hasDeck == false) {
+                        setShadow();
+                    }
+                    else if (!this.tile) ;
+                }
+                else {
+                    console.warn('no chicken sprite?????');
+                }
+                this.stack(['pawn', 'you', 'chicken', 'leaves', 'wall', 'door', 'roof', 'falsefront', 'panel']);
+                //sprite.roffset = [.5, .5];
+                //this.tile!.paint();
+                super.update();
+            }
+        }
+        chickens.chicken = chicken;
+    })(chickens || (chickens = {}));
+    var chickens$1 = chickens;
+
+    var client;
+    (function (client) {
+        client.sobjs = {};
+        client.playerId = -1;
+        client.talkingToId = '';
+        function tick() {
+            for (let id in client.sobjs) {
+                let obj = client.sobjs[id];
+                if (obj.type != 'you')
+                    obj.nettick();
+            }
+        }
+        client.tick = tick;
+        function start() {
+            client.socket = new WebSocket("ws://86.93.147.154:8080");
+            client.socket.onopen = function (e) {
+                //console.log("[open] Connection established");
+                //console.log("Sending to server");
+                //socket.send("My name is John");
+            };
+            function process_news(type, typed, data, handle, update) {
+                for (let sobj of data.news) {
+                    const { id } = sobj;
+                    if (sobj.type != typed)
+                        continue;
+                    let obj = client.sobjs[id];
+                    if (!obj) {
+                        console.log('new sobj', typed, id);
+                        obj = client.sobjs[id] = new type;
+                        obj.id = id;
+                        obj.netObj = true;
+                        handle(obj, sobj);
+                        lod$1.add(obj);
+                    }
+                    else if (obj) {
+                        update(obj, sobj);
+                    }
+                }
+            }
+            client.socket.onmessage = function (event) {
+                const data = JSON.parse(event.data);
+                if (data.removes && data.removes.length) {
+                    console.log('we have a remove', data.removes);
+                    for (let id of data.removes) {
+                        let obj = client.sobjs[id];
+                        delete client.sobjs[id];
+                        obj.hide();
+                        obj.finalize();
+                        lod$1.remove(obj);
+                    }
+                }
+                if (data.news) {
+                    process_news(pawns$1.pawn, 'pawn', data, (obj, sobj) => {
+                        const { wpos, angle, outfit } = sobj;
+                        obj.wpos = wpos;
+                        obj.angle = angle;
+                        obj.outfit = outfit;
+                        if (sobj.isPlayer)
+                            obj.isPlayer = true;
+                    }, (obj, sobj) => {
+                        if (obj.type == 'you')
+                            return;
+                        const { wpos, angle, aiming } = sobj;
+                        obj.netwpos = wpos;
+                        obj.netangle = angle;
+                        obj.aiming = aiming;
+                        //obj.sector?.swap(obj);
+                    });
+                    process_news(chickens$1.chicken, 'chicken', data, (obj, sobj) => {
+                        const { id, wpos, angle, sitting } = sobj;
+                        obj.id = id;
+                        obj.wpos = wpos;
+                        obj.angle = angle;
+                        obj.sitting = sitting;
+                    }, (obj, sobj) => {
+                        const { wpos, angle, pecking, sitting } = sobj;
+                        obj.netwpos = wpos;
+                        obj.netangle = angle;
+                        obj.pecking = pecking;
+                        obj.sitting = sitting;
+                    });
+                }
+                if (data.player) {
+                    client.playerId = data.player.id;
+                    let pawn = client.sobjs[data.player.id];
+                    if (pawn) {
+                        pawns$1.you = pawn;
+                        pawn.type = 'you';
+                        console.log('we got our pawn', client.playerId);
+                        wastes.gview.center = pawn;
+                    }
+                }
+                if (data.messages) {
+                    for (let message of data.messages) {
+                        win$1.message.message(message[0], message[1] * 1000);
+                    }
+                }
+            };
+            setInterval(() => {
+                if (pawns$1.you) {
+                    let json = {
+                        player: {
+                            wpos: pawns$1.you.wpos,
+                            angle: pawns$1.you.angle,
+                            aiming: pawns$1.you.aiming,
+                        }
+                    };
+                    if (client.talkingToId) {
+                        json.talkingToId = client.talkingToId;
+                        client.talkingToId = '';
+                    }
+                    const string = JSON.stringify(json);
+                    client.socket.send(string);
+                }
+            }, 333);
+        }
+        client.start = start;
+    })(client || (client = {}));
 
     class TGALoader extends THREE.DataTextureLoader {
 
@@ -5971,1331 +7783,6 @@ void main() {
         ]
     ];
 
-    // allows you to venture far from inclusion hell by letting you assign arbitrary values
-    var GLOB = {};
-
-    var objects;
-    (function (objects) {
-        const color_door = [210, 210, 210];
-        const color_wooden_door_and_deck = [24, 93, 61];
-        const color_decidtree = [20, 70, 20];
-        const color_deadtree = [60, 70, 60];
-        const color_grass = [40, 90, 40];
-        const color_wheat = [130, 130, 0];
-        const color_scrappy_wall = [20, 70, 50];
-        const color_fence = [89, 89, 58];
-        const color_plywood_wall = [20, 84, 87];
-        const color_overgrown_wall = [35, 105, 63];
-        const color_deringer_wall = [80, 44, 27];
-        const color_medieval_wall = [128, 128, 128];
-        const color_deck_and_roof = [114, 128, 124];
-        const color_porch = [110, 120, 120];
-        const color_rails = [110, 100, 120];
-        const color_false_front = [255, 255, 255];
-        const color_acid_barrel = [61, 118, 48];
-        const color_wall_chest = [130, 100, 50];
-        const color_shelves = [130, 80, 50];
-        const color_panel = [78, 98, 98];
-        function factory(type, pixel, pos, hints = {}) {
-            let obj = new type;
-            obj.hints = hints;
-            obj.pixel = pixel;
-            obj.wpos = pos;
-            lod$1.add(obj);
-            return obj;
-        }
-        objects.factory = factory;
-        function register() {
-            console.log(' objects register ');
-            wastes.heightmap = new colormap$1.colormap('heightmap');
-            wastes.objectmap = new colormap$1.colormap('objectmap');
-            wastes.buildingmap = new colormap$1.colormap('buildingmap');
-            wastes.colormap = new colormap$1.colormap('colormap');
-            wastes.roughmap = new colormap$1.colormap('roughmap');
-            wastes.roofmap = new colormap$1.colormap('roofmap');
-            hooks.register('sectorCreate', (sector) => {
-                pts.func(sector.small, (pos) => {
-                    let pixel = wastes.objectmap.pixel(pos);
-                    if (pixel.is_color(color_acid_barrel)) ;
-                    else if (pixel.is_color(color_wall_chest)) {
-                        factory(objects.crate, pixel, pos);
-                    }
-                    else if (pixel.is_color(color_shelves)) {
-                        factory(objects.shelves, pixel, pos);
-                    }
-                    else if (pixel.is_color(color_panel)) {
-                        factory(objects.panel, pixel, pos);
-                    }
-                });
-                return false;
-            });
-            hooks.register('sectorCreate', (sector) => {
-                pts.func(sector.small, (pos) => {
-                    let pixel = wastes.roofmap.pixel(pos);
-                    if (pixel.is_color(color_false_front)) ;
-                });
-                return false;
-            });
-            hooks.register('sectorCreate', (sector) => {
-                pts.func(sector.small, (pos) => {
-                    let pixel = wastes.buildingmap.pixel(pos);
-                    if (pixel.is_color(color_plywood_wall)) {
-                        factory(objects.deck, pixel, pos);
-                        factory(objects.wall, pixel, pos, { type: 'plywood' });
-                        factory(objects.roof, pixel, pos);
-                    }
-                    else if (pixel.is_color(color_overgrown_wall)) {
-                        factory(objects.deck, pixel, pos);
-                        factory(objects.wall, pixel, pos, { type: 'overgrown' });
-                        factory(objects.roof, pixel, pos);
-                    }
-                    else if (pixel.is_color(color_deringer_wall)) {
-                        factory(objects.deck, pixel, pos);
-                        factory(objects.wall, pixel, pos, { type: 'sideroom' });
-                        factory(objects.roof, pixel, pos);
-                    }
-                    else if (pixel.is_color(color_medieval_wall)) {
-                        factory(objects.wall, pixel, pos, { type: 'medieval' });
-                    }
-                    else if (pixel.is_color(color_scrappy_wall)) {
-                        factory(objects.wall, pixel, pos, { type: 'scrappy' });
-                        //factory(objects.roof, pixel, pos);
-                    }
-                    else if (pixel.is_color(color_fence)) ;
-                    else if (pixel.is_color(color_decidtree)) {
-                        factory(objects.decidtree, pixel, pos, { type: 'decid' });
-                    }
-                    else if (pixel.is_color(color_deadtree)) {
-                        factory(objects.deadtree, pixel, pos);
-                    }
-                    else if (pixel.is_color(color_grass)) ;
-                    else if (pixel.is_color(color_wheat)) {
-                        factory(objects.wheat, pixel, pos);
-                    }
-                    else if (pixel.is_color(color_deck_and_roof)) {
-                        factory(objects.deck, pixel, pos);
-                        factory(objects.roof, pixel, pos);
-                    }
-                    else if (pixel.is_color(color_porch)) {
-                        factory(objects.porch, pixel, pos);
-                    }
-                    else if (pixel.is_color(color_rails)) {
-                        factory(objects.rails, pixel, pos);
-                    }
-                    else if (pixel.is_color(color_door)) {
-                        factory(objects.deck, pixel, pos);
-                        factory(objects.door, pixel, pos);
-                        factory(objects.roof, pixel, pos);
-                    }
-                    else if (pixel.is_color(color_wooden_door_and_deck)) {
-                        factory(objects.deck, pixel, pos);
-                        factory(objects.door, pixel, pos);
-                        //factory(objects.roof, pixel, pos);
-                    }
-                });
-                return false;
-            });
-        }
-        objects.register = register;
-        function start() {
-            console.log(' objects start ');
-        }
-        objects.start = start;
-        function tick() {
-            if (app$1.key(' ') == 1) {
-                wastes.HIDE_ROOFS = !wastes.HIDE_ROOFS;
-                console.log('hide roofs', wastes.HIDE_ROOFS);
-            }
-        }
-        objects.tick = tick;
-        function is_solid(pos) {
-            const impassable = ['wall', 'tree', 'fence', 'deep water'];
-            pos = pts.round(pos);
-            if (tiles$1.get(pos) == undefined)
-                return true;
-            let sector = lod$1.gworld.at(lod$1.world.big(pos));
-            let at = sector.stacked(pos);
-            for (let obj of at) {
-                if (obj.is_type(impassable)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-        objects.is_solid = is_solid;
-        class objected extends lod$1.obj {
-            constructor(counts) {
-                super(counts);
-                this.isObjected = true;
-                this.paintTimer = 0;
-                this.paintedRed = false;
-                this.solid = true;
-                this.cell = [0, 0];
-                this.heightAdd = 0;
-                this.calc = 0; // used for tree leaves
-            }
-            tiled() {
-                this.tile = tiles$1.get(pts.round(this.wpos));
-                this.tileBound = new aabb2([-.5, -.5], [.5, .5]);
-                this.tileBound.translate(this.wpos);
-            }
-            onhit() {
-                const sprite = this.shape;
-                if (sprite) {
-                    sprite.material.color.set('red');
-                    this.paintedRed = true;
-                }
-            }
-            nettick() {
-            }
-            tick() {
-                if (this.paintedRed) {
-                    this.paintTimer += ren$1.delta;
-                    if (this.paintTimer > 1) {
-                        const sprite = this.shape;
-                        sprite.material.color.set('white');
-                        console.log('beo');
-                        this.paintedRed = false;
-                        this.paintTimer = 0;
-                    }
-                }
-                //console.log('oo');
-            }
-            //update(): void {
-            //	this.tiled();
-            //	super.update();
-            //}
-            stack(fallthru = []) {
-                let calc = 0;
-                let stack = this.sector.stacked(pts.round(this.wpos));
-                for (let obj of stack) {
-                    if (obj.is_type(fallthru))
-                        continue;
-                    if (obj == this)
-                        break;
-                    calc += obj.z + obj.height;
-                }
-                this.calc = calc;
-                if (this.shape)
-                    this.shape.rup = calc + this.heightAdd;
-            }
-            setup_context() {
-            }
-        }
-        objects.objected = objected;
-        class wall extends objected {
-            constructor() {
-                super(numbers.walls);
-                this.type = 'wall';
-                this.height = 24;
-            }
-            create() {
-                var _a, _b, _c, _d, _e, _f;
-                this.tiled();
-                this.size = [24, 40];
-                this.cell = [255 - this.pixel.arrayRef[3], 0];
-                let tuple = sprites$1.dscrappywalls;
-                if (((_a = this.hints) === null || _a === void 0 ? void 0 : _a.type) == 'plywood')
-                    tuple = sprites$1.dderingerwalls;
-                if (((_b = this.hints) === null || _b === void 0 ? void 0 : _b.type) == 'overgrown')
-                    tuple = sprites$1.dovergrownwalls;
-                if (((_c = this.hints) === null || _c === void 0 ? void 0 : _c.type) == 'deringer')
-                    tuple = sprites$1.dderingerwalls;
-                if (((_d = this.hints) === null || _d === void 0 ? void 0 : _d.type) == 'woody')
-                    tuple = sprites$1.dwoodywalls;
-                if (((_e = this.hints) === null || _e === void 0 ? void 0 : _e.type) == 'medieval')
-                    tuple = sprites$1.dmedievalwalls;
-                else if (((_f = this.hints) === null || _f === void 0 ? void 0 : _f.type) == 'ruddy')
-                    tuple = sprites$1.druddywalls;
-                else ;
-                new sprite({
-                    binded: this,
-                    tuple: tuple,
-                    cell: this.cell,
-                    orderBias: 1.0,
-                });
-                this.stack();
-            }
-            adapt() {
-                // change sprite to surrounding walls
-            }
-        }
-        objects.wall = wall;
-        class deck extends objected {
-            constructor() {
-                super(numbers.floors);
-                this.type = 'deck';
-                this.height = 3;
-            }
-            onhit() { }
-            create() {
-                this.tiled();
-                this.tile.hasDeck = true;
-                //this.tile!.z -= 24;
-                this.size = [24, 17];
-                //if (this.pixel!.array[3] < 240)
-                //	this.cell = [240 - this.pixel!.array[3], 0];
-                new sprite({
-                    binded: this,
-                    tuple: sprites$1.ddeck,
-                    cell: this.cell,
-                    orderBias: .4,
-                });
-                this.stack();
-            }
-            tick() {
-                super.tick();
-                let pos = this.wpos;
-                let sector = lod$1.gworld.at(lod$1.world.big(pos));
-                let at = sector.stacked(pos);
-                for (let obj of at) {
-                    if (obj.type == 'you') {
-                        wastes.HIDE_ROOFS = true;
-                        break;
-                    }
-                }
-            }
-        }
-        deck.timer = 0;
-        objects.deck = deck;
-        class porch extends objected {
-            constructor() {
-                super(numbers.floors);
-                this.type = 'porch';
-                this.height = 3;
-            }
-            onhit() { }
-            create() {
-                this.tiled();
-                //this.tile!.z -= 24;
-                this.size = [24, 17];
-                //if (this.pixel!.array[3] < 240)
-                //	this.cell = [240 - this.pixel!.array[3], 0];
-                let color = [255, 255, 255, 255];
-                color = shadows$1.calc(color, this.wpos);
-                new sprite({
-                    binded: this,
-                    tuple: sprites$1.dporch,
-                    cell: this.cell,
-                    orderBias: .0,
-                    color: color
-                });
-                this.stack();
-            }
-        }
-        porch.timer = 0;
-        objects.porch = porch;
-        class rails extends objected {
-            constructor() {
-                super(numbers.floors);
-                this.type = 'porch';
-                this.height = 3;
-            }
-            create() {
-                this.tiled();
-                //this.tile!.z -= 24;
-                this.size = [24, 17];
-                //if (this.pixel!.array[3] < 240)
-                //	this.cell = [240 - this.pixel!.array[3], 0];
-                new sprite({
-                    binded: this,
-                    tuple: sprites$1.drails,
-                    cell: this.cell,
-                    orderBias: .4,
-                });
-                this.stack();
-            }
-            tick() {
-            }
-        }
-        rails.timer = 0;
-        objects.rails = rails;
-        class deadtree extends objected {
-            constructor() {
-                super(numbers.floors);
-                this.type = 'tree';
-                this.height = 24;
-            }
-            create() {
-                this.tiled();
-                this.size = [24, 50];
-                new sprite({
-                    binded: this,
-                    tuple: sprites$1.ddeadtreetrunk,
-                    orderBias: 0.7,
-                });
-                this.stack();
-            }
-        }
-        deadtree.timer = 0;
-        objects.deadtree = deadtree;
-        class decidtree extends objected {
-            constructor() {
-                super(numbers.trees);
-                this.flowered = false;
-                this.type = 'tree';
-                this.height = 24;
-            }
-            create() {
-                this.tiled();
-                this.size = [24, 50];
-                //if (this.pixel!.array[3] < 240)
-                //	this.cell = [240 - this.pixel!.array[3], 0];
-                new sprite({
-                    binded: this,
-                    tuple: sprites$1.ddecidtreetrunk,
-                    orderBias: 0.7,
-                });
-                this.stack();
-                const tile = tiles$1.get(this.wpos);
-                if (!this.flowered) {
-                    this.flowered = true;
-                    for (let y = -1; y <= 1; y++)
-                        for (let x = -1; x <= 1; x++)
-                            if (!(x == 0 && y == 0))
-                                factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [x, y]), {
-                                    type: this.hints.type,
-                                    tree: this,
-                                    color: tile.color,
-                                    grid: [x, y]
-                                });
-                    factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [0, 0]), { type: this.hints.type, color: tile.color, noVines: true });
-                    factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [0, 0]), { type: this.hints.type, color: tile.color, noVines: true });
-                }
-            }
-        }
-        objects.decidtree = decidtree;
-        class treeleaves extends objected {
-            constructor() {
-                super(numbers.leaves);
-                this.shaded = false;
-                this.hasVines = false;
-                this.type = 'leaves';
-                this.height = 14;
-                /*if (!this.hints.noVines || Math.random() > 0.5)
-                    this.hasVines = true;*/
-            }
-            onhit() {
-            }
-            create() {
-                let pixel = wastes.buildingmap.pixel(this.wpos);
-                if (!this.hints.noVines && pixel.arrayRef[3] == 254)
-                    this.hasVines = false; // true;
-                if (pixel.arrayRef[3] == 253)
-                    return;
-                this.tiled();
-                let tuple = sprites$1.dtreeleaves;
-                if (this.hasVines) {
-                    this.size = [24, 64];
-                    const grid = this.hints.grid || [0, 0];
-                    if (pts.equals(grid, [1, 0]) || pts.equals(grid, [1, 1])) {
-                        tuple = sprites$1.dvines2;
-                        //this.hints.color = [0, 0, 0, 255]
-                        console.log(' !! using dvines 2 !!');
-                    }
-                    else if (pts.equals(grid, [0, -1]) || pts.equals(grid, [-1, -1])) {
-                        tuple = sprites$1.dvines3;
-                        //this.hints.color = [0, 0, 0, 255]
-                    }
-                    else {
-                        tuple = sprites$1.dvines;
-                    }
-                }
-                else {
-                    this.size = [24, 31];
-                }
-                //this.try_create_vines();
-                //if (this.pixel!.array[3] < 240)
-                //	this.cell = [240 - this.pixel!.array[3], 0];
-                let color = this.hints.color || [255, 255, 255, 255];
-                let color2 = wastes.colormap.pixel(this.wpos);
-                if (!(255 - color2.arrayRef[3])) {
-                    if (this.hints.color) {
-                        color = [
-                            Math.floor(color[0] * 1.6),
-                            Math.floor(color[1] * 1.6),
-                            Math.floor(color[2] * 1.6),
-                            color[3],
-                        ];
-                    }
-                    new sprite({
-                        binded: this,
-                        tuple: tuple,
-                        orderBias: 0.7,
-                        color: color
-                    });
-                    //shadows.shade(this.wpos, 0.1);
-                    if (!this.shaded) {
-                        this.shaded = true;
-                        const shadow = 0.03;
-                        shadows$1.shade_matrix(this.wpos, [
-                            [shadow / 2, shadow, shadow / 2],
-                            [shadow, shadow, shadow],
-                            [shadow / 2, shadow, shadow / 2]
-                        ]);
-                    }
-                    if (this.hints.tree)
-                        this.special_leaves_stack();
-                    else
-                        this.stack();
-                }
-            }
-            special_leaves_stack() {
-                //console.log('special stack');
-                const tree = this.hints.tree;
-                if (this.shape) {
-                    const sprite = this.shape;
-                    this.z = tree.calc + tree.height;
-                    sprite.rup = this.z;
-                    if (this.hasVines) {
-                        sprite.rup2 = -33;
-                    }
-                }
-            }
-        }
-        objects.treeleaves = treeleaves;
-        class grass extends objected {
-            constructor() {
-                super(numbers.roofs);
-                this.type = 'grass';
-                this.height = 4;
-                this.solid = false;
-            }
-            create() {
-                this.tiled();
-                this.size = [24, 30];
-                let color = tiles$1.get(this.wpos).color;
-                color = [
-                    Math.floor(color[0] * 1.5),
-                    Math.floor(color[1] * 1.5),
-                    Math.floor(color[2] * 2.0),
-                    color[3],
-                ];
-                this.cell = [255 - this.pixel.arrayRef[3], 0];
-                new sprite({
-                    binded: this,
-                    tuple: sprites$1.dgrass,
-                    cell: this.cell,
-                    orderBias: .6,
-                    color: color
-                });
-                this.stack();
-            }
-        }
-        objects.grass = grass;
-        class wheat extends objected {
-            constructor() {
-                super(numbers.roofs);
-                this.type = 'wheat';
-                this.height = 4;
-            }
-            create() {
-                this.tiled();
-                this.size = [24, 30];
-                //let color =  tiles.get(this.wpos)!.color;
-                //this.cell = [Math.floor(Math.random() * 2), 0];
-                new sprite({
-                    binded: this,
-                    tuple: sprites$1.dwheat,
-                    cell: this.cell,
-                    //color: color,
-                    orderBias: .6
-                });
-                this.stack();
-            }
-        }
-        objects.wheat = wheat;
-        class panel extends objected {
-            constructor() {
-                super(numbers.roofs);
-                this.ticker = 0;
-                this.type = 'panel';
-                this.height = 10;
-            }
-            create() {
-                this.tiled();
-                this.size = [8, 10];
-                //let color =  tiles.get(this.wpos)!.color;
-                //this.cell = [Math.floor(Math.random() * 2), 0];
-                return;
-            }
-            tick() {
-                return;
-                //console.log('boo');
-            }
-        }
-        objects.panel = panel;
-        class container {
-            constructor() {
-                this.tuples = [];
-                if (Math.random() > .5)
-                    this.add('beer');
-                if (Math.random() > .5)
-                    this.add('string');
-                if (Math.random() > .5)
-                    this.add('stone');
-            }
-            add(item) {
-                let found = false;
-                for (let tuple of this.tuples) {
-                    if (tuple[0] == item) {
-                        tuple[1] += 1;
-                        found = true;
-                        break;
-                    }
-                }
-                if (!found) {
-                    this.tuples.push([item, 1]);
-                }
-                this.tuples.sort();
-            }
-            remove(name) {
-                for (let i = this.tuples.length - 1; i >= 0; i--) {
-                    const tuple = this.tuples[i];
-                    if (tuple[0] == name) {
-                        tuple[1] -= 1;
-                        if (tuple[1] <= 0)
-                            this.tuples.splice(i, 1);
-                        break;
-                    }
-                }
-            }
-        }
-        objects.container = container;
-        class crate extends objected {
-            constructor() {
-                super(numbers.objs);
-                this.container = new container;
-                this.mousing = false;
-                this.type = 'crate';
-                this.height = 17;
-                this.container.obj = this;
-            }
-            create() {
-                this.tiled();
-                this.size = [24, 40];
-                //let color =  tiles.get(this.wpos)!.color;
-                //this.cell = [Math.floor(Math.random() * 2), 0];
-                new sprite({
-                    binded: this,
-                    tuple: sprites$1.dcrate,
-                    cell: this.cell,
-                    //color: color,
-                    orderBias: 1.0
-                });
-                this.stack(['roof', 'wall']);
-            }
-            tick() {
-                const sprite = this.shape;
-                if (!sprite)
-                    return;
-                if (sprite.mousedSquare(wastes.gview.mrpos) /*&& !this.mousing*/) {
-                    this.mousing = true;
-                    sprite.material.color.set('#c1ffcd');
-                    console.log('mover');
-                    win$1.contextmenu.focus = this;
-                }
-                else if (!sprite.mousedSquare(wastes.gview.mrpos) && this.mousing) {
-                    if (win$1.contextmenu.focus == this)
-                        win$1.contextmenu.focus = undefined;
-                    sprite.material.color.set('white');
-                    this.mousing = false;
-                }
-            }
-            setup_context() {
-                console.log('setup context');
-                win$1.contextmenu.reset();
-                win$1.contextmenu.options.options.push(["See contents", () => {
-                        return pts.distsimple(pawns$1.you.wpos, this.wpos) < 1;
-                    }, () => {
-                        win$1.container.crate = this;
-                        win$1.container.call_once();
-                    }]);
-            }
-        }
-        objects.crate = crate;
-        class shelves extends objected {
-            constructor() {
-                super(numbers.objs);
-                this.container = new container;
-                this.mousing = false;
-                this.type = 'shelves';
-                this.height = 25;
-                this.container.obj = this;
-            }
-            create() {
-                this.tiled();
-                this.size = [20, 31];
-                //this.cell = [255 - this.pixel!.array[3], 0];
-                //return
-                let shape = new sprite({
-                    binded: this,
-                    tuple: sprites$1.dshelves,
-                    //cell: this.cell,
-                    orderBias: 0
-                });
-                shape.rup2 = 9;
-                shape.rleft = 6;
-                this.stack(['roof']);
-            }
-            tick() {
-                const sprite = this.shape;
-                if (sprite.mousedSquare(wastes.gview.mrpos) /*&& !this.mousing*/) {
-                    this.mousing = true;
-                    sprite.material.color.set('#c1ffcd');
-                    win$1.contextmenu.focus = this;
-                }
-                else if (!sprite.mousedSquare(wastes.gview.mrpos) && this.mousing) {
-                    if (win$1.contextmenu.focus == this)
-                        win$1.contextmenu.focus = undefined;
-                    sprite.material.color.set('white');
-                    this.mousing = false;
-                }
-            }
-            setup_context() {
-                console.log('setup context');
-                win$1.contextmenu.reset();
-                win$1.contextmenu.options.options.push(["See contents", () => {
-                        return pts.distsimple(pawns$1.you.wpos, this.wpos) < 1;
-                    }, () => {
-                        win$1.container.crate = this;
-                        win$1.container.call_once();
-                    }]);
-                win$1.contextmenu.options.options.push(["Store", () => {
-                        return pts.distsimple(pawns$1.you.wpos, this.wpos) < 1;
-                    }, () => {
-                        //win.container.crate = this;
-                        //win.container.call_once();
-                    }]);
-                win$1.contextmenu.options.options.push(["Examine", () => {
-                        return pts.distsimple(pawns$1.you.wpos, this.wpos) < 10;
-                    }, () => {
-                        win$1.descriptor.focus = this;
-                        win$1.descriptor.call_once("A shelves with not much on it.");
-                    }]);
-            }
-        }
-        objects.shelves = shelves;
-        class roof extends objected {
-            constructor() {
-                super(numbers.roofs);
-                this.shaded = false;
-                this.type = 'roof';
-                this.height = 3;
-            }
-            onhit() { }
-            create() {
-                //return;
-                this.tiled();
-                this.size = [24, 17];
-                let shape = new sprite({
-                    binded: this,
-                    tuple: sprites$1.droof,
-                    orderBias: 1.6,
-                });
-                shape.rup = 29;
-                if (!this.shaded) {
-                    this.shaded = true;
-                    const shadow = .75;
-                    shadows$1.shade_matrix(this.wpos, [
-                        [0, 0, 0, 0, 0],
-                        [0, 0, 0, 0, 0],
-                        [0, 0, 0, 0, 0],
-                        [0, 0, 0, shadow, 0],
-                        [0, 0, 0, 0, shadow]
-                    ], true);
-                }
-            }
-            tick() {
-                super.tick();
-                const sprite = this.shape;
-                if (!sprite)
-                    return;
-                if (wastes.HIDE_ROOFS)
-                    sprite.mesh.visible = false;
-                else if (!wastes.HIDE_ROOFS)
-                    sprite.mesh.visible = true;
-            }
-        }
-        objects.roof = roof;
-        class falsefront extends objected {
-            constructor() {
-                super(numbers.roofs);
-                this.type = 'falsefront';
-                this.height = 5;
-            }
-            create() {
-                this.tiled();
-                this.cell = [255 - this.pixel.arrayRef[3], 0];
-                this.size = [24, 40];
-                new sprite({
-                    binded: this,
-                    tuple: sprites$1.dfalsefronts,
-                    cell: this.cell,
-                    orderBias: 1.6,
-                });
-                this.stack();
-                //this.z = 29+4;
-            }
-            tick() {
-                const sprite = this.shape;
-                if (!sprite)
-                    return;
-                if (wastes.HIDE_ROOFS)
-                    sprite.mesh.visible = false;
-                else if (!wastes.HIDE_ROOFS)
-                    sprite.mesh.visible = true;
-            }
-        }
-        objects.falsefront = falsefront;
-        class acidbarrel extends objected {
-            constructor() {
-                super(numbers.objs);
-                this.type = 'acidbarrel';
-                this.height = 4;
-            }
-            create() {
-                this.tiled();
-                this.size = [24, 35];
-                new sprite({
-                    binded: this,
-                    tuple: sprites$1.dacidbarrel,
-                    orderBias: .4,
-                });
-                this.stack();
-            }
-        }
-        objects.acidbarrel = acidbarrel;
-        class door extends objected {
-            constructor() {
-                super(numbers.walls);
-                this.open = false;
-                this.type = 'door';
-                this.height = 23;
-            }
-            create() {
-                this.tiled();
-                this.size = [24, 40];
-                this.cell = [255 - this.pixel.arrayRef[3], 0];
-                new sprite({
-                    binded: this,
-                    tuple: sprites$1.ddoor,
-                    cell: this.cell,
-                    orderBias: door.order,
-                });
-                this.stack();
-            }
-            tick() {
-                super.tick();
-                if (!this.shape)
-                    return;
-                let pos = this.wpos;
-                let sector = lod$1.gworld.at(lod$1.world.big(pos));
-                let at = sector.stacked(pos);
-                let pawning = false;
-                for (let obj of at) {
-                    if (obj.is_type(['pawn', 'you'])) {
-                        pawning = true;
-                        let sprite = this.shape;
-                        sprite.vars.cell = pts.subtract(this.cell, [1, 0]);
-                        sprite.vars.orderBias = 1.55;
-                        sprite.retransform();
-                        sprite.update();
-                        this.open = true;
-                        break;
-                    }
-                }
-                if (!pawning) {
-                    let sprite = this.shape;
-                    sprite.vars.cell = this.cell;
-                    sprite.vars.orderBias = door.order;
-                    sprite.retransform();
-                    sprite.update();
-                    this.open = false;
-                }
-            }
-        }
-        door.order = .7;
-        objects.door = door;
-        class shrubs extends objected {
-            constructor() {
-                super(numbers.trees);
-                this.type = 'shrubs';
-            }
-            create() {
-                this.size = [24, 15];
-                new sprite({
-                    binded: this,
-                    tuple: sprites$1.shrubs,
-                    orderBias: .5
-                });
-            }
-        }
-        objects.shrubs = shrubs;
-    })(objects || (objects = {}));
-    var objects$1 = objects;
-
-    var win;
-    (function (win_1) {
-        var win;
-        var toggle_character = false;
-        win_1.hoveringClickableElement = false;
-        win_1.started = false;
-        function start() {
-            win_1.started = true;
-            win = document.getElementById('win');
-            contextmenu.init();
-            setTimeout(() => {
-                //message.message("Welcome", 1000);
-            }, 1000);
-        }
-        win_1.start = start;
-        function tick() {
-            if (!win_1.started)
-                return;
-            if (app$1.key('c') == 1) {
-                toggle_character = !toggle_character;
-                character.call(toggle_character);
-            }
-            if (app$1.key('b') == 1) ;
-            you.tick();
-            character.tick();
-            container.tick();
-            dialogue.tick();
-            contextmenu.tick();
-            message.tick();
-            descriptor.tick();
-        }
-        win_1.tick = tick;
-        class modal {
-            constructor(title) {
-                this.element = document.createElement('div');
-                this.element.className = 'modal';
-                //this.element.append('inventory')
-                if (title) {
-                    this.title = document.createElement('div');
-                    this.title.innerHTML = title;
-                    this.title.className = 'title';
-                    this.element.append(this.title);
-                }
-                this.content = document.createElement('div');
-                this.content.className = 'content';
-                this.content.innerHTML = 'content';
-                this.element.append(this.content);
-                win.append(this.element);
-            }
-            update(title) {
-                if (title)
-                    this.title.innerHTML = title;
-            }
-            reposition(pos) {
-                const round = pts.floor(pos);
-                this.element.style.top = round[1];
-                this.element.style.left = round[0];
-            }
-            deletor() {
-                this.element.remove();
-            }
-            float(anchor, add = [0, 0]) {
-                //let pos = this.anchor.rtospos([-1.5, 2.5]);
-                let pos = anchor.rtospos();
-                pos = pts.add(pos, add);
-                pos = pts.add(pos, pts.divide(anchor.size, 2));
-                //pos = pts.add(pos, this.anchor.size);
-                //let pos = this.anchor.aabbScreen.center();
-                //let pos = lod.project(wastes.gview.mwpos);
-                pos = pts.subtract(pos, wastes.gview.rpos);
-                pos = pts.divide(pos, wastes.gview.zoom);
-                pos = pts.divide(pos, ren$1.ndpi);
-                //pos = pts.add(pos, pts.divide(ren.screenCorrected, 2));
-                //pos[1] -= ren.screenCorrected[1] / 2;
-                this.reposition([ren$1.screen[0] / 2 + pos[0], ren$1.screen[1] / 2 - pos[1]]);
-            }
-        }
-        class character {
-            static call(open) {
-                var _a, _b;
-                this.open = open;
-                if (open && !this.modal) {
-                    this.modal = new modal('you');
-                    //this.modal.reposition(['100px', '30%']);
-                    this.modal.content.innerHTML = 'stats:<br />effectiveness: 100%<br /><hr>';
-                    this.modal.content.innerHTML += 'inventory:<br />';
-                    //inventory
-                    const inventory = (_a = pawns$1.you) === null || _a === void 0 ? void 0 : _a.inventory;
-                    if (inventory) {
-                        for (let tuple of inventory.tuples) {
-                            let button = document.createElement('div');
-                            //button.innerHTML = `<img width="20" height="20" src="tex/items/${tuple[0]}.png">`;
-                            button.innerHTML += tuple[0];
-                            if (tuple[1] > 1) {
-                                button.innerHTML += ` <span>×${tuple[1]}</span>`;
-                            }
-                            button.className = 'item';
-                            this.modal.content.append(button);
-                        }
-                    }
-                    this.modal.content.innerHTML += '<hr>guns:<br />';
-                    if (pawns$1.you.gun)
-                        this.modal.content.innerHTML += `<img class="gun" src="tex/guns/${pawns$1.you.gun}.png">`;
-                }
-                else if (!open && this.modal) {
-                    (_b = this.modal) === null || _b === void 0 ? void 0 : _b.deletor();
-                    this.modal = undefined;
-                }
-            }
-            static tick() {
-                var _a;
-                if (this.open) {
-                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.float(pawns$1.you, [15, 20]);
-                }
-            }
-        }
-        character.open = false;
-        win_1.character = character;
-        class you {
-            static call(open) {
-                var _a;
-                if (open && !this.modal) {
-                    this.modal = new modal('you');
-                    this.modal.element.classList.add('you');
-                    this.modal.content.remove();
-                }
-                else if (!open && this.modal) {
-                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
-                    this.modal = undefined;
-                }
-            }
-            static tick() {
-                if (pawns$1.you && !pawns$1.you.isActive()) {
-                    this.call(true);
-                    this.modal.float(pawns$1.you, [-5, 5]);
-                    console.log('call and float');
-                }
-                else {
-                    this.call(false);
-                }
-            }
-        }
-        win_1.you = you;
-        class contextmenu {
-            static reset() {
-                this.buttons = [];
-                this.options.options = [];
-            }
-            static init() {
-                hooks.register('viewMClick', (view) => {
-                    var _a;
-                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
-                    this.modal = undefined;
-                    this.focus = undefined;
-                    return false;
-                });
-                hooks.register('viewRClick', (view) => {
-                    var _a, _b, _c;
-                    console.log('contextmenu on ?', this.focus);
-                    // We have a focus, but no window! This is the easiest scenario.
-                    if (this.focus && !this.modal) {
-                        this.focus.setup_context();
-                        this.focusCur = this.focus;
-                        this.open();
-                    }
-                    // We click away from any sprites and we have a window: break it
-                    else if (!this.focus && this.modal) { // || this.focus == this.focusCur
-                        (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
-                        this.modal = undefined;
-                        this.focusCur = undefined;
-                    }
-                    // We clicked on the already focussed sprite: break it
-                    else if (this.modal && this.focus && this.focus == this.focusCur) {
-                        (_b = this.modal) === null || _b === void 0 ? void 0 : _b.deletor();
-                        this.modal = undefined;
-                        this.focusCur = undefined;
-                    }
-                    // We have an open modal, but focus on a different sprite: recreate it
-                    else if (this.modal && this.focus && this.focus != this.focusCur) {
-                        (_c = this.modal) === null || _c === void 0 ? void 0 : _c.deletor();
-                        this.modal = undefined;
-                        this.focus.setup_context();
-                        this.focusCur = this.focus;
-                        this.open();
-                    }
-                    //else {
-                    //	this.modal?.deletor();
-                    //	this.focusCur = undefined;
-                    //}
-                    return false;
-                });
-            }
-            static destroy() {
-                var _a;
-                (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
-                //this.focusCur = undefined;
-            }
-            static open() {
-                this.modal = new modal(this.focus.type);
-                this.modal.content.innerHTML = '';
-                this.modal.element.classList.add('contextmenu');
-                for (let option of this.options.options) {
-                    let button = document.createElement('div');
-                    button.innerHTML = option[0] + "&nbsp;";
-                    //if (tuple[1] > 1) {
-                    //	button.innerHTML += ` <span>×${tuple[1]}</span>`
-                    //}
-                    button.className = 'option';
-                    button.onclick = (e) => {
-                        var _a;
-                        if (option[1]()) {
-                            (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
-                            this.modal = undefined;
-                            win_1.hoveringClickableElement = false;
-                            option[2]();
-                        }
-                    };
-                    button.onmouseover = () => { win_1.hoveringClickableElement = true; };
-                    button.onmouseleave = () => { win_1.hoveringClickableElement = false; };
-                    this.modal.content.append(button);
-                    this.buttons.push([button, option]);
-                }
-            }
-            static update() {
-                //console.log('focusCur', this.focusCur);
-                for (let button of this.buttons) {
-                    const element = button[0];
-                    const option = button[1];
-                    if (!option[1]()) {
-                        element.classList.add('disabled');
-                    }
-                    else {
-                        element.classList.remove('disabled');
-                    }
-                }
-            }
-            static tick() {
-                if (this.modal && this.focusCur) {
-                    this.update();
-                    this.modal.float(this.focusCur, [0, 0]);
-                }
-            }
-        }
-        contextmenu.buttons = [];
-        contextmenu.options = { options: [] };
-        win_1.contextmenu = contextmenu;
-        class descriptor {
-            static call_once(text = 'Examined') {
-                if (this.modal !== undefined) {
-                    this.modal.deletor();
-                    this.modal = undefined;
-                }
-                if (this.modal == undefined) {
-                    this.modal = new modal('descriptor');
-                    this.modal.title.remove();
-                    //this.modal.content.remove();
-                    this.modal.content.innerHTML = text;
-                    this.focusCur = this.focus;
-                    this.timer = Date.now();
-                }
-            }
-            static tick() {
-                var _a;
-                if (this.modal !== undefined) {
-                    this.modal.float(this.focusCur, [0, 0]);
-                }
-                if (Date.now() - this.timer > 3 * 1000) {
-                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
-                    this.modal = undefined;
-                }
-            }
-        }
-        descriptor.timer = 0;
-        win_1.descriptor = descriptor;
-        class dialogue {
-            static call_once() {
-                var _a;
-                if (this.talkingTo != this.talkingToCur) {
-                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
-                    this.modal = undefined;
-                    this.talkingToCur = undefined;
-                }
-                if (this.talkingTo && !this.modal) {
-                    this.talkingToCur = this.talkingTo;
-                    this.modal = new modal();
-                    this.where[1] = 0;
-                    this.change();
-                }
-            }
-            static change() {
-                this.modal.content.innerHTML = this.talkingToCur.dialog[this.where[1]][0] + "&nbsp;";
-                const next = this.talkingToCur.dialog[this.where[1]][1];
-                if (next != -1) {
-                    let button = document.createElement('div');
-                    button.innerHTML = '>>';
-                    button.className = 'button';
-                    this.modal.content.append(button);
-                    button.onclick = (e) => {
-                        console.log('woo');
-                        this.where[1] = next;
-                        win_1.hoveringClickableElement = false;
-                        this.change();
-                        //button.remove();
-                    };
-                    button.onmouseover = () => { win_1.hoveringClickableElement = true; };
-                    button.onmouseleave = () => { win_1.hoveringClickableElement = false; };
-                }
-            }
-            static tick() {
-                var _a;
-                if (this.modal && this.talkingToCur) {
-                    this.modal.float(this.talkingToCur, [0, 10]);
-                }
-                if (this.talkingToCur && pts.distsimple(pawns$1.you.wpos, this.talkingToCur.wpos) > 1) {
-                    this.talkingToCur = undefined;
-                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
-                    this.modal = undefined;
-                }
-            }
-        }
-        dialogue.where = [0, 0];
-        win_1.dialogue = dialogue;
-        class container {
-            static call_once() {
-                var _a;
-                if (this.crate != this.crateCur) {
-                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
-                    this.modal = undefined;
-                    this.crateCur = undefined;
-                }
-                if (this.crate) {
-                    this.crateCur = this.crate;
-                    this.modal = new modal('container');
-                    this.modal.content.innerHTML = '';
-                    const cast = this.crate;
-                    for (let tuple of cast.container.tuples) {
-                        let item = document.createElement('div');
-                        item.innerHTML = tuple[0];
-                        if (tuple[1] > 1) {
-                            item.innerHTML += ` <span>×${tuple[1]}</span>`;
-                        }
-                        item.className = 'item';
-                        this.modal.content.append(item);
-                        item.onclick = (e) => {
-                            var _a;
-                            console.log('woo');
-                            item.remove();
-                            cast.container.remove(tuple[0]);
-                            (_a = pawns$1.you) === null || _a === void 0 ? void 0 : _a.inventory.add(tuple[0]);
-                            win_1.hoveringClickableElement = false;
-                        };
-                        item.onmouseover = () => { win_1.hoveringClickableElement = true; };
-                        item.onmouseleave = () => { win_1.hoveringClickableElement = false; };
-                        //this.modal.content.innerHTML += item + '<br />';
-                    }
-                }
-            }
-            /*static call(open: boolean, obj?: lod.obj, refresh = false) {
-                //this.anchor = obj;
-                if (!this.obj) {
-                    this.obj = new lod.obj;
-                    this.obj.size = [24, 40];
-                    this.obj.wpos = [38, 49];
-                }
-
-                if (open && !this.modal) {
-                    this.modal = new modal('container');
-                }
-                else if (!open && this.modal) {
-                    this.modal?.deletor();
-                    this.obj = undefined;
-                    this.modal = undefined;
-                }
-
-                if (this.modal && obj != this.obj) {
-                    if (obj) {
-                        this.obj = obj;
-                        this.modal.update(obj.type + ' contents');
-                    }
-                    this.modal.content.innerHTML = ''
-
-                    const cast = this.obj as objects.crate;
-                    for (let tuple of cast.container.tuples) {
-                        let button = document.createElement('div');
-                        button.innerHTML = tuple[0];
-                        if (tuple[1] > 1) {
-                            button.innerHTML += ` <span>×${tuple[1]}</span>`
-                        }
-                        button.className = 'item';
-                        this.modal.content.append(button);
-
-                        button.onclick = (e) => {
-                            console.log('woo');
-                            button.remove();
-                            cast.container.remove(tuple[0]);
-                            pawns.you?.inventory.add(tuple[0]);
-                        };
-
-                        //this.modal.content.innerHTML += item + '<br />';
-                    }
-                }
-            }*/
-            static tick() {
-                var _a;
-                if (this.modal && this.crateCur) {
-                    this.modal.float(this.crateCur);
-                }
-                if (this.crateCur && pts.distsimple(pawns$1.you.wpos, this.crateCur.wpos) > 1) {
-                    this.crateCur = undefined;
-                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
-                    this.modal = undefined;
-                }
-            }
-        }
-        win_1.container = container;
-        class areatag {
-            static call(open, area, refresh = false) {
-                if (open) {
-                    console.log('boo');
-                    let element = document.createElement('div');
-                    element.className = 'area';
-                    element.innerHTML = ` ${(area === null || area === void 0 ? void 0 : area.name) || ''} `;
-                    win.append(element);
-                    setTimeout(() => {
-                        element.classList.add('fade');
-                        setTimeout(() => {
-                            element.remove();
-                        }, 3000);
-                    }, 1000);
-                }
-            }
-        }
-        win_1.areatag = areatag;
-        class message {
-            constructor() {
-                this.duration = 5;
-            }
-            static message(message, duration) {
-                this.messages.push({ message: message, duration: duration });
-            }
-            static tick() {
-                if (this.messages.length) {
-                    let shift = this.messages.shift();
-                    let element = document.createElement('div');
-                    element.className = 'message';
-                    element.innerHTML = shift.message;
-                    document.getElementById('messages').append(element);
-                    setTimeout(() => {
-                        element.classList.add('fade');
-                    }, shift.duration);
-                    setTimeout(() => {
-                        element.remove();
-                    }, shift.duration + 2000);
-                }
-            }
-        }
-        message.messages = [];
-        win_1.message = message;
-    })(win || (win = {}));
-    var win$1 = win;
-
     var pawns;
     (function (pawns) {
         class pawn extends objects$1.objected {
@@ -7386,6 +7873,7 @@ void main() {
                         }, () => {
                             win$1.dialogue.talkingTo = this;
                             win$1.dialogue.call_once();
+                            client.talkingToId = this.id;
                         }]);
                     if (this.pawntype == 'trader') {
                         win$1.contextmenu.options.options.push(["Trade", () => {
@@ -8487,477 +8975,6 @@ void main() {
         areas_1.tick = tick;
     })(areas || (areas = {}));
     var areas$1 = areas;
-
-    var chickens;
-    (function (chickens) {
-        function start() {
-            //let chicken = new chickens.chicken;
-            //chicken.wpos = [46, 49];
-            //lod.add(chicken);
-            /*let chicken2 = new chickens.chicken;
-            chicken2.wpos = [42, 53];
-            lod.add(chicken2);*/
-        }
-        chickens.start = start;
-        class chicken extends objects$1.objected {
-            constructor() {
-                super(numbers.chickens);
-                this.netwpos = [0, 0];
-                this.netangle = 0;
-                this.created = false;
-                this.pecking = false;
-                this.sitting = false;
-                //override setup_context() {
-                //	win.contextmenu.reset();
-                //}
-                this.groups = {};
-                this.meshes = {};
-                this.made = false;
-                this.swoop = 0;
-                this.angle = 0;
-                this.walkSmoother = 1;
-                this.randomWalker = 0;
-                this.type = 'chicken';
-                this.height = 24;
-            }
-            create() {
-                this.tiled();
-                this.size = pts.divide([25, 30], 1);
-                //this.subsize = [25, 40];
-                let shape = new sprite({
-                    binded: this,
-                    tuple: sprites$1.test100,
-                    //opacity: 0.5,
-                    orderBias: 1.0,
-                });
-                shape.dimetric = false;
-                shape.rleft = this.size[0] / 2;
-                shape.rup2 = this.size[1] / 2;
-                shape.show();
-                if (!this.created) {
-                    this.created = true;
-                    console.log('creating chicken');
-                    // Set scale to increase pixels exponentially
-                    const scale = 1;
-                    // make wee guy target
-                    //this.group = new THREE.Group
-                    let size = pts.mult(this.size, scale);
-                    this.target = ren$1.make_render_target(size[0], size[1]);
-                    this.camera = ren$1.make_orthographic_camera(size[0], size[1]);
-                    this.scene = new THREE.Scene();
-                    //this.scene.background = new Color('#333');
-                    this.scene.rotation.set(Math.PI / 6, Math.PI / 4, 0);
-                    this.scene.scale.set(scale, scale, scale);
-                    this.scene.add(new THREE.AmbientLight('white'));
-                    let sun = new THREE.DirectionalLight(0xffffff, 0.5);
-                    // left up right
-                    sun.position.set(-wastes.size, wastes.size * 1.5, wastes.size / 2);
-                    //sun.add(new AxesHelper(100));
-                    this.scene.add(sun);
-                    this.scene.add(sun.target);
-                }
-                const spritee = this.shape;
-                spritee.material.map = this.target.texture;
-            }
-            try_move_to(pos) {
-                let venture = pts.add(this.wpos, pos);
-                if (!objects$1.is_solid(venture))
-                    this.wpos = venture;
-            }
-            update() {
-                this.tiled();
-                this.stack();
-                super.update();
-            }
-            make() {
-                if (this.made)
-                    return;
-                this.made = true;
-                const headWidth = 2.5;
-                const headHeight = 5;
-                const headLength = 2.5;
-                const combWidth = 1;
-                const combHeight = 2;
-                const combLength = 2;
-                const beakWidth = 1.5;
-                const beakHeight = 1.5;
-                const beakLength = 2;
-                const legsWidth = 1;
-                const legsHeight = 3;
-                const legsLength = 1;
-                const armsWidth = 1;
-                const armsLength = 5;
-                const armsHeight = 3;
-                const armsAngle = .0;
-                const bodyWidth = 4;
-                const bodyHeight = 4;
-                const bodyLength = 7;
-                const feetWidth = 1.5;
-                const feetHeight = 1;
-                const feetLength = 1.5;
-                let boxHead = new THREE.BoxGeometry(headWidth, headHeight, headLength);
-                let materialHead = new THREE.MeshLambertMaterial({
-                    color: '#787a7a'
-                });
-                let boxComb = new THREE.BoxGeometry(combWidth, combHeight, combLength);
-                let materialComb = new THREE.MeshLambertMaterial({
-                    color: '#a52c2c'
-                });
-                let boxBeak = new THREE.BoxGeometry(beakWidth, beakHeight, beakLength);
-                let materialBeak = new THREE.MeshLambertMaterial({
-                    color: '#7f805f'
-                });
-                let boxBody = new THREE.BoxGeometry(bodyWidth, bodyHeight, bodyLength);
-                let materialBody = new THREE.MeshLambertMaterial({
-                    color: '#787a7a'
-                });
-                let boxArms = new THREE.BoxGeometry(armsWidth, armsHeight, armsLength);
-                let materialArms = new THREE.MeshLambertMaterial({
-                    color: '#787a7a'
-                });
-                let boxLegs = new THREE.BoxGeometry(legsWidth, legsHeight, legsLength);
-                let boxFeet = new THREE.BoxGeometry(feetWidth, feetHeight, feetLength);
-                let materialLegs = new THREE.MeshLambertMaterial({
-                    color: '#7f805f'
-                });
-                let planeWater = new THREE.PlaneGeometry(wastes.size * 2, wastes.size * 2);
-                let materialWater = new THREE.MeshLambertMaterial({
-                    color: new THREE__default["default"].Color('rgba(32, 64, 64, 255)'),
-                    opacity: 0.4,
-                    transparent: true,
-                    blending: THREE__default["default"].CustomBlending,
-                    blendEquation: THREE__default["default"].AddEquation,
-                    blendSrc: THREE__default["default"].DstAlphaFactor,
-                    blendDst: THREE__default["default"].OneMinusSrcAlphaFactor
-                });
-                this.meshes.water = new THREE.Mesh(planeWater, materialWater);
-                this.meshes.water.rotation.x = -Math.PI / 2;
-                this.meshes.water.position.y = -bodyHeight * 1.5;
-                this.meshes.water.visible = false;
-                this.meshes.head = new THREE.Mesh(boxHead, materialHead);
-                this.meshes.comb = new THREE.Mesh(boxComb, materialComb);
-                this.meshes.beak = new THREE.Mesh(boxBeak, materialBeak);
-                this.meshes.body = new THREE.Mesh(boxBody, materialBody);
-                this.meshes.arml = new THREE.Mesh(boxArms, materialArms);
-                this.meshes.armr = new THREE.Mesh(boxArms, materialArms);
-                this.meshes.legl = new THREE.Mesh(boxLegs, materialLegs);
-                this.meshes.legr = new THREE.Mesh(boxLegs, materialLegs);
-                this.meshes.footl = new THREE.Mesh(boxFeet, materialLegs);
-                this.meshes.footr = new THREE.Mesh(boxFeet, materialLegs);
-                this.groups.neck = new THREE.Group;
-                this.groups.head = new THREE.Group;
-                this.groups.beak = new THREE.Group;
-                this.groups.comb = new THREE.Group;
-                this.groups.body = new THREE.Group;
-                this.groups.arml = new THREE.Group;
-                this.groups.armr = new THREE.Group;
-                this.groups.legl = new THREE.Group;
-                this.groups.legr = new THREE.Group;
-                this.groups.footl = new THREE.Group;
-                this.groups.footr = new THREE.Group;
-                this.groups.ground = new THREE.Group;
-                this.groups.basis = new THREE.Group;
-                this.groups.neck.add(this.meshes.head);
-                this.groups.head.add(this.meshes.head);
-                this.groups.beak.add(this.meshes.beak);
-                this.groups.comb.add(this.meshes.comb);
-                this.groups.body.add(this.meshes.body);
-                this.groups.arml.add(this.meshes.arml);
-                this.groups.armr.add(this.meshes.armr);
-                this.groups.legl.add(this.meshes.legl);
-                this.groups.legr.add(this.meshes.legr);
-                this.groups.footl.add(this.meshes.footl);
-                this.groups.footr.add(this.meshes.footr);
-                this.groups.head.add(this.groups.beak);
-                this.groups.head.add(this.groups.comb);
-                this.groups.neck.add(this.groups.head);
-                this.groups.legl.add(this.groups.footl);
-                this.groups.legr.add(this.groups.footr);
-                this.groups.body.add(this.groups.neck);
-                this.groups.body.add(this.groups.arml);
-                this.groups.body.add(this.groups.armr);
-                this.groups.ground.add(this.groups.legl);
-                this.groups.ground.add(this.groups.legr);
-                this.groups.ground.add(this.groups.body);
-                this.groups.basis.add(this.groups.ground);
-                this.groups.basis.add(this.meshes.water);
-                this.groups.neck.position.set(0, bodyHeight / 2, bodyLength / 3);
-                this.groups.head.position.set(0, headHeight / 2, 0);
-                this.groups.comb.position.set(0, combHeight, combLength / 2);
-                this.groups.beak.position.set(0, 0, beakLength);
-                //this.groups.beak.rotation.set(-Math.PI / 4, 0, 0);
-                this.groups.body.position.set(0, bodyHeight, 0);
-                this.meshes.body.rotation.set(-0.3, 0, 0);
-                this.meshes.arml.rotation.set(-0.3, 0, 0);
-                this.meshes.armr.rotation.set(-0.3, 0, 0);
-                this.groups.armr.position.set(-bodyWidth / 2 - armsWidth / 2, bodyHeight / 2 - armsWidth / 2, 0);
-                this.groups.armr.rotation.set(0, 0, -armsAngle);
-                this.meshes.armr.position.set(0, -armsHeight / 2 + armsWidth / 2, 0);
-                this.groups.arml.position.set(bodyWidth / 2 + armsWidth / 2, bodyHeight / 2 - armsWidth / 2, 0);
-                this.groups.arml.rotation.set(0, 0, armsAngle);
-                this.meshes.arml.position.set(0, -armsHeight / 2 + armsWidth / 2, 0);
-                this.groups.legl.position.set(-legsWidth / 1, bodyHeight / 2, 0);
-                this.meshes.legl.position.set(0, -legsHeight / 2, 0);
-                this.groups.legr.position.set(legsWidth / 1, bodyHeight / 2, 0);
-                this.meshes.legr.position.set(0, -legsHeight / 2, 0);
-                this.groups.footl.position.set(0, -legsHeight, feetLength / 2);
-                this.groups.footr.position.set(0, -legsHeight, feetLength / 2);
-                this.groups.ground.position.set(0, -bodyHeight * 3, 0);
-                //mesh.rotation.set(Math.PI / 2, 0, 0);
-                this.scene.add(this.groups.basis);
-            }
-            render() {
-                ren$1.renderer.setRenderTarget(this.target);
-                ren$1.renderer.clear();
-                ren$1.renderer.render(this.scene, this.camera);
-            }
-            animateBodyParts() {
-                var _a;
-                this.walkSmoother = wastes.clamp(this.walkSmoother, 0, 1);
-                const legsSwoop = 0.6;
-                const headBob = 1.0;
-                const riser = 0.5;
-                this.swoop += ren$1.delta * 2.5;
-                const swoop1 = Math.cos(Math.PI * this.swoop);
-                const swoop2 = Math.cos(Math.PI * this.swoop - Math.PI);
-                this.groups.legl.rotation.x = swoop1 * legsSwoop * this.walkSmoother;
-                this.groups.legr.rotation.x = swoop2 * legsSwoop * this.walkSmoother;
-                //this.groups.arml.rotation.x = swoop1 * armsSwoop * this.walkSmoother;
-                //this.groups.armr.rotation.x = swoop2 * armsSwoop * this.walkSmoother;
-                this.groups.head.position.z = swoop1 * swoop2 * -headBob * this.walkSmoother;
-                this.groups.ground.position.y = -10 + swoop1 * swoop2 * riser * this.walkSmoother;
-                this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
-                if (this.sitting || app$1.key('q')) {
-                    this.groups.legl.visible = false;
-                    this.groups.legr.visible = false;
-                    this.groups.ground.position.y -= 4;
-                    this.meshes.body.rotation.set(0.0, 0, 0);
-                    this.meshes.arml.rotation.set(0.0, 0, 0);
-                    this.meshes.armr.rotation.set(0.0, 0, 0);
-                }
-                else {
-                    this.groups.legl.visible = true;
-                    this.groups.legr.visible = true;
-                    this.meshes.body.rotation.set(-0.3, 0, 0);
-                    this.meshes.arml.rotation.set(-0.3, 0, 0);
-                    this.meshes.armr.rotation.set(-0.3, 0, 0);
-                }
-                if (this.pecking) {
-                    this.groups.neck.rotation.x = 1.0;
-                    this.groups.body.rotation.x = 0.6;
-                }
-                else {
-                    this.groups.neck.rotation.x = 0;
-                    this.groups.body.rotation.x = 0;
-                }
-                const sprite = this.shape;
-                if (((_a = this.tile) === null || _a === void 0 ? void 0 : _a.type) == 'shallow water') {
-                    sprite.vars.orderBias = 0.25;
-                    this.meshes.water.visible = true;
-                }
-                else {
-                    sprite.vars.orderBias = 1.0;
-                    this.meshes.water.visible = false;
-                }
-                this.render();
-            }
-            nettick() {
-                //this.netangle = Math.PI / 4;
-                // Net tick can happen offscreen
-                var _a;
-                //this.wpos = tiles.hovering!.wpos;
-                //this.wpos = wastes.gview.mwpos;
-                if (this.pecking) {
-                    console.log('we are pecking');
-                }
-                if (!pts.together(this.netwpos))
-                    this.netwpos = this.wpos;
-                // tween netwpos into wpos
-                let tween = pts.mult(pts.subtract(this.netwpos, this.wpos), ren$1.delta * 2);
-                this.wpos = pts.add(this.wpos, tween);
-                (_a = this.sector) === null || _a === void 0 ? void 0 : _a.swap(this);
-                //console.log('chicken nettick', this.wpos);
-                if (this.netangle - this.angle > Math.PI)
-                    this.angle += Math.PI * 2;
-                if (this.angle - this.netangle > Math.PI)
-                    this.angle -= Math.PI * 2;
-                let tweenAngle = (this.netangle - this.angle) * 0.1;
-                this.angle += tweenAngle;
-                const movement = pts.together(pts.abs(tween));
-                if (movement > 0.005) {
-                    //console.log('movement > 0.25');
-                    this.walkSmoother += ren$1.delta * 10;
-                }
-                else {
-                    this.walkSmoother -= ren$1.delta * 5;
-                }
-            }
-            setup_context() {
-                win$1.contextmenu.reset();
-                win$1.contextmenu.options.options.push(["Examine", () => {
-                        return true;
-                    }, () => {
-                        win$1.descriptor.focus = this;
-                        win$1.descriptor.call_once("Just really a chicken.");
-                        //win.contextmenu.focus = undefined;
-                    }]);
-            }
-            tick() {
-                // We are assumed to be onscreen
-                // If we are visible
-                if (!this.shape)
-                    return;
-                //this.wpos = wastes.gview.mwpos;
-                this.make();
-                this.animateBodyParts();
-                this.tiled();
-                //this.tile?.paint();
-                //this.sector?.swap(this);
-                let color = [1, 1, 1, 1];
-                const sprite = this.shape;
-                // We could have been nulled due to a hide, dispose
-                if (sprite) {
-                    const setShadow = () => {
-                        color = shadows$1.calc(color, pts.round(this.wpos));
-                        sprite.material.color.setRGB(color[0], color[1], color[2]);
-                    };
-                    if (sprite.mousedSquare(wastes.gview.mrpos)) {
-                        sprite.material.color.set(GLOB.HOVER_COLOR);
-                        win$1.contextmenu.focus = this;
-                    }
-                    else if (!sprite.mousedSquare(wastes.gview.mrpos)) {
-                        if (win$1.contextmenu.focus == this)
-                            win$1.contextmenu.focus = undefined;
-                        setShadow();
-                    }
-                    else if (this.tile && this.tile.hasDeck == false) {
-                        setShadow();
-                    }
-                    else if (!this.tile) ;
-                }
-                else {
-                    console.warn('no chicken sprite?????');
-                }
-                this.stack(['pawn', 'you', 'chicken', 'leaves', 'wall', 'door', 'roof', 'falsefront', 'panel']);
-                //sprite.roffset = [.5, .5];
-                //this.tile!.paint();
-                super.update();
-            }
-        }
-        chickens.chicken = chicken;
-    })(chickens || (chickens = {}));
-    var chickens$1 = chickens;
-
-    var client;
-    (function (client) {
-        client.sobjs = {};
-        client.playerId = -1;
-        function tick() {
-            for (let id in client.sobjs) {
-                let obj = client.sobjs[id];
-                if (obj.type != 'you')
-                    obj.nettick();
-            }
-        }
-        client.tick = tick;
-        function start() {
-            client.socket = new WebSocket("ws://86.93.147.154:8080");
-            client.socket.onopen = function (e) {
-                //console.log("[open] Connection established");
-                //console.log("Sending to server");
-                //socket.send("My name is John");
-            };
-            function process_news(type, typed, data, handle, update) {
-                for (let sobj of data.news) {
-                    const { id } = sobj;
-                    if (sobj.type != typed)
-                        continue;
-                    let obj = client.sobjs[id];
-                    if (!obj) {
-                        console.log('new sobj', typed, id);
-                        obj = client.sobjs[id] = new type;
-                        handle(obj, sobj);
-                        lod$1.add(obj);
-                    }
-                    else if (obj) {
-                        update(obj, sobj);
-                    }
-                }
-            }
-            client.socket.onmessage = function (event) {
-                const data = JSON.parse(event.data);
-                if (data.removes && data.removes.length) {
-                    console.log('we have a remove', data.removes);
-                    for (let id of data.removes) {
-                        let obj = client.sobjs[id];
-                        delete client.sobjs[id];
-                        obj.hide();
-                        obj.finalize();
-                        lod$1.remove(obj);
-                    }
-                }
-                if (data.news) {
-                    process_news(pawns$1.pawn, 'pawn', data, (obj, sobj) => {
-                        const { wpos, angle, outfit } = sobj;
-                        obj.wpos = wpos;
-                        obj.angle = angle;
-                        obj.outfit = outfit;
-                        if (sobj.isPlayer)
-                            obj.isPlayer = true;
-                    }, (obj, sobj) => {
-                        if (obj.type == 'you')
-                            return;
-                        const { wpos, angle, aiming } = sobj;
-                        obj.netwpos = wpos;
-                        obj.netangle = angle;
-                        obj.aiming = aiming;
-                        //obj.sector?.swap(obj);
-                    });
-                    process_news(chickens$1.chicken, 'chicken', data, (obj, sobj) => {
-                        const { wpos, angle, sitting } = sobj;
-                        obj.wpos = wpos;
-                        obj.angle = angle;
-                        obj.sitting = sitting;
-                    }, (obj, sobj) => {
-                        const { wpos, angle, pecking, sitting } = sobj;
-                        obj.netwpos = wpos;
-                        obj.netangle = angle;
-                        obj.pecking = pecking;
-                        obj.sitting = sitting;
-                    });
-                }
-                if (data.player) {
-                    client.playerId = data.player.id;
-                    let pawn = client.sobjs[data.player.id];
-                    if (pawn) {
-                        pawns$1.you = pawn;
-                        pawn.type = 'you';
-                        console.log('we got our pawn', client.playerId);
-                        wastes.gview.center = pawn;
-                    }
-                }
-                if (data.messages) {
-                    for (let message of data.messages) {
-                        win$1.message.message(message[0], message[1] * 1000);
-                    }
-                }
-            };
-            setInterval(() => {
-                if (pawns$1.you) {
-                    const json = {
-                        player: {
-                            wpos: pawns$1.you.wpos,
-                            angle: pawns$1.you.angle,
-                            aiming: pawns$1.you.aiming
-                        }
-                    };
-                    const string = JSON.stringify(json);
-                    client.socket.send(string);
-                }
-            }, 333);
-        }
-        client.start = start;
-    })(client || (client = {}));
 
     var fences;
     (function (fences) {

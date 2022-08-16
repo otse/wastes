@@ -79,6 +79,8 @@ class connection {
 		this.you.hide();
 		slod.remove(this.you);
 		this.you.finalize();
+		if (this.you.freezingNpc)
+			this.you.freezingNpc.frozenBy = undefined;
 		send_message_to_all("A player disconnected", 3);
 	}
 	receive(json: any) {
@@ -89,6 +91,17 @@ class connection {
 				this.you.aiming = json.player.aiming;
 				this.you.sector?.swap(this.you);
 			}
+		}
+		if (json.talkingToId) {
+			console.log('player is talking to pawn', json.talkingToId);
+			const npc = slod.byId[json.talkingToId] as npc;
+			if (npc) {
+				this.you.freezingNpc = npc;
+				npc.frozenBy = this.you;
+			}
+			else
+				console.warn('cant talk to this entity');
+
 		}
 	}
 	update_grid() {
@@ -141,6 +154,7 @@ const outfits: [string, string, string, string][] = [
 class npc extends slod.sobj {
 	static id = 0;
 	isNpc = true
+	frozenBy?: slod.sobj
 	angle = 0
 	walkArea: aabb2
 	aimTarget: vec2 = [0, 0]
@@ -152,7 +166,7 @@ class npc extends slod.sobj {
 		this.timer = new timer(0);
 	}
 	wander() {
-		if (this.walkArea) {
+		if (!this.frozenBy && this.walkArea) {
 			if (this.timer.elapsed(2000)) {
 				const target = this.walkArea.random_point();
 				this.aimTarget = pts.round(target);
@@ -162,7 +176,7 @@ class npc extends slod.sobj {
 			}
 		}
 
-		if (pts.together(this.aimTarget)) {
+		if (!this.frozenBy && pts.together(this.aimTarget)) {
 			let angle = pts.angle(this.wpos, this.aimTarget);
 
 			this.angle = -angle + Math.PI;
@@ -178,6 +192,13 @@ class npc extends slod.sobj {
 			const dist = pts.distsimple(this.wpos, this.aimTarget);
 			if (dist < 0.2)
 				this.aimTarget = [0, 0];
+		}
+
+		if (this.frozenBy) {
+			if (pts.distsimple(this.frozenBy.wpos, this.wpos) > 1.0) {
+				this.frozenBy = undefined;
+				this.timer = new timer(0);
+			}
 		}
 	}
 	override tick() {
@@ -215,6 +236,7 @@ class pawn extends npc {
 }
 
 class player extends pawn {
+	freezingNpc?: npc
 	constructor() {
 		super();
 		this.type = 'pawn';
@@ -234,6 +256,9 @@ class player extends pawn {
 			...upper,
 			isPlayer: true
 		};
+	}
+	end() {
+
 	}
 }
 

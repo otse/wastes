@@ -45,9 +45,12 @@ namespace slod {
 
 	export var SectorSpan = 4;
 
-	export function add(obj: sobj) {
-		let sector = gworld.at(slod.sworld.big(obj.wpos));
-		sector.add(obj);
+	export var byId: { [id: string]: slod.sobj } = {}
+
+	export function add(sobj: sobj) {
+		let sector = gworld.at(slod.sworld.big(sobj.wpos));
+		byId[sobj.id] = sobj;
+		sector.add(sobj);
 	}
 
 	export function remove(obj: sobj) {

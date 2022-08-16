@@ -2,6 +2,7 @@ import { default as THREE, Scene, Color, Group, AxesHelper, Mesh, BoxGeometry, P
 import aabb2 from "./aabb2";
 
 import app from "./app";
+import { client } from "./client";
 import collada from "./collada";
 import dialogues from "./dialogue";
 import GLOB from "./glob";
@@ -128,6 +129,7 @@ export namespace pawns {
 				}, () => {
 					win.dialogue.talkingTo = this;
 					win.dialogue.call_once();
+					client.talkingToId = this.id;
 				}]);
 				if (this.pawntype == 'trader') {
 					win.contextmenu.options.options.push(["Trade", () => {

@@ -265,6 +265,7 @@ namespace lod {
 	};
 
 	export class obj extends toggle {
+		id = ''
 		type = 'an obj'
 		netObj = false
 		wpos: vec2 = [0, 0]
