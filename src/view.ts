@@ -9,6 +9,7 @@ import lod, { numbers } from "./lod";
 import wastes from "./wastes";
 import hooks from "./hooks";
 import tiles from "./tiles";
+import pawns from "./pawns";
 
 // the view manages what it sees
 
@@ -21,7 +22,7 @@ export class view {
 	mpos: vec2 = [0, 0]
 	mwpos: vec2 = [0, 0]
 	mrpos: vec2 = [0, 0]
-	
+
 	follow?: lod.obj
 	center: lod.obj
 	static make() {
@@ -185,6 +186,8 @@ export class view {
 		crunch += `lod grid size: ${lod.ggrid.spread * 2 + 1} / ${lod.ggrid.outside * 2 + 1}<br />`;
 		crunch += `mouse tile: ${pts.to_string(tiles.hovering?.wpos || [0, 0])}<br />`;
 		crunch += `view center: ${pts.to_string(pts.floor(this.wpos))}<br />`;
+		if (pawns.you)
+			crunch += `you: ${pts.to_string(pts.round(pawns.you.wpos))}<br />`;
 		crunch += `view bigpos: ${pts.to_string(lod.world.big(this.wpos))}<br />`;
 		crunch += `view center: ${pts.to_string(wastes.gview.center.wpos)}<br />`;
 		crunch += `view zoom: ${this.zoom}<br />`;

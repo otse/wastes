@@ -38,6 +38,7 @@ export namespace pawns {
 		gun: string = 'revolver'
 		outfit = ['#444139', '#444139', '#484c4c', '#31362c']
 		aiming = false
+		shoot = false
 		group
 		mesh
 		target
@@ -465,6 +466,8 @@ export namespace pawns {
 					if (app.button(0) == 1) {
 						console.log('shoot');
 
+						this.shoot = true;
+						
 						for (let obj of lod.ggrid.visibleObjs) {
 							const objected = obj as objects.objected;
 							if (objected.isObjected) {

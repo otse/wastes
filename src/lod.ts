@@ -246,12 +246,12 @@ namespace lod {
 			while (i--) {
 				let sector: sector;
 				sector = this.shown[i];
-				sector.tick();
 				if (sector.dist() > this.outside) {
 					sector.hide();
 					this.shown.splice(i, 1);
 				}
 				else {
+					sector.tick();
 					this.visibleObjs = this.visibleObjs.concat(sector.objs);
 				}
 			}
@@ -353,7 +353,7 @@ namespace lod {
 			this.counts[1]--;
 			this.bindObj.shape = null;
 			console.warn('finalize!');
-			
+
 		}
 		show() {
 			if (this.on())

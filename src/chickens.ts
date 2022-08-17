@@ -368,7 +368,7 @@ export namespace chickens {
 			//this.wpos = wastes.gview.mwpos;
 
 			if (this.pecking) {
-				console.log('we are pecking');
+				// console.log('we are pecking');
 			}
 
 			if (!pts.together(this.netwpos))

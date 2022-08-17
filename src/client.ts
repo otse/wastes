@@ -60,10 +60,12 @@ export namespace client {
 				console.log('we have a remove', data.removes);
 				for (let id of data.removes) {
 					let obj = sobjs[id];
-					delete sobjs[id];
+					if (!obj)
+						continue;
 					obj.hide();
 					obj.finalize();
 					lod.remove(obj);
+					delete sobjs[id];
 				}
 			}
 			if (data.news) {
@@ -130,8 +132,10 @@ export namespace client {
 						wpos: pawns.you.wpos,
 						angle: pawns.you.angle,
 						aiming: pawns.you.aiming,
+						shoot: pawns.you.shoot
 					}
 				};
+				pawns.you.shoot = false;
 				if (talkingToId) {
 					json.talkingToId = talkingToId;
 					talkingToId = '';

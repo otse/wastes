@@ -752,12 +752,12 @@ void main() {
                 while (i--) {
                     let sector;
                     sector = this.shown[i];
-                    sector.tick();
                     if (sector.dist() > this.outside) {
                         sector.hide();
                         this.shown.splice(i, 1);
                     }
                     else {
+                        sector.tick();
                         this.visibleObjs = this.visibleObjs.concat(sector.objs);
                     }
                 }
@@ -2929,9 +2929,7 @@ void main() {
                 var _a;
                 //this.wpos = tiles.hovering!.wpos;
                 //this.wpos = wastes.gview.mwpos;
-                if (this.pecking) {
-                    console.log('we are pecking');
-                }
+                if (this.pecking) ;
                 if (!pts.together(this.netwpos))
                     this.netwpos = this.wpos;
                 // tween netwpos into wpos
@@ -3055,10 +3053,12 @@ void main() {
                     console.log('we have a remove', data.removes);
                     for (let id of data.removes) {
                         let obj = client.sobjs[id];
-                        delete client.sobjs[id];
+                        if (!obj)
+                            continue;
                         obj.hide();
                         obj.finalize();
                         lod$1.remove(obj);
+                        delete client.sobjs[id];
                     }
                 }
                 if (data.news) {
@@ -3115,8 +3115,10 @@ void main() {
                             wpos: pawns$1.you.wpos,
                             angle: pawns$1.you.angle,
                             aiming: pawns$1.you.aiming,
+                            shoot: pawns$1.you.shoot
                         }
                     };
+                    pawns$1.you.shoot = false;
                     if (client.talkingToId) {
                         json.talkingToId = client.talkingToId;
                         client.talkingToId = '';
@@ -7798,6 +7800,7 @@ void main() {
                 this.gun = 'revolver';
                 this.outfit = ['#444139', '#444139', '#484c4c', '#31362c'];
                 this.aiming = false;
+                this.shoot = false;
                 this.created = false;
                 this.groups = {};
                 this.meshes = {};
@@ -8140,6 +8143,7 @@ void main() {
                         this.aiming = true;
                         if (app$1.button(0) == 1) {
                             console.log('shoot');
+                            this.shoot = true;
                             for (let obj of lod$1.ggrid.visibleObjs) {
                                 const objected = obj;
                                 if (objected.isObjected) {
@@ -8587,6 +8591,8 @@ void main() {
             crunch += `lod grid size: ${lod$1.ggrid.spread * 2 + 1} / ${lod$1.ggrid.outside * 2 + 1}<br />`;
             crunch += `mouse tile: ${pts.to_string(((_a = tiles$1.hovering) === null || _a === void 0 ? void 0 : _a.wpos) || [0, 0])}<br />`;
             crunch += `view center: ${pts.to_string(pts.floor(this.wpos))}<br />`;
+            if (pawns$1.you)
+                crunch += `you: ${pts.to_string(pts.round(pawns$1.you.wpos))}<br />`;
             crunch += `view bigpos: ${pts.to_string(lod$1.world.big(this.wpos))}<br />`;
             crunch += `view center: ${pts.to_string(wastes.gview.center.wpos)}<br />`;
             crunch += `view zoom: ${this.zoom}<br />`;

@@ -43,7 +43,7 @@ namespace slod {
 
 	export var gworld: sworld
 
-	export var SectorSpan = 4;
+	export var SectorSpan = 3;
 
 	export var byId: { [id: string]: slod.sobj } = {}
 
@@ -95,21 +95,22 @@ namespace slod {
 	export class ssector extends toggle {
 		color?;
 		public observers: sgrid[] = []
+		static visibles: sobj[] = []
 		static actives: ssector[] = []
 		readonly small: aabb2;
-		readonly objs: sobj[] = [];
+		readonly sobjs: sobj[] = [];
 		constructor(
 			public readonly big: vec2,
 			readonly world: sworld
 		) {
 			super();
-			console.log(`new ssector ${big[0]} ${big[1]}`);
+			// console.log(`new ssector ${big[0]} ${big[1]}`);
 			let min = pts.mult(this.big, SectorSpan);
 			let max = pts.add(min, [SectorSpan - 1, SectorSpan - 1]);
 			this.small = new aabb2(max, min);
 			numbers.sectors[1]++;
 			world.arrays[this.big[1]][this.big[0]] = this;
-			hooks.call('ssectorCreate', this);
+			hooks.call('SSectorCreate', this);
 		}
 		observe(grid: sgrid) {
 			this.observers.push(grid);
@@ -118,9 +119,9 @@ namespace slod {
 			this.observers.splice(this.observers.indexOf(grid), 1);
 		}
 		add(obj: sobj) {
-			let i = this.objs.indexOf(obj);
+			let i = this.sobjs.indexOf(obj);
 			if (i == -1) {
-				this.objs.push(obj);
+				this.sobjs.push(obj);
 				obj.sector = this;
 				if (this.isActive() && !obj.isActive())
 					obj.show();
@@ -128,16 +129,16 @@ namespace slod {
 		}
 		stacked(wpos: vec2) {
 			let stack: sobj[] = [];
-			for (let obj of this.objs)
+			for (let obj of this.sobjs)
 				if (pts.equals(wpos, pts.round(obj.wpos)))
 					stack.push(obj);
 			return stack;
 		}
 		remove(obj: sobj): boolean | undefined {
-			let i = this.objs.indexOf(obj);
+			let i = this.sobjs.indexOf(obj);
 			if (i > -1) {
 				obj.sector = null;
-				return !!this.objs.splice(i, 1).length;
+				return !!this.sobjs.splice(i, 1).length;
 			}
 		}
 		//hard_remove(obj: sobj) {
@@ -169,23 +170,22 @@ namespace slod {
 		}
 		gather() {
 			let packages: object[] = [];
-			for (let obj of this.objs) {
+			for (let obj of this.sobjs) {
 				packages.push(obj.gather());
 			}
 			return packages;
 		}
-		static tick_all() {
-			for (let sector of ssector.actives) {
+		static tick_actives() {
+			ssector.visibles = [];
+			for (let sector of ssector.actives)
+				ssector.visibles = ssector.visibles.concat(sector.sobjs);
+			for (let sobj of this.visibles)
+				sobj.tick();
+			for (let sector of ssector.actives)
 				sector.tick();
-			}
 		}
 		tick() {
-			for (let obj of this.objs) {
-				obj.tick();
-			}
 			hooks.call('ssectorTick', this);
-			//for (let obj of this.objs)
-			//	obj.tick();
 		}
 		show() {
 			if (this.on())
@@ -193,7 +193,7 @@ namespace slod {
 			//console.log('ssector show');
 			ssector.actives.push(this);
 			numbers.sectors[0]++;
-			for (let obj of this.objs)
+			for (let obj of this.sobjs)
 				obj.show();
 			hooks.call('ssectorShow', this);
 		}
@@ -205,9 +205,9 @@ namespace slod {
 				return;
 			const i = ssector.actives.indexOf(this);
 			ssector.actives.splice(i, 1);
-			console.log('ssector hide, observers', this.observers.length);
+			// console.log('ssector hide, observers', this.observers.length);
 			numbers.sectors[0]--;
-			for (let obj of this.objs)
+			for (let obj of this.sobjs)
 				obj.hide();
 			hooks.call('ssectorHide', this);
 		}
@@ -268,7 +268,7 @@ namespace slod {
 				let sector = this.shown[i];
 				if (sector.dist(this) > this.outside) {
 					sector.unobserve(this);
-					for (let obj of sector.objs)
+					for (let obj of sector.sobjs)
 						this.removes.push(obj.id);
 					sector.hide();
 					this.shown.splice(i, 1);
@@ -328,12 +328,7 @@ namespace slod {
 			// console.warn(' (lod) obj.delete ');
 		}
 		update() { // implement me
-			this.bound();
-		}
-		bound() {
-			let size = this.size;
-			this.aabb = new aabb2([-.5, -.5], [.5, .5]);
-			this.aabb.translate(this.wpos);
+
 		}
 		is_type(types: string[]) {
 			return types.indexOf(this.type) != -1;

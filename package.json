@@ -6,6 +6,7 @@
         "start": "serve public"
     },
     "dependencies": {
+        "pngjs": "^6.0.0",
         "rollup": "^2.75.5",
         "three": "^0.134.0",
         "ws": "^8.8.1"

@@ -5,12 +5,48 @@ import pts from "../src/pts"
 import aabb2 from "../src/aabb2"
 import slod from "./slod"
 import { timeStamp } from 'console';
+import maps from './maps';
+import hooks from '../src/hooks';
 
 var connections: connection[] = [];
+
+var heightmap: maps.scolormap
+var buildingmap: maps.scolormap
+var colormap: maps.scolormap
+
+const color_decidtree: vec3 = [20, 70, 20];
+const color_deadtree: vec3 = [60, 70, 60];
 
 function start() {
 
 	new slod.sworld();
+
+	heightmap = new maps.scolormap('heightmap')
+	buildingmap = new maps.scolormap('buildingmap')
+	colormap = new maps.scolormap('colormap')
+
+	function factory<type extends supersobj>(type: { new(): type }, pos, hints = {}) {
+		let obj = new type;
+		obj.wpos = pos;
+		slod.add(obj);
+		return obj;
+	}
+
+	hooks.register('SSectorCreate', (sector: slod.ssector) => {
+		pts.func(sector.small, (pos) => {
+			pos = pts.subtract(pos, [0, 0])
+			let pixel = buildingmap.pixel(pos);
+			if (pixel.is_color(color_decidtree)) {
+				factory(tree, pos);
+				console.log('decid tree', pos);
+			}
+			else if (pixel.is_color(color_deadtree)) {
+				factory(tree, pos);
+				console.log('dead tree', pos);
+			}
+		});
+		return false;
+	});
 
 	let peacekeeper = new pawn;
 	peacekeeper.wpos = [45, 56];
@@ -63,7 +99,7 @@ class connection {
 
 		this.sendDelay = Date.now() + 1000;
 
-		this.grid = new slod.sgrid(slod.gworld, 2, 2);
+		this.grid = new slod.sgrid(slod.gworld, 1, 1);
 
 		this.you = new player;
 		this.you.wpos = [44, 52];
@@ -92,6 +128,9 @@ class connection {
 				this.you.sector?.swap(this.you);
 			}
 		}
+		if (json.player.shoot) {
+			this.you.shoot(this.you.angle);
+		}
 		if (json.talkingToId) {
 			console.log('player is talking to pawn', json.talkingToId);
 			const npc = slod.byId[json.talkingToId] as npc;
@@ -102,6 +141,15 @@ class connection {
 			else
 				console.warn('cant talk to this entity');
 
+		}
+
+		// check if standing in shallow water
+		const vec = colormap.pixel(pts.round(this.you.wpos)).vec;
+		if (vec && vec[0] == 50 && vec[1] == 50 && vec[2] == 50) {
+			console.log(`we're standing in shallow water`);
+		}
+		else {
+			//console.log('the color is',vec);
 		}
 	}
 	update_grid() {
@@ -138,7 +186,7 @@ class connection {
 }
 
 const loop = () => {
-	slod.ssector.tick_all();
+	slod.ssector.tick_actives();
 	for (let con of connections) {
 		con.update_grid();
 		con.gather();
@@ -151,7 +199,56 @@ const outfits: [string, string, string, string][] = [
 	['#484847', '#484847', '#44443f', '#2c3136']
 ]
 
-class npc extends slod.sobj {
+class supersobj extends slod.sobj {
+	isSuperSobj = true
+	bound: aabb2
+	constructor() {
+		super();
+	}
+	override create() {
+		//console.log('create supersobj', this.type);
+		
+		this.rebound();
+	}
+	rebound() {
+		this.bound = new aabb2([-.5, -.5], [.5, .5]);
+		this.bound.translate(this.wpos);
+	}
+	onhit() {
+		
+	}
+	shoot(angle) {
+		for (let sobj of slod.ssector.visibles) {
+			if (sobj == this)
+				continue;
+			const cast = sobj as supersobj;
+			if (cast.isSuperSobj) {
+				cast.rebound();
+				const test = cast.bound.ray(
+					{
+						dir: [Math.sin(angle), Math.cos(angle)],
+						org: this.wpos
+					});
+				if (test) {
+					console.log('we hit something', cast.type);
+					cast.onhit();
+				}
+			}
+		}
+	}
+}
+
+class tree extends supersobj {
+	constructor() {
+		super();
+		this.type = 'tree';
+	}
+	/*override create() {
+		this.rebound();
+	}*/
+}
+
+class npc extends supersobj {
 	static id = 0;
 	isNpc = true
 	frozenBy?: slod.sobj
@@ -188,6 +285,10 @@ class npc extends slod.sobj {
 
 			let venture = pts.add(this.wpos, [x, y]);
 			this.wpos = venture;
+
+			this.sector?.swap(this);
+
+			this.rebound();
 
 			const dist = pts.distsimple(this.wpos, this.aimTarget);
 			if (dist < 0.2)
@@ -245,7 +346,7 @@ class player extends pawn {
 	override tick() {
 	}
 	override create() {
-
+		super.create();
 	}
 	override hide() {
 		console.log('ply-pawn should be impertinent');
@@ -278,7 +379,7 @@ class chicken extends npc {
 		this.type = 'chicken';
 		this.id = 'chicken_' + chicken.id++;
 		this.randomWalker = Date.now();
-		this.speed = 0.75
+		this.speed = 0.75;
 		this.walkAgain = new timer(0);
 	}
 	gather() {
