@@ -2,17 +2,23 @@ type speech = [text: string, follow: number]
 
 const dialogues: speech[][] = [
     [
-        //['I spent some of my time sewing suits for wasters.', 3]
+        // skip 0
     ],
     [
+        // 1
+        [`I'm a commmoner.`, -1]
+    ],
+    [
+        // 2
         [`I'm a trader.`, 1],
-        [`It can be hazardous around here. The purple for example is contaminated soil.`, 2],
-        [`It won't hurt, but be wary, the more blighted, the more danger that can usually be found.`, -1],
+        [`I mostly trade scrap nowadays. Always folk looking to tinker.`, 2],
+        [`Take a look, it's not all junk.`, -1],
     ],
     [
-        [`I'm a vendor of sifty town.`, 1],
-        [`I trade in most forms of scraps.`, 2],
-        [`.`, 3]
+        // 3
+        [`I protect the civilized borders.`, 1],
+        [`It may not look that civil at first glance.`, 2],
+        [`But there's order to abide to.`, -1]
     ]
 ]
 

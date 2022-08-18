@@ -4,10 +4,11 @@ import wastes from "./wastes";
 import objects from "./objects";
 import win from "./win";
 import chickens from "./chickens";
+import dialogues from "./dialogue";
 
 export namespace client {
 
-	export var sobjs: { [id: string]: lod.obj } = {}
+	export var sObjsId: { [id: string]: lod.obj } = {}
 
 	export var socket: WebSocket
 
@@ -16,8 +17,8 @@ export namespace client {
 	export var talkingToId = ''
 
 	export function tick() {
-		for (let id in sobjs) {
-			let obj = sobjs[id] as objects.objected;
+		for (let id in sObjsId) {
+			let obj = sObjsId[id] as objects.objected;
 			if (obj.type != 'you')
 				obj.nettick();
 		}
@@ -33,17 +34,18 @@ export namespace client {
 			//socket.send("My name is John");
 		};
 
-		function process_news<type extends objects.objected>(type: { new(): type }, typed: string, data: any, handle, update) {
+		function process_news<type extends objects.objected>(
+			type: { new(): type }, typed: string, data: any, handle, update) {
 			for (let sobj of data.news) {
 				const { id } = sobj;
 				if (sobj.type != typed)
 					continue;
-				let obj = sobjs[id];
+				let obj = sObjsId[id];
 				if (!obj) {
 					console.log('new sobj', typed, id);
-					obj = sobjs[id] = new type;
+					obj = sObjsId[id] = new type;
 					obj.id = id;
-					obj.netObj = true;
+					obj.networked = true;
 					handle(obj, sobj);
 					lod.add(obj);
 				}
@@ -59,24 +61,32 @@ export namespace client {
 			if (data.removes && data.removes.length) {
 				console.log('we have a remove', data.removes);
 				for (let id of data.removes) {
-					let obj = sobjs[id];
+					let obj = sObjsId[id];
 					if (!obj)
 						continue;
 					obj.hide();
 					obj.finalize();
 					lod.remove(obj);
-					delete sobjs[id];
+					delete sObjsId[id];
 				}
 			}
 			if (data.news) {
+				for (let sobj of data.news) {
+					//if (sobj.type == 'tree')
+					//console.log('got a server tree');
+				}
 				process_news(pawns.pawn, 'pawn', data,
 					(obj, sobj) => {
-						const { wpos, angle, outfit } = sobj;
+						const { wpos, angle, outfit, dialogue, aiming, isPlayer } = sobj;
 						obj.wpos = wpos;
 						obj.angle = angle;
+						obj.netwpos = wpos;
+						obj.netangle = angle;
 						obj.outfit = outfit;
-						if (sobj.isPlayer)
-							obj.isPlayer = true;
+						if (dialogue)
+							obj.dialogue = dialogues[dialogue];
+						obj.aiming = aiming;
+						obj.isPlayer = isPlayer;
 					},
 					(obj, sobj) => {
 						if (obj.type == 'you')
@@ -85,7 +95,6 @@ export namespace client {
 						obj.netwpos = wpos;
 						obj.netangle = angle;
 						obj.aiming = aiming;
-						//obj.sector?.swap(obj);
 					});
 
 				process_news(chickens.chicken, 'chicken', data,
@@ -107,7 +116,7 @@ export namespace client {
 
 			if (data.player) {
 				playerId = data.player.id;
-				let pawn = sobjs[data.player.id];
+				let pawn = sObjsId[data.player.id];
 				if (pawn) {
 					pawns.you = pawn as pawns.pawn;
 					pawn.type = 'you';

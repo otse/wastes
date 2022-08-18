@@ -41,6 +41,8 @@ namespace slod {
 
 	const grid_crawl_makes_sectors = true;
 
+	export var stamp = 0;
+
 	export var gworld: sworld
 
 	export var SectorSpan = 3;
@@ -114,6 +116,8 @@ namespace slod {
 		}
 		observe(grid: sgrid) {
 			this.observers.push(grid);
+			// this.observers.push([grid, stamp]);
+			// "tuple describes: started observing this chunk at server-frame-time-stamp"
 		}
 		unobserve(grid: sgrid) {
 			this.observers.splice(this.observers.indexOf(grid), 1);
@@ -168,12 +172,23 @@ namespace slod {
 				}
 			}
 		}
-		gather() {
-			let packages: object[] = [];
-			for (let obj of this.sobjs) {
-				packages.push(obj.gather());
-			}
-			return packages;
+		find_observer_tuple(grid: sgrid) {
+			for (let tuple of this.observers)
+				if (tuple[0] == grid)
+					return [grid, 0];
+			return [grid, 0];
+		}
+		gather(grid: slod.sgrid) {
+			const tuple = this.find_observer_tuple(grid);
+			let gathers: object[] = [];
+			for (let obj of this.sobjs)
+				/*
+				If our observer-registration is now, gather it
+				or if our last update was recent
+				*/
+				//if (tuple[1] == slod.stamp || obj.stamp == slod.stamp)
+					gathers.push(obj.gather());
+			return gathers;
 		}
 		static tick_actives() {
 			ssector.visibles = [];
@@ -219,8 +234,7 @@ namespace slod {
 	export class sgrid {
 		big: vec2 = [0, 0];
 		removes: string[] = []
-		public shown: ssector[] = [];
-		all: sobj[] = []
+		shown: ssector[] = [];
 		constructor(
 			public world: sworld,
 			public spread: number,
@@ -278,7 +292,8 @@ namespace slod {
 		gather() {
 			let packages: object[] = [];
 			for (let sector of this.shown) {
-				packages = packages.concat(sector.gather());
+				packages = packages.concat(sector.gather(this));
+				// packages = packages.concat(sector.gather(this));
 			}
 			return packages;
 		}
@@ -287,11 +302,12 @@ namespace slod {
 	export class sobj extends toggle {
 		id = 'sobj_0'
 		type = 'an sobj'
+		stamp = 0
 		aabb: aabb2
 		wpos: vec2 = [0, 0]
-		size: vec2 = [100, 100]
 		sector: ssector | null
 		impertinent = false
+		nosend = false
 		constructor(
 			public readonly counts: numbers.tally = numbers.objs) {
 			super();

@@ -267,7 +267,7 @@ namespace lod {
 	export class obj extends toggle {
 		id = ''
 		type = 'an obj'
-		netObj = false
+		networked = false
 		wpos: vec2 = [0, 0]
 		rpos: vec2 = [0, 0]
 		size: vec2 = [100, 100]
@@ -352,8 +352,7 @@ namespace lod {
 			// this.hide();
 			this.counts[1]--;
 			this.bindObj.shape = null;
-			console.warn('finalize!');
-
+			//console.warn('finalize!');
 		}
 		show() {
 			if (this.on())

@@ -15,35 +15,9 @@ import sprites from "./sprites";
 import app from "./app";
 import colormap from "./colormap";
 import shadows from "./shadows";
+import colors from "./colors";
 
 namespace objects {
-
-	const color_door: vec3 = [210, 210, 210];
-	const color_wooden_door_and_deck: vec3 = [24, 93, 61];
-	const color_decidtree: vec3 = [20, 70, 20];
-	const color_deadtree: vec3 = [60, 70, 60];
-	const color_grass: vec3 = [40, 90, 40];
-	const color_wheat: vec3 = [130, 130, 0];
-	const color_scrappy_wall: vec3 = [20, 70, 50];
-	const color_woody_wall: vec3 = [87, 57, 20];
-	const color_fence: vec3 = [89, 89, 58];
-
-	const color_plywood_wall: vec3 = [20, 84, 87];
-	const color_overgrown_wall: vec3 = [35, 105, 63];
-	const color_deringer_wall: vec3 = [80, 44, 27];
-
-	const color_medieval_wall: vec3 = [128, 128, 128];
-	const color_scrappy_wall_with_deck: vec3 = [20, 78, 54];
-	const color_deck_and_roof: vec3 = [114, 128, 124];
-	const color_porch: vec3 = [110, 120, 120];
-	const color_rails: vec3 = [110, 100, 120];
-
-	const color_false_front: vec3 = [255, 255, 255];
-
-	const color_acid_barrel: vec3 = [61, 118, 48];
-	const color_wall_chest: vec3 = [130, 100, 50];
-	const color_shelves: vec3 = [130, 80, 50];
-	const color_panel: vec3 = [78, 98, 98];
 
 	export function factory<type extends objected>(type: { new(): type }, pixel, pos, hints = {}) {
 		let obj = new type;
@@ -70,16 +44,16 @@ namespace objects {
 		hooks.register('sectorCreate', (sector: lod.sector) => {
 			pts.func(sector.small, (pos) => {
 				let pixel = wastes.objectmap.pixel(pos);
-				if (pixel.is_color(color_acid_barrel)) {
+				if (pixel.is_color(colors.color_acid_barrel)) {
 					// factory(objects.acidbarrel, pixel, pos);
 				}
-				else if (pixel.is_color(color_wall_chest)) {
+				else if (pixel.is_color(colors.color_wall_chest)) {
 					factory(objects.crate, pixel, pos);
 				}
-				else if (pixel.is_color(color_shelves)) {
+				else if (pixel.is_color(colors.color_shelves)) {
 					factory(objects.shelves, pixel, pos);
 				}
-				else if (pixel.is_color(color_panel)) {
+				else if (pixel.is_color(colors.color_panel)) {
 					factory(objects.panel, pixel, pos);
 				}
 			})
@@ -89,7 +63,7 @@ namespace objects {
 		hooks.register('sectorCreate', (sector: lod.sector) => {
 			pts.func(sector.small, (pos) => {
 				let pixel = wastes.roofmap.pixel(pos);
-				if (pixel.is_color(color_false_front)) {
+				if (pixel.is_color(colors.color_false_front)) {
 					//factory(objects.roof, pixel, pos);
 					//factory(objects.falsefront, pixel, pos);
 				}
@@ -100,61 +74,61 @@ namespace objects {
 		hooks.register('sectorCreate', (sector: lod.sector) => {
 			pts.func(sector.small, (pos) => {
 				let pixel = wastes.buildingmap.pixel(pos);
-				if (pixel.is_color(color_plywood_wall)) {
+				if (pixel.is_color(colors.color_plywood_wall)) {
 					factory(objects.deck, pixel, pos);
 					factory(objects.wall, pixel, pos, { type: 'plywood' });
 					factory(objects.roof, pixel, pos);
 				}
-				else if (pixel.is_color(color_overgrown_wall)) {
+				else if (pixel.is_color(colors.color_overgrown_wall)) {
 					factory(objects.deck, pixel, pos);
-					factory(objects.wall, pixel, pos, { type: 'overgrown' });
+					factory(objects.wall, pixel, pos, { type: 'plywood' });
 					factory(objects.roof, pixel, pos);
 				}
-				else if (pixel.is_color(color_deringer_wall)) {
+				else if (pixel.is_color(colors.color_deringer_wall)) {
 					factory(objects.deck, pixel, pos);
 					factory(objects.wall, pixel, pos, { type: 'sideroom' });
 					factory(objects.roof, pixel, pos);
 				}
-				else if (pixel.is_color(color_medieval_wall)) {
+				else if (pixel.is_color(colors.color_medieval_wall)) {
 					factory(objects.wall, pixel, pos, { type: 'medieval' });
 				}
-				else if (pixel.is_color(color_scrappy_wall)) {
+				else if (pixel.is_color(colors.color_scrappy_wall)) {
 					factory(objects.wall, pixel, pos, { type: 'scrappy' });
 					//factory(objects.roof, pixel, pos);
 				}
-				else if (pixel.is_color(color_fence)) {
+				else if (pixel.is_color(colors.color_fence)) {
 					//factory(fences.fence, pixel, pos);
 				}
-				else if (pixel.is_color(color_decidtree)) {
+				else if (pixel.is_color(colors.color_decidtree)) {
 					factory(objects.decidtree, pixel, pos, { type: 'decid' });
 
 				}
-				else if (pixel.is_color(color_deadtree)) {
+				else if (pixel.is_color(colors.color_deadtree)) {
 					factory(objects.deadtree, pixel, pos);
 
 				}
-				else if (pixel.is_color(color_grass)) {
+				else if (pixel.is_color(colors.color_grass)) {
 					//factory(objects.grass, pixel, pos);
 				}
-				else if (pixel.is_color(color_wheat)) {
+				else if (pixel.is_color(colors.color_wheat)) {
 					factory(objects.wheat, pixel, pos);
 				}
-				else if (pixel.is_color(color_deck_and_roof)) {
+				else if (pixel.is_color(colors.color_deck_and_roof)) {
 					factory(objects.deck, pixel, pos);
 					factory(objects.roof, pixel, pos);
 				}
-				else if (pixel.is_color(color_porch)) {
+				else if (pixel.is_color(colors.color_porch)) {
 					factory(objects.porch, pixel, pos);
 				}
-				else if (pixel.is_color(color_rails)) {
+				else if (pixel.is_color(colors.color_rails)) {
 					factory(objects.rails, pixel, pos);
 				}
-				else if (pixel.is_color(color_door)) {
+				else if (pixel.is_color(colors.color_door)) {
 					factory(objects.deck, pixel, pos);
 					factory(objects.door, pixel, pos);
 					factory(objects.roof, pixel, pos);
 				}
-				else if (pixel.is_color(color_wooden_door_and_deck)) {
+				else if (pixel.is_color(colors.color_wooden_door_and_deck)) {
 					factory(objects.deck, pixel, pos);
 					factory(objects.door, pixel, pos);
 					//factory(objects.roof, pixel, pos);

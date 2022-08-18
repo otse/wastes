@@ -122,14 +122,6 @@ export namespace wastes {
 			gview.center = new lod.obj();
 			gview.center.wpos = [44, 52];
 
-			//pawns.make_you();
-
-			let pos: vec2 = [37.5, 48.5];
-			let vendor = new pawns.pawn();
-			vendor.pawntype = 'trader';
-			vendor.wpos = pos;
-			lod.add(vendor);
-
 			/*
 				[`I'm on duty.`, 1],
 				[`I protect the civilized area here. It may not look that civil at first glance.`, 2],

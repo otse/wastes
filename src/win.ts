@@ -339,9 +339,9 @@ namespace win {
 		static change() {
 			const which = 1;
 
-			this.modal!.content.innerHTML = this.talkingToCur!.dialog[this.where[1]][0] + "&nbsp;"
+			this.modal!.content.innerHTML = this.talkingToCur!.dialogue[this.where[1]][0] + "&nbsp;"
 
-			const next = this.talkingToCur!.dialog[this.where[1]][1];
+			const next = this.talkingToCur!.dialogue[this.where[1]][1];
 
 			if (next != -1) {
 				let button = document.createElement('div');

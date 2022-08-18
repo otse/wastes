@@ -1,0 +1,28 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var colors;
+(function (colors) {
+    colors.color_door = [210, 210, 210];
+    colors.color_wooden_door_and_deck = [24, 93, 61];
+    colors.color_decidtree = [20, 70, 20];
+    colors.color_deadtree = [60, 70, 60];
+    colors.color_grass = [40, 90, 40];
+    colors.color_wheat = [130, 130, 0];
+    colors.color_scrappy_wall = [20, 70, 50];
+    colors.color_woody_wall = [87, 57, 20];
+    colors.color_fence = [89, 89, 58];
+    colors.color_plywood_wall = [20, 84, 87];
+    colors.color_overgrown_wall = [35, 105, 63];
+    colors.color_deringer_wall = [80, 44, 27];
+    colors.color_medieval_wall = [128, 128, 128];
+    colors.color_scrappy_wall_with_deck = [20, 78, 54];
+    colors.color_deck_and_roof = [114, 128, 124];
+    colors.color_porch = [110, 120, 120];
+    colors.color_rails = [110, 100, 120];
+    colors.color_false_front = [255, 255, 255];
+    colors.color_acid_barrel = [61, 118, 48];
+    colors.color_wall_chest = [130, 100, 50];
+    colors.color_shelves = [130, 80, 50];
+    colors.color_panel = [78, 98, 98];
+})(colors || (colors = {}));
+exports.default = colors;

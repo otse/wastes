@@ -7,6 +7,7 @@ import slod from "./slod"
 import { timeStamp } from 'console';
 import maps from './maps';
 import hooks from '../src/hooks';
+import colors from '../src/colors';
 
 var connections: connection[] = [];
 
@@ -14,12 +15,12 @@ var heightmap: maps.scolormap
 var buildingmap: maps.scolormap
 var colormap: maps.scolormap
 
-const color_decidtree: vec3 = [20, 70, 20];
-const color_deadtree: vec3 = [60, 70, 60];
-
 function start() {
 
 	new slod.sworld();
+
+	// will observe the trashy vendor and shadow chicken
+	let villageVantage = new slod.sgrid(slod.gworld, 2, 2);
 
 	heightmap = new maps.scolormap('heightmap')
 	buildingmap = new maps.scolormap('buildingmap')
@@ -36,11 +37,11 @@ function start() {
 		pts.func(sector.small, (pos) => {
 			pos = pts.subtract(pos, [0, 0])
 			let pixel = buildingmap.pixel(pos);
-			if (pixel.is_color(color_decidtree)) {
+			if (pixel.is_color(colors.color_decidtree)) {
 				factory(tree, pos);
 				console.log('decid tree', pos);
 			}
-			else if (pixel.is_color(color_deadtree)) {
+			else if (pixel.is_color(colors.color_deadtree)) {
 				factory(tree, pos);
 				console.log('dead tree', pos);
 			}
@@ -48,11 +49,19 @@ function start() {
 		return false;
 	});
 
-	let peacekeeper = new pawn;
-	peacekeeper.wpos = [45, 56];
+	let vendor = new pawn;
+	//vendor.pawntype = 'trader';
+	vendor.walkArea = new aabb2([37, 49], [41, 49]);
+	vendor.dialogue = 2;
+	vendor.wpos = [37.5, 48.5];
+	slod.add(vendor);
+
+	let guard = new pawn;
+	guard.wpos = [45, 56];
 	//peacekeeper.outfit = []
-	peacekeeper.walkArea = new aabb2([43, 51], [46, 58]);
-	slod.add(peacekeeper);
+	guard.dialogue = 3;
+	guard.walkArea = new aabb2([43, 51], [46, 58]);
+	slod.add(guard);
 
 	let shadowChicken = new chicken;
 	shadowChicken.wpos = [42, 53];
@@ -99,7 +108,7 @@ class connection {
 
 		this.sendDelay = Date.now() + 1000;
 
-		this.grid = new slod.sgrid(slod.gworld, 1, 1);
+		this.grid = new slod.sgrid(slod.gworld, 2, 2);
 
 		this.you = new player;
 		this.you.wpos = [44, 52];
@@ -172,6 +181,7 @@ class connection {
 		//}
 
 		object.news = this.grid.gather();
+
 		if (this.grid.removes.length)
 			object.removes = this.grid.removes;
 		this.grid.removes = [];
@@ -186,6 +196,7 @@ class connection {
 }
 
 const loop = () => {
+	slod.stamp++;
 	slod.ssector.tick_actives();
 	for (let con of connections) {
 		con.update_grid();
@@ -202,20 +213,22 @@ const outfits: [string, string, string, string][] = [
 class supersobj extends slod.sobj {
 	isSuperSobj = true
 	bound: aabb2
+	size = 1
 	constructor() {
 		super();
 	}
 	override create() {
 		//console.log('create supersobj', this.type);
-		
+
 		this.rebound();
 	}
 	rebound() {
-		this.bound = new aabb2([-.5, -.5], [.5, .5]);
+		const size = this.size / 2;
+		this.bound = new aabb2([-size, -size], [size, size]);
 		this.bound.translate(this.wpos);
 	}
 	onhit() {
-		
+
 	}
 	shoot(angle) {
 		for (let sobj of slod.ssector.visibles) {
@@ -318,6 +331,7 @@ class npc extends supersobj {
 class pawn extends npc {
 	static id = 0
 	outfit: string[] = []
+	dialogue = 0
 	aiming = false
 	isPlayer = false
 	constructor() {
@@ -327,12 +341,13 @@ class pawn extends npc {
 		this.outfit = outfits[Math.floor(Math.random() * outfits.length)];
 	}
 	override gather() {
-		let upper = super.gather();
-		return {
-			...upper,
-			outfit: this.outfit,
-			aiming: this.aiming
-		};
+		let upper = super.gather() as any;
+		upper.outfit = this.outfit;
+		if (this.dialogue)
+			upper.dialogue = this.dialogue;
+		if (this.aiming)
+			upper.aiming = this.aiming;
+		return upper;
 	}
 }
 
@@ -352,11 +367,9 @@ class player extends pawn {
 		console.log('ply-pawn should be impertinent');
 	}
 	override gather() {
-		let upper = super.gather();
-		return {
-			...upper,
-			isPlayer: true
-		};
+		let upper = super.gather() as any;
+		upper.isPlayer = true;
+		return upper;
 	}
 	end() {
 
@@ -380,10 +393,11 @@ class chicken extends npc {
 		this.id = 'chicken_' + chicken.id++;
 		this.randomWalker = Date.now();
 		this.speed = 0.75;
+		this.size = 0.5;
 		this.walkAgain = new timer(0);
 	}
 	gather() {
-		let upper = super.gather();
+		let upper = super.gather() as any;
 		return {
 			...upper,
 			pecking: this.pecking,
@@ -431,6 +445,9 @@ wss.on('connection', (ws) => {
 
 	let con = new connection(ws);
 	connections.push(con);
+
+	console.log('players: ', connections.length);
+
 
 	ws.on('message', (data) => {
 

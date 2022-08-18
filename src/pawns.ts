@@ -28,7 +28,7 @@ export namespace pawns {
 	export class pawn extends objects.objected {
 		static noun = 'pawn'
 		isPlayer = false
-		dialog = dialogues[1]
+		dialogue = dialogues[0]
 		netwpos: vec2 = [0, 0]
 		netangle = 0
 		pawntype = 'generic'
@@ -509,6 +509,9 @@ export namespace pawns {
 		walkSmoother = 0
 		randomWalker = 0
 		nettick() {
+
+			if (this.type == 'you')
+				return;
 
 			//this.wpos = tiles.hovering!.wpos;
 

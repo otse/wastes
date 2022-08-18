@@ -772,7 +772,7 @@ void main() {
                 this.counts = counts;
                 this.id = '';
                 this.type = 'an obj';
-                this.netObj = false;
+                this.networked = false;
                 this.wpos = [0, 0];
                 this.rpos = [0, 0];
                 this.size = [100, 100];
@@ -848,7 +848,7 @@ void main() {
                 // this.hide();
                 this.counts[1]--;
                 this.bindObj.shape = null;
-                console.warn('finalize!');
+                //console.warn('finalize!');
             }
             show() {
                 if (this.on())
@@ -1608,8 +1608,8 @@ void main() {
                 }
             }
             static change() {
-                this.modal.content.innerHTML = this.talkingToCur.dialog[this.where[1]][0] + "&nbsp;";
-                const next = this.talkingToCur.dialog[this.where[1]][1];
+                this.modal.content.innerHTML = this.talkingToCur.dialogue[this.where[1]][0] + "&nbsp;";
+                const next = this.talkingToCur.dialogue[this.where[1]][1];
                 if (next != -1) {
                     let button = document.createElement('div');
                     button.innerHTML = '>>';
@@ -1788,28 +1788,35 @@ void main() {
     // allows you to venture far from inclusion hell by letting you assign arbitrary values
     var GLOB = {};
 
+    var colors;
+    (function (colors) {
+        colors.color_door = [210, 210, 210];
+        colors.color_wooden_door_and_deck = [24, 93, 61];
+        colors.color_decidtree = [20, 70, 20];
+        colors.color_deadtree = [60, 70, 60];
+        colors.color_grass = [40, 90, 40];
+        colors.color_wheat = [130, 130, 0];
+        colors.color_scrappy_wall = [20, 70, 50];
+        colors.color_woody_wall = [87, 57, 20];
+        colors.color_fence = [89, 89, 58];
+        colors.color_plywood_wall = [20, 84, 87];
+        colors.color_overgrown_wall = [35, 105, 63];
+        colors.color_deringer_wall = [80, 44, 27];
+        colors.color_medieval_wall = [128, 128, 128];
+        colors.color_scrappy_wall_with_deck = [20, 78, 54];
+        colors.color_deck_and_roof = [114, 128, 124];
+        colors.color_porch = [110, 120, 120];
+        colors.color_rails = [110, 100, 120];
+        colors.color_false_front = [255, 255, 255];
+        colors.color_acid_barrel = [61, 118, 48];
+        colors.color_wall_chest = [130, 100, 50];
+        colors.color_shelves = [130, 80, 50];
+        colors.color_panel = [78, 98, 98];
+    })(colors || (colors = {}));
+    var colors$1 = colors;
+
     var objects;
     (function (objects) {
-        const color_door = [210, 210, 210];
-        const color_wooden_door_and_deck = [24, 93, 61];
-        const color_decidtree = [20, 70, 20];
-        const color_deadtree = [60, 70, 60];
-        const color_grass = [40, 90, 40];
-        const color_wheat = [130, 130, 0];
-        const color_scrappy_wall = [20, 70, 50];
-        const color_fence = [89, 89, 58];
-        const color_plywood_wall = [20, 84, 87];
-        const color_overgrown_wall = [35, 105, 63];
-        const color_deringer_wall = [80, 44, 27];
-        const color_medieval_wall = [128, 128, 128];
-        const color_deck_and_roof = [114, 128, 124];
-        const color_porch = [110, 120, 120];
-        const color_rails = [110, 100, 120];
-        const color_false_front = [255, 255, 255];
-        const color_acid_barrel = [61, 118, 48];
-        const color_wall_chest = [130, 100, 50];
-        const color_shelves = [130, 80, 50];
-        const color_panel = [78, 98, 98];
         function factory(type, pixel, pos, hints = {}) {
             let obj = new type;
             obj.hints = hints;
@@ -1830,14 +1837,14 @@ void main() {
             hooks.register('sectorCreate', (sector) => {
                 pts.func(sector.small, (pos) => {
                     let pixel = wastes.objectmap.pixel(pos);
-                    if (pixel.is_color(color_acid_barrel)) ;
-                    else if (pixel.is_color(color_wall_chest)) {
+                    if (pixel.is_color(colors$1.color_acid_barrel)) ;
+                    else if (pixel.is_color(colors$1.color_wall_chest)) {
                         factory(objects.crate, pixel, pos);
                     }
-                    else if (pixel.is_color(color_shelves)) {
+                    else if (pixel.is_color(colors$1.color_shelves)) {
                         factory(objects.shelves, pixel, pos);
                     }
-                    else if (pixel.is_color(color_panel)) {
+                    else if (pixel.is_color(colors$1.color_panel)) {
                         factory(objects.panel, pixel, pos);
                     }
                 });
@@ -1846,62 +1853,62 @@ void main() {
             hooks.register('sectorCreate', (sector) => {
                 pts.func(sector.small, (pos) => {
                     let pixel = wastes.roofmap.pixel(pos);
-                    if (pixel.is_color(color_false_front)) ;
+                    if (pixel.is_color(colors$1.color_false_front)) ;
                 });
                 return false;
             });
             hooks.register('sectorCreate', (sector) => {
                 pts.func(sector.small, (pos) => {
                     let pixel = wastes.buildingmap.pixel(pos);
-                    if (pixel.is_color(color_plywood_wall)) {
+                    if (pixel.is_color(colors$1.color_plywood_wall)) {
                         factory(objects.deck, pixel, pos);
                         factory(objects.wall, pixel, pos, { type: 'plywood' });
                         factory(objects.roof, pixel, pos);
                     }
-                    else if (pixel.is_color(color_overgrown_wall)) {
+                    else if (pixel.is_color(colors$1.color_overgrown_wall)) {
                         factory(objects.deck, pixel, pos);
-                        factory(objects.wall, pixel, pos, { type: 'overgrown' });
+                        factory(objects.wall, pixel, pos, { type: 'plywood' });
                         factory(objects.roof, pixel, pos);
                     }
-                    else if (pixel.is_color(color_deringer_wall)) {
+                    else if (pixel.is_color(colors$1.color_deringer_wall)) {
                         factory(objects.deck, pixel, pos);
                         factory(objects.wall, pixel, pos, { type: 'sideroom' });
                         factory(objects.roof, pixel, pos);
                     }
-                    else if (pixel.is_color(color_medieval_wall)) {
+                    else if (pixel.is_color(colors$1.color_medieval_wall)) {
                         factory(objects.wall, pixel, pos, { type: 'medieval' });
                     }
-                    else if (pixel.is_color(color_scrappy_wall)) {
+                    else if (pixel.is_color(colors$1.color_scrappy_wall)) {
                         factory(objects.wall, pixel, pos, { type: 'scrappy' });
                         //factory(objects.roof, pixel, pos);
                     }
-                    else if (pixel.is_color(color_fence)) ;
-                    else if (pixel.is_color(color_decidtree)) {
+                    else if (pixel.is_color(colors$1.color_fence)) ;
+                    else if (pixel.is_color(colors$1.color_decidtree)) {
                         factory(objects.decidtree, pixel, pos, { type: 'decid' });
                     }
-                    else if (pixel.is_color(color_deadtree)) {
+                    else if (pixel.is_color(colors$1.color_deadtree)) {
                         factory(objects.deadtree, pixel, pos);
                     }
-                    else if (pixel.is_color(color_grass)) ;
-                    else if (pixel.is_color(color_wheat)) {
+                    else if (pixel.is_color(colors$1.color_grass)) ;
+                    else if (pixel.is_color(colors$1.color_wheat)) {
                         factory(objects.wheat, pixel, pos);
                     }
-                    else if (pixel.is_color(color_deck_and_roof)) {
+                    else if (pixel.is_color(colors$1.color_deck_and_roof)) {
                         factory(objects.deck, pixel, pos);
                         factory(objects.roof, pixel, pos);
                     }
-                    else if (pixel.is_color(color_porch)) {
+                    else if (pixel.is_color(colors$1.color_porch)) {
                         factory(objects.porch, pixel, pos);
                     }
-                    else if (pixel.is_color(color_rails)) {
+                    else if (pixel.is_color(colors$1.color_rails)) {
                         factory(objects.rails, pixel, pos);
                     }
-                    else if (pixel.is_color(color_door)) {
+                    else if (pixel.is_color(colors$1.color_door)) {
                         factory(objects.deck, pixel, pos);
                         factory(objects.door, pixel, pos);
                         factory(objects.roof, pixel, pos);
                     }
-                    else if (pixel.is_color(color_wooden_door_and_deck)) {
+                    else if (pixel.is_color(colors$1.color_wooden_door_and_deck)) {
                         factory(objects.deck, pixel, pos);
                         factory(objects.door, pixel, pos);
                         //factory(objects.roof, pixel, pos);
@@ -2958,7 +2965,7 @@ void main() {
                         return true;
                     }, () => {
                         win$1.descriptor.focus = this;
-                        win$1.descriptor.call_once("Just really a chicken.");
+                        win$1.descriptor.call_once("A chicken, cluck cluck.");
                         //win.contextmenu.focus = undefined;
                     }]);
             }
@@ -3008,14 +3015,36 @@ void main() {
     })(chickens || (chickens = {}));
     var chickens$1 = chickens;
 
+    const dialogues = [
+        [
+        // skip 0
+        ],
+        [
+            // 1
+            [`I'm a commmoner.`, -1]
+        ],
+        [
+            // 2
+            [`I'm a trader.`, 1],
+            [`I mostly trade scrap nowadays. Always folk looking to tinker.`, 2],
+            [`Take a look, it's not all junk.`, -1],
+        ],
+        [
+            // 3
+            [`I protect the civilized borders.`, 1],
+            [`It may not look that civil at first glance.`, 2],
+            [`But there's order to abide to.`, -1]
+        ]
+    ];
+
     var client;
     (function (client) {
-        client.sobjs = {};
+        client.sObjsId = {};
         client.playerId = -1;
         client.talkingToId = '';
         function tick() {
-            for (let id in client.sobjs) {
-                let obj = client.sobjs[id];
+            for (let id in client.sObjsId) {
+                let obj = client.sObjsId[id];
                 if (obj.type != 'you')
                     obj.nettick();
             }
@@ -3033,12 +3062,12 @@ void main() {
                     const { id } = sobj;
                     if (sobj.type != typed)
                         continue;
-                    let obj = client.sobjs[id];
+                    let obj = client.sObjsId[id];
                     if (!obj) {
                         console.log('new sobj', typed, id);
-                        obj = client.sobjs[id] = new type;
+                        obj = client.sObjsId[id] = new type;
                         obj.id = id;
-                        obj.netObj = true;
+                        obj.networked = true;
                         handle(obj, sobj);
                         lod$1.add(obj);
                     }
@@ -3052,23 +3081,31 @@ void main() {
                 if (data.removes && data.removes.length) {
                     console.log('we have a remove', data.removes);
                     for (let id of data.removes) {
-                        let obj = client.sobjs[id];
+                        let obj = client.sObjsId[id];
                         if (!obj)
                             continue;
                         obj.hide();
                         obj.finalize();
                         lod$1.remove(obj);
-                        delete client.sobjs[id];
+                        delete client.sObjsId[id];
                     }
                 }
                 if (data.news) {
+                    for (let sobj of data.news) {
+                        //if (sobj.type == 'tree')
+                        //console.log('got a server tree');
+                    }
                     process_news(pawns$1.pawn, 'pawn', data, (obj, sobj) => {
-                        const { wpos, angle, outfit } = sobj;
+                        const { wpos, angle, outfit, dialogue, aiming, isPlayer } = sobj;
                         obj.wpos = wpos;
                         obj.angle = angle;
+                        obj.netwpos = wpos;
+                        obj.netangle = angle;
                         obj.outfit = outfit;
-                        if (sobj.isPlayer)
-                            obj.isPlayer = true;
+                        if (dialogue)
+                            obj.dialogue = dialogues[dialogue];
+                        obj.aiming = aiming;
+                        obj.isPlayer = isPlayer;
                     }, (obj, sobj) => {
                         if (obj.type == 'you')
                             return;
@@ -3076,7 +3113,6 @@ void main() {
                         obj.netwpos = wpos;
                         obj.netangle = angle;
                         obj.aiming = aiming;
-                        //obj.sector?.swap(obj);
                     });
                     process_news(chickens$1.chicken, 'chicken', data, (obj, sobj) => {
                         const { id, wpos, angle, sitting } = sobj;
@@ -3094,7 +3130,7 @@ void main() {
                 }
                 if (data.player) {
                     client.playerId = data.player.id;
-                    let pawn = client.sobjs[data.player.id];
+                    let pawn = client.sObjsId[data.player.id];
                     if (pawn) {
                         pawns$1.you = pawn;
                         pawn.type = 'you';
@@ -7769,29 +7805,13 @@ void main() {
     })(collada || (collada = {}));
     var collada$1 = collada;
 
-    const dialogues = [
-        [
-        //['I spent some of my time sewing suits for wasters.', 3]
-        ],
-        [
-            [`I'm a trader.`, 1],
-            [`It can be hazardous around here. The purple for example is contaminated soil.`, 2],
-            [`It won't hurt, but be wary, the more blighted, the more danger that can usually be found.`, -1],
-        ],
-        [
-            [`I'm a vendor of sifty town.`, 1],
-            [`I trade in most forms of scraps.`, 2],
-            [`.`, 3]
-        ]
-    ];
-
     var pawns;
     (function (pawns) {
         class pawn extends objects$1.objected {
             constructor() {
                 super(numbers.pawns);
                 this.isPlayer = false;
-                this.dialog = dialogues[1];
+                this.dialogue = dialogues[0];
                 this.netwpos = [0, 0];
                 this.netangle = 0;
                 this.pawntype = 'generic';
@@ -8177,8 +8197,10 @@ void main() {
                 this.render();
             }
             nettick() {
-                //this.wpos = tiles.hovering!.wpos;
                 var _a;
+                if (this.type == 'you')
+                    return;
+                //this.wpos = tiles.hovering!.wpos;
                 if (!pts.together(this.netwpos))
                     this.netwpos = this.wpos;
                 // tween netwpos into wpos
@@ -9087,12 +9109,6 @@ void main() {
                 chickens$1.start();
                 wastes.gview.center = new lod$1.obj();
                 wastes.gview.center.wpos = [44, 52];
-                //pawns.make_you();
-                let pos = [37.5, 48.5];
-                let vendor = new pawns$1.pawn();
-                vendor.pawntype = 'trader';
-                vendor.wpos = pos;
-                lod$1.add(vendor);
                 /*
                     [`I'm on duty.`, 1],
                     [`I protect the civilized area here. It may not look that civil at first glance.`, 2],

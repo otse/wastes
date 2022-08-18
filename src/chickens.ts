@@ -409,7 +409,7 @@ export namespace chickens {
 				return true;
 			}, () => {
 				win.descriptor.focus = this;
-				win.descriptor.call_once("Just really a chicken.");
+				win.descriptor.call_once("A chicken, cluck cluck.");
 				//win.contextmenu.focus = undefined;
 			}]);
 
