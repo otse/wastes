@@ -131,6 +131,8 @@ class connection {
 	receive(json: any) {
 		if (json.player) {
 			if (this.you) {
+				//this.you.needsAnUpdate = true
+				this.you.needsUpdate(1);
 				this.you.wpos = json.player.wpos;
 				this.you.angle = json.player.angle;
 				this.you.aiming = json.player.aiming;
@@ -300,8 +302,6 @@ class npc extends supersobj {
 			let x = speed * Math.sin(this.angle);
 			let y = speed * Math.cos(this.angle);
 
-			this.stamp = slod.stamp;
-
 			let venture = pts.add(this.wpos, [x, y]);
 			this.wpos = venture;
 
@@ -358,6 +358,7 @@ class pawn extends npc {
 }
 
 class player extends pawn {
+	receive: any
 	freezingNpc?: npc
 	constructor() {
 		super();

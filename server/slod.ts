@@ -187,11 +187,9 @@ namespace slod {
 			const tuple = this.find_observer_tuple(grid)!;
 			let gathers: object[] = [];
 			for (let obj of this.sobjs)
-				/*
-				If our observer-registration is now, gather it
-				or if our last update was recent
-				*/
-				if (tuple[1] == slod.stamp || obj.stamp == slod.stamp)
+				// If our observer-stamp or our last update is [ now ]
+				// if (tuple[1] == true || obj.stamp == slod.stamp)
+				if (tuple[1] == slod.stamp || obj.stamp >= slod.stamp)
 					gathers.push(obj.gather());
 			return gathers;
 		}
@@ -199,10 +197,11 @@ namespace slod {
 			ssector.visibles = [];
 			for (let sector of ssector.actives)
 				ssector.visibles = ssector.visibles.concat(sector.sobjs);
+			// todo sort players first, then pawns
 			for (let sobj of this.visibles)
 				sobj.tick();
-			for (let sector of ssector.actives)
-				sector.tick();
+			// for (let sector of ssector.actives)
+			// 	sector.tick();
 		}
 		tick() {
 			hooks.call('ssectorTick', this);
@@ -325,8 +324,8 @@ namespace slod {
 		remove_for_observer(grid: sgrid) {
 			grid.removes.push(this.id);
 		}
-		needsUpdate() {
-			this.stamp = slod.stamp;
+		needsUpdate(padding = 0) {
+			this.stamp = slod.stamp + padding;
 		}
 		show() {
 			if (this.on())
