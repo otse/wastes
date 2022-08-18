@@ -3092,8 +3092,8 @@ void main() {
                 }
                 if (data.news) {
                     for (let sobj of data.news) {
-                        //if (sobj.type == 'tree')
-                        //console.log('got a server tree');
+                        if (sobj.type == 'tree')
+                            console.log('got a server tree');
                     }
                     process_news(pawns$1.pawn, 'pawn', data, (obj, sobj) => {
                         const { wpos, angle, outfit, dialogue, aiming, isPlayer } = sobj;
@@ -3126,6 +3126,7 @@ void main() {
                         obj.netangle = angle;
                         obj.pecking = pecking;
                         obj.sitting = sitting;
+                        console.log('updating chicken!');
                     });
                 }
                 if (data.player) {

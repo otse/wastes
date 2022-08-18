@@ -72,8 +72,8 @@ export namespace client {
 			}
 			if (data.news) {
 				for (let sobj of data.news) {
-					//if (sobj.type == 'tree')
-					//console.log('got a server tree');
+					if (sobj.type == 'tree')
+						console.log('got a server tree');
 				}
 				process_news(pawns.pawn, 'pawn', data,
 					(obj, sobj) => {
@@ -111,6 +111,8 @@ export namespace client {
 						obj.netangle = angle;
 						obj.pecking = pecking;
 						obj.sitting = sitting;
+						console.log('updating chicken!');
+						
 					});
 			}
 

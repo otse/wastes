@@ -252,9 +252,11 @@ class supersobj extends slod.sobj {
 }
 
 class tree extends supersobj {
+	static id = 0
 	constructor() {
 		super();
 		this.type = 'tree';
+		this.id = 'tree_' + tree.id++
 	}
 	/*override create() {
 		this.rebound();
@@ -293,8 +295,12 @@ class npc extends supersobj {
 
 			let speed = this.speed * delta;
 
+			this.needsUpdate();
+
 			let x = speed * Math.sin(this.angle);
 			let y = speed * Math.cos(this.angle);
+
+			this.stamp = slod.stamp;
 
 			let venture = pts.add(this.wpos, [x, y]);
 			this.wpos = venture;
@@ -409,10 +415,12 @@ class chicken extends npc {
 			if (!this.pecking && !this.sitting && this.walkAgain?.elapsed(5000)) {
 				if (Math.random() > .25) {
 					this.pecking = true;
+					this.needsUpdate();
 					this.walkAgain = new timer(0);
 				}
 				else {
 					this.sitting = true;
+					this.needsUpdate();
 					this.walkAgain = new timer(0);
 				}
 			}
@@ -420,10 +428,12 @@ class chicken extends npc {
 
 		if (this.pecking && this.walkAgain?.elapsed(500)) {
 			this.pecking = false;
+			this.needsUpdate();
 			this.walkAgain = new timer(0);
 		}
 		else if (this.sitting && this.walkAgain?.elapsed(6000)) {
 			this.sitting = false;
+			this.needsUpdate();
 			this.walkAgain = new timer(0);
 		}
 		else if (!this.pecking && !this.sitting) {

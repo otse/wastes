@@ -59,8 +59,9 @@ namespace slod {
 		const { sector } = obj;
 		if (sector) {
 			sector.remove(obj);
-			for (let grid of sector.observers)
-				grid.removes.push(obj.id);
+			// remove obj for all observers
+			for (const tuple of sector.observers)
+				tuple[0].removes.push(obj.id);
 		}
 	}
 
@@ -96,7 +97,7 @@ namespace slod {
 
 	export class ssector extends toggle {
 		color?;
-		public observers: sgrid[] = []
+		public observers: [observer: sgrid, stamp: number][] = []
 		static visibles: sobj[] = []
 		static actives: ssector[] = []
 		readonly small: aabb2;
@@ -115,12 +116,16 @@ namespace slod {
 			hooks.call('SSectorCreate', this);
 		}
 		observe(grid: sgrid) {
-			this.observers.push(grid);
-			// this.observers.push([grid, stamp]);
-			// "tuple describes: started observing this chunk at server-frame-time-stamp"
+			this.observers.push([grid, slod.stamp]);
 		}
 		unobserve(grid: sgrid) {
-			this.observers.splice(this.observers.indexOf(grid), 1);
+			for (let i = this.observers.length - 1; i >= 0; i--) {
+				const tuple = this.observers[i];
+				if (tuple[0] == grid) {
+					this.observers.splice(i, 1);
+					break;
+				}
+			}
 		}
 		add(obj: sobj) {
 			let i = this.sobjs.indexOf(obj);
@@ -150,8 +155,8 @@ namespace slod {
 		//		grid.removes.push(obj.id);
 		//}
 		is_observed_by(target: sgrid) {
-			for (let grid of this.observers)
-				if (grid == target)
+			for (const tuple of this.observers)
+				if (tuple[0] == target)
 					return true;
 			return false;
 		}
@@ -165,28 +170,28 @@ namespace slod {
 					obj.hide();
 					//console.warn('sobj move into hidden ssector');
 				}
-				for (let grid of this.observers) {
-					if (!newSector.is_observed_by(grid)) {
-						grid.removes.push(obj.id);
+				// If the new sector isn't observed, remove us from that observer
+				for (const tuple of this.observers) {
+					if (newSector.is_observed_by(tuple[0]) == false) {
+						tuple[0].removes.push(obj.id);
 					}
 				}
 			}
 		}
-		find_observer_tuple(grid: sgrid) {
-			for (let tuple of this.observers)
-				if (tuple[0] == grid)
-					return [grid, 0];
-			return [grid, 0];
+		find_observer_tuple(observer: sgrid) {
+			for (const tuple of this.observers)
+				if (tuple[0] == observer)
+					return tuple;
 		}
 		gather(grid: slod.sgrid) {
-			const tuple = this.find_observer_tuple(grid);
+			const tuple = this.find_observer_tuple(grid)!;
 			let gathers: object[] = [];
 			for (let obj of this.sobjs)
 				/*
 				If our observer-registration is now, gather it
 				or if our last update was recent
 				*/
-				//if (tuple[1] == slod.stamp || obj.stamp == slod.stamp)
+				if (tuple[1] == slod.stamp || obj.stamp == slod.stamp)
 					gathers.push(obj.gather());
 			return gathers;
 		}
@@ -213,9 +218,8 @@ namespace slod {
 			hooks.call('ssectorShow', this);
 		}
 		hide() {
-			if (this.observers.length >= 1) {
+			if (this.observers.length >= 1)
 				return;
-			}
 			if (this.off())
 				return;
 			const i = ssector.actives.indexOf(this);
@@ -312,6 +316,7 @@ namespace slod {
 			public readonly counts: numbers.tally = numbers.objs) {
 			super();
 			this.counts[1]++;
+			this.needsUpdate();
 		}
 		finalize() {
 			//this.hide();
@@ -319,6 +324,9 @@ namespace slod {
 		}
 		remove_for_observer(grid: sgrid) {
 			grid.removes.push(this.id);
+		}
+		needsUpdate() {
+			this.stamp = slod.stamp;
 		}
 		show() {
 			if (this.on())
