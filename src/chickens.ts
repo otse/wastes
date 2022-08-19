@@ -67,7 +67,7 @@ export namespace chickens {
 			if (!this.created) {
 				this.created = true;
 
-				console.log('creating chicken');
+				//console.log('creating chicken');
 
 				// Set scale to increase pixels exponentially
 				const scale = 1;
@@ -107,7 +107,7 @@ export namespace chickens {
 		}
 		override update() {
 			this.tiled();
-			this.stack();
+			//this.stack();
 			super.update();
 		}
 		//override setup_context() {

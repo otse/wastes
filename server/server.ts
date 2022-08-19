@@ -67,7 +67,7 @@ function start() {
 	guard.walkArea = new aabb2([43, 51], [46, 58]);
 	slod.add(guard);
 
-	for (let i = 0; i < 10; i++) {
+	for (let i = 0; i < 5; i++) {
 		let shadowChicken = new chicken;
 		shadowChicken.wpos = [42, 53];
 		shadowChicken.walkArea = new aabb2([41, 54], [43, 51]);
@@ -119,7 +119,7 @@ class connection {
 
 		this.you = new player;
 		this.you.wpos = [44, 52];
-		this.you.impertinent = true;
+		// this.you.impertinent = true;
 		slod.add(this.you);
 
 		if (Math.random() > .5)
@@ -157,9 +157,9 @@ class connection {
 		if (json.player.shoot) {
 			this.you.shoot(this.you.angle);
 		}
-		if (json.talkingToId) {
-			console.log('player is talking to pawn', json.talkingToId);
-			const npc = slod.byId[json.talkingToId] as npc;
+		if (json.interactingWith) {
+			console.log('player is interacting with npc', json.interactingWith);
+			const npc = slod.byId[json.interactingWith] as npc;
 			if (npc) {
 				this.you.freezingNpc = npc;
 				npc.frozenBy = this.you;
@@ -365,7 +365,8 @@ class pawn extends npc {
 		this.outfit = outfits[Math.floor(Math.random() * outfits.length)];
 
 		this.inventory = new sinventory;
-		this.inventory.add('bullet', 100);
+		this.inventory.add('bullet', 10);
+		this.inventory.add('cork', 100);
 	}
 	override tick() {
 		super.tick();
@@ -406,10 +407,8 @@ class player extends pawn {
 	}
 	override tick() {
 		let bullets = this.inventory.get('bullet');
-		//if (bullets) {
-		//	bullets[1] -= 1;
-		//}
-		this.inventory.remove('bullet');
+		
+		this.inventory.remove('cork');
 	}
 	override create() {
 		super.create();

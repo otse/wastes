@@ -310,7 +310,7 @@ namespace slod {
 		wpos: vec2 = [0, 0]
 		sector: ssector | null
 		// impertinent sobj stays visible
-		impertinent = false
+		// impertinent = false
 		nosend = false
 		constructor(
 			public readonly counts: numbers.tally = numbers.objs) {
@@ -336,8 +336,8 @@ namespace slod {
 			this.update();
 		}
 		hide() {
-			if (this.impertinent)
-				return;
+			//if (this.impertinent)
+			//	return;
 			if (this.off())
 				return;
 			this.counts[0]--;

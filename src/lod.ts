@@ -29,7 +29,7 @@ class toggle {
 	isActive() { return this.active };
 	on() {
 		if (this.active) {
-			console.warn(' (toggle) already on ');
+			// console.warn(' (toggle) already on ');
 			return true;
 			// it was on before
 		}
@@ -39,7 +39,7 @@ class toggle {
 	}
 	off() {
 		if (!this.active) {
-			console.warn(' (toggle) already off ');
+			// console.warn(' (toggle) already off ');
 			return true;
 		}
 		this.active = false;
