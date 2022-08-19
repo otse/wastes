@@ -368,6 +368,7 @@ namespace win {
 				this.talkingToCur = undefined;
 				this.modal?.deletor();
 				this.modal = undefined;
+				hoveringClickableElement = false;
 			}
 		}
 	}

@@ -1635,6 +1635,7 @@ void main() {
                     this.talkingToCur = undefined;
                     (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
                     this.modal = undefined;
+                    win_1.hoveringClickableElement = false;
                 }
             }
         }
@@ -1867,7 +1868,7 @@ void main() {
                     }
                     else if (pixel.is_color(colors$1.color_overgrown_wall)) {
                         factory(objects.deck, pixel, pos);
-                        factory(objects.wall, pixel, pos, { type: 'plywood' });
+                        factory(objects.wall, pixel, pos, { type: 'overgrown' });
                         factory(objects.roof, pixel, pos);
                     }
                     else if (pixel.is_color(colors$1.color_deringer_wall)) {
@@ -2020,7 +2021,7 @@ void main() {
                 if (((_a = this.hints) === null || _a === void 0 ? void 0 : _a.type) == 'plywood')
                     tuple = sprites$1.dderingerwalls;
                 if (((_b = this.hints) === null || _b === void 0 ? void 0 : _b.type) == 'overgrown')
-                    tuple = sprites$1.dovergrownwalls;
+                    tuple = sprites$1.dderingerwalls;
                 if (((_c = this.hints) === null || _c === void 0 ? void 0 : _c.type) == 'deringer')
                     tuple = sprites$1.dderingerwalls;
                 if (((_d = this.hints) === null || _d === void 0 ? void 0 : _d.type) == 'woody')
@@ -2144,7 +2145,7 @@ void main() {
                 new sprite({
                     binded: this,
                     tuple: sprites$1.ddeadtreetrunk,
-                    orderBias: 0.7,
+                    orderBias: 0.6,
                 });
                 this.stack();
             }
@@ -2166,7 +2167,7 @@ void main() {
                 new sprite({
                     binded: this,
                     tuple: sprites$1.ddecidtreetrunk,
-                    orderBias: 0.7,
+                    orderBias: 0.6,
                 });
                 this.stack();
                 const tile = tiles$1.get(this.wpos);
@@ -2182,7 +2183,7 @@ void main() {
                                     grid: [x, y]
                                 });
                     factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [0, 0]), { type: this.hints.type, color: tile.color, noVines: true });
-                    factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [0, 0]), { type: this.hints.type, color: tile.color, noVines: true });
+                    //factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [0, 0]), { type: this.hints.type, color: tile.color, noVines: true });
                 }
             }
         }
@@ -2965,7 +2966,7 @@ void main() {
                         return true;
                     }, () => {
                         win$1.descriptor.focus = this;
-                        win$1.descriptor.call_once("A chicken, cluck cluck.");
+                        win$1.descriptor.call_once("Cluck cluck.");
                         //win.contextmenu.focus = undefined;
                     }]);
             }
@@ -3025,22 +3026,21 @@ void main() {
         ],
         [
             // 2
-            [`I'm a trader.`, 1],
-            [`I mostly trade scrap nowadays. Always folk looking to tinker.`, 2],
-            [`Take a look, it's not all junk.`, -1],
+            [`I'm the trader around here.`, 1],
+            [`I mostly trade scrap nowadays. Always folk looking to tinker.`, -1],
         ],
         [
             // 3
             [`I protect the civilized borders.`, 1],
             [`It may not look that civil at first glance.`, 2],
-            [`But there's order to abide to.`, -1]
+            [`But there's county to keep safe.`, -1]
         ]
     ];
 
     var client;
     (function (client) {
         client.sObjsId = {};
-        client.playerId = -1;
+        client.plyId = -1;
         client.talkingToId = '';
         function tick() {
             for (let id in client.sObjsId) {
@@ -3084,6 +3084,9 @@ void main() {
                         let obj = client.sObjsId[id];
                         if (!obj)
                             continue;
+                        if (id == client.plyId)
+                            // prevent self-destruct by moving too fast
+                            continue;
                         obj.hide();
                         obj.finalize();
                         lod$1.remove(obj);
@@ -3126,16 +3129,16 @@ void main() {
                         obj.netangle = angle;
                         obj.pecking = pecking;
                         obj.sitting = sitting;
-                        console.log('updating chicken!');
+                        // console.log('updating chicken!');
                     });
                 }
-                if (data.player) {
-                    client.playerId = data.player.id;
-                    let pawn = client.sObjsId[data.player.id];
+                if (data.playerId) {
+                    client.plyId = data.playerId;
+                    let pawn = client.sObjsId[client.plyId];
                     if (pawn) {
+                        console.log('  got you pawn  ', client.plyId);
                         pawns$1.you = pawn;
                         pawn.type = 'you';
-                        console.log('we got our pawn', client.playerId);
                         wastes.gview.center = pawn;
                     }
                 }

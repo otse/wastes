@@ -56,12 +56,14 @@ function start() {
 	vendor.wpos = [37.5, 48.5];
 	slod.add(vendor);
 
+	//for (let i = 0; i < 100; i++) {
 	let guard = new pawn;
 	guard.wpos = [45, 56];
 	//peacekeeper.outfit = []
 	guard.dialogue = 3;
 	guard.walkArea = new aabb2([43, 51], [46, 58]);
 	slod.add(guard);
+	//}
 
 	let shadowChicken = new chicken;
 	shadowChicken.wpos = [42, 53];
@@ -173,14 +175,12 @@ class connection {
 	gather() {
 		let object: any = {};
 
-		//if (this.sendDelay - Date.now() <= 0) {
 		if (!this.sentPlayer) {
 			this.sentPlayer = true;
 			console.log('sending you-pawn');
 
-			object.player = this.you?.gather();
+			object.playerId = this.you?.id;
 		}
-		//}
 
 		object.news = this.grid.gather();
 

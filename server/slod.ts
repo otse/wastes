@@ -171,11 +171,11 @@ namespace slod {
 					//console.warn('sobj move into hidden ssector');
 				}
 				// If the new sector isn't observed, remove us from that observer
-				for (const tuple of this.observers) {
-					if (newSector.is_observed_by(tuple[0]) == false) {
+				for (const tuple of this.observers)
+					if (!newSector.is_observed_by(tuple[0]))
+						//if (!obj.impertinent)
 						tuple[0].removes.push(obj.id);
-					}
-				}
+
 			}
 		}
 		find_observer_tuple(observer: sgrid) {
@@ -309,6 +309,7 @@ namespace slod {
 		aabb: aabb2
 		wpos: vec2 = [0, 0]
 		sector: ssector | null
+		// impertinent sobj stays visible
 		impertinent = false
 		nosend = false
 		constructor(

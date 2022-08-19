@@ -12,7 +12,7 @@ export namespace client {
 
 	export var socket: WebSocket
 
-	export var playerId = -1;
+	export var plyId = -1;
 
 	export var talkingToId = ''
 
@@ -64,6 +64,9 @@ export namespace client {
 					let obj = sObjsId[id];
 					if (!obj)
 						continue;
+					if (id == plyId)
+						// prevent self-destruct by moving too fast
+						continue;
 					obj.hide();
 					obj.finalize();
 					lod.remove(obj);
@@ -111,18 +114,17 @@ export namespace client {
 						obj.netangle = angle;
 						obj.pecking = pecking;
 						obj.sitting = sitting;
-						console.log('updating chicken!');
-						
+						// console.log('updating chicken!');
 					});
 			}
 
-			if (data.player) {
-				playerId = data.player.id;
-				let pawn = sObjsId[data.player.id];
+			if (data.playerId) {
+				plyId = data.playerId;
+				let pawn = sObjsId[plyId];
 				if (pawn) {
+					console.log('  got you pawn  ', plyId);
 					pawns.you = pawn as pawns.pawn;
 					pawn.type = 'you';
-					console.log('we got our pawn', playerId);
 					wastes.gview.center = pawn;
 				}
 			}

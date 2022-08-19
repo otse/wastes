@@ -81,7 +81,7 @@ namespace objects {
 				}
 				else if (pixel.is_color(colors.color_overgrown_wall)) {
 					factory(objects.deck, pixel, pos);
-					factory(objects.wall, pixel, pos, { type: 'plywood' });
+					factory(objects.wall, pixel, pos, { type: 'overgrown' });
 					factory(objects.roof, pixel, pos);
 				}
 				else if (pixel.is_color(colors.color_deringer_wall)) {
@@ -250,7 +250,7 @@ namespace objects {
 			if (this.hints?.type == 'plywood')
 				tuple = sprites.dderingerwalls;
 			if (this.hints?.type == 'overgrown')
-				tuple = sprites.dovergrownwalls;
+				tuple = sprites.dderingerwalls;
 			if (this.hints?.type == 'deringer')
 				tuple = sprites.dderingerwalls;
 			if (this.hints?.type == 'woody')
@@ -391,7 +391,7 @@ namespace objects {
 			let shape = new sprite({
 				binded: this,
 				tuple: sprites.ddeadtreetrunk,
-				orderBias: 0.7,
+				orderBias: 0.6,
 			});
 			this.stack();
 		}
@@ -411,7 +411,7 @@ namespace objects {
 			let shape = new sprite({
 				binded: this,
 				tuple: sprites.ddecidtreetrunk,
-				orderBias: 0.7,
+				orderBias: 0.6,
 			});
 			this.stack();
 			const tile = tiles.get(this.wpos)!;
@@ -431,7 +431,7 @@ namespace objects {
 									grid: [x, y]
 								});
 				factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [0, 0]), { type: this.hints.type, color: tile.color, noVines: true });
-				factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [0, 0]), { type: this.hints.type, color: tile.color, noVines: true });
+				//factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [0, 0]), { type: this.hints.type, color: tile.color, noVines: true });
 			}
 		}
 	}

@@ -10,15 +10,14 @@ const dialogues: speech[][] = [
     ],
     [
         // 2
-        [`I'm a trader.`, 1],
-        [`I mostly trade scrap nowadays. Always folk looking to tinker.`, 2],
-        [`Take a look, it's not all junk.`, -1],
+        [`I'm the trader around here.`, 1],
+        [`I mostly trade scrap nowadays. Always folk looking to tinker.`, -1],
     ],
     [
         // 3
         [`I protect the civilized borders.`, 1],
         [`It may not look that civil at first glance.`, 2],
-        [`But there's order to abide to.`, -1]
+        [`But there's county to keep safe.`, -1]
     ]
 ]
 
