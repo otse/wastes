@@ -39,7 +39,7 @@ namespace win {
 
 		if (app.key('c') == 1) {
 			toggle_character = !toggle_character;
-			character.call(toggle_character);
+			character.call_once(toggle_character);
 		}
 
 		if (app.key('b') == 1) {
@@ -113,7 +113,40 @@ namespace win {
 		static open = false
 		static anchor: lod.obj
 		static modal?: modal
-		static call(open: boolean) {
+		static inventoryElement
+		static inventoryStamp = 0
+		static render_inventory() {
+
+			if (!this.inventoryElement) {
+				this.inventoryElement = document.createElement('div');
+				this.inventoryElement.className = 'inventory';
+				this.modal?.content.append(character.inventoryElement);
+			}
+
+			const inventory = pawns.you?.inventory;
+
+			if (inventory && this.inventoryStamp != inventory.stamp) {
+
+				this.inventoryElement.innerHTML = ``;
+
+				console.log('yes', inventory.tuples);
+				//console.log(inventory);
+
+				for (let tuple of inventory.tuples) {
+					let button = document.createElement('div');
+					//button.innerHTML = `<img width="20" height="20" src="tex/items/${tuple[0]}.png">`;
+					button.innerHTML += tuple[0];
+					if (tuple[1] > 1) {
+						button.innerHTML += ` <span>×${tuple[1]}</span>`
+					}
+					button.className = 'item';
+					this.inventoryElement.append(button);
+
+					this.inventoryStamp = inventory.stamp;
+				}
+			}
+		}
+		static call_once(open: boolean) {
 			this.open = open;
 			if (open && !this.modal) {
 				this.modal = new modal('you',);
@@ -122,33 +155,26 @@ namespace win {
 				this.modal.content.innerHTML = 'stats:<br />effectiveness: 100%<br /><hr>';
 				this.modal.content.innerHTML += 'inventory:<br />';
 				//inventory
-				const inventory = pawns.you?.inventory;
-				if (inventory) {
-					for (let tuple of inventory.tuples) {
-						let button = document.createElement('div');
-						//button.innerHTML = `<img width="20" height="20" src="tex/items/${tuple[0]}.png">`;
-						button.innerHTML += tuple[0];
-						if (tuple[1] > 1) {
-							button.innerHTML += ` <span>×${tuple[1]}</span>`
-						}
-						button.className = 'item';
-						this.modal.content.append(button);
-					}
-				}
-				this.modal.content.innerHTML += '<hr>guns:<br />';
+
+				this.render_inventory();
+
+				let next = document.createElement('p');
+				next.innerHTML += '<hr>guns:<br />';
 				if (pawns.you.gun)
-					this.modal.content.innerHTML += `<img class="gun" src="tex/guns/${pawns.you.gun}.png">`;
-
-
+					next.innerHTML += `<img class="gun" src="tex/guns/${pawns.you.gun}.png">`;
+				
+				this.modal.content.append(next);
 			}
 			else if (!open && this.modal) {
 				this.modal?.deletor();
 				this.modal = undefined;
+				this.inventoryElement = undefined;
 			}
 		}
 		static tick() {
 			if (this.open) {
 				this.modal?.float(pawns.you!, [15, 20]);
+				this.render_inventory();
 			}
 		}
 	}
@@ -381,8 +407,7 @@ namespace win {
 		static call_once() {
 
 			// We are trying to open a different container
-			if (this.modal !== undefined)
-			{
+			if (this.modal !== undefined) {
 				this.modal?.deletor();
 				this.modal = undefined;
 				this.focusCur = undefined;
@@ -415,7 +440,7 @@ namespace win {
 						console.log('woo');
 						item.remove();
 						cast.container.remove(tuple[0]);
-						pawns.you?.inventory.add(tuple[0]);
+						//pawns.you?.inventory.add(tuple[0]);
 						hoveringClickableElement = false;
 					};
 					item.onmouseover = () => { hoveringClickableElement = true; }

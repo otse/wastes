@@ -1338,7 +1338,7 @@ void main() {
                 return;
             if (app$1.key('c') == 1) {
                 toggle_character = !toggle_character;
-                character.call(toggle_character);
+                character.call_once(toggle_character);
             }
             if (app$1.key('b') == 1) ;
             you.tick();
@@ -1396,8 +1396,33 @@ void main() {
             }
         }
         class character {
-            static call(open) {
+            static render_inventory() {
                 var _a, _b;
+                if (!this.inventoryElement) {
+                    this.inventoryElement = document.createElement('div');
+                    this.inventoryElement.className = 'inventory';
+                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.content.append(character.inventoryElement);
+                }
+                const inventory = (_b = pawns$1.you) === null || _b === void 0 ? void 0 : _b.inventory;
+                if (inventory && this.inventoryStamp != inventory.stamp) {
+                    this.inventoryElement.innerHTML = ``;
+                    console.log('yes', inventory.tuples);
+                    //console.log(inventory);
+                    for (let tuple of inventory.tuples) {
+                        let button = document.createElement('div');
+                        //button.innerHTML = `<img width="20" height="20" src="tex/items/${tuple[0]}.png">`;
+                        button.innerHTML += tuple[0];
+                        if (tuple[1] > 1) {
+                            button.innerHTML += ` <span>×${tuple[1]}</span>`;
+                        }
+                        button.className = 'item';
+                        this.inventoryElement.append(button);
+                        this.inventoryStamp = inventory.stamp;
+                    }
+                }
+            }
+            static call_once(open) {
+                var _a;
                 this.open = open;
                 if (open && !this.modal) {
                     this.modal = new modal('you');
@@ -1405,36 +1430,29 @@ void main() {
                     this.modal.content.innerHTML = 'stats:<br />effectiveness: 100%<br /><hr>';
                     this.modal.content.innerHTML += 'inventory:<br />';
                     //inventory
-                    const inventory = (_a = pawns$1.you) === null || _a === void 0 ? void 0 : _a.inventory;
-                    if (inventory) {
-                        for (let tuple of inventory.tuples) {
-                            let button = document.createElement('div');
-                            //button.innerHTML = `<img width="20" height="20" src="tex/items/${tuple[0]}.png">`;
-                            button.innerHTML += tuple[0];
-                            if (tuple[1] > 1) {
-                                button.innerHTML += ` <span>×${tuple[1]}</span>`;
-                            }
-                            button.className = 'item';
-                            this.modal.content.append(button);
-                        }
-                    }
-                    this.modal.content.innerHTML += '<hr>guns:<br />';
+                    this.render_inventory();
+                    let next = document.createElement('p');
+                    next.innerHTML += '<hr>guns:<br />';
                     if (pawns$1.you.gun)
-                        this.modal.content.innerHTML += `<img class="gun" src="tex/guns/${pawns$1.you.gun}.png">`;
+                        next.innerHTML += `<img class="gun" src="tex/guns/${pawns$1.you.gun}.png">`;
+                    this.modal.content.append(next);
                 }
                 else if (!open && this.modal) {
-                    (_b = this.modal) === null || _b === void 0 ? void 0 : _b.deletor();
+                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
                     this.modal = undefined;
+                    this.inventoryElement = undefined;
                 }
             }
             static tick() {
                 var _a;
                 if (this.open) {
                     (_a = this.modal) === null || _a === void 0 ? void 0 : _a.float(pawns$1.you, [15, 20]);
+                    this.render_inventory();
                 }
             }
         }
         character.open = false;
+        character.inventoryStamp = 0;
         win_1.character = character;
         class you {
             static call(open) {
@@ -1669,11 +1687,10 @@ void main() {
                         item.className = 'item';
                         this.modal.content.append(item);
                         item.onclick = (e) => {
-                            var _a;
                             console.log('woo');
                             item.remove();
                             cast.container.remove(tuple[0]);
-                            (_a = pawns$1.you) === null || _a === void 0 ? void 0 : _a.inventory.add(tuple[0]);
+                            //pawns.you?.inventory.add(tuple[0]);
                             win_1.hoveringClickableElement = false;
                         };
                         item.onmouseover = () => { win_1.hoveringClickableElement = true; };
@@ -2358,18 +2375,17 @@ void main() {
                 if (Math.random() > .5)
                     this.add('stone');
             }
-            add(item) {
-                let found = false;
-                for (let tuple of this.tuples) {
-                    if (tuple[0] == item) {
-                        tuple[1] += 1;
-                        found = true;
-                        break;
-                    }
-                }
-                if (!found) {
-                    this.tuples.push([item, 1]);
-                }
+            get(name) {
+                for (const tuple of this.tuples)
+                    if (tuple[0] == name)
+                        return tuple;
+            }
+            add(name) {
+                let tuple = this.get(name);
+                if (tuple)
+                    tuple[1] += 1;
+                else
+                    this.tuples.push([name, 1]);
                 this.tuples.sort();
             }
             remove(name) {
@@ -3040,8 +3056,10 @@ void main() {
     var client;
     (function (client) {
         client.sObjsId = {};
+        client.sInventoriesId = {};
         client.plyId = -1;
         client.talkingToId = '';
+        client.tradeWithId = '';
         function tick() {
             for (let id in client.sObjsId) {
                 let obj = client.sObjsId[id];
@@ -3097,25 +3115,33 @@ void main() {
                     for (let sobj of data.news) {
                         if (sobj.type == 'tree')
                             console.log('got a server tree');
+                        if (sobj.type == 'inventory')
+                            console.log('got a server sinventory');
                     }
                     process_news(pawns$1.pawn, 'pawn', data, (obj, sobj) => {
-                        const { wpos, angle, outfit, dialogue, aiming, isPlayer } = sobj;
+                        const { wpos, angle, outfit, dialogue, aiming, inventory, subtype, isPlayer } = sobj;
                         obj.wpos = wpos;
                         obj.angle = angle;
                         obj.netwpos = wpos;
                         obj.netangle = angle;
                         obj.outfit = outfit;
+                        obj.aiming = aiming;
+                        obj.subtype = subtype;
                         if (dialogue)
                             obj.dialogue = dialogues[dialogue];
-                        obj.aiming = aiming;
                         obj.isPlayer = isPlayer;
+                        obj.inventory = inventory;
                     }, (obj, sobj) => {
-                        if (obj.type == 'you')
-                            return;
-                        const { wpos, angle, aiming } = sobj;
-                        obj.netwpos = wpos;
-                        obj.netangle = angle;
-                        obj.aiming = aiming;
+                        const { wpos, angle, aiming, inventory } = sobj;
+                        if (obj.type != 'you') {
+                            obj.netwpos = wpos;
+                            obj.netangle = angle;
+                            obj.aiming = aiming;
+                        }
+                        if (inventory) {
+                            //console.log('update inventory');
+                            obj.inventory = inventory;
+                        }
                     });
                     process_news(chickens$1.chicken, 'chicken', data, (obj, sobj) => {
                         const { id, wpos, angle, sitting } = sobj;
@@ -3162,6 +3188,10 @@ void main() {
                     if (client.talkingToId) {
                         json.talkingToId = client.talkingToId;
                         client.talkingToId = '';
+                    }
+                    if (client.tradeWithId) {
+                        json.tradeWithId = client.tradeWithId;
+                        client.tradeWithId = '';
                     }
                     const string = JSON.stringify(json);
                     client.socket.send(string);
@@ -7814,12 +7844,12 @@ void main() {
         class pawn extends objects$1.objected {
             constructor() {
                 super(numbers.pawns);
+                this.isTrader = false;
                 this.isPlayer = false;
                 this.dialogue = dialogues[0];
                 this.netwpos = [0, 0];
                 this.netangle = 0;
-                this.pawntype = 'generic';
-                this.trader = false;
+                //inventory: objects.container
                 this.items = [];
                 this.gun = 'revolver';
                 this.outfit = ['#444139', '#444139', '#484c4c', '#31362c'];
@@ -7836,8 +7866,8 @@ void main() {
                 this.randomWalker = 0;
                 this.type = 'pawn';
                 this.height = 24;
-                this.inventory = new objects$1.container;
-                this.inventory.add('money');
+                //this.inventory = new objects.container;
+                //this.inventory.add('money');
             }
             create() {
                 this.tiled();
@@ -7902,10 +7932,12 @@ void main() {
                             win$1.dialogue.call_once();
                             client.talkingToId = this.id;
                         }]);
-                    if (this.pawntype == 'trader') {
+                    if (this.subtype == 'trader') {
                         win$1.contextmenu.options.options.push(["Trade", () => {
                                 return pts.distsimple(pawns.you.wpos, this.wpos) < 1;
-                            }, () => { }]);
+                            }, () => {
+                                client.tradeWithId = this.id;
+                            }]);
                     }
                 }
             }

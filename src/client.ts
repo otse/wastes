@@ -10,11 +10,15 @@ export namespace client {
 
 	export var sObjsId: { [id: string]: lod.obj } = {}
 
+	export var sInventoriesId: { [id: string]: any } = {}
+
 	export var socket: WebSocket
 
 	export var plyId = -1;
 
 	export var talkingToId = ''
+
+	export var tradeWithId = '';
 
 	export function tick() {
 		for (let id in sObjsId) {
@@ -77,27 +81,37 @@ export namespace client {
 				for (let sobj of data.news) {
 					if (sobj.type == 'tree')
 						console.log('got a server tree');
+					if (sobj.type == 'inventory')
+						console.log('got a server sinventory');
 				}
+
 				process_news(pawns.pawn, 'pawn', data,
 					(obj, sobj) => {
-						const { wpos, angle, outfit, dialogue, aiming, isPlayer } = sobj;
+						const { wpos, angle, outfit, dialogue, aiming, inventory, subtype, isPlayer } = sobj;
 						obj.wpos = wpos;
 						obj.angle = angle;
 						obj.netwpos = wpos;
 						obj.netangle = angle;
 						obj.outfit = outfit;
+						obj.aiming = aiming;
+						obj.subtype = subtype;
 						if (dialogue)
 							obj.dialogue = dialogues[dialogue];
-						obj.aiming = aiming;
 						obj.isPlayer = isPlayer;
+						obj.inventory = inventory;
 					},
 					(obj, sobj) => {
-						if (obj.type == 'you')
-							return;
-						const { wpos, angle, aiming } = sobj;
-						obj.netwpos = wpos;
-						obj.netangle = angle;
-						obj.aiming = aiming;
+						const { wpos, angle, aiming, inventory } = sobj;
+						if (obj.type != 'you') {
+							obj.netwpos = wpos;
+							obj.netangle = angle;
+							obj.aiming = aiming;
+						}
+						if (inventory) {
+							//console.log('update inventory');
+
+							obj.inventory = inventory;
+						}
 					});
 
 				process_news(chickens.chicken, 'chicken', data,
@@ -152,6 +166,10 @@ export namespace client {
 				if (talkingToId) {
 					json.talkingToId = talkingToId;
 					talkingToId = '';
+				}
+				if (tradeWithId) {
+					json.tradeWithId = tradeWithId;
+					tradeWithId = '';
 				}
 				const string = JSON.stringify(json);
 				socket.send(string);

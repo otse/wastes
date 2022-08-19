@@ -25,15 +25,18 @@ export namespace pawns {
 
 	const wasterSprite = false;
 
+	type inventory = { stamp: number, tuples: [string, number][]}
+
 	export class pawn extends objects.objected {
 		static noun = 'pawn'
+		isTrader = false
 		isPlayer = false
+		inventory?: inventory
 		dialogue = dialogues[0]
 		netwpos: vec2 = [0, 0]
 		netangle = 0
-		pawntype = 'generic'
-		trader = false
-		inventory: objects.container
+		subtype
+		//inventory: objects.container
 		items: string[] = []
 		gun: string = 'revolver'
 		outfit = ['#444139', '#444139', '#484c4c', '#31362c']
@@ -49,8 +52,8 @@ export namespace pawns {
 			super(numbers.pawns);
 			this.type = 'pawn';
 			this.height = 24;
-			this.inventory = new objects.container;
-			this.inventory.add('money');
+			//this.inventory = new objects.container;
+			//this.inventory.add('money');
 		}
 		override create() {
 
@@ -132,10 +135,12 @@ export namespace pawns {
 					win.dialogue.call_once();
 					client.talkingToId = this.id;
 				}]);
-				if (this.pawntype == 'trader') {
+				if (this.subtype == 'trader') {
 					win.contextmenu.options.options.push(["Trade", () => {
 						return pts.distsimple(you.wpos, this.wpos) < 1;
-					}, () => { }]);
+					}, () => {
+						client.tradeWithId = this.id;
+					}]);
 				}
 				else {
 
@@ -467,7 +472,7 @@ export namespace pawns {
 						console.log('shoot');
 
 						this.shoot = true;
-						
+
 						for (let obj of lod.ggrid.visibleObjs) {
 							const objected = obj as objects.objected;
 							if (objected.isObjected) {

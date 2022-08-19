@@ -186,11 +186,11 @@ namespace slod {
 		gather(grid: slod.sgrid) {
 			const tuple = this.find_observer_tuple(grid)!;
 			let gathers: object[] = [];
-			for (let obj of this.sobjs)
-				// If our observer-stamp or our last update is [ now ]
-				// if (tuple[1] == true || obj.stamp == slod.stamp)
+			for (let obj of this.sobjs) {
+				// If we are a new observer, or we have changes
 				if (tuple[1] == slod.stamp || obj.stamp >= slod.stamp)
-					gathers.push(obj.gather());
+					gathers.push(obj.gather(tuple[1] == slod.stamp));
+			}
 			return gathers;
 		}
 		static tick_actives() {
@@ -357,8 +357,12 @@ namespace slod {
 		is_type(types: string[]) {
 			return types.indexOf(this.type) != -1;
 		}
-		gather() {
+		gather(first: boolean) {
+			//if (first/* || stamp == slod.stamp*/)
 			return { id: this.id, type: this.type, wpos: this.wpos };
+			//else
+			//	return { id: this.id, type: this.type };
+
 		}
 	}
 }

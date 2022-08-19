@@ -8,6 +8,7 @@ import { timeStamp } from 'console';
 import maps from './maps';
 import hooks from '../src/hooks';
 import colors from '../src/colors';
+import { sinventory } from './sinventory';
 
 var connections: connection[] = [];
 
@@ -54,21 +55,24 @@ function start() {
 	vendor.walkArea = new aabb2([37, 49], [41, 49]);
 	vendor.dialogue = 2;
 	vendor.wpos = [37.5, 48.5];
+	vendor.subtype = 'trader';
+	vendor.isTrader = true;
 	slod.add(vendor);
 
-	//for (let i = 0; i < 100; i++) {
 	let guard = new pawn;
 	guard.wpos = [45, 56];
 	//peacekeeper.outfit = []
 	guard.dialogue = 3;
+	guard.subtype = 'guard';
 	guard.walkArea = new aabb2([43, 51], [46, 58]);
 	slod.add(guard);
-	//}
 
-	let shadowChicken = new chicken;
-	shadowChicken.wpos = [42, 53];
-	shadowChicken.walkArea = new aabb2([41, 54], [43, 51]);
-	slod.add(shadowChicken);
+	for (let i = 0; i < 10; i++) {
+		let shadowChicken = new chicken;
+		shadowChicken.wpos = [42, 53];
+		shadowChicken.walkArea = new aabb2([41, 54], [43, 51]);
+		slod.add(shadowChicken);
+	}
 }
 
 const tick_rate = 333;
@@ -96,6 +100,7 @@ class timer {
 		return Date.now() - this.time > elapsed;
 	}
 }
+
 class connection {
 	you: player
 	messages: [text: string, duration: number][] = []
@@ -116,6 +121,14 @@ class connection {
 		this.you.wpos = [44, 52];
 		this.you.impertinent = true;
 		slod.add(this.you);
+
+		if (Math.random() > .5)
+			this.you.inventory.add('beer');
+		if (Math.random() > .5)
+			this.you.inventory.add('string');
+		if (Math.random() > .5)
+			this.you.inventory.add('stone');
+
 		//const string = JSON.stringify({ playerId: this.you.id });
 		//this.ws.send(string);
 
@@ -153,6 +166,10 @@ class connection {
 			}
 			else
 				console.warn('cant talk to this entity');
+
+		}
+		if (json.tradeWithId) {
+			console.log('player is trying to trade with', json.tradeWithId);
 
 		}
 
@@ -265,6 +282,7 @@ class tree extends supersobj {
 	}*/
 }
 
+// npc can be a chicken or a pawn
 class npc extends supersobj {
 	static id = 0;
 	isNpc = true
@@ -324,35 +342,56 @@ class npc extends supersobj {
 	override tick() {
 		this.wander();
 	}
-	override gather() {
-		return {
-			id: this.id,
-			type: this.type,
-			wpos: this.wpos,
-			angle: this.angle
-		};
+	override gather(whole: boolean) {
+		let upper = super.gather(whole) as any;
+		upper.angle = this.angle;
+		return upper;
 	}
 }
 
 class pawn extends npc {
 	static id = 0
+	inventory: sinventory
 	outfit: string[] = []
+	subtype = ''
 	dialogue = 0
 	aiming = false
 	isPlayer = false
+	isTrader = false
 	constructor() {
 		super();
 		this.type = 'pawn';
 		this.id = 'pawn_' + pawn.id++;
 		this.outfit = outfits[Math.floor(Math.random() * outfits.length)];
+
+		this.inventory = new sinventory;
+		this.inventory.add('bullet', 100);
 	}
-	override gather() {
-		let upper = super.gather() as any;
+	override tick() {
+		super.tick();
+		//if (this.subtype == 'trader') {
+		//this.inventory.wpos = this.wpos;
+		// console.log('syncing inventory with pawn-npc');
+		//}
+	}
+	override gather(first: boolean) {
+		let upper = super.gather(first) as any;
 		upper.outfit = this.outfit;
-		if (this.dialogue)
-			upper.dialogue = this.dialogue;
 		if (this.aiming)
 			upper.aiming = this.aiming;
+		if (first) {
+			if (this.dialogue)
+				upper.dialogue = this.dialogue;
+			if (this.subtype)
+				upper.subtype = this.subtype;
+			if (this.isTrader)
+				upper.isTrader = this.isTrader;
+		}
+		if (first || this.inventory.stamp == slod.stamp) {
+			console.log('inventory needs an update');
+
+			upper.inventory = this.inventory.collect();
+		}
 		return upper;
 	}
 }
@@ -366,6 +405,11 @@ class player extends pawn {
 		this.isPlayer = true;
 	}
 	override tick() {
+		let bullets = this.inventory.get('bullet');
+		//if (bullets) {
+		//	bullets[1] -= 1;
+		//}
+		this.inventory.remove('bullet');
 	}
 	override create() {
 		super.create();
@@ -373,8 +417,8 @@ class player extends pawn {
 	override hide() {
 		console.log('ply-pawn should be impertinent');
 	}
-	override gather() {
-		let upper = super.gather() as any;
+	override gather(first: boolean) {
+		let upper = super.gather(first) as any;
 		upper.isPlayer = true;
 		return upper;
 	}
@@ -403,8 +447,8 @@ class chicken extends npc {
 		this.size = 0.5;
 		this.walkAgain = new timer(0);
 	}
-	gather() {
-		let upper = super.gather() as any;
+	override gather(first: boolean) {
+		let upper = super.gather(first) as any;
 		return {
 			...upper,
 			pecking: this.pecking,

@@ -627,10 +627,10 @@ namespace objects {
 
 		}
 	}
-	type item = [string: string, amount: number]
+	type item = [name: string, amount: number]
 	export class container {
 		obj?: objects.objected
-		tuples: [string: string, amount: number][] = []
+		tuples: item[] = []
 		constructor() {
 			if (Math.random() > .5)
 				this.add('beer');
@@ -639,18 +639,17 @@ namespace objects {
 			if (Math.random() > .5)
 				this.add('stone');
 		}
-		add(item: string) {
-			let found = false;
-			for (let tuple of this.tuples) {
-				if (tuple[0] == item) {
-					tuple[1] += 1;
-					found = true;
-					break;
-				}
-			}
-			if (!found) {
-				this.tuples.push([item, 1]);
-			}
+		get(name: string) {
+			for (const tuple of this.tuples)
+				if (tuple[0] == name)
+					return tuple;
+		}
+		add(name: string) {
+			let tuple = this.get(name);
+			if (tuple)
+				tuple[1] += 1;
+			else
+				this.tuples.push([name, 1]);
 			this.tuples.sort();
 		}
 		remove(name: string) {
