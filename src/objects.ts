@@ -35,6 +35,7 @@ namespace objects {
 		wastes.heightmap = new colormap.colormap('heightmap');
 		wastes.objectmap = new colormap.colormap('objectmap');
 		wastes.buildingmap = new colormap.colormap('buildingmap');
+		wastes.treemap = new colormap.colormap('treemap');
 		wastes.colormap = new colormap.colormap('colormap');
 		wastes.roughmap = new colormap.colormap('roughmap');
 		wastes.roofmap = new colormap.colormap('roofmap');
@@ -73,6 +74,20 @@ namespace objects {
 
 		hooks.register('sectorCreate', (sector: lod.sector) => {
 			pts.func(sector.small, (pos) => {
+				let pixel = wastes.treemap.pixel(pos);
+
+				if (pixel.is_color(colors.color_decidtree)) {
+					factory(objects.decidtree, pixel, pos, { type: 'decid' });
+				}
+				else if (pixel.is_color(colors.color_deadtree)) {
+					factory(objects.deadtree, pixel, pos);
+				}
+			})
+			return false;
+		});
+
+		hooks.register('sectorCreate', (sector: lod.sector) => {
+			pts.func(sector.small, (pos) => {
 				let pixel = wastes.buildingmap.pixel(pos);
 				if (pixel.is_color(colors.color_plywood_wall)) {
 					factory(objects.deck, pixel, pos);
@@ -98,14 +113,6 @@ namespace objects {
 				}
 				else if (pixel.is_color(colors.color_fence)) {
 					//factory(fences.fence, pixel, pos);
-				}
-				else if (pixel.is_color(colors.color_decidtree)) {
-					factory(objects.decidtree, pixel, pos, { type: 'decid' });
-
-				}
-				else if (pixel.is_color(colors.color_deadtree)) {
-					factory(objects.deadtree, pixel, pos);
-
 				}
 				else if (pixel.is_color(colors.color_grass)) {
 					//factory(objects.grass, pixel, pos);
@@ -176,7 +183,7 @@ namespace objects {
 		solid = true
 		pixel?: colormap.pixel
 		tile?: tiles.tile
-		tileBound: aabb2
+		tileBound?: aabb2
 		cell: vec2 = [0, 0]
 		heightAdd = 0
 		hints?: any
@@ -431,7 +438,7 @@ namespace objects {
 									grid: [x, y]
 								});
 				factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [0, 0]), { type: this.hints.type, color: tile.color, noVines: true });
-				//factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [0, 0]), { type: this.hints.type, color: tile.color, noVines: true });
+				factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [0, 0]), { type: this.hints.type, color: tile.color, noVines: true });
 			}
 		}
 	}
@@ -451,7 +458,7 @@ namespace objects {
 
 		}
 		override create() {
-			let pixel = wastes.buildingmap.pixel(this.wpos);
+			let pixel = wastes.treemap.pixel(this.wpos);
 
 			if (!this.hints.noVines && pixel.arrayRef[3] == 254)
 				this.hasVines = false // true;

@@ -223,6 +223,7 @@ var wastes = (function (exports, THREE) {
         var buttons = {};
         var pos = [0, 0];
         app.salt = 'x';
+        app.mobile = false;
         app.wheel = 0;
         function onkeys(event) {
             const key = event.key.toLowerCase();
@@ -248,6 +249,7 @@ var wastes = (function (exports, THREE) {
         app.mouse = mouse;
         function boot(version) {
             app.salt = version;
+            app.mobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
             function onmousemove(e) { pos[0] = e.clientX; pos[1] = e.clientY; }
             function onmousedown(e) { buttons[e.button] = 1; if (e.button == 1)
                 return false; }
@@ -552,7 +554,7 @@ void main() {
         ;
         on() {
             if (this.active) {
-                console.warn(' (toggle) already on ');
+                // console.warn(' (toggle) already on ');
                 return true;
                 // it was on before
             }
@@ -562,7 +564,7 @@ void main() {
         }
         off() {
             if (!this.active) {
-                console.warn(' (toggle) already off ');
+                // console.warn(' (toggle) already off ');
                 return true;
             }
             this.active = false;
@@ -1348,6 +1350,7 @@ void main() {
             contextmenu.tick();
             message.tick();
             descriptor.tick();
+            trader.tick();
         }
         win_1.tick = tick;
         class modal {
@@ -1395,16 +1398,114 @@ void main() {
                 this.reposition([ren$1.screen[0] / 2 + pos[0], ren$1.screen[1] / 2 - pos[1]]);
             }
         }
+        class trader {
+            static hover_money_label_here() {
+            }
+            static call_once() {
+                if (this.tradeWith && this.tradeWithCur != this.tradeWith) {
+                    trader.end();
+                }
+                if (!this.modal) {
+                    this.modal = new modal('trader');
+                    this.modal.content.innerHTML = `buy:<br />`;
+                    this.tradeWithCur = this.tradeWith;
+                    this.render_trader_inventory(true);
+                    let next = document.createElement('span');
+                    next.innerHTML += '<hr>sell:<br />';
+                    this.modal.content.append(next);
+                    this.render_your_inventory(true);
+                }
+            }
+            static render_trader_inventory(force) {
+                var _a;
+                if (!this.traderInventoryElement) {
+                    this.traderInventoryElement = document.createElement('div');
+                    this.traderInventoryElement.className = 'inventory';
+                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.content.append(this.traderInventoryElement);
+                }
+                let pawn = this.tradeWithCur;
+                const inventory = pawn.inventory;
+                if (inventory && this.traderStamp != inventory.stamp || force) {
+                    this.traderInventoryElement.innerHTML = ``;
+                    console.log('yes', inventory.tuples);
+                    //console.log(inventory);
+                    for (let tuple of inventory.tuples) {
+                        let button = document.createElement('div');
+                        //button.innerHTML = `<img width="20" height="20" src="tex/items/${tuple[0]}.png">`;
+                        button.innerHTML += tuple[0];
+                        if (tuple[1] > 1) {
+                            button.innerHTML += ` <span>×${tuple[1]}</span>`;
+                        }
+                        button.onmouseover = () => {
+                            win_1.hoveringClickableElement = true;
+                        };
+                        button.onmouseleave = () => {
+                            win_1.hoveringClickableElement = false;
+                        };
+                        button.className = 'item';
+                        this.traderInventoryElement.append(button);
+                        this.traderStamp = inventory.stamp;
+                    }
+                }
+            }
+            static render_your_inventory(force) {
+                var _a;
+                if (!this.yourInventoryElement) {
+                    this.yourInventoryElement = document.createElement('div');
+                    this.yourInventoryElement.className = 'inventory';
+                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.content.append(this.yourInventoryElement);
+                }
+                let you = pawns$1.you;
+                const inventory = you.inventory;
+                if (inventory && this.yourStamp != inventory.stamp || force) {
+                    this.yourInventoryElement.innerHTML = ``;
+                    for (let tuple of inventory.tuples) {
+                        let button = document.createElement('div');
+                        //button.innerHTML = `<img width="20" height="20" src="tex/items/${tuple[0]}.png">`;
+                        button.innerHTML += tuple[0];
+                        if (tuple[1] > 1) {
+                            button.innerHTML += ` <span>×${tuple[1]}</span>`;
+                        }
+                        button.className = 'item';
+                        this.yourInventoryElement.append(button);
+                        this.yourStamp = inventory.stamp;
+                    }
+                }
+            }
+            static end() {
+                var _a;
+                (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
+                this.modal = undefined;
+                this.tradeWithCur = undefined;
+                this.traderInventoryElement = undefined;
+                this.yourInventoryElement = undefined;
+            }
+            static tick() {
+                if (this.tradeWithCur && pts.distsimple(this.tradeWithCur.wpos, pawns$1.you.wpos) > 1) {
+                    trader.end();
+                }
+                if (this.modal) {
+                    this.modal.float(this.tradeWithCur, [0, 0]);
+                    this.render_trader_inventory(false);
+                    this.render_your_inventory(false);
+                }
+            }
+        }
+        trader.traderStamp = 0;
+        trader.yourStamp = 0;
+        win_1.trader = trader;
         class character {
-            static render_inventory() {
-                var _a, _b;
+            static render_inventory(force) {
+                var _a;
                 if (!this.inventoryElement) {
                     this.inventoryElement = document.createElement('div');
                     this.inventoryElement.className = 'inventory';
                     (_a = this.modal) === null || _a === void 0 ? void 0 : _a.content.append(character.inventoryElement);
                 }
-                const inventory = (_b = pawns$1.you) === null || _b === void 0 ? void 0 : _b.inventory;
-                if (inventory && this.inventoryStamp != inventory.stamp) {
+                const inventory = pawns$1.you.inventory;
+                if (!inventory)
+                    return;
+                if (inventory && this.inventoryStamp != inventory.stamp || force) {
                     this.inventoryElement.innerHTML = ``;
                     console.log('yes', inventory.tuples);
                     //console.log(inventory);
@@ -1430,7 +1531,7 @@ void main() {
                     this.modal.content.innerHTML = 'stats:<br />effectiveness: 100%<br /><hr>';
                     this.modal.content.innerHTML += 'inventory:<br />';
                     //inventory
-                    this.render_inventory();
+                    this.render_inventory(true);
                     let next = document.createElement('p');
                     next.innerHTML += '<hr>guns:<br />';
                     if (pawns$1.you.gun)
@@ -1447,7 +1548,7 @@ void main() {
                 var _a;
                 if (this.open) {
                     (_a = this.modal) === null || _a === void 0 ? void 0 : _a.float(pawns$1.you, [15, 20]);
-                    this.render_inventory();
+                    this.render_inventory(false);
                 }
             }
         }
@@ -1484,6 +1585,12 @@ void main() {
                 this.buttons = [];
                 this.options.options = [];
             }
+            static end() {
+                var _a;
+                (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
+                this.modal = undefined;
+                this.focusCur = undefined;
+            }
             static init() {
                 hooks.register('viewMClick', (view) => {
                     var _a;
@@ -1493,7 +1600,7 @@ void main() {
                     return false;
                 });
                 hooks.register('viewRClick', (view) => {
-                    var _a, _b, _c;
+                    var _a;
                     console.log('contextmenu on ?', this.focus);
                     // We have a focus, but no window! This is the easiest scenario.
                     if (this.focus && !this.modal) {
@@ -1501,21 +1608,17 @@ void main() {
                         this.focusCur = this.focus;
                         this.open();
                     }
-                    // We click away from any sprites and we have a window: break it
-                    else if (!this.focus && this.modal) { // || this.focus == this.focusCur
-                        (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
-                        this.modal = undefined;
-                        this.focusCur = undefined;
+                    // We click away from any sprites and we have a menu open: break it
+                    else if (!this.focus && this.modal) {
+                        contextmenu.end();
                     }
                     // We clicked on the already focussed sprite: break it
                     else if (this.modal && this.focus && this.focus == this.focusCur) {
-                        (_b = this.modal) === null || _b === void 0 ? void 0 : _b.deletor();
-                        this.modal = undefined;
-                        this.focusCur = undefined;
+                        contextmenu.end();
                     }
                     // We have an open modal, but focus on a different sprite: recreate it
                     else if (this.modal && this.focus && this.focus != this.focusCur) {
-                        (_c = this.modal) === null || _c === void 0 ? void 0 : _c.deletor();
+                        (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
                         this.modal = undefined;
                         this.focus.setup_context();
                         this.focusCur = this.focus;
@@ -1849,6 +1952,7 @@ void main() {
             wastes.heightmap = new colormap$1.colormap('heightmap');
             wastes.objectmap = new colormap$1.colormap('objectmap');
             wastes.buildingmap = new colormap$1.colormap('buildingmap');
+            wastes.treemap = new colormap$1.colormap('treemap');
             wastes.colormap = new colormap$1.colormap('colormap');
             wastes.roughmap = new colormap$1.colormap('roughmap');
             wastes.roofmap = new colormap$1.colormap('roofmap');
@@ -1872,6 +1976,18 @@ void main() {
                 pts.func(sector.small, (pos) => {
                     let pixel = wastes.roofmap.pixel(pos);
                     if (pixel.is_color(colors$1.color_false_front)) ;
+                });
+                return false;
+            });
+            hooks.register('sectorCreate', (sector) => {
+                pts.func(sector.small, (pos) => {
+                    let pixel = wastes.treemap.pixel(pos);
+                    if (pixel.is_color(colors$1.color_decidtree)) {
+                        factory(objects.decidtree, pixel, pos, { type: 'decid' });
+                    }
+                    else if (pixel.is_color(colors$1.color_deadtree)) {
+                        factory(objects.deadtree, pixel, pos);
+                    }
                 });
                 return false;
             });
@@ -1901,12 +2017,6 @@ void main() {
                         //factory(objects.roof, pixel, pos);
                     }
                     else if (pixel.is_color(colors$1.color_fence)) ;
-                    else if (pixel.is_color(colors$1.color_decidtree)) {
-                        factory(objects.decidtree, pixel, pos, { type: 'decid' });
-                    }
-                    else if (pixel.is_color(colors$1.color_deadtree)) {
-                        factory(objects.deadtree, pixel, pos);
-                    }
                     else if (pixel.is_color(colors$1.color_grass)) ;
                     else if (pixel.is_color(colors$1.color_wheat)) {
                         factory(objects.wheat, pixel, pos);
@@ -2200,7 +2310,7 @@ void main() {
                                     grid: [x, y]
                                 });
                     factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [0, 0]), { type: this.hints.type, color: tile.color, noVines: true });
-                    //factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [0, 0]), { type: this.hints.type, color: tile.color, noVines: true });
+                    factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [0, 0]), { type: this.hints.type, color: tile.color, noVines: true });
                 }
             }
         }
@@ -2218,7 +2328,7 @@ void main() {
             onhit() {
             }
             create() {
-                let pixel = wastes.buildingmap.pixel(this.wpos);
+                let pixel = wastes.treemap.pixel(this.wpos);
                 if (!this.hints.noVines && pixel.arrayRef[3] == 254)
                     this.hasVines = false; // true;
                 if (pixel.arrayRef[3] == 253)
@@ -2722,7 +2832,7 @@ void main() {
                 shape.show();
                 if (!this.created) {
                     this.created = true;
-                    console.log('creating chicken');
+                    //console.log('creating chicken');
                     // Set scale to increase pixels exponentially
                     const scale = 1;
                     // make wee guy target
@@ -2752,7 +2862,7 @@ void main() {
             }
             update() {
                 this.tiled();
-                this.stack();
+                //this.stack();
                 super.update();
             }
             make() {
@@ -3034,7 +3144,8 @@ void main() {
 
     const dialogues = [
         [
-        // skip 0
+            // skip 0
+            ['I got nothing to say.', -1]
         ],
         [
             // 1
@@ -3043,13 +3154,13 @@ void main() {
         [
             // 2
             [`I'm the trader around here.`, 1],
-            [`I mostly trade scrap nowadays. Always folk looking to tinker.`, -1],
+            [`I mostly trade scrap nowadays. To them tinker folk.`, -1],
         ],
         [
             // 3
             [`I protect the civilized borders.`, 1],
             [`It may not look that civil at first glance.`, 2],
-            [`But there's county to keep safe.`, -1]
+            [`But there's a county to keep safe.`, -1]
         ]
     ];
 
@@ -3058,7 +3169,7 @@ void main() {
         client.sObjsId = {};
         client.sInventoriesId = {};
         client.plyId = -1;
-        client.talkingToId = '';
+        client.interactingWith = '';
         client.tradeWithId = '';
         function tick() {
             for (let id in client.sObjsId) {
@@ -3082,7 +3193,7 @@ void main() {
                         continue;
                     let obj = client.sObjsId[id];
                     if (!obj) {
-                        console.log('new sobj', typed, id);
+                        // console.log('new sobj', typed, id);
                         obj = client.sObjsId[id] = new type;
                         obj.id = id;
                         obj.networked = true;
@@ -3097,14 +3208,16 @@ void main() {
             client.socket.onmessage = function (event) {
                 const data = JSON.parse(event.data);
                 if (data.removes && data.removes.length) {
-                    console.log('we have a remove', data.removes);
+                    // console.log('we have removes', data.removes);
                     for (let id of data.removes) {
                         let obj = client.sObjsId[id];
                         if (!obj)
                             continue;
-                        if (id == client.plyId)
+                        if (id == client.plyId) {
+                            console.error('going too fast');
                             // prevent self-destruct by moving too fast
                             continue;
+                        }
                         obj.hide();
                         obj.finalize();
                         lod$1.remove(obj);
@@ -3139,7 +3252,7 @@ void main() {
                             obj.aiming = aiming;
                         }
                         if (inventory) {
-                            //console.log('update inventory');
+                            console.log('update inventory');
                             obj.inventory = inventory;
                         }
                     });
@@ -3185,9 +3298,9 @@ void main() {
                         }
                     };
                     pawns$1.you.shoot = false;
-                    if (client.talkingToId) {
-                        json.talkingToId = client.talkingToId;
-                        client.talkingToId = '';
+                    if (client.interactingWith) {
+                        json.interactingWith = client.interactingWith;
+                        client.interactingWith = '';
                     }
                     if (client.tradeWithId) {
                         json.tradeWithId = client.tradeWithId;
@@ -7930,13 +8043,15 @@ void main() {
                         }, () => {
                             win$1.dialogue.talkingTo = this;
                             win$1.dialogue.call_once();
-                            client.talkingToId = this.id;
+                            client.interactingWith = this.id;
                         }]);
                     if (this.subtype == 'trader') {
                         win$1.contextmenu.options.options.push(["Trade", () => {
                                 return pts.distsimple(pawns.you.wpos, this.wpos) < 1;
                             }, () => {
-                                client.tradeWithId = this.id;
+                                win$1.trader.tradeWith = this;
+                                win$1.trader.call_once();
+                                client.interactingWith = this.id;
                             }]);
                     }
                 }
@@ -8086,13 +8201,6 @@ void main() {
                 this.groups.ground.position.set(0, -bodyHeight * 1.0, 0);
                 //mesh.rotation.set(Math.PI / 2, 0, 0);
                 this.scene.add(this.groups.basis);
-                {
-                    collada$1.load_model('collada/revolver', (model) => {
-                        model.rotation.set(0, 0, Math.PI / 2);
-                        model.position.set(0, -armsHeight + armsSize / 2, 0);
-                        this.groups.armr.add(model);
-                    });
-                }
             }
             render() {
                 ren$1.renderer.setRenderTarget(this.target);
@@ -8202,7 +8310,7 @@ void main() {
                             this.shoot = true;
                             for (let obj of lod$1.ggrid.visibleObjs) {
                                 const objected = obj;
-                                if (objected.isObjected) {
+                                if (objected.isObjected && objected.tileBound) {
                                     const test = objected.tileBound.ray({
                                         dir: [Math.sin(this.angle), Math.cos(this.angle)],
                                         org: this.wpos
@@ -8507,6 +8615,7 @@ void main() {
             this.mpos = [0, 0];
             this.mwpos = [0, 0];
             this.mrpos = [0, 0];
+            this.raise = 50;
             this.begin = [0, 0];
             this.before = [0, 0];
             this.show = true;
@@ -8521,20 +8630,20 @@ void main() {
         tick() {
             this.move();
             this.mouse();
-            if (!this.follow)
-                this.wpos = lod$1.unproject(this.rpos);
-            else {
-                let pos = this.follow.wpos;
+            //if (!this.follow)
+            //	this.wpos = lod.unproject(this.rpos);
+            if (this.follow) {
+                let wpos = this.follow.wpos;
                 // Why the .5, .5 ?
-                pos = pts.add(pos, [.5, .5]);
-                //this.wpos = pts.clone(pos);
-                this.rpos = lod$1.project(pos);
+                wpos = pts.add(wpos, [.5, .5]);
+                this.rpos = lod$1.project(wpos);
+            }
+            else {
+                this.rpos = lod$1.project(this.wpos);
             }
             this.pan();
             this.wpos = lod$1.unproject(this.rpos);
-            if (this.follow) {
-                this.rpos = pts.add(this.rpos, [0, this.follow.size[1] / 2]);
-            }
+            this.rpos = pts.add(this.rpos, [0, this.raise / 2]);
             this.set_camera();
             this.stats();
             lod$1.gworld.update(this.wpos);
@@ -8562,7 +8671,7 @@ void main() {
                     dif = pts.mult(dif, this.zoom);
                     dif = pts.subtract(dif, this.before);
                     this.rpos = pts.inv(dif);
-                    this.wpos = lod$1.unproject(this.rpos);
+                    //this.wpos = lod.unproject(this.rpos);
                     //this.rpos = pts.floor(this.rpos); // floor 
                 }
             }
@@ -8628,6 +8737,8 @@ void main() {
         }
         stats() {
             var _a;
+            if (app$1.mobile)
+                this.show = false;
             if (app$1.key('h') == 1)
                 this.show = !this.show;
             let crunch = ``;
@@ -8652,7 +8763,7 @@ void main() {
             if (pawns$1.you)
                 crunch += `you: ${pts.to_string(pts.round(pawns$1.you.wpos))}<br />`;
             crunch += `view bigpos: ${pts.to_string(lod$1.world.big(this.wpos))}<br />`;
-            crunch += `view center: ${pts.to_string(wastes.gview.center.wpos)}<br />`;
+            crunch += `view center: ${pts.to_string_fixed(wastes.gview.center.wpos)}<br />`;
             crunch += `view zoom: ${this.zoom}<br />`;
             crunch += `lod grid: ${lod$1.ggrid.spread}, ${lod$1.ggrid.outside}<br />`;
             crunch += '<br />';

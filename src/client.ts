@@ -16,7 +16,7 @@ export namespace client {
 
 	export var plyId = -1;
 
-	export var talkingToId = ''
+	export var interactingWith = ''
 
 	export var tradeWithId = '';
 
@@ -46,7 +46,7 @@ export namespace client {
 					continue;
 				let obj = sObjsId[id];
 				if (!obj) {
-					console.log('new sobj', typed, id);
+					// console.log('new sobj', typed, id);
 					obj = sObjsId[id] = new type;
 					obj.id = id;
 					obj.networked = true;
@@ -63,14 +63,16 @@ export namespace client {
 			const data = JSON.parse(event.data);
 
 			if (data.removes && data.removes.length) {
-				console.log('we have a remove', data.removes);
+				// console.log('we have removes', data.removes);
 				for (let id of data.removes) {
 					let obj = sObjsId[id];
 					if (!obj)
 						continue;
-					if (id == plyId)
+					if (id == plyId) {
+						console.error('going too fast');
 						// prevent self-destruct by moving too fast
 						continue;
+					}
 					obj.hide();
 					obj.finalize();
 					lod.remove(obj);
@@ -108,7 +110,7 @@ export namespace client {
 							obj.aiming = aiming;
 						}
 						if (inventory) {
-							//console.log('update inventory');
+							console.log('update inventory');
 
 							obj.inventory = inventory;
 						}
@@ -163,9 +165,9 @@ export namespace client {
 					}
 				};
 				pawns.you.shoot = false;
-				if (talkingToId) {
-					json.talkingToId = talkingToId;
-					talkingToId = '';
+				if (interactingWith) {
+					json.interactingWith = interactingWith;
+					interactingWith = '';
 				}
 				if (tradeWithId) {
 					json.tradeWithId = tradeWithId;

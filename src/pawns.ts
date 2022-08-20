@@ -133,13 +133,15 @@ export namespace pawns {
 				}, () => {
 					win.dialogue.talkingTo = this;
 					win.dialogue.call_once();
-					client.talkingToId = this.id;
+					client.interactingWith = this.id;
 				}]);
 				if (this.subtype == 'trader') {
 					win.contextmenu.options.options.push(["Trade", () => {
 						return pts.distsimple(you.wpos, this.wpos) < 1;
 					}, () => {
-						client.tradeWithId = this.id;
+						win.trader.tradeWith = this;
+						win.trader.call_once();
+						client.interactingWith = this.id;
 					}]);
 				}
 				else {
@@ -335,7 +337,7 @@ export namespace pawns {
 
 			this.scene.add(this.groups.basis);
 
-			const loadGunAgain = true;
+			const loadGunAgain = false;
 			if (loadGunAgain) {
 				const gun = collada.load_model('collada/revolver', (model) => {
 					model.rotation.set(0, 0, Math.PI / 2);
@@ -475,7 +477,7 @@ export namespace pawns {
 
 						for (let obj of lod.ggrid.visibleObjs) {
 							const objected = obj as objects.objected;
-							if (objected.isObjected) {
+							if (objected.isObjected && objected.tileBound) {
 								const test = objected.tileBound.ray(
 									{
 										dir: [Math.sin(this.angle), Math.cos(this.angle)],

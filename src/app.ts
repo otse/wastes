@@ -21,6 +21,7 @@ namespace app {
 	var buttons = {};
 	var pos: vec2 = [0, 0];
 	export var salt = 'x';
+	export var mobile = false;
 	export var wheel = 0;
 	export function onkeys(event) {
 		const key = event.key.toLowerCase();
@@ -42,6 +43,7 @@ namespace app {
 	}
 	export function boot(version: string) {
 		salt = version;
+		mobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 		function onmousemove(e) { pos[0] = e.clientX; pos[1] = e.clientY; }
 		function onmousedown(e) { buttons[e.button] = 1; if (e.button == 1) return false }
 		function onmouseup(e) { buttons[e.button] = MOUSE.UP; }

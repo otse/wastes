@@ -54,6 +54,7 @@ namespace win {
 		contextmenu.tick();
 		message.tick();
 		descriptor.tick();
+		trader.tick();
 	}
 
 	class modal {
@@ -109,23 +110,137 @@ namespace win {
 		}
 	}
 
+	export class trader {
+		static tradeWith?: lod.obj
+		static tradeWithCur?: lod.obj
+		static traderInventoryElement?
+		static yourInventoryElement?
+		static traderStamp = 0
+		static yourStamp = 0
+		static modal?: modal
+		static hover_money_label_here() {
+			
+		}
+		static call_once() {
+			if (this.tradeWith && this.tradeWithCur != this.tradeWith) {
+				trader.end();
+			}
+			if (!this.modal) {
+				this.modal = new modal('trader',);
+				this.modal.content.innerHTML = `buy:<br />`;
+				this.tradeWithCur = this.tradeWith;
+				this.render_trader_inventory(true);
+				
+				let next = document.createElement('span');
+				next.innerHTML += '<hr>sell:<br />';
+
+				this.modal.content.append(next);
+
+				this.render_your_inventory(true);
+
+			}
+		}
+		static render_trader_inventory(force) {
+			if (!this.traderInventoryElement) {
+				this.traderInventoryElement = document.createElement('div');
+				this.traderInventoryElement.className = 'inventory';
+				this.modal?.content.append(this.traderInventoryElement);
+			}
+			let pawn = this.tradeWithCur as pawns.pawn;
+
+			const inventory = pawn.inventory!;
+
+			if (inventory && this.traderStamp != inventory.stamp || force) {
+				this.traderInventoryElement.innerHTML = ``;
+
+				console.log('yes', inventory.tuples);
+				//console.log(inventory);
+
+				for (let tuple of inventory.tuples) {
+					let button = document.createElement('div');
+					//button.innerHTML = `<img width="20" height="20" src="tex/items/${tuple[0]}.png">`;
+					button.innerHTML += tuple[0];
+					if (tuple[1] > 1) {
+						button.innerHTML += ` <span>×${tuple[1]}</span>`
+					}
+					button.onmouseover = () => {
+						hoveringClickableElement = true;
+					}
+					button.onmouseleave = () => {
+						hoveringClickableElement = false;
+					}
+					button.className = 'item';
+					this.traderInventoryElement.append(button);
+
+					this.traderStamp = inventory.stamp;
+				}
+			}
+		}
+		static render_your_inventory(force) {
+			if (!this.yourInventoryElement) {
+				this.yourInventoryElement = document.createElement('div');
+				this.yourInventoryElement.className = 'inventory';
+				this.modal?.content.append(this.yourInventoryElement);
+			}
+			let you = pawns.you;
+
+			const inventory = you.inventory!;
+
+			if (inventory && this.yourStamp != inventory.stamp || force) {
+				this.yourInventoryElement.innerHTML = ``;
+
+				for (let tuple of inventory.tuples) {
+					let button = document.createElement('div');
+					//button.innerHTML = `<img width="20" height="20" src="tex/items/${tuple[0]}.png">`;
+					button.innerHTML += tuple[0];
+					if (tuple[1] > 1) {
+						button.innerHTML += ` <span>×${tuple[1]}</span>`
+					}
+					button.className = 'item';
+					this.yourInventoryElement.append(button);
+
+					this.yourStamp = inventory.stamp;
+				}
+			}
+		}
+		static end() {
+			this.modal?.deletor();
+			this.modal = undefined;
+			this.tradeWithCur = undefined;
+			this.traderInventoryElement = undefined;
+			this.yourInventoryElement = undefined;
+		}
+		static tick() {
+			if (this.tradeWithCur && pts.distsimple(this.tradeWithCur.wpos, pawns.you.wpos) > 1) {
+				trader.end();
+			}
+			if (this.modal) {
+				this.modal.float(this.tradeWithCur!, [0, 0]);
+				this.render_trader_inventory(false);
+				this.render_your_inventory(false);
+			}
+		}
+	}
+
 	export class character {
 		static open = false
 		static anchor: lod.obj
 		static modal?: modal
 		static inventoryElement
 		static inventoryStamp = 0
-		static render_inventory() {
+		static render_inventory(force) {
 
 			if (!this.inventoryElement) {
 				this.inventoryElement = document.createElement('div');
 				this.inventoryElement.className = 'inventory';
 				this.modal?.content.append(character.inventoryElement);
 			}
+			const inventory = pawns.you!.inventory;
 
-			const inventory = pawns.you?.inventory;
+			if (!inventory)
+				return;
 
-			if (inventory && this.inventoryStamp != inventory.stamp) {
+			if (inventory && this.inventoryStamp != inventory.stamp || force) {
 
 				this.inventoryElement.innerHTML = ``;
 
@@ -156,13 +271,13 @@ namespace win {
 				this.modal.content.innerHTML += 'inventory:<br />';
 				//inventory
 
-				this.render_inventory();
+				this.render_inventory(true);
 
 				let next = document.createElement('p');
 				next.innerHTML += '<hr>guns:<br />';
 				if (pawns.you.gun)
 					next.innerHTML += `<img class="gun" src="tex/guns/${pawns.you.gun}.png">`;
-				
+
 				this.modal.content.append(next);
 			}
 			else if (!open && this.modal) {
@@ -174,7 +289,7 @@ namespace win {
 		static tick() {
 			if (this.open) {
 				this.modal?.float(pawns.you!, [15, 20]);
-				this.render_inventory();
+				this.render_inventory(false);
 			}
 		}
 	}
@@ -216,6 +331,11 @@ namespace win {
 			this.buttons = []
 			this.options.options = [];
 		}
+		static end() {
+			this.modal?.deletor();
+			this.modal = undefined;
+			this.focusCur = undefined;
+		}
 		static init() {
 			hooks.register('viewMClick', (view) => {
 				this.modal?.deletor();
@@ -233,17 +353,13 @@ namespace win {
 					this.focusCur = this.focus;
 					this.open();
 				}
-				// We click away from any sprites and we have a window: break it
-				else if (!this.focus && this.modal) { // || this.focus == this.focusCur
-					this.modal?.deletor();
-					this.modal = undefined;
-					this.focusCur = undefined;
+				// We click away from any sprites and we have a menu open: break it
+				else if (!this.focus && this.modal) {
+					contextmenu.end();
 				}
 				// We clicked on the already focussed sprite: break it
 				else if (this.modal && this.focus && this.focus == this.focusCur) {
-					this.modal?.deletor();
-					this.modal = undefined;
-					this.focusCur = undefined;
+					contextmenu.end();
 				}
 				// We have an open modal, but focus on a different sprite: recreate it
 				else if (this.modal && this.focus && this.focus != this.focusCur) {

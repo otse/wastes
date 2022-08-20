@@ -24,6 +24,7 @@ export class view {
 	mrpos: vec2 = [0, 0]
 
 	follow?: lod.obj
+	raise = 50
 	center: lod.obj
 	static make() {
 		return new view;
@@ -37,20 +38,20 @@ export class view {
 	tick() {
 		this.move();
 		this.mouse();
-		if (!this.follow)
-			this.wpos = lod.unproject(this.rpos);
-		else {
-			let pos = this.follow.wpos;
+		//if (!this.follow)
+		//	this.wpos = lod.unproject(this.rpos);
+		if (this.follow) {
+			let wpos = this.follow.wpos;
 			// Why the .5, .5 ?
-			pos = pts.add(pos, [.5, .5]);
-			//this.wpos = pts.clone(pos);
-			this.rpos = lod.project(pos);
+			wpos = pts.add(wpos, [.5, .5]);
+			this.rpos = lod.project(wpos);
+		}
+		else {
+			this.rpos = lod.project(this.wpos);
 		}
 		this.pan();
 		this.wpos = lod.unproject(this.rpos);
-		if (this.follow) {
-			this.rpos = pts.add(this.rpos, [0, this.follow.size[1] / 2]);
-		}
+		this.rpos = pts.add(this.rpos, [0, this.raise / 2]);
 		this.set_camera();
 		this.stats();
 		lod.gworld.update(this.wpos);
@@ -86,7 +87,7 @@ export class view {
 				dif = pts.mult(dif, this.zoom);
 				dif = pts.subtract(dif, this.before);
 				this.rpos = pts.inv(dif);
-				this.wpos = lod.unproject(this.rpos);
+				//this.wpos = lod.unproject(this.rpos);
 
 				//this.rpos = pts.floor(this.rpos); // floor 
 			}
@@ -161,8 +162,12 @@ export class view {
 	}
 	show = true
 	stats() {
+		if (app.mobile)
+			this.show = false;
+
 		if (app.key('h') == 1)
 			this.show = !this.show;
+
 		let crunch = ``;
 		crunch += `DPI_UPSCALED_RT: ${ren.DPI_UPSCALED_RT}<br />`;
 		crunch += '<br />';
@@ -189,7 +194,7 @@ export class view {
 		if (pawns.you)
 			crunch += `you: ${pts.to_string(pts.round(pawns.you.wpos))}<br />`;
 		crunch += `view bigpos: ${pts.to_string(lod.world.big(this.wpos))}<br />`;
-		crunch += `view center: ${pts.to_string(wastes.gview.center.wpos)}<br />`;
+		crunch += `view center: ${pts.to_string_fixed(wastes.gview.center.wpos)}<br />`;
 		crunch += `view zoom: ${this.zoom}<br />`;
 		crunch += `lod grid: ${lod.ggrid.spread}, ${lod.ggrid.outside}<br />`;
 		crunch += '<br />';

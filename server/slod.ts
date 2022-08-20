@@ -37,6 +37,8 @@ class toggle {
 	}
 }
 
+// server version of the lod
+
 namespace slod {
 
 	const grid_crawl_makes_sectors = true;
@@ -356,6 +358,10 @@ namespace slod {
 		}
 		is_type(types: string[]) {
 			return types.indexOf(this.type) != -1;
+		}
+		static attach_truthy(upper, property) {
+			if (property)
+				upper[property] = property;
 		}
 		gather(first: boolean) {
 			//if (first/* || stamp == slod.stamp*/)

@@ -8,7 +8,7 @@ import { timeStamp } from 'console';
 import maps from './maps';
 import hooks from '../src/hooks';
 import colors from '../src/colors';
-import { sinventory } from './sinventory';
+import { inventory } from './sinventory';
 
 var connections: connection[] = [];
 
@@ -57,6 +57,8 @@ function start() {
 	vendor.wpos = [37.5, 48.5];
 	vendor.subtype = 'trader';
 	vendor.isTrader = true;
+	vendor.inventory.add('scrap', -1);
+	vendor.inventory.add('junk', -1);
 	slod.add(vendor);
 
 	let guard = new pawn;
@@ -334,6 +336,8 @@ class npc extends supersobj {
 
 		if (this.frozenBy) {
 			if (pts.distsimple(this.frozenBy.wpos, this.wpos) > 1.0) {
+				const player = this.frozenBy as player;
+				player.freezingNpc = undefined;
 				this.frozenBy = undefined;
 				this.timer = new timer(0);
 			}
@@ -351,7 +355,7 @@ class npc extends supersobj {
 
 class pawn extends npc {
 	static id = 0
-	inventory: sinventory
+	inventory: inventory
 	outfit: string[] = []
 	subtype = ''
 	dialogue = 0
@@ -364,9 +368,8 @@ class pawn extends npc {
 		this.id = 'pawn_' + pawn.id++;
 		this.outfit = outfits[Math.floor(Math.random() * outfits.length)];
 
-		this.inventory = new sinventory;
-		this.inventory.add('bullet', 10);
-		this.inventory.add('cork', 100);
+		this.inventory = new inventory;
+
 	}
 	override tick() {
 		super.tick();
@@ -381,12 +384,8 @@ class pawn extends npc {
 		if (this.aiming)
 			upper.aiming = this.aiming;
 		if (first) {
-			if (this.dialogue)
-				upper.dialogue = this.dialogue;
-			if (this.subtype)
-				upper.subtype = this.subtype;
-			if (this.isTrader)
-				upper.isTrader = this.isTrader;
+			upper.dialogue = this.dialogue;
+			upper.subtype = this.subtype;
 		}
 		if (first || this.inventory.stamp == slod.stamp) {
 			console.log('inventory needs an update');
@@ -404,10 +403,16 @@ class player extends pawn {
 		super();
 		this.type = 'pawn';
 		this.isPlayer = true;
+
+		this.inventory.add('bullet', 10);
+		this.inventory.add('cork', 50);
+
+		console.log('amount of blood:', this.inventory.amount('blood'));
+
 	}
 	override tick() {
 		let bullets = this.inventory.get('bullet');
-		
+
 		this.inventory.remove('cork');
 	}
 	override create() {
@@ -418,7 +423,8 @@ class player extends pawn {
 	}
 	override gather(first: boolean) {
 		let upper = super.gather(first) as any;
-		upper.isPlayer = true;
+		if (first)
+			upper.isPlayer = true;
 		return upper;
 	}
 	end() {
@@ -448,11 +454,12 @@ class chicken extends npc {
 	}
 	override gather(first: boolean) {
 		let upper = super.gather(first) as any;
-		return {
-			...upper,
-			pecking: this.pecking,
-			sitting: this.sitting
-		};
+		// slod.sobj.attach_truthy(upper, this.pecking);
+		if (this.pecking)
+			upper.pecking = this.pecking;
+		if (this.sitting)
+			upper.sitting = this.sitting;
+		return upper;
 	}
 	override tick() {
 		if (pts.together(this.aimTarget) == 0) {

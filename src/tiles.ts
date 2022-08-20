@@ -225,8 +225,7 @@ export namespace tiles {
 				this.show();
 			}
 			if (pawns.you && pts.equals(this.wpos, pts.round(pawns.you.wpos))) {
-				//console.log('boo');
-				//this.hover();
+				//this.paint();
 			}
 		}
 	}
