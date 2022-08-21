@@ -49,10 +49,12 @@ namespace objects {
 					// factory(objects.acidbarrel, pixel, pos);
 				}
 				else if (pixel.is_color(colors.color_wall_chest)) {
-					factory(objects.crate, pixel, pos);
+					//factory(objects.crate, pixel, pos);
 				}
 				else if (pixel.is_color(colors.color_shelves)) {
-					factory(objects.shelves, pixel, pos);
+					console.log('got shelves color');
+					
+					//factory(objects.shelves, pixel, pos);
 				}
 				else if (pixel.is_color(colors.color_panel)) {
 					factory(objects.panel, pixel, pos);
@@ -160,7 +162,7 @@ namespace objects {
 	}
 
 	export function is_solid(pos: vec2) {
-		const impassable = ['wall', 'tree', 'fence', 'deep water'];
+		const impassable = ['wall', 'crate', 'shelves', 'tree', 'fence', 'deep water'];
 		pos = pts.round(pos);
 		if (tiles.get(pos) == undefined)
 			return true;
@@ -672,23 +674,19 @@ namespace objects {
 		}
 	}
 	export class crate extends objected {
-		container: container = new container
+		inventory?: any
 		constructor() {
 			super(numbers.objs);
 			this.type = 'crate'
 			this.height = 17;
-			this.container.obj = this;
 		}
 		override create() {
 			this.tiled();
 			this.size = [24, 40];
-			//let color =  tiles.get(this.wpos)!.color;
-			//this.cell = [Math.floor(Math.random() * 2), 0];
 			let shape = new sprite({
 				binded: this,
 				tuple: sprites.dcrate,
 				cell: this.cell,
-				//color: color,
 				orderBias: 1.0
 			});
 			this.stack(['roof', 'wall']);
@@ -742,11 +740,11 @@ namespace objects {
 				binded: this,
 				tuple: sprites.dshelves,
 				//cell: this.cell,
-				orderBias: 0
+				orderBias: 1.0
 			});
-			shape.rup2 = 9;
-			shape.rleft = 6;
-			this.stack(['roof']);
+			//shape.rup2 = 9;
+			//shape.rleft = 6;
+			this.stack(['roof', 'wall']);
 		}
 		mousing = false;
 		override tick() {

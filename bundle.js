@@ -1320,595 +1320,6 @@ void main() {
     })(shadows || (shadows = {}));
     var shadows$1 = shadows;
 
-    var win;
-    (function (win_1) {
-        var win;
-        var toggle_character = false;
-        win_1.hoveringClickableElement = false;
-        win_1.started = false;
-        function start() {
-            win_1.started = true;
-            win = document.getElementById('win');
-            contextmenu.init();
-            setTimeout(() => {
-                //message.message("Welcome", 1000);
-            }, 1000);
-        }
-        win_1.start = start;
-        function tick() {
-            if (!win_1.started)
-                return;
-            if (app$1.key('c') == 1) {
-                toggle_character = !toggle_character;
-                character.call_once(toggle_character);
-            }
-            if (app$1.key('b') == 1) ;
-            you.tick();
-            character.tick();
-            container.tick();
-            dialogue.tick();
-            contextmenu.tick();
-            message.tick();
-            descriptor.tick();
-            trader.tick();
-        }
-        win_1.tick = tick;
-        class modal {
-            constructor(title) {
-                this.element = document.createElement('div');
-                this.element.className = 'modal';
-                //this.element.append('inventory')
-                if (title) {
-                    this.title = document.createElement('div');
-                    this.title.innerHTML = title;
-                    this.title.className = 'title';
-                    this.element.append(this.title);
-                }
-                this.content = document.createElement('div');
-                this.content.className = 'content';
-                this.content.innerHTML = 'content';
-                this.element.append(this.content);
-                win.append(this.element);
-            }
-            update(title) {
-                if (title)
-                    this.title.innerHTML = title;
-            }
-            reposition(pos) {
-                const round = pts.floor(pos);
-                this.element.style.top = round[1];
-                this.element.style.left = round[0];
-            }
-            deletor() {
-                this.element.remove();
-            }
-            float(anchor, add = [0, 0]) {
-                //let pos = this.anchor.rtospos([-1.5, 2.5]);
-                let pos = anchor.rtospos();
-                pos = pts.add(pos, add);
-                pos = pts.add(pos, pts.divide(anchor.size, 2));
-                //pos = pts.add(pos, this.anchor.size);
-                //let pos = this.anchor.aabbScreen.center();
-                //let pos = lod.project(wastes.gview.mwpos);
-                pos = pts.subtract(pos, wastes.gview.rpos);
-                pos = pts.divide(pos, wastes.gview.zoom);
-                pos = pts.divide(pos, ren$1.ndpi);
-                //pos = pts.add(pos, pts.divide(ren.screenCorrected, 2));
-                //pos[1] -= ren.screenCorrected[1] / 2;
-                this.reposition([ren$1.screen[0] / 2 + pos[0], ren$1.screen[1] / 2 - pos[1]]);
-            }
-        }
-        class trader {
-            static hover_money_label_here() {
-            }
-            static call_once() {
-                if (this.tradeWith && this.tradeWithCur != this.tradeWith) {
-                    trader.end();
-                }
-                if (!this.modal) {
-                    this.modal = new modal('trader');
-                    this.modal.content.innerHTML = `buy:<br />`;
-                    this.tradeWithCur = this.tradeWith;
-                    this.render_trader_inventory(true);
-                    let next = document.createElement('span');
-                    next.innerHTML += '<hr>sell:<br />';
-                    this.modal.content.append(next);
-                    this.render_your_inventory(true);
-                }
-            }
-            static render_trader_inventory(force) {
-                var _a;
-                if (!this.traderInventoryElement) {
-                    this.traderInventoryElement = document.createElement('div');
-                    this.traderInventoryElement.className = 'inventory';
-                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.content.append(this.traderInventoryElement);
-                }
-                let pawn = this.tradeWithCur;
-                const inventory = pawn.inventory;
-                if (inventory && this.traderStamp != inventory.stamp || force) {
-                    this.traderInventoryElement.innerHTML = ``;
-                    console.log('yes', inventory.tuples);
-                    //console.log(inventory);
-                    for (let tuple of inventory.tuples) {
-                        let button = document.createElement('div');
-                        //button.innerHTML = `<img width="20" height="20" src="tex/items/${tuple[0]}.png">`;
-                        button.innerHTML += tuple[0];
-                        if (tuple[1] > 1) {
-                            button.innerHTML += ` <span>×${tuple[1]}</span>`;
-                        }
-                        button.onmouseover = () => {
-                            win_1.hoveringClickableElement = true;
-                        };
-                        button.onmouseleave = () => {
-                            win_1.hoveringClickableElement = false;
-                        };
-                        button.className = 'item';
-                        this.traderInventoryElement.append(button);
-                        this.traderStamp = inventory.stamp;
-                    }
-                }
-            }
-            static render_your_inventory(force) {
-                var _a;
-                if (!this.yourInventoryElement) {
-                    this.yourInventoryElement = document.createElement('div');
-                    this.yourInventoryElement.className = 'inventory';
-                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.content.append(this.yourInventoryElement);
-                }
-                let you = pawns$1.you;
-                const inventory = you.inventory;
-                if (inventory && this.yourStamp != inventory.stamp || force) {
-                    this.yourInventoryElement.innerHTML = ``;
-                    for (let tuple of inventory.tuples) {
-                        let button = document.createElement('div');
-                        //button.innerHTML = `<img width="20" height="20" src="tex/items/${tuple[0]}.png">`;
-                        button.innerHTML += tuple[0];
-                        if (tuple[1] > 1) {
-                            button.innerHTML += ` <span>×${tuple[1]}</span>`;
-                        }
-                        button.className = 'item';
-                        this.yourInventoryElement.append(button);
-                        this.yourStamp = inventory.stamp;
-                    }
-                }
-            }
-            static end() {
-                var _a;
-                (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
-                this.modal = undefined;
-                this.tradeWithCur = undefined;
-                this.traderInventoryElement = undefined;
-                this.yourInventoryElement = undefined;
-            }
-            static tick() {
-                if (this.tradeWithCur && pts.distsimple(this.tradeWithCur.wpos, pawns$1.you.wpos) > 1) {
-                    trader.end();
-                }
-                if (this.modal) {
-                    this.modal.float(this.tradeWithCur, [0, 0]);
-                    this.render_trader_inventory(false);
-                    this.render_your_inventory(false);
-                }
-            }
-        }
-        trader.traderStamp = 0;
-        trader.yourStamp = 0;
-        win_1.trader = trader;
-        class character {
-            static render_inventory(force) {
-                var _a;
-                if (!this.inventoryElement) {
-                    this.inventoryElement = document.createElement('div');
-                    this.inventoryElement.className = 'inventory';
-                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.content.append(character.inventoryElement);
-                }
-                const inventory = pawns$1.you.inventory;
-                if (!inventory)
-                    return;
-                if (inventory && this.inventoryStamp != inventory.stamp || force) {
-                    this.inventoryElement.innerHTML = ``;
-                    console.log('yes', inventory.tuples);
-                    //console.log(inventory);
-                    for (let tuple of inventory.tuples) {
-                        let button = document.createElement('div');
-                        //button.innerHTML = `<img width="20" height="20" src="tex/items/${tuple[0]}.png">`;
-                        button.innerHTML += tuple[0];
-                        if (tuple[1] > 1) {
-                            button.innerHTML += ` <span>×${tuple[1]}</span>`;
-                        }
-                        button.className = 'item';
-                        this.inventoryElement.append(button);
-                        this.inventoryStamp = inventory.stamp;
-                    }
-                }
-            }
-            static call_once(open) {
-                var _a;
-                this.open = open;
-                if (open && !this.modal) {
-                    this.modal = new modal('you');
-                    //this.modal.reposition(['100px', '30%']);
-                    this.modal.content.innerHTML = 'stats:<br />effectiveness: 100%<br /><hr>';
-                    this.modal.content.innerHTML += 'inventory:<br />';
-                    //inventory
-                    this.render_inventory(true);
-                    let next = document.createElement('p');
-                    next.innerHTML += '<hr>guns:<br />';
-                    if (pawns$1.you.gun)
-                        next.innerHTML += `<img class="gun" src="tex/guns/${pawns$1.you.gun}.png">`;
-                    this.modal.content.append(next);
-                }
-                else if (!open && this.modal) {
-                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
-                    this.modal = undefined;
-                    this.inventoryElement = undefined;
-                }
-            }
-            static tick() {
-                var _a;
-                if (this.open) {
-                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.float(pawns$1.you, [15, 20]);
-                    this.render_inventory(false);
-                }
-            }
-        }
-        character.open = false;
-        character.inventoryStamp = 0;
-        win_1.character = character;
-        class you {
-            static call(open) {
-                var _a;
-                if (open && !this.modal) {
-                    this.modal = new modal('you');
-                    this.modal.element.classList.add('you');
-                    this.modal.content.remove();
-                }
-                else if (!open && this.modal) {
-                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
-                    this.modal = undefined;
-                }
-            }
-            static tick() {
-                if (pawns$1.you && !pawns$1.you.isActive()) {
-                    this.call(true);
-                    this.modal.float(pawns$1.you, [-5, 5]);
-                    console.log('call and float');
-                }
-                else {
-                    this.call(false);
-                }
-            }
-        }
-        win_1.you = you;
-        class contextmenu {
-            static reset() {
-                this.buttons = [];
-                this.options.options = [];
-            }
-            static end() {
-                var _a;
-                (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
-                this.modal = undefined;
-                this.focusCur = undefined;
-            }
-            static init() {
-                hooks.register('viewMClick', (view) => {
-                    var _a;
-                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
-                    this.modal = undefined;
-                    this.focus = undefined;
-                    return false;
-                });
-                hooks.register('viewRClick', (view) => {
-                    var _a;
-                    console.log('contextmenu on ?', this.focus);
-                    // We have a focus, but no window! This is the easiest scenario.
-                    if (this.focus && !this.modal) {
-                        this.focus.setup_context();
-                        this.focusCur = this.focus;
-                        this.open();
-                    }
-                    // We click away from any sprites and we have a menu open: break it
-                    else if (!this.focus && this.modal) {
-                        contextmenu.end();
-                    }
-                    // We clicked on the already focussed sprite: break it
-                    else if (this.modal && this.focus && this.focus == this.focusCur) {
-                        contextmenu.end();
-                    }
-                    // We have an open modal, but focus on a different sprite: recreate it
-                    else if (this.modal && this.focus && this.focus != this.focusCur) {
-                        (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
-                        this.modal = undefined;
-                        this.focus.setup_context();
-                        this.focusCur = this.focus;
-                        this.open();
-                    }
-                    //else {
-                    //	this.modal?.deletor();
-                    //	this.focusCur = undefined;
-                    //}
-                    return false;
-                });
-            }
-            static destroy() {
-                var _a;
-                (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
-                //this.focusCur = undefined;
-            }
-            static open() {
-                this.modal = new modal(this.focus.type);
-                this.modal.content.innerHTML = '';
-                this.modal.element.classList.add('contextmenu');
-                for (let option of this.options.options) {
-                    let button = document.createElement('div');
-                    button.innerHTML = option[0] + "&nbsp;";
-                    //if (tuple[1] > 1) {
-                    //	button.innerHTML += ` <span>×${tuple[1]}</span>`
-                    //}
-                    button.className = 'option';
-                    button.onclick = (e) => {
-                        var _a;
-                        if (option[1]()) {
-                            (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
-                            this.modal = undefined;
-                            win_1.hoveringClickableElement = false;
-                            option[2]();
-                        }
-                    };
-                    button.onmouseover = () => { win_1.hoveringClickableElement = true; };
-                    button.onmouseleave = () => { win_1.hoveringClickableElement = false; };
-                    this.modal.content.append(button);
-                    this.buttons.push([button, option]);
-                }
-            }
-            static update() {
-                //console.log('focusCur', this.focusCur);
-                for (let button of this.buttons) {
-                    const element = button[0];
-                    const option = button[1];
-                    if (!option[1]()) {
-                        element.classList.add('disabled');
-                    }
-                    else {
-                        element.classList.remove('disabled');
-                    }
-                }
-            }
-            static tick() {
-                if (this.modal && this.focusCur) {
-                    this.update();
-                    this.modal.float(this.focusCur, [0, 0]);
-                }
-            }
-        }
-        contextmenu.buttons = [];
-        contextmenu.options = { options: [] };
-        win_1.contextmenu = contextmenu;
-        class descriptor {
-            static call_once(text = 'Examined') {
-                if (this.modal !== undefined) {
-                    this.modal.deletor();
-                    this.modal = undefined;
-                }
-                if (this.modal == undefined) {
-                    this.modal = new modal('descriptor');
-                    this.modal.title.remove();
-                    //this.modal.content.remove();
-                    this.modal.content.innerHTML = text;
-                    this.focusCur = this.focus;
-                    this.timer = Date.now();
-                }
-            }
-            static tick() {
-                var _a;
-                if (this.modal !== undefined) {
-                    this.modal.float(this.focusCur, [0, 0]);
-                }
-                if (Date.now() - this.timer > 3 * 1000) {
-                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
-                    this.modal = undefined;
-                }
-            }
-        }
-        descriptor.timer = 0;
-        win_1.descriptor = descriptor;
-        class dialogue {
-            static call_once() {
-                var _a;
-                if (this.talkingTo != this.talkingToCur) {
-                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
-                    this.modal = undefined;
-                    this.talkingToCur = undefined;
-                }
-                if (this.talkingTo && !this.modal) {
-                    this.talkingToCur = this.talkingTo;
-                    this.modal = new modal();
-                    this.where[1] = 0;
-                    this.change();
-                }
-            }
-            static change() {
-                this.modal.content.innerHTML = this.talkingToCur.dialogue[this.where[1]][0] + "&nbsp;";
-                const next = this.talkingToCur.dialogue[this.where[1]][1];
-                if (next != -1) {
-                    let button = document.createElement('div');
-                    button.innerHTML = '>>';
-                    button.className = 'button';
-                    this.modal.content.append(button);
-                    button.onclick = (e) => {
-                        console.log('woo');
-                        this.where[1] = next;
-                        win_1.hoveringClickableElement = false;
-                        this.change();
-                        //button.remove();
-                    };
-                    button.onmouseover = () => { win_1.hoveringClickableElement = true; };
-                    button.onmouseleave = () => { win_1.hoveringClickableElement = false; };
-                }
-            }
-            static tick() {
-                var _a;
-                if (this.modal && this.talkingToCur) {
-                    this.modal.float(this.talkingToCur, [0, 10]);
-                }
-                if (this.talkingToCur && pts.distsimple(pawns$1.you.wpos, this.talkingToCur.wpos) > 1) {
-                    this.talkingToCur = undefined;
-                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
-                    this.modal = undefined;
-                    win_1.hoveringClickableElement = false;
-                }
-            }
-        }
-        dialogue.where = [0, 0];
-        win_1.dialogue = dialogue;
-        class container {
-            static call_once() {
-                var _a;
-                // We are trying to open a different container
-                if (this.modal !== undefined) {
-                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
-                    this.modal = undefined;
-                    this.focusCur = undefined;
-                }
-                /*if (this.modal !== undefined && this.focus != this.focusCur) {
-                    this.modal?.deletor();
-                    this.modal = undefined;
-                    this.focusCur = undefined;
-                }*/
-                if (this.focus) {
-                    this.focusCur = this.focus;
-                    this.modal = new modal('container');
-                    this.modal.content.innerHTML = '';
-                    const cast = this.focus;
-                    for (let tuple of cast.container.tuples) {
-                        let item = document.createElement('div');
-                        item.innerHTML = tuple[0];
-                        if (tuple[1] > 1) {
-                            item.innerHTML += ` <span>×${tuple[1]}</span>`;
-                        }
-                        item.className = 'item';
-                        this.modal.content.append(item);
-                        item.onclick = (e) => {
-                            console.log('woo');
-                            item.remove();
-                            cast.container.remove(tuple[0]);
-                            //pawns.you?.inventory.add(tuple[0]);
-                            win_1.hoveringClickableElement = false;
-                        };
-                        item.onmouseover = () => { win_1.hoveringClickableElement = true; };
-                        item.onmouseleave = () => { win_1.hoveringClickableElement = false; };
-                        //this.modal.content.innerHTML += item + '<br />';
-                    }
-                }
-            }
-            /*static call(open: boolean, obj?: lod.obj, refresh = false) {
-                //this.anchor = obj;
-                if (!this.obj) {
-                    this.obj = new lod.obj;
-                    this.obj.size = [24, 40];
-                    this.obj.wpos = [38, 49];
-                }
-
-                if (open && !this.modal) {
-                    this.modal = new modal('container');
-                }
-                else if (!open && this.modal) {
-                    this.modal?.deletor();
-                    this.obj = undefined;
-                    this.modal = undefined;
-                }
-
-                if (this.modal && obj != this.obj) {
-                    if (obj) {
-                        this.obj = obj;
-                        this.modal.update(obj.type + ' contents');
-                    }
-                    this.modal.content.innerHTML = ''
-
-                    const cast = this.obj as objects.crate;
-                    for (let tuple of cast.container.tuples) {
-                        let button = document.createElement('div');
-                        button.innerHTML = tuple[0];
-                        if (tuple[1] > 1) {
-                            button.innerHTML += ` <span>×${tuple[1]}</span>`
-                        }
-                        button.className = 'item';
-                        this.modal.content.append(button);
-
-                        button.onclick = (e) => {
-                            console.log('woo');
-                            button.remove();
-                            cast.container.remove(tuple[0]);
-                            pawns.you?.inventory.add(tuple[0]);
-                        };
-
-                        //this.modal.content.innerHTML += item + '<br />';
-                    }
-                }
-            }*/
-            static tick() {
-                var _a;
-                if (this.modal && this.focusCur) {
-                    this.modal.float(this.focusCur);
-                }
-                if (this.focusCur && pts.distsimple(pawns$1.you.wpos, this.focusCur.wpos) > 1) {
-                    this.focusCur = undefined;
-                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
-                    this.modal = undefined;
-                }
-            }
-        }
-        win_1.container = container;
-        class areatag {
-            static call(open, area, refresh = false) {
-                if (open) {
-                    console.log('boo');
-                    let element = document.createElement('div');
-                    element.className = 'area';
-                    element.innerHTML = ` ${(area === null || area === void 0 ? void 0 : area.name) || ''} `;
-                    win.append(element);
-                    setTimeout(() => {
-                        element.classList.add('fade');
-                        setTimeout(() => {
-                            element.remove();
-                        }, 3000);
-                    }, 1000);
-                }
-            }
-        }
-        win_1.areatag = areatag;
-        class message {
-            constructor() {
-                this.duration = 5;
-            }
-            static message(message, duration) {
-                this.messages.push({ message: message, duration: duration });
-            }
-            static tick() {
-                if (this.messages.length) {
-                    let shift = this.messages.shift();
-                    let element = document.createElement('div');
-                    element.className = 'message';
-                    element.innerHTML = shift.message;
-                    document.getElementById('messages').append(element);
-                    setTimeout(() => {
-                        element.classList.add('fade');
-                    }, shift.duration);
-                    setTimeout(() => {
-                        element.remove();
-                    }, shift.duration + 2000);
-                }
-            }
-        }
-        message.messages = [];
-        win_1.message = message;
-    })(win || (win = {}));
-    var win$1 = win;
-
-    // allows you to venture far from inclusion hell by letting you assign arbitrary values
-    var GLOB = {};
-
     var colors;
     (function (colors) {
         colors.color_door = [210, 210, 210];
@@ -1960,11 +1371,10 @@ void main() {
                 pts.func(sector.small, (pos) => {
                     let pixel = wastes.objectmap.pixel(pos);
                     if (pixel.is_color(colors$1.color_acid_barrel)) ;
-                    else if (pixel.is_color(colors$1.color_wall_chest)) {
-                        factory(objects.crate, pixel, pos);
-                    }
+                    else if (pixel.is_color(colors$1.color_wall_chest)) ;
                     else if (pixel.is_color(colors$1.color_shelves)) {
-                        factory(objects.shelves, pixel, pos);
+                        console.log('got shelves color');
+                        //factory(objects.shelves, pixel, pos);
                     }
                     else if (pixel.is_color(colors$1.color_panel)) {
                         factory(objects.panel, pixel, pos);
@@ -2058,7 +1468,7 @@ void main() {
         }
         objects.tick = tick;
         function is_solid(pos) {
-            const impassable = ['wall', 'tree', 'fence', 'deep water'];
+            const impassable = ['wall', 'crate', 'shelves', 'tree', 'fence', 'deep water'];
             pos = pts.round(pos);
             if (tiles$1.get(pos) == undefined)
                 return true;
@@ -2514,22 +1924,17 @@ void main() {
         class crate extends objected {
             constructor() {
                 super(numbers.objs);
-                this.container = new container;
                 this.mousing = false;
                 this.type = 'crate';
                 this.height = 17;
-                this.container.obj = this;
             }
             create() {
                 this.tiled();
                 this.size = [24, 40];
-                //let color =  tiles.get(this.wpos)!.color;
-                //this.cell = [Math.floor(Math.random() * 2), 0];
                 new sprite({
                     binded: this,
                     tuple: sprites$1.dcrate,
                     cell: this.cell,
-                    //color: color,
                     orderBias: 1.0
                 });
                 this.stack(['roof', 'wall']);
@@ -2577,15 +1982,15 @@ void main() {
                 this.size = [20, 31];
                 //this.cell = [255 - this.pixel!.array[3], 0];
                 //return
-                let shape = new sprite({
+                new sprite({
                     binded: this,
                     tuple: sprites$1.dshelves,
                     //cell: this.cell,
-                    orderBias: 0
+                    orderBias: 1.0
                 });
-                shape.rup2 = 9;
-                shape.rleft = 6;
-                this.stack(['roof']);
+                //shape.rup2 = 9;
+                //shape.rleft = 6;
+                this.stack(['roof', 'wall']);
             }
             tick() {
                 const sprite = this.shape;
@@ -2783,6 +2188,637 @@ void main() {
         objects.shrubs = shrubs;
     })(objects || (objects = {}));
     var objects$1 = objects;
+
+    var win;
+    (function (win_1) {
+        var win;
+        var toggle_character = false;
+        win_1.genericHovering = false;
+        win_1.started = false;
+        function start() {
+            win_1.started = true;
+            win = document.getElementById('win');
+            contextmenu.init();
+            container.init();
+            trader.init();
+            dialogue.init();
+            setTimeout(() => {
+                //message.message("Welcome", 1000);
+            }, 1000);
+        }
+        win_1.start = start;
+        function tick() {
+            if (!win_1.started)
+                return;
+            if (app$1.key('c') == 1) {
+                toggle_character = !toggle_character;
+                character.call_once(toggle_character);
+            }
+            if (app$1.key('b') == 1) ;
+            you.tick();
+            character.tick();
+            container.tick();
+            dialogue.tick();
+            contextmenu.tick();
+            message.tick();
+            descriptor.tick();
+            trader.tick();
+        }
+        win_1.tick = tick;
+        class modal {
+            constructor(title) {
+                this.element = document.createElement('div');
+                this.element.className = 'modal';
+                this.element.onmouseover = () => { this.hovering = true; win_1.genericHovering = true; };
+                this.element.onmouseleave = () => { this.hovering = false; win_1.genericHovering = false; };
+                //this.element.append('inventory')
+                if (title) {
+                    this.title = document.createElement('div');
+                    this.title.innerHTML = title;
+                    this.title.className = 'title';
+                    this.element.append(this.title);
+                }
+                this.content = document.createElement('div');
+                this.content.className = 'content';
+                this.content.innerHTML = 'content';
+                this.element.append(this.content);
+                win.append(this.element);
+            }
+            update(title) {
+                if (title)
+                    this.title.innerHTML = title;
+            }
+            reposition(pos) {
+                const round = pts.floor(pos);
+                this.element.style.top = round[1];
+                this.element.style.left = round[0];
+            }
+            deletor() {
+                this.element.remove();
+            }
+            float(anchor, add = [0, 0]) {
+                //let pos = this.anchor.rtospos([-1.5, 2.5]);
+                let pos = anchor.rtospos();
+                pos = pts.add(pos, add);
+                pos = pts.add(pos, pts.divide(anchor.size, 2));
+                //pos = pts.add(pos, this.anchor.size);
+                //let pos = this.anchor.aabbScreen.center();
+                //let pos = lod.project(wastes.gview.mwpos);
+                pos = pts.subtract(pos, wastes.gview.rpos);
+                pos = pts.divide(pos, wastes.gview.zoom);
+                pos = pts.divide(pos, ren$1.ndpi);
+                //pos = pts.add(pos, pts.divide(ren.screenCorrected, 2));
+                //pos[1] -= ren.screenCorrected[1] / 2;
+                this.reposition([ren$1.screen[0] / 2 + pos[0], ren$1.screen[1] / 2 - pos[1]]);
+            }
+        }
+        class trader {
+            static hover_money_label_here() {
+            }
+            static init() {
+                hooks.register('viewRClick', (view) => {
+                    // We right click outside
+                    if (trader.modal && !trader.modal.hovering) {
+                        trader.end();
+                    }
+                    return false;
+                });
+            }
+            static end() {
+                var _a;
+                (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
+                this.modal = undefined;
+                this.tradeWithCur = undefined;
+                this.traderInventoryElement = undefined;
+                this.yourInventoryElement = undefined;
+            }
+            static call_once() {
+                if (this.tradeWith && this.tradeWithCur != this.tradeWith) {
+                    trader.end();
+                }
+                if (!this.modal) {
+                    this.modal = new modal('trader');
+                    this.modal.content.innerHTML = `buy:<br />`;
+                    this.modal.content.onmouseover = () => { win_1.genericHovering = true; };
+                    this.modal.content.onmouseleave = () => { win_1.genericHovering = false; };
+                    this.tradeWithCur = this.tradeWith;
+                    this.render_trader_inventory(true);
+                    let next = document.createElement('span');
+                    next.innerHTML += '<hr>sell:<br />';
+                    this.modal.content.append(next);
+                    this.render_your_inventory(true);
+                }
+            }
+            static render_trader_inventory(force) {
+                var _a;
+                if (!this.traderInventoryElement) {
+                    this.traderInventoryElement = document.createElement('div');
+                    this.traderInventoryElement.className = 'inventory';
+                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.content.append(this.traderInventoryElement);
+                }
+                let pawn = this.tradeWithCur;
+                const inventory = pawn.inventory;
+                if (inventory && this.traderStamp != inventory.stamp || force) {
+                    this.traderInventoryElement.innerHTML = ``;
+                    console.log('yes', inventory.tuples);
+                    //console.log(inventory);
+                    for (let tuple of inventory.tuples) {
+                        let button = document.createElement('div');
+                        //button.innerHTML = `<img width="20" height="20" src="tex/items/${tuple[0]}.png">`;
+                        button.innerHTML += tuple[0];
+                        if (tuple[1] > 1) {
+                            button.innerHTML += ` <span>×${tuple[1]}</span>`;
+                        }
+                        button.className = 'item';
+                        this.traderInventoryElement.append(button);
+                        this.traderStamp = inventory.stamp;
+                    }
+                }
+            }
+            static render_your_inventory(force) {
+                var _a;
+                if (!this.yourInventoryElement) {
+                    this.yourInventoryElement = document.createElement('div');
+                    this.yourInventoryElement.className = 'inventory';
+                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.content.append(this.yourInventoryElement);
+                }
+                let you = pawns$1.you;
+                const inventory = you.inventory;
+                if (inventory && this.yourStamp != inventory.stamp || force) {
+                    this.yourInventoryElement.innerHTML = ``;
+                    for (let tuple of inventory.tuples) {
+                        let button = document.createElement('div');
+                        //button.innerHTML = `<img width="20" height="20" src="tex/items/${tuple[0]}.png">`;
+                        button.innerHTML += tuple[0];
+                        if (tuple[1] > 1) {
+                            button.innerHTML += ` <span>×${tuple[1]}</span>`;
+                        }
+                        button.onmouseover = () => {
+                            win_1.genericHovering = true;
+                        };
+                        button.onmouseleave = () => {
+                            win_1.genericHovering = false;
+                        };
+                        button.className = 'item';
+                        this.yourInventoryElement.append(button);
+                        this.yourStamp = inventory.stamp;
+                    }
+                }
+            }
+            static tick() {
+                if (this.tradeWithCur && pts.distsimple(this.tradeWithCur.wpos, pawns$1.you.wpos) > 1) {
+                    trader.end();
+                }
+                if (this.modal) {
+                    this.modal.float(this.tradeWithCur, [0, 0]);
+                    this.render_trader_inventory(false);
+                    this.render_your_inventory(false);
+                }
+            }
+        }
+        trader.traderStamp = 0;
+        trader.yourStamp = 0;
+        win_1.trader = trader;
+        class character {
+            static render_inventory(force) {
+                var _a;
+                if (!this.inventoryElement) {
+                    this.inventoryElement = document.createElement('div');
+                    this.inventoryElement.className = 'inventory';
+                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.content.append(character.inventoryElement);
+                }
+                const inventory = pawns$1.you.inventory;
+                if (!inventory)
+                    return;
+                if (inventory && this.inventoryStamp != inventory.stamp || force) {
+                    this.inventoryElement.innerHTML = ``;
+                    console.log('yes', inventory.tuples);
+                    //console.log(inventory);
+                    for (let tuple of inventory.tuples) {
+                        let button = document.createElement('div');
+                        //button.innerHTML = `<img width="20" height="20" src="tex/items/${tuple[0]}.png">`;
+                        button.innerHTML += tuple[0];
+                        if (tuple[1] > 1) {
+                            button.innerHTML += ` <span>×${tuple[1]}</span>`;
+                        }
+                        button.className = 'item';
+                        this.inventoryElement.append(button);
+                        this.inventoryStamp = inventory.stamp;
+                    }
+                }
+            }
+            static call_once(open) {
+                var _a;
+                this.open = open;
+                if (open && !this.modal) {
+                    this.modal = new modal('you');
+                    //this.modal.reposition(['100px', '30%']);
+                    this.modal.content.innerHTML = 'stats:<br />effectiveness: 100%<br /><hr>';
+                    this.modal.content.innerHTML += 'inventory:<br />';
+                    //inventory
+                    this.render_inventory(true);
+                    let next = document.createElement('p');
+                    next.innerHTML += '<hr>guns:<br />';
+                    if (pawns$1.you.gun)
+                        next.innerHTML += `<img class="gun" src="tex/guns/${pawns$1.you.gun}.png">`;
+                    this.modal.content.append(next);
+                }
+                else if (!open && this.modal) {
+                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
+                    this.modal = undefined;
+                    this.inventoryElement = undefined;
+                }
+            }
+            static tick() {
+                var _a;
+                if (this.open) {
+                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.float(pawns$1.you, [15, 20]);
+                    this.render_inventory(false);
+                }
+            }
+        }
+        character.open = false;
+        character.inventoryStamp = 0;
+        win_1.character = character;
+        class you {
+            static call(open) {
+                var _a;
+                if (open && !this.modal) {
+                    this.modal = new modal('you');
+                    this.modal.element.classList.add('you');
+                    this.modal.content.remove();
+                }
+                else if (!open && this.modal) {
+                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
+                    this.modal = undefined;
+                }
+            }
+            static tick() {
+                if (pawns$1.you && !pawns$1.you.isActive()) {
+                    this.call(true);
+                    this.modal.float(pawns$1.you, [-5, 5]);
+                    console.log('call and float');
+                }
+                else {
+                    this.call(false);
+                }
+            }
+        }
+        win_1.you = you;
+        class contextmenu {
+            static reset() {
+                this.buttons = [];
+                this.options.options = [];
+            }
+            static end_close_others() {
+                trader.end();
+                dialogue.end();
+                win_1.genericHovering = false;
+            }
+            static end() {
+                var _a;
+                (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
+                this.modal = undefined;
+                this.focusCur = undefined;
+                win_1.genericHovering = false;
+            }
+            static init() {
+                hooks.register('viewMClick', (view) => {
+                    var _a;
+                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
+                    this.modal = undefined;
+                    this.focus = undefined;
+                    return false;
+                });
+                hooks.register('viewRClick', (view) => {
+                    console.log('contextmenu on ?', this.focus);
+                    // We have a focus, but no window! This is the easiest scenario.
+                    if (this.focus && !this.modal) {
+                        this.focus.setup_context();
+                        this.focusCur = this.focus;
+                        this.call_once();
+                    }
+                    // We click away from any sprites and we have a menu open: break it
+                    else if (!this.focus && this.modal) {
+                        contextmenu.end();
+                    }
+                    // We clicked on the already focussed sprite: break it
+                    else if (this.modal && this.focus && this.focus == this.focusCur) {
+                        contextmenu.end();
+                    }
+                    // We have an open modal, but focus on a different sprite: recreate it
+                    else if (this.modal && this.focus && this.focus != this.focusCur) {
+                        this.end();
+                        this.focus.setup_context();
+                        this.focusCur = this.focus;
+                        this.call_once();
+                    }
+                    //else {
+                    //	this.modal?.deletor();
+                    //	this.focusCur = undefined;
+                    //}
+                    return false;
+                });
+            }
+            static destroy() {
+                var _a;
+                (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
+                //this.focusCur = undefined;
+            }
+            static call_once() {
+                this.end_close_others();
+                this.modal = new modal(this.focus.type);
+                this.modal.content.innerHTML = '';
+                this.modal.element.classList.add('contextmenu');
+                for (let option of this.options.options) {
+                    let button = document.createElement('div');
+                    button.innerHTML = option[0] + "&nbsp;";
+                    //if (tuple[1] > 1) {
+                    //	button.innerHTML += ` <span>×${tuple[1]}</span>`
+                    //}
+                    button.className = 'option';
+                    button.onclick = (e) => {
+                        var _a;
+                        if (option[1]()) {
+                            (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
+                            this.modal = undefined;
+                            win_1.genericHovering = false;
+                            option[2]();
+                        }
+                    };
+                    button.onmouseover = () => { win_1.genericHovering = true; };
+                    button.onmouseleave = () => { win_1.genericHovering = false; };
+                    this.modal.content.append(button);
+                    this.buttons.push([button, option]);
+                }
+            }
+            static update() {
+                //console.log('focusCur', this.focusCur);
+                for (let button of this.buttons) {
+                    const element = button[0];
+                    const option = button[1];
+                    if (!option[1]()) {
+                        element.classList.add('disabled');
+                    }
+                    else {
+                        element.classList.remove('disabled');
+                    }
+                }
+            }
+            static tick() {
+                if (this.modal && this.focusCur) {
+                    this.update();
+                    this.modal.float(this.focusCur, [0, 0]);
+                }
+            }
+        }
+        contextmenu.buttons = [];
+        contextmenu.options = { options: [] };
+        win_1.contextmenu = contextmenu;
+        class descriptor {
+            static call_once(text = 'Examined') {
+                if (this.modal !== undefined) {
+                    this.modal.deletor();
+                    this.modal = undefined;
+                }
+                if (this.modal == undefined) {
+                    this.modal = new modal('descriptor');
+                    this.modal.title.remove();
+                    //this.modal.content.remove();
+                    this.modal.content.innerHTML = text;
+                    this.focusCur = this.focus;
+                    this.timer = Date.now();
+                }
+            }
+            static tick() {
+                var _a;
+                if (this.modal !== undefined) {
+                    this.modal.float(this.focusCur, [0, 0]);
+                }
+                if (Date.now() - this.timer > 3 * 1000) {
+                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
+                    this.modal = undefined;
+                }
+            }
+        }
+        descriptor.timer = 0;
+        win_1.descriptor = descriptor;
+        class dialogue {
+            static init() {
+                hooks.register('viewRClick', (view) => {
+                    // We right clickd outside
+                    if (dialogue.modal && !dialogue.modal.hovering)
+                        dialogue.end();
+                    return false;
+                });
+            }
+            static call_once() {
+                // We wish to talk to a different pawn
+                if (this.talkingTo != this.talkingToCur) {
+                    this.end();
+                }
+                if (this.talkingTo && !this.modal) {
+                    this.talkingToCur = this.talkingTo;
+                    this.modal = new modal();
+                    this.where[1] = 0;
+                    this.change();
+                }
+            }
+            static end() {
+                var _a;
+                (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
+                this.modal = undefined;
+                this.talkingToCur = undefined;
+                win_1.genericHovering = false;
+            }
+            static change() {
+                this.modal.content.innerHTML = this.talkingToCur.dialogue[this.where[1]][0] + "&nbsp;";
+                this.modal.content.onmouseover = () => { win_1.genericHovering = true; };
+                this.modal.content.onmouseleave = () => { win_1.genericHovering = false; };
+                const next = this.talkingToCur.dialogue[this.where[1]][1];
+                if (next != -1) {
+                    let button = document.createElement('div');
+                    button.innerHTML = '>>';
+                    button.className = 'button';
+                    this.modal.content.append(button);
+                    button.onclick = (e) => {
+                        console.log('woo');
+                        this.where[1] = next;
+                        win_1.genericHovering = false;
+                        this.change();
+                        //button.remove();
+                    };
+                }
+            }
+            static tick() {
+                if (this.modal && this.talkingToCur) {
+                    this.modal.float(this.talkingToCur, [0, 10]);
+                }
+                if (this.talkingToCur && pts.distsimple(pawns$1.you.wpos, this.talkingToCur.wpos) > 1) {
+                    this.end();
+                }
+            }
+        }
+        dialogue.where = [0, 0];
+        win_1.dialogue = dialogue;
+        class container {
+            static init() {
+                hooks.register('viewRClick', (view) => {
+                    // We right clickd outside
+                    if (container.modal && !container.modal.hovering) {
+                        container.end();
+                    }
+                    return false;
+                });
+            }
+            static end() {
+                var _a;
+                (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
+                this.modal = undefined;
+                this.focusCur = undefined;
+            }
+            static call_once() {
+                var _a;
+                // We are trying to open a different container
+                if (this.modal !== undefined) {
+                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
+                    this.modal = undefined;
+                    this.focusCur = undefined;
+                }
+                /*if (this.modal !== undefined && this.focus != this.focusCur) {
+                    this.modal?.deletor();
+                    this.modal = undefined;
+                    this.focusCur = undefined;
+                }*/
+                if (this.focus) {
+                    this.focusCur = this.focus;
+                    this.modal = new modal('container');
+                    this.modal.content.innerHTML = '';
+                    const cast = this.focus;
+                    for (let tuple of cast.inventory.tuples) {
+                        let item = document.createElement('div');
+                        item.innerHTML = tuple[0];
+                        if (tuple[1] > 1) {
+                            item.innerHTML += ` <span>×${tuple[1]}</span>`;
+                        }
+                        item.className = 'item';
+                        this.modal.content.append(item);
+                        item.onclick = (e) => {
+                            console.log('woo');
+                            item.remove();
+                            //cast.inventory.remove(tuple[0]);
+                            //pawns.you?.inventory.add(tuple[0]);
+                            win_1.genericHovering = false;
+                        };
+                        //item.onmouseover = () => { hoveringClickableElement = true; }
+                        //item.onmouseleave = () => { hoveringClickableElement = false; }
+                        //this.modal.content.innerHTML += item + '<br />';
+                    }
+                }
+            }
+            /*static call(open: boolean, obj?: lod.obj, refresh = false) {
+                //this.anchor = obj;
+                if (!this.obj) {
+                    this.obj = new lod.obj;
+                    this.obj.size = [24, 40];
+                    this.obj.wpos = [38, 49];
+                }
+
+                if (open && !this.modal) {
+                    this.modal = new modal('container');
+                }
+                else if (!open && this.modal) {
+                    this.modal?.deletor();
+                    this.obj = undefined;
+                    this.modal = undefined;
+                }
+
+                if (this.modal && obj != this.obj) {
+                    if (obj) {
+                        this.obj = obj;
+                        this.modal.update(obj.type + ' contents');
+                    }
+                    this.modal.content.innerHTML = ''
+
+                    const cast = this.obj as objects.crate;
+                    for (let tuple of cast.container.tuples) {
+                        let button = document.createElement('div');
+                        button.innerHTML = tuple[0];
+                        if (tuple[1] > 1) {
+                            button.innerHTML += ` <span>×${tuple[1]}</span>`
+                        }
+                        button.className = 'item';
+                        this.modal.content.append(button);
+
+                        button.onclick = (e) => {
+                            console.log('woo');
+                            button.remove();
+                            cast.container.remove(tuple[0]);
+                            pawns.you?.inventory.add(tuple[0]);
+                        };
+
+                        //this.modal.content.innerHTML += item + '<br />';
+                    }
+                }
+            }*/
+            static tick() {
+                if (this.modal && this.focusCur) {
+                    this.modal.float(this.focusCur);
+                }
+                if (this.focusCur && pts.distsimple(pawns$1.you.wpos, this.focusCur.wpos) > 1) {
+                    this.end();
+                }
+            }
+        }
+        win_1.container = container;
+        class areatag {
+            static call(open, area, refresh = false) {
+                if (open) {
+                    console.log('boo');
+                    let element = document.createElement('div');
+                    element.className = 'area';
+                    element.innerHTML = ` ${(area === null || area === void 0 ? void 0 : area.name) || ''} `;
+                    win.append(element);
+                    setTimeout(() => {
+                        element.classList.add('fade');
+                        setTimeout(() => {
+                            element.remove();
+                        }, 3000);
+                    }, 1000);
+                }
+            }
+        }
+        win_1.areatag = areatag;
+        class message {
+            constructor() {
+                this.duration = 5;
+            }
+            static message(message, duration) {
+                this.messages.push({ message: message, duration: duration });
+            }
+            static tick() {
+                if (this.messages.length) {
+                    let shift = this.messages.shift();
+                    let element = document.createElement('div');
+                    element.className = 'message';
+                    element.innerHTML = shift.message;
+                    document.getElementById('messages').append(element);
+                    setTimeout(() => {
+                        element.classList.add('fade');
+                    }, shift.duration);
+                    setTimeout(() => {
+                        element.remove();
+                    }, shift.duration + 2000);
+                }
+            }
+        }
+        message.messages = [];
+        win_1.message = message;
+    })(win || (win = {}));
+    var win$1 = win;
+
+    // allows you to venture far from inclusion hell by letting you assign arbitrary values
+    var GLOB = {};
 
     var chickens;
     (function (chickens) {
@@ -3169,6 +3205,8 @@ void main() {
         client.sObjsId = {};
         client.sInventoriesId = {};
         client.plyId = -1;
+        client.rates = [];
+        client.prices = [];
         client.interactingWith = '';
         client.tradeWithId = '';
         function tick() {
@@ -3270,6 +3308,29 @@ void main() {
                         obj.sitting = sitting;
                         // console.log('updating chicken!');
                     });
+                    process_news(objects$1.crate, 'crate', data, (obj, sobj) => {
+                        const { id, wpos, inventory } = sobj;
+                        obj.id = id;
+                        obj.wpos = wpos;
+                        obj.inventory = inventory;
+                        console.error('a new crate!');
+                    }, (obj, sobj) => {
+                        const { inventory } = sobj;
+                        if (inventory)
+                            obj.inventory = inventory;
+                        // console.log('updating chicken!');
+                    });
+                    process_news(objects$1.shelves, 'shelves', data, (obj, sobj) => {
+                        const { id, wpos, inventory } = sobj;
+                        obj.id = id;
+                        obj.wpos = wpos;
+                        obj.inventory = inventory;
+                    }, (obj, sobj) => {
+                        const { inventory } = sobj;
+                        if (inventory)
+                            obj.inventory = inventory;
+                        // console.log('updating chicken!');
+                    });
                 }
                 if (data.playerId) {
                     client.plyId = data.playerId;
@@ -3280,6 +3341,10 @@ void main() {
                         pawn.type = 'you';
                         wastes.gview.center = pawn;
                     }
+                }
+                if (data.rates) {
+                    client.rates = data.rates;
+                    console.log('got rates');
                 }
                 if (data.messages) {
                     for (let message of data.messages) {
@@ -8234,7 +8299,7 @@ void main() {
                     }
                 }
                 // We snap to aim onto tiles
-                if (this.type == 'you' && app$1.key('shift') && !win$1.hoveringClickableElement) {
+                if (this.type == 'you' && app$1.key('shift') && !win$1.genericHovering) {
                     let pos = ((_a = tiles$1.hovering) === null || _a === void 0 ? void 0 : _a.wpos) || [0, 0];
                     pos = pts.subtract(pos, pawns.you.wpos);
                     const dist = pts.distsimple(pos, wastes.gview.mwpos);
@@ -8243,7 +8308,7 @@ void main() {
                         y = -pos[1];
                     }
                 }
-                else if (this.type == 'you' && (!x && !y) && app$1.button(0) >= 1 && !win$1.hoveringClickableElement) {
+                else if (this.type == 'you' && (!x && !y) && app$1.button(0) >= 1 && !win$1.genericHovering) {
                     let mouse = wastes.gview.mwpos;
                     let pos = this.wpos;
                     pos = pts.add(pos, pts.divide([1, 1], 2));
@@ -8763,7 +8828,8 @@ void main() {
             if (pawns$1.you)
                 crunch += `you: ${pts.to_string(pts.round(pawns$1.you.wpos))}<br />`;
             crunch += `view bigpos: ${pts.to_string(lod$1.world.big(this.wpos))}<br />`;
-            crunch += `view center: ${pts.to_string_fixed(wastes.gview.center.wpos)}<br />`;
+            if (wastes.gview.center)
+                crunch += `view center: ${pts.to_string_fixed(wastes.gview.center.wpos)}<br />`;
             crunch += `view zoom: ${this.zoom}<br />`;
             crunch += `lod grid: ${lod$1.ggrid.spread}, ${lod$1.ggrid.outside}<br />`;
             crunch += '<br />';

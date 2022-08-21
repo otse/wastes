@@ -385,7 +385,7 @@ export namespace pawns {
 
 
 			// We snap to aim onto tiles
-			if (this.type == 'you' && app.key('shift') && !win.hoveringClickableElement) {
+			if (this.type == 'you' && app.key('shift') && !win.genericHovering) {
 				wasd = false;
 				let pos = tiles.hovering?.wpos || [0, 0];
 				pos = pts.subtract(pos, pawns.you.wpos);
@@ -395,7 +395,7 @@ export namespace pawns {
 					y = -pos[1];
 				}
 			}
-			else if (this.type == 'you' && (!x && !y) && app.button(0) >= 1 && !win.hoveringClickableElement) {
+			else if (this.type == 'you' && (!x && !y) && app.button(0) >= 1 && !win.genericHovering) {
 				// Deduce x and y from click moving
 				wasd = false;
 				let mouse = wastes.gview.mwpos;

@@ -16,6 +16,9 @@ export namespace client {
 
 	export var plyId = -1;
 
+	export var rates: [item: string, buy: number, sell: number][] = []
+	export var prices: [item: string, value: number][] = []
+
 	export var interactingWith = ''
 
 	export var tradeWithId = '';
@@ -132,6 +135,35 @@ export namespace client {
 						obj.sitting = sitting;
 						// console.log('updating chicken!');
 					});
+
+				process_news(objects.crate, 'crate', data,
+					(obj, sobj) => {
+						const { id, wpos, inventory } = sobj;
+						obj.id = id;
+						obj.wpos = wpos;
+						obj.inventory = inventory;
+						console.error('a new crate!');
+					},
+					(obj, sobj) => {
+						const { inventory } = sobj;
+						if (inventory)
+							obj.inventory = inventory;
+						// console.log('updating chicken!');
+					});
+				
+				process_news(objects.shelves, 'shelves', data,
+					(obj, sobj) => {
+						const { id, wpos, inventory } = sobj;
+						obj.id = id;
+						obj.wpos = wpos;
+						obj.inventory = inventory;
+					},
+					(obj, sobj) => {
+						const { inventory } = sobj;
+						if (inventory)
+							obj.inventory = inventory;
+						// console.log('updating chicken!');
+					});
 			}
 
 			if (data.playerId) {
@@ -143,6 +175,11 @@ export namespace client {
 					pawn.type = 'you';
 					wastes.gview.center = pawn;
 				}
+			}
+
+			if (data.rates) {
+				client.rates = data.rates;
+				console.log('got rates');
 			}
 
 			if (data.messages) {

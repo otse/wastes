@@ -11,7 +11,9 @@ class inventory {
         this.tuples = [];
     }
     needsUpdate() {
+        var _a;
         this.stamp = slod_1.default.stamp;
+        (_a = this.owner) === null || _a === void 0 ? void 0 : _a.needs_update();
     }
     get(name) {
         for (const tuple of this.tuples)

@@ -12,6 +12,7 @@ export class inventory {
 	}
 	needsUpdate() {
 		this.stamp = slod.stamp;
+		this.owner?.needs_update();
 	}
 	get(name: string) {
 		for (const tuple of this.tuples)

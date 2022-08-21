@@ -14,27 +14,45 @@ var connections: connection[] = [];
 
 var heightmap: maps.scolormap
 var buildingmap: maps.scolormap
+var objectmap: maps.scolormap
 var colormap: maps.scolormap
+
+var rates: [item: string, buy: number, sell: number][] = [
+	['scrap', 5, 2]
+]
+
+var prices: [item: string, value: number][] = [
+	['scrap', 5],
+	['junk', 5]
+]
 
 function start() {
 
-	new slod.sworld();
-
+	
 	// will observe the trashy vendor and shadow chicken
-	let villageVantage = new slod.sgrid(slod.gworld, 2, 2);
-
+	//let villageVantage = new slod.sgrid(slod.gworld, 2, 2);
+	
 	heightmap = new maps.scolormap('heightmap')
 	buildingmap = new maps.scolormap('buildingmap')
+	objectmap = new maps.scolormap('objectmap')
 	colormap = new maps.scolormap('colormap')
 
-	function factory<type extends supersobj>(type: { new(): type }, pos, hints = {}) {
+	// wait for pngs to load
+	setTimeout(start2, 1000);
+}
+
+function start2() {
+	
+	new slod.sworld();
+
+	function factory<type extends supersobj>(type: { new(): type }, pos: vec2, hints = {}) {
 		let obj = new type;
 		obj.wpos = pos;
 		slod.add(obj);
 		return obj;
 	}
 
-	hooks.register('SSectorCreate', (sector: slod.ssector) => {
+	hooks.register('sectorCreate', (sector: slod.ssector) => {
 		pts.func(sector.small, (pos) => {
 			pos = pts.subtract(pos, [0, 0])
 			let pixel = buildingmap.pixel(pos);
@@ -50,11 +68,32 @@ function start() {
 		return false;
 	});
 
+	hooks.register('sectorCreate', (sector: slod.ssector) => {
+		pts.func(sector.small, (pos) => {
+			let pixel = objectmap.pixel(pos);
+			if (pixel.is_color(colors.color_acid_barrel)) {
+				// factory(objects.acidbarrel, pixel, pos);
+			}
+			else if (pixel.is_color(colors.color_wall_chest)) {
+				factory(crate, pos);
+			}
+			else if (pixel.is_color(colors.color_shelves)) {
+				factory(shelves, pos);
+			}
+			else {
+				//let chick = new chicken;
+				//chick.wpos = pos;
+				//slod.add(chick);
+			}
+		})
+		return false;
+	})
+
 	let vendor = new pawn;
 	//vendor.pawntype = 'trader';
-	vendor.walkArea = new aabb2([37, 49], [41, 49]);
+	vendor.walkArea = new aabb2([38, 49], [41, 49]);
 	vendor.dialogue = 2;
-	vendor.wpos = [37.5, 48.5];
+	vendor.wpos = [37, 48];
 	vendor.subtype = 'trader';
 	vendor.isTrader = true;
 	vendor.inventory.add('scrap', -1);
@@ -69,7 +108,7 @@ function start() {
 	guard.walkArea = new aabb2([43, 51], [46, 58]);
 	slod.add(guard);
 
-	for (let i = 0; i < 5; i++) {
+	for (let i = 0; i < 2; i++) {
 		let shadowChicken = new chicken;
 		shadowChicken.wpos = [42, 53];
 		shadowChicken.walkArea = new aabb2([41, 54], [43, 51]);
@@ -120,7 +159,7 @@ class connection {
 		this.grid = new slod.sgrid(slod.gworld, 2, 2);
 
 		this.you = new player;
-		this.you.wpos = [44, 52];
+		this.you.wpos = [40, 49];
 		// this.you.impertinent = true;
 		slod.add(this.you);
 
@@ -149,7 +188,7 @@ class connection {
 		if (json.player) {
 			if (this.you) {
 				//this.you.needsAnUpdate = true
-				this.you.needsUpdate(1);
+				this.you.needs_update(1); // todo stamp padding is so so
 				this.you.wpos = json.player.wpos;
 				this.you.angle = json.player.angle;
 				this.you.aiming = json.player.aiming;
@@ -196,9 +235,10 @@ class connection {
 
 		if (!this.sentPlayer) {
 			this.sentPlayer = true;
-			console.log('sending you-pawn');
+			console.log('sending you-pawn id');
 
 			object.playerId = this.you?.id;
+			object.rates = rates;
 		}
 
 		object.news = this.grid.gather();
@@ -272,6 +312,55 @@ class supersobj extends slod.sobj {
 	}
 }
 
+class container extends supersobj {
+	static id = 0
+	inventory: inventory
+
+	constructor() {
+		super();
+		this.id = 'container_' + container.id++;
+		this.inventory = new inventory;
+	}
+	override gather(first: boolean) {
+		let upper = super.gather(first) as any;
+		if (first || this.inventory.stamp == slod.stamp)
+			upper.inventory = this.inventory.collect();
+		return upper;
+	}
+}
+
+class shelves extends container {
+	constructor() {
+		super();
+		console.log('shelves', 1);
+
+		this.type = 'shelves';
+		this.id = 'shelves_' + container.id++;
+		this.inventory.add('stuff', 5);
+		if (Math.random() > .5)
+			this.inventory.add('junk', 5);
+	}
+	/*override create() {
+		this.rebound();
+	}*/
+}
+
+class crate extends container {
+	constructor() {
+		super();
+		console.log('crate', 1);
+
+		this.type = 'crate';
+		this.id = 'crate_' + container.id++;
+		this.inventory.add('stuff', 5);
+		if (Math.random() > .5)
+			this.inventory.add('junk', 5);
+	}
+	/*override create() {
+		this.rebound();
+	}*/
+}
+
 class tree extends supersobj {
 	static id = 0
 	constructor() {
@@ -317,7 +406,7 @@ class npc extends supersobj {
 
 			let speed = this.speed * delta;
 
-			this.needsUpdate();
+			this.needs_update();
 
 			let x = speed * Math.sin(this.angle);
 			let y = speed * Math.cos(this.angle);
@@ -346,8 +435,8 @@ class npc extends supersobj {
 	override tick() {
 		this.wander();
 	}
-	override gather(whole: boolean) {
-		let upper = super.gather(whole) as any;
+	override gather(first: boolean) {
+		let upper = super.gather(first) as any;
 		upper.angle = this.angle;
 		return upper;
 	}
@@ -380,16 +469,15 @@ class pawn extends npc {
 	}
 	override gather(first: boolean) {
 		let upper = super.gather(first) as any;
-		upper.outfit = this.outfit;
-		if (this.aiming)
-			upper.aiming = this.aiming;
 		if (first) {
+			upper.outfit = this.outfit;
 			upper.dialogue = this.dialogue;
 			upper.subtype = this.subtype;
 		}
+		if (this.aiming)
+			upper.aiming = this.aiming;
 		if (first || this.inventory.stamp == slod.stamp) {
-			console.log('inventory needs an update');
-
+			//console.log('inventory needs an update');
 			upper.inventory = this.inventory.collect();
 		}
 		return upper;
@@ -466,12 +554,12 @@ class chicken extends npc {
 			if (!this.pecking && !this.sitting && this.walkAgain?.elapsed(5000)) {
 				if (Math.random() > .25) {
 					this.pecking = true;
-					this.needsUpdate();
+					this.needs_update();
 					this.walkAgain = new timer(0);
 				}
 				else {
 					this.sitting = true;
-					this.needsUpdate();
+					this.needs_update();
 					this.walkAgain = new timer(0);
 				}
 			}
@@ -479,12 +567,12 @@ class chicken extends npc {
 
 		if (this.pecking && this.walkAgain?.elapsed(500)) {
 			this.pecking = false;
-			this.needsUpdate();
+			this.needs_update();
 			this.walkAgain = new timer(0);
 		}
 		else if (this.sitting && this.walkAgain?.elapsed(6000)) {
 			this.sitting = false;
-			this.needsUpdate();
+			this.needs_update();
 			this.walkAgain = new timer(0);
 		}
 		else if (!this.pecking && !this.sitting) {

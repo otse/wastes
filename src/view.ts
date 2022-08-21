@@ -194,7 +194,8 @@ export class view {
 		if (pawns.you)
 			crunch += `you: ${pts.to_string(pts.round(pawns.you.wpos))}<br />`;
 		crunch += `view bigpos: ${pts.to_string(lod.world.big(this.wpos))}<br />`;
-		crunch += `view center: ${pts.to_string_fixed(wastes.gview.center.wpos)}<br />`;
+		if (wastes.gview.center)
+			crunch += `view center: ${pts.to_string_fixed(wastes.gview.center.wpos)}<br />`;
 		crunch += `view zoom: ${this.zoom}<br />`;
 		crunch += `lod grid: ${lod.ggrid.spread}, ${lod.ggrid.outside}<br />`;
 		crunch += '<br />';

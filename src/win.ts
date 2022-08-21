@@ -16,7 +16,7 @@ namespace win {
 
 	var toggle_character = false;
 
-	export var hoveringClickableElement = false;
+	export var genericHovering = false;
 
 	export var started = false;
 
@@ -26,6 +26,9 @@ namespace win {
 		win = document.getElementById('win') as HTMLElement;
 
 		contextmenu.init();
+		container.init();
+		trader.init();
+		dialogue.init();
 
 		setTimeout(() => {
 			//message.message("Welcome", 1000);
@@ -61,9 +64,13 @@ namespace win {
 		element
 		title
 		content
+		hovering
 		constructor(title?: string) {
 			this.element = document.createElement('div') as HTMLElement
 			this.element.className = 'modal';
+
+			this.element.onmouseover = () => { this.hovering = true; genericHovering = true; }
+			this.element.onmouseleave = () => { this.hovering = false; genericHovering = false; }
 			//this.element.append('inventory')
 
 			if (title) {
@@ -119,7 +126,24 @@ namespace win {
 		static yourStamp = 0
 		static modal?: modal
 		static hover_money_label_here() {
-			
+
+		}
+		static init() {
+			hooks.register('viewRClick', (view) => {
+				// We right click outside
+				if (trader.modal && !trader.modal.hovering) {
+					trader.end();
+				}
+				return false;
+				return false;
+			});
+		}
+		static end() {
+			this.modal?.deletor();
+			this.modal = undefined;
+			this.tradeWithCur = undefined;
+			this.traderInventoryElement = undefined;
+			this.yourInventoryElement = undefined;
 		}
 		static call_once() {
 			if (this.tradeWith && this.tradeWithCur != this.tradeWith) {
@@ -128,9 +152,13 @@ namespace win {
 			if (!this.modal) {
 				this.modal = new modal('trader',);
 				this.modal.content.innerHTML = `buy:<br />`;
+
+				this.modal!.content.onmouseover = () => { genericHovering = true; }
+				this.modal!.content.onmouseleave = () => { genericHovering = false; }
+
 				this.tradeWithCur = this.tradeWith;
 				this.render_trader_inventory(true);
-				
+
 				let next = document.createElement('span');
 				next.innerHTML += '<hr>sell:<br />';
 
@@ -163,12 +191,6 @@ namespace win {
 					if (tuple[1] > 1) {
 						button.innerHTML += ` <span>×${tuple[1]}</span>`
 					}
-					button.onmouseover = () => {
-						hoveringClickableElement = true;
-					}
-					button.onmouseleave = () => {
-						hoveringClickableElement = false;
-					}
 					button.className = 'item';
 					this.traderInventoryElement.append(button);
 
@@ -196,19 +218,18 @@ namespace win {
 					if (tuple[1] > 1) {
 						button.innerHTML += ` <span>×${tuple[1]}</span>`
 					}
+					button.onmouseover = () => {
+						genericHovering = true;
+					}
+					button.onmouseleave = () => {
+						genericHovering = false;
+					}
 					button.className = 'item';
 					this.yourInventoryElement.append(button);
 
 					this.yourStamp = inventory.stamp;
 				}
 			}
-		}
-		static end() {
-			this.modal?.deletor();
-			this.modal = undefined;
-			this.tradeWithCur = undefined;
-			this.traderInventoryElement = undefined;
-			this.yourInventoryElement = undefined;
 		}
 		static tick() {
 			if (this.tradeWithCur && pts.distsimple(this.tradeWithCur.wpos, pawns.you.wpos) > 1) {
@@ -331,10 +352,16 @@ namespace win {
 			this.buttons = []
 			this.options.options = [];
 		}
+		static end_close_others() {
+			trader.end();
+			dialogue.end();
+			genericHovering = false;
+		}
 		static end() {
 			this.modal?.deletor();
 			this.modal = undefined;
 			this.focusCur = undefined;
+			genericHovering = false;
 		}
 		static init() {
 			hooks.register('viewMClick', (view) => {
@@ -351,7 +378,7 @@ namespace win {
 				if (this.focus && !this.modal) {
 					this.focus.setup_context();
 					this.focusCur = this.focus;
-					this.open();
+					this.call_once();
 				}
 				// We click away from any sprites and we have a menu open: break it
 				else if (!this.focus && this.modal) {
@@ -363,11 +390,10 @@ namespace win {
 				}
 				// We have an open modal, but focus on a different sprite: recreate it
 				else if (this.modal && this.focus && this.focus != this.focusCur) {
-					this.modal?.deletor();
-					this.modal = undefined;
+					this.end();
 					this.focus!.setup_context();
 					this.focusCur = this.focus;
-					this.open();
+					this.call_once();
 				}
 				//else {
 				//	this.modal?.deletor();
@@ -381,7 +407,9 @@ namespace win {
 			this.modal?.deletor();
 			//this.focusCur = undefined;
 		}
-		static open() {
+		static call_once() {
+			this.end_close_others();
+
 			this.modal = new modal(this.focus!.type);
 			this.modal.content.innerHTML = '';
 			this.modal.element.classList.add('contextmenu');
@@ -397,12 +425,12 @@ namespace win {
 					if (option[1]()) {
 						this.modal?.deletor();
 						this.modal = undefined;
-						hoveringClickableElement = false;
+						genericHovering = false;
 						option[2]();
 					}
 				};
-				button.onmouseover = () => { hoveringClickableElement = true; }
-				button.onmouseleave = () => { hoveringClickableElement = false; }
+				button.onmouseover = () => { genericHovering = true; }
+				button.onmouseleave = () => { genericHovering = false; }
 				this.modal.content.append(button);
 				this.buttons.push([button, option]);
 			}
@@ -464,11 +492,18 @@ namespace win {
 		static talkingToCur?: pawns.pawn
 		static modal?: modal
 		static where = [0, 0];
+		static init() {
+			hooks.register('viewRClick', (view) => {
+				// We right clickd outside
+				if (dialogue.modal && !dialogue.modal.hovering)
+					dialogue.end();
+				return false;
+			});
+		}
 		static call_once() {
+			// We wish to talk to a different pawn
 			if (this.talkingTo != this.talkingToCur) {
-				this.modal?.deletor();
-				this.modal = undefined;
-				this.talkingToCur = undefined;
+				this.end();
 			}
 
 			if (this.talkingTo && !this.modal) {
@@ -478,10 +513,18 @@ namespace win {
 				this.change();
 			}
 		}
+		static end() {
+			this.modal?.deletor();
+			this.modal = undefined;
+			this.talkingToCur = undefined;
+			genericHovering = false;
+		}
 		static change() {
 			const which = 1;
 
 			this.modal!.content.innerHTML = this.talkingToCur!.dialogue[this.where[1]][0] + "&nbsp;"
+			this.modal!.content.onmouseover = () => { genericHovering = true; }
+			this.modal!.content.onmouseleave = () => { genericHovering = false; }
 
 			const next = this.talkingToCur!.dialogue[this.where[1]][1];
 
@@ -494,12 +537,10 @@ namespace win {
 				button.onclick = (e) => {
 					console.log('woo');
 					this.where[1] = next as number;
-					hoveringClickableElement = false;
+					genericHovering = false;
 					this.change();
 					//button.remove();
 				};
-				button.onmouseover = () => { hoveringClickableElement = true; }
-				button.onmouseleave = () => { hoveringClickableElement = false; }
 			}
 		}
 		static tick() {
@@ -507,10 +548,7 @@ namespace win {
 				this.modal.float(this.talkingToCur, [0, 10]);
 			}
 			if (this.talkingToCur && pts.distsimple(pawns.you.wpos, this.talkingToCur.wpos) > 1) {
-				this.talkingToCur = undefined;
-				this.modal?.deletor();
-				this.modal = undefined;
-				hoveringClickableElement = false;
+				this.end();
 			}
 		}
 	}
@@ -520,6 +558,20 @@ namespace win {
 		static focusCur?: objects.objected
 		//static obj?: lod.obj
 		static modal?: modal
+		static init() {
+			hooks.register('viewRClick', (view) => {
+				// We right clickd outside
+				if (container.modal && !container.modal.hovering) {
+					container.end();
+				}
+				return false;
+			});
+		}
+		static end() {
+			this.modal?.deletor();
+			this.modal = undefined;
+			this.focusCur = undefined;
+		}
 		static call_once() {
 
 			// We are trying to open a different container
@@ -543,7 +595,7 @@ namespace win {
 
 				const cast = this.focus as objects.crate;
 
-				for (let tuple of cast.container.tuples) {
+				for (let tuple of cast.inventory.tuples) {
 					let item = document.createElement('div');
 					item.innerHTML = tuple[0];
 					if (tuple[1] > 1) {
@@ -555,12 +607,12 @@ namespace win {
 					item.onclick = (e) => {
 						console.log('woo');
 						item.remove();
-						cast.container.remove(tuple[0]);
+						//cast.inventory.remove(tuple[0]);
 						//pawns.you?.inventory.add(tuple[0]);
-						hoveringClickableElement = false;
+						genericHovering = false;
 					};
-					item.onmouseover = () => { hoveringClickableElement = true; }
-					item.onmouseleave = () => { hoveringClickableElement = false; }
+					//item.onmouseover = () => { hoveringClickableElement = true; }
+					//item.onmouseleave = () => { hoveringClickableElement = false; }
 
 					//this.modal.content.innerHTML += item + '<br />';
 				}
@@ -616,9 +668,7 @@ namespace win {
 				this.modal.float(this.focusCur);
 			}
 			if (this.focusCur && pts.distsimple(pawns.you.wpos, this.focusCur.wpos) > 1) {
-				this.focusCur = undefined;
-				this.modal?.deletor();
-				this.modal = undefined;
+				this.end();
 			}
 		}
 	}

@@ -52,7 +52,7 @@ namespace slod {
 	export var byId: { [id: string]: slod.sobj } = {}
 
 	export function add(sobj: sobj) {
-		let sector = gworld.at(slod.sworld.big(sobj.wpos));
+		let sector = gworld.at(slod.sworld.big(pts.round(sobj.wpos)));
 		byId[sobj.id] = sobj;
 		sector.add(sobj);
 	}
@@ -108,14 +108,14 @@ namespace slod {
 			public readonly big: vec2,
 			readonly world: sworld
 		) {
-			super();
+			super();				
 			// console.log(`new ssector ${big[0]} ${big[1]}`);
 			let min = pts.mult(this.big, SectorSpan);
 			let max = pts.add(min, [SectorSpan - 1, SectorSpan - 1]);
 			this.small = new aabb2(max, min);
 			numbers.sectors[1]++;
 			world.arrays[this.big[1]][this.big[0]] = this;
-			hooks.call('SSectorCreate', this);
+			hooks.call('sectorCreate', this);
 		}
 		observe(grid: sgrid) {
 			this.observers.push([grid, slod.stamp]);
@@ -318,7 +318,7 @@ namespace slod {
 			public readonly counts: numbers.tally = numbers.objs) {
 			super();
 			this.counts[1]++;
-			this.needsUpdate();
+			this.needs_update();
 		}
 		finalize() {
 			//this.hide();
@@ -327,7 +327,7 @@ namespace slod {
 		remove_for_observer(grid: sgrid) {
 			grid.removes.push(this.id);
 		}
-		needsUpdate(padding = 0) {
+		needs_update(padding = 0) {
 			this.stamp = slod.stamp + padding;
 		}
 		show() {

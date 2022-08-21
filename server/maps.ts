@@ -40,7 +40,7 @@ namespace maps {
 			let vec = this.get(pos);
 			if (vec)
 				return new spixel(this, pos, vec);
-			return new spixel(this, pos, [0, 0, 0, 0]);
+			return new spixel(this, pos, [255, 0, 255, 0]);
 		}
 		read() {
 			const { name, pixels } = this;
