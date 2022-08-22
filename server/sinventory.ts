@@ -8,7 +8,8 @@ export class inventory {
 	stamp = 0
 	tuples: item[] = []
 	owner?: slod.sobj
-	constructor() {
+	constructor(owner: slod.sobj) {
+		this.owner = owner;
 	}
 	needsUpdate() {
 		this.stamp = slod.stamp;
@@ -34,7 +35,7 @@ export class inventory {
 		}
 		else
 			this.tuples.push([name, amount]);
-		this.tuples.sort();
+		//this.tuples.sort();
 		this.needsUpdate();
 	}
 	// if we try remove more than we have, set amount to 0

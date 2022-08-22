@@ -6,9 +6,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.inventory = void 0;
 const slod_1 = __importDefault(require("./slod"));
 class inventory {
-    constructor() {
+    constructor(owner) {
         this.stamp = 0;
         this.tuples = [];
+        this.owner = owner;
     }
     needsUpdate() {
         var _a;
@@ -35,7 +36,7 @@ class inventory {
         }
         else
             this.tuples.push([name, amount]);
-        this.tuples.sort();
+        //this.tuples.sort();
         this.needsUpdate();
     }
     // if we try remove more than we have, set amount to 0

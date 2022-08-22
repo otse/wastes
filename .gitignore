@@ -1,5 +1,5 @@
 node_modules/
-js/*.js
+js/*
 modeler/
 modeler/collada
 tex/stock/

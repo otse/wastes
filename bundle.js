@@ -1719,8 +1719,8 @@ void main() {
                                     color: tile.color,
                                     grid: [x, y]
                                 });
-                    factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [0, 0]), { type: this.hints.type, color: tile.color, noVines: true });
-                    factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [0, 0]), { type: this.hints.type, color: tile.color, noVines: true });
+                    //factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [0, 0]), { type: this.hints.type, color: tile.color, noVines: true });
+                    //factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [0, 0]), { type: this.hints.type, color: tile.color, noVines: true });
                 }
             }
         }
@@ -2319,17 +2319,26 @@ void main() {
                 let pawn = this.tradeWithCur;
                 const inventory = pawn.inventory;
                 if (inventory && this.traderStamp != inventory.stamp || force) {
+                    console.log('refresh trader inven');
                     this.traderInventoryElement.innerHTML = ``;
-                    console.log('yes', inventory.tuples);
-                    //console.log(inventory);
                     for (let tuple of inventory.tuples) {
+                        if (tuple[0] == 'money')
+                            continue;
                         let button = document.createElement('div');
                         //button.innerHTML = `<img width="20" height="20" src="tex/items/${tuple[0]}.png">`;
                         button.innerHTML += tuple[0];
+                        button.className = 'item';
                         if (tuple[1] > 1) {
                             button.innerHTML += ` <span>×${tuple[1]}</span>`;
                         }
-                        button.className = 'item';
+                        button.onclick = () => {
+                            client.wantToBuy = tuple[0];
+                        };
+                        let extra = document.createElement('span');
+                        button.append(extra);
+                        const rate = client.get_rate(tuple[0]) || ['', 0, 0];
+                        let buy = rate[1];
+                        extra.innerHTML = `&nbsp; - ${buy}ct`;
                         this.traderInventoryElement.append(button);
                         this.traderStamp = inventory.stamp;
                     }
@@ -2347,22 +2356,35 @@ void main() {
                 if (inventory && this.yourStamp != inventory.stamp || force) {
                     this.yourInventoryElement.innerHTML = ``;
                     for (let tuple of inventory.tuples) {
+                        if (tuple[0] == 'money')
+                            continue;
                         let button = document.createElement('div');
                         //button.innerHTML = `<img width="20" height="20" src="tex/items/${tuple[0]}.png">`;
                         button.innerHTML += tuple[0];
+                        button.className = 'item';
                         if (tuple[1] > 1) {
                             button.innerHTML += ` <span>×${tuple[1]}</span>`;
                         }
-                        button.onmouseover = () => {
-                            win_1.genericHovering = true;
+                        button.onclick = () => {
+                            client.wantToSell = tuple[0];
                         };
-                        button.onmouseleave = () => {
-                            win_1.genericHovering = false;
-                        };
-                        button.className = 'item';
+                        let extra = document.createElement('span');
+                        button.append(extra);
+                        const rate = client.get_rate(tuple[0]) || ['', 0, 0];
+                        let sell = rate[2];
+                        extra.innerHTML = `&nbsp; - ${sell}ct`;
                         this.yourInventoryElement.append(button);
                         this.yourStamp = inventory.stamp;
                     }
+                    let money = 0;
+                    for (let tuple of inventory.tuples)
+                        if (tuple[0] == 'money') {
+                            money = tuple[1];
+                            break;
+                        }
+                    let next = document.createElement('div');
+                    next.innerHTML += `your money: ${money}<br />`;
+                    this.yourInventoryElement.append(next);
                 }
             }
             static tick() {
@@ -3202,16 +3224,24 @@ void main() {
 
     var client;
     (function (client) {
-        client.sObjsId = {};
-        client.sInventoriesId = {};
+        client.objsId = {};
         client.plyId = -1;
         client.rates = [];
         client.prices = [];
+        function get_rate(item) {
+            for (const rate of client.rates)
+                if (rate[0] == item)
+                    return rate;
+            return ['', 0, 0];
+        }
+        client.get_rate = get_rate;
         client.interactingWith = '';
+        client.wantToBuy = '';
+        client.wantToSell = '';
         client.tradeWithId = '';
         function tick() {
-            for (let id in client.sObjsId) {
-                let obj = client.sObjsId[id];
+            for (let id in client.objsId) {
+                let obj = client.objsId[id];
                 if (obj.type != 'you')
                     obj.nettick();
             }
@@ -3229,10 +3259,10 @@ void main() {
                     const { id } = sobj;
                     if (sobj.type != typed)
                         continue;
-                    let obj = client.sObjsId[id];
+                    let obj = client.objsId[id];
                     if (!obj) {
                         // console.log('new sobj', typed, id);
-                        obj = client.sObjsId[id] = new type;
+                        obj = client.objsId[id] = new type;
                         obj.id = id;
                         obj.networked = true;
                         handle(obj, sobj);
@@ -3248,18 +3278,18 @@ void main() {
                 if (data.removes && data.removes.length) {
                     // console.log('we have removes', data.removes);
                     for (let id of data.removes) {
-                        let obj = client.sObjsId[id];
+                        let obj = client.objsId[id];
                         if (!obj)
                             continue;
                         if (id == client.plyId) {
-                            console.error('going too fast');
                             // prevent self-destruct by moving too fast
+                            console.error(' you are probably going too fast ');
                             continue;
                         }
                         obj.hide();
                         obj.finalize();
                         lod$1.remove(obj);
-                        delete client.sObjsId[id];
+                        delete client.objsId[id];
                     }
                 }
                 if (data.news) {
@@ -3334,7 +3364,7 @@ void main() {
                 }
                 if (data.playerId) {
                     client.plyId = data.playerId;
-                    let pawn = client.sObjsId[client.plyId];
+                    let pawn = client.objsId[client.plyId];
                     if (pawn) {
                         console.log('  got you pawn  ', client.plyId);
                         pawns$1.you = pawn;
@@ -3366,6 +3396,14 @@ void main() {
                     if (client.interactingWith) {
                         json.interactingWith = client.interactingWith;
                         client.interactingWith = '';
+                    }
+                    if (client.wantToBuy) {
+                        json.wantToBuy = client.wantToBuy;
+                        client.wantToBuy = '';
+                    }
+                    if (client.wantToSell) {
+                        json.wantToSell = client.wantToSell;
+                        client.wantToSell = '';
                     }
                     if (client.tradeWithId) {
                         json.tradeWithId = client.tradeWithId;
@@ -8163,23 +8201,23 @@ void main() {
                 transforme(armsSize, armsSize, armsHeight, `tex/pawn/arms.png`);
                 let boxHead = new THREE.BoxGeometry(headSize, headSize, headSize, 1, 1, 1);
                 let materialHead = new THREE.MeshLambertMaterial({
-                    color: this.outfit[3]
+                    color: this.outfit[0]
                 });
                 let boxGasMask = new THREE.BoxGeometry(gasMaskSize, gasMaskSize, gasMaskSize, 1, 1, 1);
                 let materialGasMask = new THREE.MeshLambertMaterial({
-                    color: this.outfit[3]
+                    color: this.outfit[0]
                 });
                 let boxBody = new THREE.BoxGeometry(bodyWidth, bodyHeight, bodyThick, 1, 1, 1);
                 let materialBody = new THREE.MeshLambertMaterial({
-                    color: this.outfit[0]
+                    color: this.outfit[1]
                 });
                 let boxArms = new THREE.BoxGeometry(armsSize, armsHeight, armsSize, 1, 1, 1);
                 let materialArms = new THREE.MeshLambertMaterial({
-                    color: this.outfit[1]
+                    color: this.outfit[2]
                 });
                 let boxLegs = new THREE.BoxGeometry(legsSize, legsHeight, legsSize, 1, 1, 1);
                 let materialLegs = new THREE.MeshLambertMaterial({
-                    color: this.outfit[2]
+                    color: this.outfit[3]
                 });
                 // https://www.andersriggelsen.dk/glblendfunc.php
                 let planeWater = new THREE.PlaneGeometry(wastes.size * 2, wastes.size * 2);
@@ -8355,6 +8393,10 @@ void main() {
             }
             animateBodyParts() {
                 var _a;
+                if (!this.groups.legl) {
+                    console.error('no groups leg left??');
+                    return;
+                }
                 const legsSwoop = 0.8;
                 const armsSwoop = 0.5;
                 const rise = 0.5;
@@ -8583,13 +8625,6 @@ void main() {
                     this.tuple = sprites$1.dgraveltiles;
                     this.height = 6;
                     this.cell = [1, 0];
-                    {
-                        let biome = wastes.roughmap.pixel(this.wpos);
-                        if (biome.arrayRef[0] > 70) {
-                            this.tuple = sprites$1.dswamptiles;
-                            //this.z -= 1;
-                        }
-                    }
                     const divisor = 3;
                     let height = wastes.heightmap.pixel(this.wpos);
                     this.z += Math.floor(height.arrayRef[0] / divisor);

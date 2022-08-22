@@ -80,21 +80,22 @@ option.disabled:hover {}
 	cursor: pointer;
 }
 
-.modal .item {
+.modal .inventory .item {
 	display: inline-block;
 	margin-right: 1ex;
 	border: 1px gray inset;
 	padding: 0px;
+	margin: 2px;
 	color: #333;
 	cursor: pointer;
 	lline-height: 34px;
 }
 
-.modal .item>span {
+.modal .inventory .item>span {
 	display: inline-block;
 }
 
-.modal .item:hover {
+.modal .inventory .item:hover {
 	color: purple;
 }
 

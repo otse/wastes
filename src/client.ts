@@ -8,9 +8,7 @@ import dialogues from "./dialogue";
 
 export namespace client {
 
-	export var sObjsId: { [id: string]: lod.obj } = {}
-
-	export var sInventoriesId: { [id: string]: any } = {}
+	export var objsId: { [id: string]: lod.obj } = {}
 
 	export var socket: WebSocket
 
@@ -19,13 +17,22 @@ export namespace client {
 	export var rates: [item: string, buy: number, sell: number][] = []
 	export var prices: [item: string, value: number][] = []
 
+	export function get_rate(item: string) {
+		for (const rate of rates)
+			if (rate[0] == item)
+				return rate;
+		return ['', 0, 0];
+	}
+
 	export var interactingWith = ''
+	export var wantToBuy = ''
+	export var wantToSell = ''
 
 	export var tradeWithId = '';
 
 	export function tick() {
-		for (let id in sObjsId) {
-			let obj = sObjsId[id] as objects.objected;
+		for (let id in objsId) {
+			let obj = objsId[id] as objects.objected;
 			if (obj.type != 'you')
 				obj.nettick();
 		}
@@ -47,10 +54,10 @@ export namespace client {
 				const { id } = sobj;
 				if (sobj.type != typed)
 					continue;
-				let obj = sObjsId[id];
+				let obj = objsId[id];
 				if (!obj) {
 					// console.log('new sobj', typed, id);
-					obj = sObjsId[id] = new type;
+					obj = objsId[id] = new type;
 					obj.id = id;
 					obj.networked = true;
 					handle(obj, sobj);
@@ -68,18 +75,18 @@ export namespace client {
 			if (data.removes && data.removes.length) {
 				// console.log('we have removes', data.removes);
 				for (let id of data.removes) {
-					let obj = sObjsId[id];
+					let obj = objsId[id];
 					if (!obj)
 						continue;
 					if (id == plyId) {
-						console.error('going too fast');
 						// prevent self-destruct by moving too fast
+						console.error(' you are probably going too fast ');
 						continue;
 					}
 					obj.hide();
 					obj.finalize();
 					lod.remove(obj);
-					delete sObjsId[id];
+					delete objsId[id];
 				}
 			}
 			if (data.news) {
@@ -150,7 +157,7 @@ export namespace client {
 							obj.inventory = inventory;
 						// console.log('updating chicken!');
 					});
-				
+
 				process_news(objects.shelves, 'shelves', data,
 					(obj, sobj) => {
 						const { id, wpos, inventory } = sobj;
@@ -168,7 +175,7 @@ export namespace client {
 
 			if (data.playerId) {
 				plyId = data.playerId;
-				let pawn = sObjsId[plyId];
+				let pawn = objsId[plyId];
 				if (pawn) {
 					console.log('  got you pawn  ', plyId);
 					pawns.you = pawn as pawns.pawn;
@@ -205,6 +212,14 @@ export namespace client {
 				if (interactingWith) {
 					json.interactingWith = interactingWith;
 					interactingWith = '';
+				}
+				if (wantToBuy) {
+					json.wantToBuy = wantToBuy;
+					wantToBuy = '';
+				}
+				if (wantToSell) {
+					json.wantToSell = wantToSell;
+					wantToSell = '';
 				}
 				if (tradeWithId) {
 					json.tradeWithId = tradeWithId;

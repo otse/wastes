@@ -141,7 +141,7 @@ export namespace tiles {
 				this.height = 6;
 				this.cell = [1, 0];
 
-				const useRoughMap = true;
+				const useRoughMap = false;
 
 				if (useRoughMap) {
 					let biome = wastes.roughmap.pixel(this.wpos);

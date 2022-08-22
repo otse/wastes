@@ -9,6 +9,7 @@ import wastes, { pawns } from "./wastes";
 import objects from "./objects";
 import areas from "./areas";
 import hooks from "./hooks";
+import { client } from "./client";
 
 namespace win {
 
@@ -179,19 +180,31 @@ namespace win {
 			const inventory = pawn.inventory!;
 
 			if (inventory && this.traderStamp != inventory.stamp || force) {
+				console.log('refresh trader inven');
+				
 				this.traderInventoryElement.innerHTML = ``;
 
-				console.log('yes', inventory.tuples);
-				//console.log(inventory);
-
 				for (let tuple of inventory.tuples) {
+					if (tuple[0] == 'money')
+						continue;
 					let button = document.createElement('div');
 					//button.innerHTML = `<img width="20" height="20" src="tex/items/${tuple[0]}.png">`;
 					button.innerHTML += tuple[0];
+					button.className = 'item';
 					if (tuple[1] > 1) {
 						button.innerHTML += ` <span>×${tuple[1]}</span>`
 					}
-					button.className = 'item';
+					button.onclick = () => {
+						client.wantToBuy = tuple[0];
+					}
+
+					let extra = document.createElement('span');
+					button.append(extra);
+					
+					const rate = client.get_rate(tuple[0]) || ['', 0, 0];
+					let buy = rate[1];
+					extra.innerHTML = `&nbsp; - ${buy}ct`;
+
 					this.traderInventoryElement.append(button);
 
 					this.traderStamp = inventory.stamp;
@@ -212,23 +225,39 @@ namespace win {
 				this.yourInventoryElement.innerHTML = ``;
 
 				for (let tuple of inventory.tuples) {
+					if (tuple[0] == 'money')
+						continue;
 					let button = document.createElement('div');
 					//button.innerHTML = `<img width="20" height="20" src="tex/items/${tuple[0]}.png">`;
 					button.innerHTML += tuple[0];
+					button.className = 'item';
 					if (tuple[1] > 1) {
 						button.innerHTML += ` <span>×${tuple[1]}</span>`
 					}
-					button.onmouseover = () => {
-						genericHovering = true;
+					button.onclick = () => {
+						client.wantToSell = tuple[0];
 					}
-					button.onmouseleave = () => {
-						genericHovering = false;
-					}
-					button.className = 'item';
+
+					let extra = document.createElement('span');
+					button.append(extra);
+
+					const rate = client.get_rate(tuple[0]) || ['', 0, 0];
+					let sell = rate[2];
+					extra.innerHTML = `&nbsp; - ${sell}ct`;
 					this.yourInventoryElement.append(button);
 
 					this.yourStamp = inventory.stamp;
 				}
+
+				let money = 0;
+				for (let tuple of inventory.tuples)
+					if (tuple[0] == 'money') {
+						money = tuple[1];
+						break;
+					}
+				let next = document.createElement('div');
+				next.innerHTML += `your money: ${money}<br />`;
+				this.yourInventoryElement.append(next);
 			}
 		}
 		static tick() {

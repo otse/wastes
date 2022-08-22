@@ -206,27 +206,27 @@ export namespace pawns {
 
 			let boxHead = new BoxGeometry(headSize, headSize, headSize, 1, 1, 1);
 			let materialHead = new MeshLambertMaterial({
-				color: this.outfit[3]
+				color: this.outfit[0]
 			});
 
 			let boxGasMask = new BoxGeometry(gasMaskSize, gasMaskSize, gasMaskSize, 1, 1, 1);
 			let materialGasMask = new MeshLambertMaterial({
-				color: this.outfit[3]
+				color: this.outfit[0]
 			});
 
 			let boxBody = new BoxGeometry(bodyWidth, bodyHeight, bodyThick, 1, 1, 1);
 			let materialBody = new MeshLambertMaterial({
-				color: this.outfit[0]
+				color: this.outfit[1]
 			});
 
 			let boxArms = new BoxGeometry(armsSize, armsHeight, armsSize, 1, 1, 1);
 			let materialArms = new MeshLambertMaterial({
-				color: this.outfit[1]
+				color: this.outfit[2]
 			});
 
 			let boxLegs = new BoxGeometry(legsSize, legsHeight, legsSize, 1, 1, 1);
 			let materialLegs = new MeshLambertMaterial({
-				color: this.outfit[2]
+				color: this.outfit[3]
 			});
 
 			// https://www.andersriggelsen.dk/glblendfunc.php
@@ -450,6 +450,10 @@ export namespace pawns {
 
 		}
 		animateBodyParts() {
+			if (!this.groups.legl) {
+				console.error('no groups leg left??');
+				return;
+			}
 			const legsSwoop = 0.8;
 			const armsSwoop = 0.5;
 			const rise = 0.5;

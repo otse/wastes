@@ -18,20 +18,24 @@ var objectmap: maps.scolormap
 var colormap: maps.scolormap
 
 var rates: [item: string, buy: number, sell: number][] = [
-	['scrap', 5, 2]
+	['scrap', 5, 2],
+	['junk', 5, 2],
+	['bullet', 2, 1],
 ]
 
-var prices: [item: string, value: number][] = [
+/*var prices: [item: string, value: number][] = [
 	['scrap', 5],
-	['junk', 5]
-]
+	['junk', 5],
+	['bullet', 1]
+]*/
 
 function start() {
 
-	
+	new slod.sworld();
+
 	// will observe the trashy vendor and shadow chicken
 	//let villageVantage = new slod.sgrid(slod.gworld, 2, 2);
-	
+
 	heightmap = new maps.scolormap('heightmap')
 	buildingmap = new maps.scolormap('buildingmap')
 	objectmap = new maps.scolormap('objectmap')
@@ -42,8 +46,7 @@ function start() {
 }
 
 function start2() {
-	
-	new slod.sworld();
+
 
 	function factory<type extends supersobj>(type: { new(): type }, pos: vec2, hints = {}) {
 		let obj = new type;
@@ -93,7 +96,7 @@ function start2() {
 	//vendor.pawntype = 'trader';
 	vendor.walkArea = new aabb2([38, 49], [41, 49]);
 	vendor.dialogue = 2;
-	vendor.wpos = [37, 48];
+	vendor.wpos = [37.5, 48.5];
 	vendor.subtype = 'trader';
 	vendor.isTrader = true;
 	vendor.inventory.add('scrap', -1);
@@ -148,6 +151,7 @@ class connection {
 	grid: slod.sgrid
 	sendDelay = 0
 	sentPlayer = false
+	json: any
 	constructor(public ws) {
 
 		console.log('new connection');
@@ -185,6 +189,24 @@ class connection {
 		send_message_to_all("A player disconnected", 3);
 	}
 	receive(json: any) {
+		this.json = json;
+		this.process();
+		/*if (json.player) {
+			if (this.you) {
+				//this.you.needsAnUpdate = true
+				this.you.needs_update(1); // todo stamp padding is so so
+				this.you.wpos = json.player.wpos;
+				this.you.angle = json.player.angle;
+				this.you.aiming = json.player.aiming;
+				this.you.sector?.swap(this.you);
+			}
+		}*/
+	}
+	process() {
+		if (!this.json)
+			return;
+		const json = this.json;
+		this.json = undefined;
 		if (json.player) {
 			if (this.you) {
 				//this.you.needsAnUpdate = true
@@ -208,6 +230,28 @@ class connection {
 			else
 				console.warn('cant talk to this entity');
 
+		}
+		if (json.wantToBuy) {
+			console.log('player wants to buy', json.wantToBuy);
+			let trader = this.you.freezingNpc as pawn;
+			if (trader && trader.type == 'pawn') {
+				if (trader.inventory.get(json.wantToBuy)) {
+					trader.inventory.remove(json.wantToBuy);
+					this.you.inventory.add(json.wantToBuy);
+				}
+			}
+		}
+		if (json.wantToSell) {
+			console.log('player wants to sell', json.wantToSell);
+			let trader = this.you.freezingNpc as pawn;
+			if (trader && trader.type == 'pawn') {
+				let tuple;
+				if (tuple = this.you.inventory.get(json.wantToSell)) {
+					this.you.inventory.remove(json.wantToSell);
+					trader.inventory.add(json.wantToSell);
+					console.log('after sell player has left', tuple[1]);
+				}
+			}
 		}
 		if (json.tradeWithId) {
 			console.log('player is trying to trade with', json.tradeWithId);
@@ -257,18 +301,20 @@ class connection {
 }
 
 const loop = () => {
-	slod.stamp++;
 	slod.ssector.tick_actives();
 	for (let con of connections) {
+		//con.process();
 		con.update_grid();
 		con.gather();
 		//con.ws.send();
 	}
+	slod.stamp++;
 };
 
-const outfits: [string, string, string, string][] = [
-	['#444139', '#444139', '#484c4c', '#31362c'],
-	['#484847', '#484847', '#44443f', '#2c3136']
+const outfits: [head: string, body: string, arms: string, legs: string][] = [
+	['#2f302e', '#414439', '#444139', '#3e3f38'], // default
+	['#2c3136', '#3a3935', '#3a3935', '#35393a'], // blueish
+	['#474348', '#454049', '#454049', '#484c4c'], // pink
 ]
 
 class supersobj extends slod.sobj {
@@ -319,7 +365,7 @@ class container extends supersobj {
 	constructor() {
 		super();
 		this.id = 'container_' + container.id++;
-		this.inventory = new inventory;
+		this.inventory = new inventory(this);
 	}
 	override gather(first: boolean) {
 		let upper = super.gather(first) as any;
@@ -457,7 +503,7 @@ class pawn extends npc {
 		this.id = 'pawn_' + pawn.id++;
 		this.outfit = outfits[Math.floor(Math.random() * outfits.length)];
 
-		this.inventory = new inventory;
+		this.inventory = new inventory(this);
 
 	}
 	override tick() {
@@ -491,6 +537,8 @@ class player extends pawn {
 		super();
 		this.type = 'pawn';
 		this.isPlayer = true;
+
+		this.inventory.add('money', 10);
 
 		this.inventory.add('bullet', 10);
 		this.inventory.add('cork', 50);
