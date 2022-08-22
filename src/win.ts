@@ -181,7 +181,7 @@ namespace win {
 
 			if (inventory && this.traderStamp != inventory.stamp || force) {
 				console.log('refresh trader inven');
-				
+
 				this.traderInventoryElement.innerHTML = ``;
 
 				for (let tuple of inventory.tuples) {
@@ -200,7 +200,7 @@ namespace win {
 
 					let extra = document.createElement('span');
 					button.append(extra);
-					
+
 					const rate = client.get_rate(tuple[0]) || ['', 0, 0];
 					let buy = rate[1];
 					extra.innerHTML = `&nbsp; - ${buy}ct`;
@@ -586,7 +586,9 @@ namespace win {
 		static focus?: objects.objected
 		static focusCur?: objects.objected
 		//static obj?: lod.obj
+		static stamp = 0
 		static modal?: modal
+		static inventoryElement?
 		static init() {
 			hooks.register('viewRClick', (view) => {
 				// We right clickd outside
@@ -600,45 +602,40 @@ namespace win {
 			this.modal?.deletor();
 			this.modal = undefined;
 			this.focusCur = undefined;
+			this.inventoryElement = undefined;
 		}
-		static call_once() {
+		static update_inventory_view(force) {
+			if (!this.modal)
+				return;
 
-			// We are trying to open a different container
-			if (this.modal !== undefined) {
-				this.modal?.deletor();
-				this.modal = undefined;
-				this.focusCur = undefined;
+			if (!this.inventoryElement) {
+				this.inventoryElement = document.createElement('div');
+				this.inventoryElement.className = 'inventory';
+				this.modal.content.append(this.inventoryElement);
 			}
 
-			/*if (this.modal !== undefined && this.focus != this.focusCur) {
-				this.modal?.deletor();
-				this.modal = undefined;
-				this.focusCur = undefined;
-			}*/
+			const cast = this.focus as objects.crate;
+			const inventory = cast.inventory;
 
-			if (this.focus) {
-				this.focusCur = this.focus;
+			if (this.stamp != inventory.stamp || force) {
+				this.stamp = inventory.stamp;
 
-				this.modal = new modal('container');
-				this.modal.content.innerHTML = ''
+				this.inventoryElement.innerHTML = ``;
 
-				const cast = this.focus as objects.crate;
-
-				for (let tuple of cast.inventory.tuples) {
+				for (let tuple of inventory.tuples) {
 					let item = document.createElement('div');
 					item.innerHTML = tuple[0];
 					if (tuple[1] > 1) {
-						item.innerHTML += ` <span>×${tuple[1]}</span>`
+						item.innerHTML += ` <span>×${tuple[1]}</span>`;
 					}
 					item.className = 'item';
-					this.modal.content.append(item);
+					this.inventoryElement.append(item);
 
 					item.onclick = (e) => {
-						console.log('woo');
-						item.remove();
+						console.log('clicked');
+						client.wantToGrab = [cast.id, tuple[0]] as any;
 						//cast.inventory.remove(tuple[0]);
 						//pawns.you?.inventory.add(tuple[0]);
-						genericHovering = false;
 					};
 					//item.onmouseover = () => { hoveringClickableElement = true; }
 					//item.onmouseleave = () => { hoveringClickableElement = false; }
@@ -646,55 +643,28 @@ namespace win {
 					//this.modal.content.innerHTML += item + '<br />';
 				}
 			}
+
 		}
-		/*static call(open: boolean, obj?: lod.obj, refresh = false) {
-			//this.anchor = obj;
-			if (!this.obj) {
-				this.obj = new lod.obj;
-				this.obj.size = [24, 40];
-				this.obj.wpos = [38, 49];
+		static call_once() {
+
+			// We are trying to open a different container
+			if (this.modal !== undefined) {
+				this.end();
 			}
 
-			if (open && !this.modal) {
+			if (this.focus) {
+				this.focusCur = this.focus;
+
 				this.modal = new modal('container');
-			}
-			else if (!open && this.modal) {
-				this.modal?.deletor();
-				this.obj = undefined;
-				this.modal = undefined;
-			}
-
-			if (this.modal && obj != this.obj) {
-				if (obj) {
-					this.obj = obj;
-					this.modal.update(obj.type + ' contents');
-				}
 				this.modal.content.innerHTML = ''
 
-				const cast = this.obj as objects.crate;
-				for (let tuple of cast.container.tuples) {
-					let button = document.createElement('div');
-					button.innerHTML = tuple[0];
-					if (tuple[1] > 1) {
-						button.innerHTML += ` <span>×${tuple[1]}</span>`
-					}
-					button.className = 'item';
-					this.modal.content.append(button);
-
-					button.onclick = (e) => {
-						console.log('woo');
-						button.remove();
-						cast.container.remove(tuple[0]);
-						pawns.you?.inventory.add(tuple[0]);
-					};
-
-					//this.modal.content.innerHTML += item + '<br />';
-				}
+				this.update_inventory_view(true);
 			}
-		}*/
+		}
 		static tick() {
 			if (this.modal && this.focusCur) {
 				this.modal.float(this.focusCur);
+				this.update_inventory_view(false);
 			}
 			if (this.focusCur && pts.distsimple(pawns.you.wpos, this.focusCur.wpos) > 1) {
 				this.end();

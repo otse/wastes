@@ -27,6 +27,7 @@ export namespace client {
 	export var interactingWith = ''
 	export var wantToBuy = ''
 	export var wantToSell = ''
+	export var wantToGrab = ''
 
 	export var tradeWithId = '';
 
@@ -128,8 +129,7 @@ export namespace client {
 
 				process_news(chickens.chicken, 'chicken', data,
 					(obj, sobj) => {
-						const { id, wpos, angle, sitting } = sobj;
-						obj.id = id;
+						const { wpos, angle, sitting } = sobj;
 						obj.wpos = wpos;
 						obj.angle = angle;
 						obj.sitting = sitting;
@@ -145,8 +145,7 @@ export namespace client {
 
 				process_news(objects.crate, 'crate', data,
 					(obj, sobj) => {
-						const { id, wpos, inventory } = sobj;
-						obj.id = id;
+						const { wpos, inventory } = sobj;
 						obj.wpos = wpos;
 						obj.inventory = inventory;
 						console.error('a new crate!');
@@ -160,8 +159,7 @@ export namespace client {
 
 				process_news(objects.shelves, 'shelves', data,
 					(obj, sobj) => {
-						const { id, wpos, inventory } = sobj;
-						obj.id = id;
+						const { wpos, inventory } = sobj;
 						obj.wpos = wpos;
 						obj.inventory = inventory;
 					},
@@ -220,6 +218,10 @@ export namespace client {
 				if (wantToSell) {
 					json.wantToSell = wantToSell;
 					wantToSell = '';
+				}
+				if (wantToGrab) {
+					json.wantToGrab = wantToGrab;
+					wantToGrab = '';
 				}
 				if (tradeWithId) {
 					json.tradeWithId = tradeWithId;

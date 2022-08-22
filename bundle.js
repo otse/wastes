@@ -2698,39 +2698,34 @@ void main() {
                 (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
                 this.modal = undefined;
                 this.focusCur = undefined;
+                this.inventoryElement = undefined;
             }
-            static call_once() {
-                var _a;
-                // We are trying to open a different container
-                if (this.modal !== undefined) {
-                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
-                    this.modal = undefined;
-                    this.focusCur = undefined;
+            static update_inventory_view(force) {
+                if (!this.modal)
+                    return;
+                if (!this.inventoryElement) {
+                    this.inventoryElement = document.createElement('div');
+                    this.inventoryElement.className = 'inventory';
+                    this.modal.content.append(this.inventoryElement);
                 }
-                /*if (this.modal !== undefined && this.focus != this.focusCur) {
-                    this.modal?.deletor();
-                    this.modal = undefined;
-                    this.focusCur = undefined;
-                }*/
-                if (this.focus) {
-                    this.focusCur = this.focus;
-                    this.modal = new modal('container');
-                    this.modal.content.innerHTML = '';
-                    const cast = this.focus;
-                    for (let tuple of cast.inventory.tuples) {
+                const cast = this.focus;
+                const inventory = cast.inventory;
+                if (this.stamp != inventory.stamp || force) {
+                    this.stamp = inventory.stamp;
+                    this.inventoryElement.innerHTML = ``;
+                    for (let tuple of inventory.tuples) {
                         let item = document.createElement('div');
                         item.innerHTML = tuple[0];
                         if (tuple[1] > 1) {
                             item.innerHTML += ` <span>×${tuple[1]}</span>`;
                         }
                         item.className = 'item';
-                        this.modal.content.append(item);
+                        this.inventoryElement.append(item);
                         item.onclick = (e) => {
-                            console.log('woo');
-                            item.remove();
+                            console.log('clicked');
+                            client.wantToGrab = [cast.id, tuple[0]];
                             //cast.inventory.remove(tuple[0]);
                             //pawns.you?.inventory.add(tuple[0]);
-                            win_1.genericHovering = false;
                         };
                         //item.onmouseover = () => { hoveringClickableElement = true; }
                         //item.onmouseleave = () => { hoveringClickableElement = false; }
@@ -2738,60 +2733,30 @@ void main() {
                     }
                 }
             }
-            /*static call(open: boolean, obj?: lod.obj, refresh = false) {
-                //this.anchor = obj;
-                if (!this.obj) {
-                    this.obj = new lod.obj;
-                    this.obj.size = [24, 40];
-                    this.obj.wpos = [38, 49];
+            static call_once() {
+                // We are trying to open a different container
+                if (this.modal !== undefined) {
+                    this.end();
                 }
-
-                if (open && !this.modal) {
+                if (this.focus) {
+                    this.focusCur = this.focus;
                     this.modal = new modal('container');
+                    this.modal.content.innerHTML = '';
+                    this.update_inventory_view(true);
                 }
-                else if (!open && this.modal) {
-                    this.modal?.deletor();
-                    this.obj = undefined;
-                    this.modal = undefined;
-                }
-
-                if (this.modal && obj != this.obj) {
-                    if (obj) {
-                        this.obj = obj;
-                        this.modal.update(obj.type + ' contents');
-                    }
-                    this.modal.content.innerHTML = ''
-
-                    const cast = this.obj as objects.crate;
-                    for (let tuple of cast.container.tuples) {
-                        let button = document.createElement('div');
-                        button.innerHTML = tuple[0];
-                        if (tuple[1] > 1) {
-                            button.innerHTML += ` <span>×${tuple[1]}</span>`
-                        }
-                        button.className = 'item';
-                        this.modal.content.append(button);
-
-                        button.onclick = (e) => {
-                            console.log('woo');
-                            button.remove();
-                            cast.container.remove(tuple[0]);
-                            pawns.you?.inventory.add(tuple[0]);
-                        };
-
-                        //this.modal.content.innerHTML += item + '<br />';
-                    }
-                }
-            }*/
+            }
             static tick() {
                 if (this.modal && this.focusCur) {
                     this.modal.float(this.focusCur);
+                    this.update_inventory_view(false);
                 }
                 if (this.focusCur && pts.distsimple(pawns$1.you.wpos, this.focusCur.wpos) > 1) {
                     this.end();
                 }
             }
         }
+        //static obj?: lod.obj
+        container.stamp = 0;
         win_1.container = container;
         class areatag {
             static call(open, area, refresh = false) {
@@ -3238,6 +3203,7 @@ void main() {
         client.interactingWith = '';
         client.wantToBuy = '';
         client.wantToSell = '';
+        client.wantToGrab = '';
         client.tradeWithId = '';
         function tick() {
             for (let id in client.objsId) {
@@ -3325,8 +3291,7 @@ void main() {
                         }
                     });
                     process_news(chickens$1.chicken, 'chicken', data, (obj, sobj) => {
-                        const { id, wpos, angle, sitting } = sobj;
-                        obj.id = id;
+                        const { wpos, angle, sitting } = sobj;
                         obj.wpos = wpos;
                         obj.angle = angle;
                         obj.sitting = sitting;
@@ -3339,8 +3304,7 @@ void main() {
                         // console.log('updating chicken!');
                     });
                     process_news(objects$1.crate, 'crate', data, (obj, sobj) => {
-                        const { id, wpos, inventory } = sobj;
-                        obj.id = id;
+                        const { wpos, inventory } = sobj;
                         obj.wpos = wpos;
                         obj.inventory = inventory;
                         console.error('a new crate!');
@@ -3351,8 +3315,7 @@ void main() {
                         // console.log('updating chicken!');
                     });
                     process_news(objects$1.shelves, 'shelves', data, (obj, sobj) => {
-                        const { id, wpos, inventory } = sobj;
-                        obj.id = id;
+                        const { wpos, inventory } = sobj;
                         obj.wpos = wpos;
                         obj.inventory = inventory;
                     }, (obj, sobj) => {
@@ -3404,6 +3367,10 @@ void main() {
                     if (client.wantToSell) {
                         json.wantToSell = client.wantToSell;
                         client.wantToSell = '';
+                    }
+                    if (client.wantToGrab) {
+                        json.wantToGrab = client.wantToGrab;
+                        client.wantToGrab = '';
                     }
                     if (client.tradeWithId) {
                         json.tradeWithId = client.tradeWithId;

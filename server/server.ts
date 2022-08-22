@@ -210,7 +210,7 @@ class connection {
 		if (json.player) {
 			if (this.you) {
 				//this.you.needsAnUpdate = true
-				this.you.needs_update(1); // todo stamp padding is so so
+				this.you.needs_update();
 				this.you.wpos = json.player.wpos;
 				this.you.angle = json.player.angle;
 				this.you.aiming = json.player.aiming;
@@ -240,6 +240,8 @@ class connection {
 					this.you.inventory.add(json.wantToBuy);
 				}
 			}
+			else
+				this.messages.push(['Not properly interacting with an NPC.', 2])
 		}
 		if (json.wantToSell) {
 			console.log('player wants to sell', json.wantToSell);
@@ -251,6 +253,17 @@ class connection {
 					trader.inventory.add(json.wantToSell);
 					console.log('after sell player has left', tuple[1]);
 				}
+			}
+			else
+				this.messages.push(['Not properly interacting with an NPC.', 2])
+		}
+		if (json.wantToGrab) {
+			console.log('player wants to grab ', json.wantToGrab);
+			const container = slod.byId[json.wantToGrab[0]] as container;
+			// todo do a distance check between the container and pawn
+			if (container && container.inventory.get(json.wantToGrab[1])) {
+				container.inventory.remove(json.wantToGrab[1]);
+				this.you.inventory.add(json.wantToGrab[1]);
 			}
 		}
 		if (json.tradeWithId) {
@@ -361,11 +374,20 @@ class supersobj extends slod.sobj {
 class container extends supersobj {
 	static id = 0
 	inventory: inventory
-
+	ticksAgo = 0
 	constructor() {
 		super();
 		this.id = 'container_' + container.id++;
 		this.inventory = new inventory(this);
+	}
+	override tick() {
+		this.ticksAgo++;
+		if (this.ticksAgo == 20)
+		{
+			// console.log('tick container', 1, 2, 3);
+			
+			this.ticksAgo = 0;
+		}
 	}
 	override gather(first: boolean) {
 		let upper = super.gather(first) as any;

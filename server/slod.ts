@@ -327,8 +327,8 @@ namespace slod {
 		remove_for_observer(grid: sgrid) {
 			grid.removes.push(this.id);
 		}
-		needs_update(padding = 0) {
-			this.stamp = slod.stamp + padding;
+		needs_update() {
+			this.stamp = slod.stamp;
 		}
 		show() {
 			if (this.on())
