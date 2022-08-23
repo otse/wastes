@@ -33,7 +33,7 @@ export namespace client {
 
 	export function tick() {
 		for (let id in objsId) {
-			let obj = objsId[id] as objects.objected;
+			let obj = objsId[id] as objects.superobject;
 			if (obj.type != 'you')
 				obj.nettick();
 		}
@@ -49,7 +49,7 @@ export namespace client {
 			//socket.send("My name is John");
 		};
 
-		function process_news<type extends objects.objected>(
+		function process_news<type extends objects.superobject>(
 			type: { new(): type }, typed: string, data: any, handle, update) {
 			for (let sobj of data.news) {
 				const { id } = sobj;

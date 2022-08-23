@@ -12,7 +12,7 @@ import objects from "./objects";
 import pts from "./pts";
 import ren from "./renderer";
 import shadows from "./shadows";
-import sprite, { SpriteMaterial } from "./sprite";
+import sprite, { hovering_sprites, SpriteMaterial } from "./sprite";
 import sprites from "./sprites";
 import tiles from "./tiles";
 import wastes from "./wastes";
@@ -25,9 +25,9 @@ export namespace pawns {
 
 	const wasterSprite = false;
 
-	type inventory = { stamp: number, tuples: [string, number][]}
+	type inventory = { stamp: number, tuples: [string, number][] }
 
-	export class pawn extends objects.objected {
+	export class pawn extends objects.superobject {
 		static noun = 'pawn'
 		isTrader = false
 		isPlayer = false
@@ -120,12 +120,12 @@ export namespace pawns {
 				this.wpos = venture;
 
 		}
-		override update() {
+		override obj_manual_update() {
 			this.tiled();
 			//this.stack();
-			super.update();
+			super.obj_manual_update();
 		}
-		override setup_context() {
+		override superobject_setup_context_menu() {
 			win.contextmenu.reset();
 			if (!this.isPlayer && this.type != 'you') {
 				win.contextmenu.options.options.push(["Talk to", () => {
@@ -438,7 +438,7 @@ export namespace pawns {
 				}
 				if (wastes.FOLLOW_CAMERA) {
 					this.wtorpos();
-					this.update();
+					this.obj_manual_update();
 					wastes.gview.follow = this;
 				}
 				else {
@@ -480,7 +480,7 @@ export namespace pawns {
 						this.shoot = true;
 
 						for (let obj of lod.ggrid.visibleObjs) {
-							const objected = obj as objects.objected;
+							const objected = obj as objects.superobject;
 							if (objected.isObjected && objected.tileBound) {
 								const test = objected.tileBound.ray(
 									{
@@ -514,7 +514,6 @@ export namespace pawns {
 
 			this.render();
 		}
-		mousing = false
 		swoop = 0
 		angle = 0
 		walkSmoother = 0
@@ -586,20 +585,17 @@ export namespace pawns {
 					sprite.material.color.setRGB(color[0], color[1], color[2]);
 				}
 
-				if (this.type != 'you' && sprite.mousedSquare(wastes.gview.mrpos) /*&& !this.mousing*/) {
-					this.mousing = true;
+				this.superobject_hovering_pass();
+				/*if (this.type != 'you' && sprite.mousedSquare(wastes.gview.mrpos)) {
+					hovering_sprites.hover(sprite);
 					sprite.material.color.set(GLOB.HOVER_COLOR);
-					if (this.type != 'you') {
-						win.contextmenu.focus = this;
-					}
 				}
-				else if (!sprite.mousedSquare(wastes.gview.mrpos) && this.mousing) {
-					if (win.contextmenu.focus == this)
-						win.contextmenu.focus = undefined;
+				else {
+					hovering_sprites.unhover(sprite);
 					setShadow();
-					this.mousing = false;
-				}
-				else if (this.tile && this.tile.hasDeck == false) {
+				}*/
+				
+				if (this.tile && this.tile.hasDeck == false) {
 					setShadow();
 				}
 				else {
@@ -612,7 +608,7 @@ export namespace pawns {
 			}
 
 			this.stack(['pawn', 'you', 'chicken', 'shelves', 'leaves', 'wall', 'door', 'roof', 'falsefront', 'panel']);
-			super.update();
+			super.obj_manual_update();
 		}
 		//tick() {
 		//}

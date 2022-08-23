@@ -10,7 +10,7 @@ import objects from "./objects";
 import pts from "./pts";
 import ren from "./renderer";
 import shadows from "./shadows";
-import sprite, { SpriteMaterial } from "./sprite";
+import sprite, { hovering_sprites, SpriteMaterial } from "./sprite";
 import sprites from "./sprites";
 import tiles from "./tiles";
 import wastes from "./wastes";
@@ -29,7 +29,7 @@ export namespace chickens {
 		lod.add(chicken2);*/
 	}
 
-	export class chicken extends objects.objected {
+	export class chicken extends objects.superobject {
 		netwpos: vec2 = [0, 0]
 		netangle = 0
 		group
@@ -105,10 +105,10 @@ export namespace chickens {
 				this.wpos = venture;
 
 		}
-		override update() {
+		override obj_manual_update() {
 			this.tiled();
 			//this.stack();
-			super.update();
+			super.obj_manual_update();
 		}
 		//override setup_context() {
 		//	win.contextmenu.reset();
@@ -402,7 +402,7 @@ export namespace chickens {
 			}
 
 		}
-		override setup_context() {
+		override superobject_setup_context_menu() {
 			win.contextmenu.reset();
 
 			win.contextmenu.options.options.push(["Examine", () => {
@@ -442,16 +442,19 @@ export namespace chickens {
 					color = shadows.calc(color, pts.round(this.wpos));
 					sprite.material.color.setRGB(color[0], color[1], color[2]);
 				}
-				if (sprite.mousedSquare(wastes.gview.mrpos)) {
+				this.superobject_hovering_pass();
+				/*if (sprite.mousedSquare(wastes.gview.mrpos)) {
 					sprite.material.color.set(GLOB.HOVER_COLOR);
-					win.contextmenu.focus = this;
+					hovering_sprites.hover(sprite);
+					//win.contextmenu.focus = this;
 				}
 				else if (!sprite.mousedSquare(wastes.gview.mrpos)) {
-					if (win.contextmenu.focus == this)
-						win.contextmenu.focus = undefined;
+					//if (win.contextmenu.focus == this)
+					//	win.contextmenu.focus = undefined;
+					hovering_sprites.unhover(sprite);
 					setShadow();
 				}
-				else if (this.tile && this.tile.hasDeck == false) {
+				else*/ if (this.tile && this.tile.hasDeck == false) {
 					setShadow();
 				}
 				else if (!this.tile) {
@@ -464,7 +467,7 @@ export namespace chickens {
 			this.stack(['pawn', 'you', 'chicken', 'leaves', 'wall', 'door', 'roof', 'falsefront', 'panel']);
 			//sprite.roffset = [.5, .5];
 			//this.tile!.paint();
-			super.update();
+			super.obj_manual_update();
 		}
 		//tick() {
 		//}

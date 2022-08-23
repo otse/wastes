@@ -10,7 +10,7 @@ import pts from "./pts";
 import aabb2 from "./aabb2";
 import tiles from "./tiles";
 import hooks from "./hooks";
-import sprite from "./sprite";
+import sprite, { hovering_sprites } from "./sprite";
 import sprites from "./sprites";
 import app from "./app";
 import colormap from "./colormap";
@@ -19,7 +19,7 @@ import colors from "./colors";
 
 namespace objects {
 
-	export function factory<type extends objected>(type: { new(): type }, pixel, pos, hints = {}) {
+	export function factory<type extends superobject>(type: { new(): type }, pixel, pos, hints = {}) {
 		let obj = new type;
 		obj.hints = hints;
 		obj.pixel = pixel;
@@ -176,8 +176,8 @@ namespace objects {
 		return false;
 	}
 
-	export class objected extends lod.obj {
-		static focus: objected
+	export class superobject extends lod.obj {
+		static focus: superobject
 		id = 'an_objected_0'
 		isObjected = true
 		paintTimer = 0
@@ -206,22 +206,37 @@ namespace objects {
 				this.paintedRed = true;
 			}
 		}
+		override hide() {
+			console.log('superobject hide');
+			hovering_sprites.unhover(this.shape as sprite);
+			super.hide();
+		}
 		nettick() {
 		}
+		superobject_hovering_pass() {
+			const sprite = this.shape as sprite;
+			if (!sprite)
+				return;
+			if (sprite.mousedSquare(wastes.gview.mrpos)) {
+				sprite.material.color.set('#c1ffcd');
+				hovering_sprites.hover(sprite);
+			}
+			else {
+				sprite.material.color.set('white');
+				hovering_sprites.unhover(sprite);
+			}
+		}
 		tick() {
+			//this.superobject_hovering_pass();
 			if (this.paintedRed) {
 				this.paintTimer += ren.delta;
 				if (this.paintTimer > 1) {
 					const sprite = this.shape as sprite;
 					sprite.material.color.set('white');
-					console.log('beo');
-
 					this.paintedRed = false;
 					this.paintTimer = 0;
 				}
 			}
-			//console.log('oo');
-
 		}
 		//update(): void {
 		//	this.tiled();
@@ -241,11 +256,11 @@ namespace objects {
 			if (this.shape)
 				(this.shape as sprite).rup = calc + this.heightAdd;
 		}
-		setup_context() { // override me
+		superobject_setup_context_menu() { // override me
 		}
 	}
 
-	export class wall extends objected {
+	export class wall extends superobject {
 		constructor() {
 			super(numbers.walls);
 			this.type = 'wall';
@@ -297,7 +312,7 @@ namespace objects {
 			}
 		}*/
 	}
-	export class deck extends objected {
+	export class deck extends superobject {
 		static timer = 0;
 		constructor() {
 			super(numbers.floors);
@@ -334,7 +349,7 @@ namespace objects {
 			}
 		}
 	}
-	export class porch extends objected {
+	export class porch extends superobject {
 		static timer = 0;
 		constructor() {
 			super(numbers.floors);
@@ -356,14 +371,14 @@ namespace objects {
 				binded: this,
 				tuple: sprites.dporch,
 				cell: this.cell,
-				orderBias: .0,
+				orderBias: -0.45,
 				color: color
 			});
 			this.stack();
 
 		}
 	}
-	export class rails extends objected {
+	export class rails extends superobject {
 		static timer = 0;
 		constructor() {
 			super(numbers.floors);
@@ -387,7 +402,7 @@ namespace objects {
 		override tick() {
 		}
 	}
-	export class deadtree extends objected {
+	export class deadtree extends superobject {
 		static timer = 0;
 		constructor() {
 			super(numbers.floors);
@@ -405,7 +420,7 @@ namespace objects {
 			this.stack();
 		}
 	}
-	export class decidtree extends objected {
+	export class decidtree extends superobject {
 		flowered = false
 		constructor() {
 			super(numbers.trees);
@@ -444,7 +459,7 @@ namespace objects {
 			}
 		}
 	}
-	export class treeleaves extends objected {
+	export class treeleaves extends superobject {
 		shaded = false
 		hasVines = false
 		constructor() {
@@ -544,7 +559,7 @@ namespace objects {
 			}
 		}
 	}
-	export class grass extends objected {
+	export class grass extends superobject {
 		constructor() {
 			super(numbers.roofs);
 			this.type = 'grass';
@@ -572,7 +587,7 @@ namespace objects {
 			this.stack();
 		}
 	}
-	export class wheat extends objected {
+	export class wheat extends superobject {
 		constructor() {
 			super(numbers.roofs);
 			this.type = 'wheat';
@@ -594,7 +609,7 @@ namespace objects {
 			this.stack();
 		}
 	}
-	export class panel extends objected {
+	export class panel extends superobject {
 		ticker = 0
 		constructor() {
 			super(numbers.roofs);
@@ -631,49 +646,11 @@ namespace objects {
 				this.ticker = 0;
 			}
 			//sprite.retransform();
-			sprite.update();
+			sprite.shape_manual_update();
 			//console.log('boo');
-
 		}
 	}
-	type item = [name: string, amount: number]
-	export class container {
-		obj?: objects.objected
-		tuples: item[] = []
-		constructor() {
-			if (Math.random() > .5)
-				this.add('beer');
-			if (Math.random() > .5)
-				this.add('string');
-			if (Math.random() > .5)
-				this.add('stone');
-		}
-		get(name: string) {
-			for (const tuple of this.tuples)
-				if (tuple[0] == name)
-					return tuple;
-		}
-		add(name: string) {
-			let tuple = this.get(name);
-			if (tuple)
-				tuple[1] += 1;
-			else
-				this.tuples.push([name, 1]);
-			this.tuples.sort();
-		}
-		remove(name: string) {
-			for (let i = this.tuples.length - 1; i >= 0; i--) {
-				const tuple = this.tuples[i];
-				if (tuple[0] == name) {
-					tuple[1] -= 1;
-					if (tuple[1] <= 0)
-						this.tuples.splice(i, 1);
-					break;
-				}
-			}
-		}
-	}
-	export class crate extends objected {
+	export class crate extends superobject {
 		inventory?: any
 		constructor() {
 			super(numbers.objs);
@@ -691,27 +668,15 @@ namespace objects {
 			});
 			this.stack(['roof', 'wall']);
 		}
-		mousing = false;
 		override tick() {
 			const sprite = this.shape as sprite;
 
 			if (!sprite)
 				return;
 
-			if (sprite.mousedSquare(wastes.gview.mrpos) /*&& !this.mousing*/) {
-				this.mousing = true;
-				sprite.material.color.set('#c1ffcd');
-				console.log('mover');
-				win.contextmenu.focus = this;
-			}
-			else if (!sprite.mousedSquare(wastes.gview.mrpos) && this.mousing) {
-				if (win.contextmenu.focus == this)
-					win.contextmenu.focus = undefined;
-				sprite.material.color.set('white');
-				this.mousing = false;
-			}
+			this.superobject_hovering_pass();
 		}
-		override setup_context() {
+		override superobject_setup_context_menu() {
 			console.log('setup context');
 
 			win.contextmenu.reset();
@@ -723,13 +688,11 @@ namespace objects {
 			}]);
 		}
 	}
-	export class shelves extends objected {
-		container: container = new container
+	export class shelves extends superobject {
 		constructor() {
 			super(numbers.objs);
 			this.type = 'shelves'
 			this.height = 25;
-			this.container.obj = this;
 		}
 		override create() {
 			this.tiled();
@@ -746,23 +709,12 @@ namespace objects {
 			//shape.rleft = 6;
 			this.stack(['roof', 'wall']);
 		}
-		mousing = false;
 		override tick() {
 			const sprite = this.shape as sprite;
 
-			if (sprite.mousedSquare(wastes.gview.mrpos) /*&& !this.mousing*/) {
-				this.mousing = true;
-				sprite.material.color.set('#c1ffcd');
-				win.contextmenu.focus = this;
-			}
-			else if (!sprite.mousedSquare(wastes.gview.mrpos) && this.mousing) {
-				if (win.contextmenu.focus == this)
-					win.contextmenu.focus = undefined;
-				sprite.material.color.set('white');
-				this.mousing = false;
-			}
+			this.superobject_hovering_pass();
 		}
-		override setup_context() {
+		override superobject_setup_context_menu() {
 			console.log('setup context');
 
 			win.contextmenu.reset();
@@ -772,12 +724,12 @@ namespace objects {
 				win.container.focus = this;
 				win.container.call_once();
 			}]);
-			win.contextmenu.options.options.push(["Store", () => {
+			/*win.contextmenu.options.options.push(["Store", () => {
 				return pts.distsimple(pawns.you.wpos, this.wpos) < 1;
 			}, () => {
 				//win.container.crate = this;
 				//win.container.call_once();
-			}]);
+			}]);*/
 			win.contextmenu.options.options.push(["Examine", () => {
 				return pts.distsimple(pawns.you.wpos, this.wpos) < 10;
 			}, () => {
@@ -786,7 +738,7 @@ namespace objects {
 			}]);
 		}
 	}
-	export class roof extends objected {
+	export class roof extends superobject {
 		shaded = false
 		constructor() {
 			super(numbers.roofs);
@@ -826,7 +778,7 @@ namespace objects {
 				sprite.mesh.visible = true;
 		}
 	}
-	export class falsefront extends objected {
+	export class falsefront extends superobject {
 		constructor() {
 			super(numbers.roofs);
 			this.type = 'falsefront'
@@ -855,7 +807,7 @@ namespace objects {
 				sprite.mesh.visible = true;
 		}
 	}
-	export class acidbarrel extends objected {
+	export class acidbarrel extends superobject {
 		constructor() {
 			super(numbers.objs);
 			this.type = 'acidbarrel'
@@ -873,7 +825,7 @@ namespace objects {
 		}
 	}
 
-	export class door extends objected {
+	export class door extends superobject {
 		static order = .7;
 		open = false
 		cell: vec2
@@ -909,7 +861,7 @@ namespace objects {
 					sprite.vars.cell = pts.subtract(this.cell, [1, 0]);
 					sprite.vars.orderBias = 1.55;
 					sprite.retransform();
-					sprite.update();
+					sprite.shape_manual_update();
 					this.open = true;
 					break;
 				}
@@ -919,13 +871,13 @@ namespace objects {
 				sprite.vars.cell = this.cell;
 				sprite.vars.orderBias = door.order;
 				sprite.retransform();
-				sprite.update();
+				sprite.shape_manual_update();
 				this.open = false;
 			}
 		}
 	}
 
-	export class shrubs extends objected {
+	export class shrubs extends superobject {
 		constructor() {
 			super(numbers.trees);
 			this.type = 'shrubs'

@@ -10,6 +10,7 @@ import objects from "./objects";
 import areas from "./areas";
 import hooks from "./hooks";
 import { client } from "./client";
+import { hovering_sprites } from "./sprite";
 
 namespace win {
 
@@ -99,6 +100,8 @@ namespace win {
 		}
 		deletor() {
 			this.element.remove();
+			if (this.hovering)
+				genericHovering = false;
 		}
 		float(anchor: lod.obj, add: vec2 = [0, 0]) {
 
@@ -371,7 +374,7 @@ namespace win {
 	}
 
 	export class contextmenu {
-		static focus?: objects.objected
+		static focus?: objects.superobject
 		static focusCur?: lod.obj
 		static modal?: modal
 		static buttons: any = []
@@ -402,10 +405,18 @@ namespace win {
 
 			hooks.register('viewRClick', (view) => {
 				console.log('contextmenu on ?', this.focus);
+				if (!hovering_sprites.sprites.length)
+					this.focus = undefined;
+
+				console.log('we got hovering sprites', hovering_sprites.sprites.length);
+				hovering_sprites.sort_closest_to_mouse();
+
+				if (hovering_sprites.sprites.length)
+					this.focus = hovering_sprites.sprites[0].vars.binded as objects.superobject;
 
 				// We have a focus, but no window! This is the easiest scenario.
 				if (this.focus && !this.modal) {
-					this.focus.setup_context();
+					this.focus.superobject_setup_context_menu();
 					this.focusCur = this.focus;
 					this.call_once();
 				}
@@ -420,7 +431,7 @@ namespace win {
 				// We have an open modal, but focus on a different sprite: recreate it
 				else if (this.modal && this.focus && this.focus != this.focusCur) {
 					this.end();
-					this.focus!.setup_context();
+					this.focus!.superobject_setup_context_menu();
 					this.focusCur = this.focus;
 					this.call_once();
 				}
@@ -478,6 +489,9 @@ namespace win {
 			}
 		}
 		static tick() {
+			//for (let hover of hoveringSprites) {
+			//	
+			//}
 			if (this.modal && this.focusCur) {
 				this.update();
 				this.modal.float(this.focusCur, [0, 0]);
@@ -551,17 +565,22 @@ namespace win {
 		static change() {
 			const which = 1;
 
-			this.modal!.content.innerHTML = this.talkingToCur!.dialogue[this.where[1]][0] + "&nbsp;"
-			this.modal!.content.onmouseover = () => { genericHovering = true; }
-			this.modal!.content.onmouseleave = () => { genericHovering = false; }
+			this.modal!.content.innerHTML = ''; // reset
+
+			let pawnImage = document.createElement('div');
+			pawnImage.className = 'pawnimage';
+			this.modal!.content.append(pawnImage);
+
+			let textArea = document.createElement('div');
+			textArea.innerHTML = this.talkingToCur!.dialogue[this.where[1]][0] + "&nbsp;";
+			this.modal!.content.append(textArea);
 
 			const next = this.talkingToCur!.dialogue[this.where[1]][1];
-
 			if (next != -1) {
 				let button = document.createElement('div');
 				button.innerHTML = '>>'
 				button.className = 'button';
-				this.modal!.content.append(button);
+				textArea.append(button);
 
 				button.onclick = (e) => {
 					console.log('woo');
@@ -583,8 +602,8 @@ namespace win {
 	}
 
 	export class container {
-		static focus?: objects.objected
-		static focusCur?: objects.objected
+		static focus?: objects.superobject
+		static focusCur?: objects.superobject
 		//static obj?: lod.obj
 		static stamp = 0
 		static modal?: modal

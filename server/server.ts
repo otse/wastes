@@ -103,6 +103,8 @@ function start2() {
 	vendor.inventory.add('junk', -1);
 	slod.add(vendor);
 
+
+	//for (let i = 0; i < 100; i++) {
 	let guard = new pawn;
 	guard.wpos = [45, 56];
 	//peacekeeper.outfit = []
@@ -110,7 +112,18 @@ function start2() {
 	guard.subtype = 'guard';
 	guard.walkArea = new aabb2([43, 51], [46, 58]);
 	slod.add(guard);
+	//}
 
+	let talker = new pawn;
+	talker.wpos = [43.8, 61.2];
+	//peacekeeper.outfit = []
+	talker.dialogue = 4;
+	talker.angle = Math.PI / 2;
+	talker.subtype = 'civilian';
+	//talker.walkArea = new aabb2([43, 51], [46, 58]);
+	slod.add(talker);
+
+	//}
 	for (let i = 0; i < 2; i++) {
 		let shadowChicken = new chicken;
 		shadowChicken.wpos = [42, 53];
@@ -382,10 +395,9 @@ class container extends supersobj {
 	}
 	override tick() {
 		this.ticksAgo++;
-		if (this.ticksAgo == 20)
-		{
+		if (this.ticksAgo == 20) {
 			// console.log('tick container', 1, 2, 3);
-			
+
 			this.ticksAgo = 0;
 		}
 	}

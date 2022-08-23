@@ -292,7 +292,7 @@ namespace lod {
 				return;
 			this.counts[0]++;
 			this.create();
-			this.update();
+			this.obj_manual_update();
 			this.shape?.show();
 		}
 		hide() {
@@ -319,9 +319,9 @@ namespace lod {
 		delete() { // implement me
 			// console.warn(' (lod) obj.delete ');
 		}
-		update() { // implement me
+		obj_manual_update() { // implement me
 			this.wtorpos();
-			this.shape?.update();
+			this.shape?.shape_manual_update();
 		}
 		is_type(types: string[]) {
 			return types.indexOf(this.type) != -1;
@@ -342,7 +342,7 @@ namespace lod {
 			this.bindObj.shape = this;
 			this.counts[1]++;
 		}
-		update() { // implement me
+		shape_manual_update() { // implement me
 		}
 		create() { // implement me
 		}

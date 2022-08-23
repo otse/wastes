@@ -13,8 +13,9 @@ import pawns from "./pawns";
 
 export namespace tiles {
 
-	const mapSize = 100
+	const mapSize = 100;
 
+	const dont_show_tiles = false;
 
 	export var started = false;
 
@@ -24,7 +25,7 @@ export namespace tiles {
 
 	export var hovering: tile | undefined = undefined
 
-	export function get(pos: vec2) : tile | undefined {
+	export function get(pos: vec2): tile | undefined {
 		if (arrays[pos[1]])
 			return arrays[pos[1]][pos[0]];
 	}
@@ -104,7 +105,7 @@ export namespace tiles {
 			this.wpos = wpos;
 
 			let pixel = wastes.colormap.pixel(this.wpos);
-			
+
 			if (pixel.is_invalid_pixel()) {
 				// We are fog of war
 				console.log('invalid pixel');
@@ -177,7 +178,8 @@ export namespace tiles {
 				this.color = shadows.calc(this.color, this.wpos);
 			}
 			this.myOrderBias = -0.5;// + (this.z / 4);// + (this.height / 10);
-
+			if (dont_show_tiles)
+				return
 			let shape = new sprite({
 				binded: this,
 				tuple: this.tuple,

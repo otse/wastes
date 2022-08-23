@@ -6,6 +6,7 @@ import pts from "./pts";
 import ren from "./renderer";
 import sprites from "./sprites";
 import tiles from "./tiles";
+import wastes from "./wastes";
 
 interface SpriteParameters {
 	binded: lod.obj,
@@ -21,7 +22,32 @@ export namespace sprite {
 	export type params = sprite['vars'];
 };
 
-const useWireframe = false;
+const show_wire_frames = false;
+
+// hovering sprites was made for contextmenu to get a more accurate sprite
+export namespace hovering_sprites {
+	export var sprites: sprite[] = []
+	export function hover(sprite: sprite) {
+		let i = sprites.indexOf(sprite);
+		if (i == -1)
+			sprites.push(sprite);
+	}
+	export function unhover(sprite: sprite) {
+		let i = sprites.indexOf(sprite);
+		if (i != -1)
+			sprites.splice(i, 1);
+	}
+	export function sort_closest_to_mouse() {
+		sprites.sort((a: sprite, b: sprite) => {
+			const dist_a = pts.distsimple(wastes.gview.mrpos, a.aabbScreen.center());
+			const dist_b = pts.distsimple(wastes.gview.mrpos, b.aabbScreen.center());
+			if (dist_a < dist_b)
+				return -1;
+			else
+				return 1;
+		})
+	}
+};
 
 export class sprite extends lod.shape {
 	dimetric = true
@@ -56,9 +82,12 @@ export class sprite extends lod.shape {
 		if (pts.together(this.subsize))
 			size = this.subsize;
 
-		this.aabbScreen = new aabb2([0, 0], size);
 		let calc = this.calc;
+
+		this.aabbScreen = new aabb2([0, 0], size);
 		calc = pts.subtract(calc, pts.divide(size, 2));
+
+		//calc = pts.add(calc, [this.rleft, this.rup + this.rup2]);
 		this.aabbScreen.translate(calc);
 	}
 	mousedSquare(mouse: Vec2) {
@@ -68,13 +97,14 @@ export class sprite extends lod.shape {
 	override dispose() {
 		if (!this.mesh)
 			return;
+		hovering_sprites.unhover(this);
 		this.geometry?.dispose();
 		this.material?.dispose();
 		this.mesh.parent?.remove(this.mesh);
-		if (useWireframe)
+		if (show_wire_frames)
 			this.wireframe.parent?.remove(this.wireframe);
 	}
-	override update() {
+	override shape_manual_update() {
 		if (!this.mesh)
 			return;
 		const obj = this.vars.binded;
@@ -103,7 +133,7 @@ export class sprite extends lod.shape {
 			this.mesh.renderOrder = -pos[1] + pos[0] + this.vars.orderBias! + zBasedBias;
 			this.mesh.rotation.z = this.vars.binded.ro;
 			this.mesh.updateMatrix();
-			if (useWireframe) {
+			if (show_wire_frames) {
 				this.wireframe.position.fromArray([...calc, 0]);
 				this.wireframe.renderOrder = this.mesh.renderOrder + 10;
 				this.wireframe.updateMatrix();
@@ -143,14 +173,14 @@ export class sprite extends lod.shape {
 		this.vars.binded.sector?.group.add(this.mesh);
 		ren.groups.axisSwap.add(this.mesh);
 
-		if (useWireframe) {
+		if (show_wire_frames) {
 			this.wireframe = new Mesh(this.geometry, new MeshLambertMaterial({ wireframe: true }));
 			this.wireframe.frustumCulled = false;
 			this.wireframe.matrixAutoUpdate = false;
 			ren.groups.axisSwap.add(this.wireframe);
 		}
 
-		this.update();
+		this.shape_manual_update();
 	}
 };
 

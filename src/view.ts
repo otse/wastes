@@ -19,7 +19,6 @@ export class view {
 	zooms = [1, 0.5, 0.33, 0.2, 0.1, 0.05]
 	wpos: vec2 = [44, 52]
 	rpos: vec2 = [0, 0]
-	mpos: vec2 = [0, 0]
 	mwpos: vec2 = [0, 0]
 	mrpos: vec2 = [0, 0]
 

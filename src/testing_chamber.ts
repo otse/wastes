@@ -77,7 +77,7 @@ namespace testing_chamber {
 			this.wpos[0] += this.float[0];
 			this.wpos[1] -= this.float[1];
 			this.ro += this.rate;
-			super.update();
+			super.obj_manual_update();
 			this.sector?.swap(this);
 		}
 	}

@@ -4,7 +4,7 @@ import sprite from "./sprite";
 import sprites from "./sprites";
 
 export namespace fences {
-	export class fence extends objects.objected {
+	export class fence extends objects.superobject {
 		static camera
 		static target
 		static made = false

@@ -794,7 +794,7 @@ void main() {
                     return;
                 this.counts[0]++;
                 this.create();
-                this.update();
+                this.obj_manual_update();
                 (_a = this.shape) === null || _a === void 0 ? void 0 : _a.show();
             }
             hide() {
@@ -822,10 +822,10 @@ void main() {
             delete() {
                 // console.warn(' (lod) obj.delete ');
             }
-            update() {
+            obj_manual_update() {
                 var _a;
                 this.wtorpos();
-                (_a = this.shape) === null || _a === void 0 ? void 0 : _a.update();
+                (_a = this.shape) === null || _a === void 0 ? void 0 : _a.shape_manual_update();
             }
             is_type(types) {
                 return types.indexOf(this.type) != -1;
@@ -840,7 +840,7 @@ void main() {
                 this.bindObj.shape = this;
                 this.counts[1]++;
             }
-            update() {
+            shape_manual_update() {
             }
             create() {
             }
@@ -928,6 +928,34 @@ void main() {
     })(sprites || (sprites = {}));
     var sprites$1 = sprites;
 
+    // hovering sprites was made for contextmenu to get a more accurate sprite
+    var hovering_sprites;
+    (function (hovering_sprites) {
+        hovering_sprites.sprites = [];
+        function hover(sprite) {
+            let i = hovering_sprites.sprites.indexOf(sprite);
+            if (i == -1)
+                hovering_sprites.sprites.push(sprite);
+        }
+        hovering_sprites.hover = hover;
+        function unhover(sprite) {
+            let i = hovering_sprites.sprites.indexOf(sprite);
+            if (i != -1)
+                hovering_sprites.sprites.splice(i, 1);
+        }
+        hovering_sprites.unhover = unhover;
+        function sort_closest_to_mouse() {
+            hovering_sprites.sprites.sort((a, b) => {
+                const dist_a = pts.distsimple(wastes.gview.mrpos, a.aabbScreen.center());
+                const dist_b = pts.distsimple(wastes.gview.mrpos, b.aabbScreen.center());
+                if (dist_a < dist_b)
+                    return -1;
+                else
+                    return 1;
+            });
+        }
+        hovering_sprites.sort_closest_to_mouse = sort_closest_to_mouse;
+    })(hovering_sprites || (hovering_sprites = {}));
     class sprite extends lod$1.shape {
         constructor(vars) {
             super(vars.binded, numbers.sprites);
@@ -952,9 +980,10 @@ void main() {
             let size = this.vars.binded.size;
             if (pts.together(this.subsize))
                 size = this.subsize;
-            this.aabbScreen = new aabb2([0, 0], size);
             let calc = this.calc;
+            this.aabbScreen = new aabb2([0, 0], size);
             calc = pts.subtract(calc, pts.divide(size, 2));
+            //calc = pts.add(calc, [this.rleft, this.rup + this.rup2]);
             this.aabbScreen.translate(calc);
         }
         mousedSquare(mouse) {
@@ -966,11 +995,12 @@ void main() {
             var _a, _b, _c;
             if (!this.mesh)
                 return;
+            hovering_sprites.unhover(this);
             (_a = this.geometry) === null || _a === void 0 ? void 0 : _a.dispose();
             (_b = this.material) === null || _b === void 0 ? void 0 : _b.dispose();
             (_c = this.mesh.parent) === null || _c === void 0 ? void 0 : _c.remove(this.mesh);
         }
-        update() {
+        shape_manual_update() {
             if (!this.mesh)
                 return;
             const obj = this.vars.binded;
@@ -1026,7 +1056,7 @@ void main() {
             this.mesh.matrixAutoUpdate = false;
             (_a = this.vars.binded.sector) === null || _a === void 0 ? void 0 : _a.group.add(this.mesh);
             ren$1.groups.axisSwap.add(this.mesh);
-            this.update();
+            this.shape_manual_update();
         }
     }
     function SpriteMaterial(parameters, uniforms) {
@@ -1108,7 +1138,7 @@ void main() {
                 this.wpos[0] += this.float[0];
                 this.wpos[1] -= this.float[1];
                 this.ro += this.rate;
-                super.update();
+                super.obj_manual_update();
                 (_a = this.sector) === null || _a === void 0 ? void 0 : _a.swap(this);
             }
         }
@@ -1167,7 +1197,7 @@ void main() {
                 var _a;
                 if (this.obj) {
                     this.obj.rpos = wastes.gview.mrpos;
-                    (_a = this.obj.shape) === null || _a === void 0 ? void 0 : _a.update();
+                    (_a = this.obj.shape) === null || _a === void 0 ? void 0 : _a.shape_manual_update();
                     this.obj.shape;
                 }
             }
@@ -1482,7 +1512,7 @@ void main() {
             return false;
         }
         objects.is_solid = is_solid;
-        class objected extends lod$1.obj {
+        class superobject extends lod$1.obj {
             constructor(counts) {
                 super(counts);
                 this.id = 'an_objected_0';
@@ -1506,20 +1536,37 @@ void main() {
                     this.paintedRed = true;
                 }
             }
+            hide() {
+                console.log('superobject hide');
+                hovering_sprites.unhover(this.shape);
+                super.hide();
+            }
             nettick() {
             }
+            superobject_hovering_pass() {
+                const sprite = this.shape;
+                if (!sprite)
+                    return;
+                if (sprite.mousedSquare(wastes.gview.mrpos)) {
+                    sprite.material.color.set('#c1ffcd');
+                    hovering_sprites.hover(sprite);
+                }
+                else {
+                    sprite.material.color.set('white');
+                    hovering_sprites.unhover(sprite);
+                }
+            }
             tick() {
+                //this.superobject_hovering_pass();
                 if (this.paintedRed) {
                     this.paintTimer += ren$1.delta;
                     if (this.paintTimer > 1) {
                         const sprite = this.shape;
                         sprite.material.color.set('white');
-                        console.log('beo');
                         this.paintedRed = false;
                         this.paintTimer = 0;
                     }
                 }
-                //console.log('oo');
             }
             //update(): void {
             //	this.tiled();
@@ -1539,11 +1586,11 @@ void main() {
                 if (this.shape)
                     this.shape.rup = calc + this.heightAdd;
             }
-            setup_context() {
+            superobject_setup_context_menu() {
             }
         }
-        objects.objected = objected;
-        class wall extends objected {
+        objects.superobject = superobject;
+        class wall extends superobject {
             constructor() {
                 super(numbers.walls);
                 this.type = 'wall';
@@ -1581,7 +1628,7 @@ void main() {
             }
         }
         objects.wall = wall;
-        class deck extends objected {
+        class deck extends superobject {
             constructor() {
                 super(numbers.floors);
                 this.type = 'deck';
@@ -1618,7 +1665,7 @@ void main() {
         }
         deck.timer = 0;
         objects.deck = deck;
-        class porch extends objected {
+        class porch extends superobject {
             constructor() {
                 super(numbers.floors);
                 this.type = 'porch';
@@ -1637,7 +1684,7 @@ void main() {
                     binded: this,
                     tuple: sprites$1.dporch,
                     cell: this.cell,
-                    orderBias: .0,
+                    orderBias: -0.45,
                     color: color
                 });
                 this.stack();
@@ -1645,7 +1692,7 @@ void main() {
         }
         porch.timer = 0;
         objects.porch = porch;
-        class rails extends objected {
+        class rails extends superobject {
             constructor() {
                 super(numbers.floors);
                 this.type = 'porch';
@@ -1670,7 +1717,7 @@ void main() {
         }
         rails.timer = 0;
         objects.rails = rails;
-        class deadtree extends objected {
+        class deadtree extends superobject {
             constructor() {
                 super(numbers.floors);
                 this.type = 'tree';
@@ -1689,7 +1736,7 @@ void main() {
         }
         deadtree.timer = 0;
         objects.deadtree = deadtree;
-        class decidtree extends objected {
+        class decidtree extends superobject {
             constructor() {
                 super(numbers.trees);
                 this.flowered = false;
@@ -1725,7 +1772,7 @@ void main() {
             }
         }
         objects.decidtree = decidtree;
-        class treeleaves extends objected {
+        class treeleaves extends superobject {
             constructor() {
                 super(numbers.leaves);
                 this.shaded = false;
@@ -1814,7 +1861,7 @@ void main() {
             }
         }
         objects.treeleaves = treeleaves;
-        class grass extends objected {
+        class grass extends superobject {
             constructor() {
                 super(numbers.roofs);
                 this.type = 'grass';
@@ -1843,7 +1890,7 @@ void main() {
             }
         }
         objects.grass = grass;
-        class wheat extends objected {
+        class wheat extends superobject {
             constructor() {
                 super(numbers.roofs);
                 this.type = 'wheat';
@@ -1865,7 +1912,7 @@ void main() {
             }
         }
         objects.wheat = wheat;
-        class panel extends objected {
+        class panel extends superobject {
             constructor() {
                 super(numbers.roofs);
                 this.ticker = 0;
@@ -1885,46 +1932,9 @@ void main() {
             }
         }
         objects.panel = panel;
-        class container {
-            constructor() {
-                this.tuples = [];
-                if (Math.random() > .5)
-                    this.add('beer');
-                if (Math.random() > .5)
-                    this.add('string');
-                if (Math.random() > .5)
-                    this.add('stone');
-            }
-            get(name) {
-                for (const tuple of this.tuples)
-                    if (tuple[0] == name)
-                        return tuple;
-            }
-            add(name) {
-                let tuple = this.get(name);
-                if (tuple)
-                    tuple[1] += 1;
-                else
-                    this.tuples.push([name, 1]);
-                this.tuples.sort();
-            }
-            remove(name) {
-                for (let i = this.tuples.length - 1; i >= 0; i--) {
-                    const tuple = this.tuples[i];
-                    if (tuple[0] == name) {
-                        tuple[1] -= 1;
-                        if (tuple[1] <= 0)
-                            this.tuples.splice(i, 1);
-                        break;
-                    }
-                }
-            }
-        }
-        objects.container = container;
-        class crate extends objected {
+        class crate extends superobject {
             constructor() {
                 super(numbers.objs);
-                this.mousing = false;
                 this.type = 'crate';
                 this.height = 17;
             }
@@ -1943,20 +1953,9 @@ void main() {
                 const sprite = this.shape;
                 if (!sprite)
                     return;
-                if (sprite.mousedSquare(wastes.gview.mrpos) /*&& !this.mousing*/) {
-                    this.mousing = true;
-                    sprite.material.color.set('#c1ffcd');
-                    console.log('mover');
-                    win$1.contextmenu.focus = this;
-                }
-                else if (!sprite.mousedSquare(wastes.gview.mrpos) && this.mousing) {
-                    if (win$1.contextmenu.focus == this)
-                        win$1.contextmenu.focus = undefined;
-                    sprite.material.color.set('white');
-                    this.mousing = false;
-                }
+                this.superobject_hovering_pass();
             }
-            setup_context() {
+            superobject_setup_context_menu() {
                 console.log('setup context');
                 win$1.contextmenu.reset();
                 win$1.contextmenu.options.options.push(["See contents", () => {
@@ -1968,14 +1967,11 @@ void main() {
             }
         }
         objects.crate = crate;
-        class shelves extends objected {
+        class shelves extends superobject {
             constructor() {
                 super(numbers.objs);
-                this.container = new container;
-                this.mousing = false;
                 this.type = 'shelves';
                 this.height = 25;
-                this.container.obj = this;
             }
             create() {
                 this.tiled();
@@ -1993,20 +1989,10 @@ void main() {
                 this.stack(['roof', 'wall']);
             }
             tick() {
-                const sprite = this.shape;
-                if (sprite.mousedSquare(wastes.gview.mrpos) /*&& !this.mousing*/) {
-                    this.mousing = true;
-                    sprite.material.color.set('#c1ffcd');
-                    win$1.contextmenu.focus = this;
-                }
-                else if (!sprite.mousedSquare(wastes.gview.mrpos) && this.mousing) {
-                    if (win$1.contextmenu.focus == this)
-                        win$1.contextmenu.focus = undefined;
-                    sprite.material.color.set('white');
-                    this.mousing = false;
-                }
+                this.shape;
+                this.superobject_hovering_pass();
             }
-            setup_context() {
+            superobject_setup_context_menu() {
                 console.log('setup context');
                 win$1.contextmenu.reset();
                 win$1.contextmenu.options.options.push(["See contents", () => {
@@ -2015,12 +2001,12 @@ void main() {
                         win$1.container.focus = this;
                         win$1.container.call_once();
                     }]);
-                win$1.contextmenu.options.options.push(["Store", () => {
-                        return pts.distsimple(pawns$1.you.wpos, this.wpos) < 1;
-                    }, () => {
-                        //win.container.crate = this;
-                        //win.container.call_once();
-                    }]);
+                /*win.contextmenu.options.options.push(["Store", () => {
+                    return pts.distsimple(pawns.you.wpos, this.wpos) < 1;
+                }, () => {
+                    //win.container.crate = this;
+                    //win.container.call_once();
+                }]);*/
                 win$1.contextmenu.options.options.push(["Examine", () => {
                         return pts.distsimple(pawns$1.you.wpos, this.wpos) < 10;
                     }, () => {
@@ -2030,7 +2016,7 @@ void main() {
             }
         }
         objects.shelves = shelves;
-        class roof extends objected {
+        class roof extends superobject {
             constructor() {
                 super(numbers.roofs);
                 this.shaded = false;
@@ -2072,7 +2058,7 @@ void main() {
             }
         }
         objects.roof = roof;
-        class falsefront extends objected {
+        class falsefront extends superobject {
             constructor() {
                 super(numbers.roofs);
                 this.type = 'falsefront';
@@ -2102,7 +2088,7 @@ void main() {
             }
         }
         objects.falsefront = falsefront;
-        class acidbarrel extends objected {
+        class acidbarrel extends superobject {
             constructor() {
                 super(numbers.objs);
                 this.type = 'acidbarrel';
@@ -2120,7 +2106,7 @@ void main() {
             }
         }
         objects.acidbarrel = acidbarrel;
-        class door extends objected {
+        class door extends superobject {
             constructor() {
                 super(numbers.walls);
                 this.open = false;
@@ -2154,7 +2140,7 @@ void main() {
                         sprite.vars.cell = pts.subtract(this.cell, [1, 0]);
                         sprite.vars.orderBias = 1.55;
                         sprite.retransform();
-                        sprite.update();
+                        sprite.shape_manual_update();
                         this.open = true;
                         break;
                     }
@@ -2164,14 +2150,14 @@ void main() {
                     sprite.vars.cell = this.cell;
                     sprite.vars.orderBias = door.order;
                     sprite.retransform();
-                    sprite.update();
+                    sprite.shape_manual_update();
                     this.open = false;
                 }
             }
         }
         door.order = .7;
         objects.door = door;
-        class shrubs extends objected {
+        class shrubs extends superobject {
             constructor() {
                 super(numbers.trees);
                 this.type = 'shrubs';
@@ -2255,6 +2241,8 @@ void main() {
             }
             deletor() {
                 this.element.remove();
+                if (this.hovering)
+                    win_1.genericHovering = false;
             }
             float(anchor, add = [0, 0]) {
                 //let pos = this.anchor.rtospos([-1.5, 2.5]);
@@ -2514,9 +2502,15 @@ void main() {
                 });
                 hooks.register('viewRClick', (view) => {
                     console.log('contextmenu on ?', this.focus);
+                    if (!hovering_sprites.sprites.length)
+                        this.focus = undefined;
+                    console.log('we got hovering sprites', hovering_sprites.sprites.length);
+                    hovering_sprites.sort_closest_to_mouse();
+                    if (hovering_sprites.sprites.length)
+                        this.focus = hovering_sprites.sprites[0].vars.binded;
                     // We have a focus, but no window! This is the easiest scenario.
                     if (this.focus && !this.modal) {
-                        this.focus.setup_context();
+                        this.focus.superobject_setup_context_menu();
                         this.focusCur = this.focus;
                         this.call_once();
                     }
@@ -2531,7 +2525,7 @@ void main() {
                     // We have an open modal, but focus on a different sprite: recreate it
                     else if (this.modal && this.focus && this.focus != this.focusCur) {
                         this.end();
-                        this.focus.setup_context();
+                        this.focus.superobject_setup_context_menu();
                         this.focusCur = this.focus;
                         this.call_once();
                     }
@@ -2588,6 +2582,9 @@ void main() {
                 }
             }
             static tick() {
+                //for (let hover of hoveringSprites) {
+                //	
+                //}
                 if (this.modal && this.focusCur) {
                     this.update();
                     this.modal.float(this.focusCur, [0, 0]);
@@ -2654,15 +2651,19 @@ void main() {
                 win_1.genericHovering = false;
             }
             static change() {
-                this.modal.content.innerHTML = this.talkingToCur.dialogue[this.where[1]][0] + "&nbsp;";
-                this.modal.content.onmouseover = () => { win_1.genericHovering = true; };
-                this.modal.content.onmouseleave = () => { win_1.genericHovering = false; };
+                this.modal.content.innerHTML = ''; // reset
+                let pawnImage = document.createElement('div');
+                pawnImage.className = 'pawnimage';
+                this.modal.content.append(pawnImage);
+                let textArea = document.createElement('div');
+                textArea.innerHTML = this.talkingToCur.dialogue[this.where[1]][0] + "&nbsp;";
+                this.modal.content.append(textArea);
                 const next = this.talkingToCur.dialogue[this.where[1]][1];
                 if (next != -1) {
                     let button = document.createElement('div');
                     button.innerHTML = '>>';
                     button.className = 'button';
-                    this.modal.content.append(button);
+                    textArea.append(button);
                     button.onclick = (e) => {
                         console.log('woo');
                         this.where[1] = next;
@@ -2804,9 +2805,6 @@ void main() {
     })(win || (win = {}));
     var win$1 = win;
 
-    // allows you to venture far from inclusion hell by letting you assign arbitrary values
-    var GLOB = {};
-
     var chickens;
     (function (chickens) {
         function start() {
@@ -2818,7 +2816,7 @@ void main() {
             lod.add(chicken2);*/
         }
         chickens.start = start;
-        class chicken extends objects$1.objected {
+        class chicken extends objects$1.superobject {
             constructor() {
                 super(numbers.chickens);
                 this.netwpos = [0, 0];
@@ -2883,10 +2881,10 @@ void main() {
                 if (!objects$1.is_solid(venture))
                     this.wpos = venture;
             }
-            update() {
+            obj_manual_update() {
                 this.tiled();
                 //this.stack();
-                super.update();
+                super.obj_manual_update();
             }
             make() {
                 if (this.made)
@@ -3109,7 +3107,7 @@ void main() {
                     this.walkSmoother -= ren$1.delta * 5;
                 }
             }
-            setup_context() {
+            superobject_setup_context_menu() {
                 win$1.contextmenu.reset();
                 win$1.contextmenu.options.options.push(["Examine", () => {
                         return true;
@@ -3138,16 +3136,19 @@ void main() {
                         color = shadows$1.calc(color, pts.round(this.wpos));
                         sprite.material.color.setRGB(color[0], color[1], color[2]);
                     };
-                    if (sprite.mousedSquare(wastes.gview.mrpos)) {
+                    this.superobject_hovering_pass();
+                    /*if (sprite.mousedSquare(wastes.gview.mrpos)) {
                         sprite.material.color.set(GLOB.HOVER_COLOR);
-                        win$1.contextmenu.focus = this;
+                        hovering_sprites.hover(sprite);
+                        //win.contextmenu.focus = this;
                     }
                     else if (!sprite.mousedSquare(wastes.gview.mrpos)) {
-                        if (win$1.contextmenu.focus == this)
-                            win$1.contextmenu.focus = undefined;
+                        //if (win.contextmenu.focus == this)
+                        //	win.contextmenu.focus = undefined;
+                        hovering_sprites.unhover(sprite);
                         setShadow();
                     }
-                    else if (this.tile && this.tile.hasDeck == false) {
+                    else*/ if (this.tile && this.tile.hasDeck == false) {
                         setShadow();
                     }
                     else if (!this.tile) ;
@@ -3158,7 +3159,7 @@ void main() {
                 this.stack(['pawn', 'you', 'chicken', 'leaves', 'wall', 'door', 'roof', 'falsefront', 'panel']);
                 //sprite.roffset = [.5, .5];
                 //this.tile!.paint();
-                super.update();
+                super.obj_manual_update();
             }
         }
         chickens.chicken = chicken;
@@ -3177,13 +3178,20 @@ void main() {
         [
             // 2
             [`I'm the trader around here.`, 1],
-            [`I mostly trade scrap nowadays. To them tinker folk.`, -1],
+            [`I mostly trade scrap nowadays.`, 2],
+            [`Everyone furnishes their own things.`, -1],
         ],
         [
             // 3
             [`I protect the civilized borders.`, 1],
             [`It may not look that civil at first glance.`, 2],
             [`But there's a county to keep safe.`, -1]
+        ],
+        [
+            // 4
+            [`I live here.`, 1],
+            [`You stalkers think you can survive out here. Don't be so content. Nothing is good.`, 2],
+            [`The bayou swallows you up. You'll be another zombie.`, -1],
         ]
     ];
 
@@ -8024,7 +8032,7 @@ void main() {
 
     var pawns;
     (function (pawns) {
-        class pawn extends objects$1.objected {
+        class pawn extends objects$1.superobject {
             constructor() {
                 super(numbers.pawns);
                 this.isTrader = false;
@@ -8042,7 +8050,6 @@ void main() {
                 this.groups = {};
                 this.meshes = {};
                 this.made = false;
-                this.mousing = false;
                 this.swoop = 0;
                 this.angle = 0;
                 this.walkSmoother = 0;
@@ -8100,12 +8107,12 @@ void main() {
                 if (!objects$1.is_solid(venture))
                     this.wpos = venture;
             }
-            update() {
+            obj_manual_update() {
                 this.tiled();
                 //this.stack();
-                super.update();
+                super.obj_manual_update();
             }
-            setup_context() {
+            superobject_setup_context_menu() {
                 win$1.contextmenu.reset();
                 if (!this.isPlayer && this.type != 'you') {
                     win$1.contextmenu.options.options.push(["Talk to", () => {
@@ -8349,7 +8356,7 @@ void main() {
                     }
                     if (wastes.FOLLOW_CAMERA) {
                         this.wtorpos();
-                        this.update();
+                        this.obj_manual_update();
                         wastes.gview.follow = this;
                     }
                     else {
@@ -8461,20 +8468,16 @@ void main() {
                         color = shadows$1.calc(color, pts.round(this.wpos));
                         sprite.material.color.setRGB(color[0], color[1], color[2]);
                     };
-                    if (this.type != 'you' && sprite.mousedSquare(wastes.gview.mrpos) /*&& !this.mousing*/) {
-                        this.mousing = true;
+                    this.superobject_hovering_pass();
+                    /*if (this.type != 'you' && sprite.mousedSquare(wastes.gview.mrpos)) {
+                        hovering_sprites.hover(sprite);
                         sprite.material.color.set(GLOB.HOVER_COLOR);
-                        if (this.type != 'you') {
-                            win$1.contextmenu.focus = this;
-                        }
                     }
-                    else if (!sprite.mousedSquare(wastes.gview.mrpos) && this.mousing) {
-                        if (win$1.contextmenu.focus == this)
-                            win$1.contextmenu.focus = undefined;
+                    else {
+                        hovering_sprites.unhover(sprite);
                         setShadow();
-                        this.mousing = false;
-                    }
-                    else if (this.tile && this.tile.hasDeck == false) {
+                    }*/
+                    if (this.tile && this.tile.hasDeck == false) {
                         setShadow();
                     }
                     else {
@@ -8483,7 +8486,7 @@ void main() {
                 }
                 if (this.type == 'you') ;
                 this.stack(['pawn', 'you', 'chicken', 'shelves', 'leaves', 'wall', 'door', 'roof', 'falsefront', 'panel']);
-                super.update();
+                super.obj_manual_update();
             }
         }
         pawn.noun = 'pawn';
@@ -8679,7 +8682,6 @@ void main() {
             this.zooms = [1, 0.5, 0.33, 0.2, 0.1, 0.05];
             this.wpos = [44, 52];
             this.rpos = [0, 0];
-            this.mpos = [0, 0];
             this.mwpos = [0, 0];
             this.mrpos = [0, 0];
             this.raise = 50;
@@ -9221,7 +9223,7 @@ void main() {
 
     var fences;
     (function (fences) {
-        class fence extends objects$1.objected {
+        class fence extends objects$1.superobject {
             constructor() {
                 super(numbers.walls);
                 this.type = 'wall';
@@ -9337,7 +9339,6 @@ void main() {
                 return;
             started = true;
             console.log(' wastes starting ');
-            GLOB.HOVER_COLOR = '#95ca90';
             starts();
         }
         function init() {

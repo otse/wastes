@@ -31,7 +31,7 @@ export namespace tests {
 		static tick() {
 			if (this.obj) {
 				this.obj.rpos = wastes.gview.mrpos;
-				this.obj.shape?.update();
+				this.obj.shape?.shape_manual_update();
 				let sprite = this.obj.shape as sprite;
 			}
 		}
