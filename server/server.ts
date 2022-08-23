@@ -120,7 +120,7 @@ function start2() {
 	talker.dialogue = 4;
 	talker.angle = Math.PI / 2;
 	talker.subtype = 'civilian';
-	//talker.walkArea = new aabb2([43, 51], [46, 58]);
+	talker.walkArea = new aabb2([43.5, 61.5], [45.5, 59.5]);
 	slod.add(talker);
 
 	//}
@@ -334,6 +334,7 @@ const loop = () => {
 		con.gather();
 		//con.ws.send();
 	}
+	slod.ssector.unstamp_newlies();
 	slod.stamp++;
 };
 
@@ -546,10 +547,13 @@ class pawn extends npc {
 		//this.inventory.wpos = this.wpos;
 		// console.log('syncing inventory with pawn-npc');
 		//}
+
 	}
 	override gather(first: boolean) {
 		let upper = super.gather(first) as any;
 		if (first) {
+			console.log('pawn first');
+			//console.log('outfit');
 			upper.outfit = this.outfit;
 			upper.dialogue = this.dialogue;
 			upper.subtype = this.subtype;
@@ -577,7 +581,7 @@ class player extends pawn {
 		this.inventory.add('bullet', 10);
 		this.inventory.add('cork', 50);
 
-		console.log('amount of blood:', this.inventory.amount('blood'));
+		console.log('amount of cork:', this.inventory.amount('cork'));
 
 	}
 	override tick() {

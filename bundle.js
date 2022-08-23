@@ -3191,7 +3191,7 @@ void main() {
             // 4
             [`I live here.`, 1],
             [`You stalkers think you can survive out here. Don't be so content. Nothing is good.`, 2],
-            [`The bayou swallows you up. You'll be another zombie.`, -1],
+            [`The bayou swallows you up.`, -1],
         ]
     ];
 
@@ -3279,7 +3279,11 @@ void main() {
                         obj.angle = angle;
                         obj.netwpos = wpos;
                         obj.netangle = angle;
-                        obj.outfit = outfit;
+                        if (!outfit)
+                            console.error('no outfit for new pawn?');
+                        if (outfit) {
+                            obj.outfit = outfit;
+                        }
                         obj.aiming = aiming;
                         obj.subtype = subtype;
                         if (dialogue)

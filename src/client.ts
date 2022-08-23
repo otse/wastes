@@ -99,13 +99,17 @@ export namespace client {
 				}
 
 				process_news(pawns.pawn, 'pawn', data,
-					(obj, sobj) => {
+					(obj: pawns.pawn, sobj) => {
 						const { wpos, angle, outfit, dialogue, aiming, inventory, subtype, isPlayer } = sobj;
 						obj.wpos = wpos;
 						obj.angle = angle;
 						obj.netwpos = wpos;
 						obj.netangle = angle;
-						obj.outfit = outfit;
+						if (!outfit)
+							console.error('no outfit for new pawn?');
+						if (outfit) {
+							obj.outfit = outfit;
+						}
 						obj.aiming = aiming;
 						obj.subtype = subtype;
 						if (dialogue)

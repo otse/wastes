@@ -100,6 +100,7 @@ namespace slod {
 	export class ssector extends toggle {
 		color?;
 		public observers: [observer: sgrid, stamp: number][] = []
+		static newlies: sobj[] = []
 		static visibles: sobj[] = []
 		static actives: ssector[] = []
 		readonly small: aabb2;
@@ -108,7 +109,7 @@ namespace slod {
 			public readonly big: vec2,
 			readonly world: sworld
 		) {
-			super();				
+			super();
 			// console.log(`new ssector ${big[0]} ${big[1]}`);
 			let min = pts.mult(this.big, SectorSpan);
 			let max = pts.add(min, [SectorSpan - 1, SectorSpan - 1]);
@@ -190,8 +191,13 @@ namespace slod {
 			let gathers: object[] = [];
 			for (let obj of this.sobjs) {
 				// If we are a new observer, or we have changes
-				if (tuple[1] == slod.stamp || obj.stamp >= slod.stamp)
-					gathers.push(obj.gather(tuple[1] == slod.stamp));
+				if (tuple[1] == slod.stamp || obj.stamp == 0 || obj.stamp >= slod.stamp)
+					gathers.push(obj.gather(tuple[1] == slod.stamp || obj.stamp == 0));
+
+				if (obj.stamp == 0) {
+					console.log('this object is newly created, deserves to be fully send', obj.type);
+					slod.ssector.newlies.push(obj);
+				}
 			}
 			return gathers;
 		}
@@ -204,6 +210,13 @@ namespace slod {
 				sobj.tick();
 			// for (let sector of ssector.actives)
 			// 	sector.tick();
+		}
+		static unstamp_newlies() {
+			// this fixes the unique moment where a new sobj isnt send fully
+			// since we were already observing the sector.
+			// that's why we fully send all 0-stamps, then cancel it with -1
+			for (let sobj of slod.ssector.newlies)
+				sobj.stamp = -1;
 		}
 		tick() {
 			hooks.call('ssectorTick', this);
@@ -308,6 +321,7 @@ namespace slod {
 		id = 'sobj_0'
 		type = 'an sobj'
 		stamp = 0
+		newly = true // unused prototype for newly created objects, rather than newly observed objects
 		aabb: aabb2
 		wpos: vec2 = [0, 0]
 		sector: ssector | null
@@ -328,7 +342,8 @@ namespace slod {
 			grid.removes.push(this.id);
 		}
 		needs_update() {
-			this.stamp = slod.stamp;
+			if (this.stamp != 0)
+				this.stamp = slod.stamp;
 		}
 		show() {
 			if (this.on())
@@ -344,6 +359,9 @@ namespace slod {
 				return;
 			this.counts[0]--;
 		}
+		//after_tick() {
+		//	this.newly = false;
+		//}
 		tick() { // implement me
 		}
 		create() { // implement me
