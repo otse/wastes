@@ -91,7 +91,7 @@ function start2() {
 		})
 		return false;
 	})
-
+	
 	let vendor = new pawn;
 	//vendor.pawntype = 'trader';
 	vendor.walkArea = new aabb2([38, 49], [41, 49]);
@@ -103,8 +103,7 @@ function start2() {
 	vendor.inventory.add('junk', -1);
 	slod.add(vendor);
 
-
-	//for (let i = 0; i < 100; i++) {
+	//for (let i = 0; i < 0; i++) {
 	let guard = new pawn;
 	guard.wpos = [45, 56];
 	//peacekeeper.outfit = []
@@ -122,8 +121,8 @@ function start2() {
 	talker.subtype = 'civilian';
 	talker.walkArea = new aabb2([43.5, 61.5], [45.5, 59.5]);
 	slod.add(talker);
+	
 
-	//}
 	for (let i = 0; i < 2; i++) {
 		let shadowChicken = new chicken;
 		shadowChicken.wpos = [42, 53];

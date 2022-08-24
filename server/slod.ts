@@ -163,21 +163,28 @@ namespace slod {
 					return true;
 			return false;
 		}
+		// Call whenever sobj has moved within tick
 		swap(obj: sobj) {
-			// Call me whenever you move
+			let oldSector = obj.sector;
 			let newSector = this.world.at(slod.sworld.big(pts.round(obj.wpos)));
-			if (obj.sector != newSector) {
-				obj.sector?.remove(obj);
+			if (oldSector != newSector) {
+				oldSector?.remove(obj);
 				newSector.add(obj);
 				if (!newSector.isActive()) {
 					obj.hide();
 					//console.warn('sobj move into hidden ssector');
 				}
-				// If the new sector isn't observed, remove us from that observer
+				// These two for loops check for [[ overlap ]]
+
+				// Check old-to-new-sector [[ overlap ]]
 				for (const tuple of this.observers)
 					if (!newSector.is_observed_by(tuple[0]))
-						//if (!obj.impertinent)
 						tuple[0].removes.push(obj.id);
+
+				// Check new-to-old-sector [[ overlap ]]
+				for (const tuple of newSector!.observers)
+					if (!oldSector?.is_observed_by(tuple[0]))
+						obj.stamp = 0;
 
 			}
 		}
@@ -191,11 +198,13 @@ namespace slod {
 			let gathers: object[] = [];
 			for (let obj of this.sobjs) {
 				// If we are a new observer, or we have changes
-				if (tuple[1] == slod.stamp || obj.stamp == 0 || obj.stamp >= slod.stamp)
-					gathers.push(obj.gather(tuple[1] == slod.stamp || obj.stamp == 0));
+				const first = tuple[1] == slod.stamp || obj.stamp == 0;
+				if (first || obj.stamp == slod.stamp)
+					gathers.push(obj.gather(first));
 
 				if (obj.stamp == 0) {
-					console.log('this object is newly created, deserves to be fully send', obj.type);
+					// For a multitude of possible reasons, we need to be globally fully send
+					//console.log('this object is newly created, deserves to be fully send', obj.type);
 					slod.ssector.newlies.push(obj);
 				}
 			}
@@ -339,7 +348,7 @@ namespace slod {
 			this.counts[1]--;
 		}
 		remove_for_observer(grid: sgrid) {
-			grid.removes.push(this.id);
+			grid.removes.push(this.id); // we do grid removes push manually
 		}
 		needs_update() {
 			if (this.stamp != 0)

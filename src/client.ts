@@ -79,6 +79,8 @@ export namespace client {
 					let obj = objsId[id];
 					if (!obj)
 						continue;
+					console.log('remove', obj.type);
+					
 					if (id == plyId) {
 						// prevent self-destruct by moving too fast
 						console.error(' you are probably going too fast ');
@@ -101,6 +103,7 @@ export namespace client {
 				process_news(pawns.pawn, 'pawn', data,
 					(obj: pawns.pawn, sobj) => {
 						const { wpos, angle, outfit, dialogue, aiming, inventory, subtype, isPlayer } = sobj;
+						console.log('news pawn');
 						obj.wpos = wpos;
 						obj.angle = angle;
 						obj.netwpos = wpos;
@@ -125,7 +128,7 @@ export namespace client {
 							obj.aiming = aiming;
 						}
 						if (inventory) {
-							console.log('update inventory');
+							//console.log('update inventory');
 
 							obj.inventory = inventory;
 						}
