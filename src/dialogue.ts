@@ -25,6 +25,7 @@ const dialogues: speech[][] = [
         // 4
         [`I live here.`, 1],
         [`The bayou swallows you up.`, 2],
+        [`You stalkers think you're survivors.`, 3],
         [`You'll be a zombie before you know it.`, -1],
     ]
 ]

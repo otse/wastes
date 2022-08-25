@@ -377,9 +377,6 @@ void main() {
         }
         ren.calc = calc;
         function render() {
-            if (app$1.key('z') == 1) {
-                ren.materialPost.uniforms.compression.value = !ren.materialPost.uniforms.compression.value;
-            }
             /*alternate = ! alternate;
             if (alternate) {
                 return;
@@ -3191,6 +3188,7 @@ void main() {
             // 4
             [`I live here.`, 1],
             [`The bayou swallows you up.`, 2],
+            [`You stalkers think you're survivors.`, 3],
             [`You'll be a zombie before you know it.`, -1],
         ]
     ];
@@ -8684,7 +8682,7 @@ void main() {
     class view {
         constructor() {
             this.zoom = 0.33;
-            this.zoomIndex = 4;
+            this.zoomIndex = 3;
             this.zooms = [1, 0.5, 0.33, 0.2, 0.1, 0.05];
             this.wpos = [44, 52];
             this.rpos = [0, 0];
@@ -8861,7 +8859,6 @@ void main() {
 		[r, f] or [scrollwheel] to zoom<br />
 		[t, g] to change lod<br />
 		[v] to toggle camera<br />
-		[z] to toggle bit depth effect<br />
 		[shift] to aim<br />
 		[shift + click] to shoot<br />
 		[middle mouse] to pan<br />

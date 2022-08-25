@@ -125,9 +125,11 @@ namespace ren {
 	let alternate = true;
 	export function render() {
 
-		if (app.key('z') == 1) {
-			materialPost.uniforms.compression.value = !materialPost.uniforms.compression.value;
-		}
+		const allowColorDepthToggle = false;
+
+		if (allowColorDepthToggle)
+			if (app.key('z') == 1)
+				materialPost.uniforms.compression.value = !materialPost.uniforms.compression.value;
 
 		/*alternate = ! alternate;
 		if (alternate) {
@@ -190,7 +192,7 @@ namespace ren {
 
 		materialPost = new ShaderMaterial({
 			uniforms: {
-				tDiffuse: { value: target.texture }, 
+				tDiffuse: { value: target.texture },
 				compression: { value: 1 }
 			},
 			vertexShader: vertexScreen,
@@ -230,7 +232,7 @@ namespace ren {
 		      new is ${pts.to_string(screenCorrected)}`);
 
 		target.setSize(screenCorrected[0], screenCorrected[1]);
-		
+
 		plane = new PlaneBufferGeometry(screenCorrected[0], screenCorrected[1]);
 
 		if (quadPost)

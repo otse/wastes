@@ -15,7 +15,7 @@ import pawns from "./pawns";
 
 export class view {
 	zoom = 0.33
-	zoomIndex = 4
+	zoomIndex = 3
 	zooms = [1, 0.5, 0.33, 0.2, 0.1, 0.05]
 	wpos: vec2 = [44, 52]
 	rpos: vec2 = [0, 0]
@@ -218,7 +218,6 @@ export class view {
 		[r, f] or [scrollwheel] to zoom<br />
 		[t, g] to change lod<br />
 		[v] to toggle camera<br />
-		[z] to toggle bit depth effect<br />
 		[shift] to aim<br />
 		[shift + click] to shoot<br />
 		[middle mouse] to pan<br />

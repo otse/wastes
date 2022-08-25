@@ -174,7 +174,9 @@ namespace slod {
 					obj.hide();
 					//console.warn('sobj move into hidden ssector');
 				}
+
 				// These two for loops check for [[ overlap ]]
+				// Then either remove, or zero-stamp (to send full object)
 
 				// Check old-to-new-sector [[ overlap ]]
 				for (const tuple of this.observers)
@@ -198,9 +200,10 @@ namespace slod {
 			let gathers: object[] = [];
 			for (let obj of this.sobjs) {
 				// If we are a new observer, or we have changes
-				const first = tuple[1] == slod.stamp || obj.stamp == 0;
-				if (first || obj.stamp == slod.stamp)
-					gathers.push(obj.gather(first));
+				const fully = tuple[1] == slod.stamp || obj.stamp == 0;
+				const updated = obj.stamp == slod.stamp;
+				if (fully || updated)
+					gathers.push(obj.gather(fully));
 
 				if (obj.stamp == 0) {
 					// For a multitude of possible reasons, we need to be globally fully send
@@ -330,7 +333,6 @@ namespace slod {
 		id = 'sobj_0'
 		type = 'an sobj'
 		stamp = 0
-		newly = true // unused prototype for newly created objects, rather than newly observed objects
 		aabb: aabb2
 		wpos: vec2 = [0, 0]
 		sector: ssector | null
@@ -390,7 +392,7 @@ namespace slod {
 			if (property)
 				upper[property] = property;
 		}
-		gather(first: boolean) {
+		gather(fully: boolean) {
 			//if (first/* || stamp == slod.stamp*/)
 			return { id: this.id, type: this.type, wpos: this.wpos };
 			//else

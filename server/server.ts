@@ -175,7 +175,7 @@ class connection {
 		this.grid = new slod.sgrid(slod.gworld, 2, 2);
 
 		this.you = new player;
-		this.you.wpos = [40, 49];
+		this.you.wpos = [44, 51];
 		// this.you.impertinent = true;
 		slod.add(this.you);
 
@@ -401,9 +401,9 @@ class container extends supersobj {
 			this.ticksAgo = 0;
 		}
 	}
-	override gather(first: boolean) {
-		let upper = super.gather(first) as any;
-		if (first || this.inventory.stamp == slod.stamp)
+	override gather(fully: boolean) {
+		let upper = super.gather(fully) as any;
+		if (fully || this.inventory.stamp == slod.stamp)
 			upper.inventory = this.inventory.collect();
 		return upper;
 	}
@@ -515,8 +515,8 @@ class npc extends supersobj {
 	override tick() {
 		this.wander();
 	}
-	override gather(first: boolean) {
-		let upper = super.gather(first) as any;
+	override gather(fully: boolean) {
+		let upper = super.gather(fully) as any;
 		upper.angle = this.angle;
 		return upper;
 	}
@@ -548,9 +548,9 @@ class pawn extends npc {
 		//}
 
 	}
-	override gather(first: boolean) {
-		let upper = super.gather(first) as any;
-		if (first) {
+	override gather(fully: boolean) {
+		let upper = super.gather(fully) as any;
+		if (fully) {
 			console.log('pawn first');
 			//console.log('outfit');
 			upper.outfit = this.outfit;
@@ -559,7 +559,7 @@ class pawn extends npc {
 		}
 		if (this.aiming)
 			upper.aiming = this.aiming;
-		if (first || this.inventory.stamp == slod.stamp) {
+		if (fully || this.inventory.stamp == slod.stamp) {
 			//console.log('inventory needs an update');
 			upper.inventory = this.inventory.collect();
 		}
@@ -594,9 +594,9 @@ class player extends pawn {
 	override hide() {
 		console.log('ply-pawn should be impertinent');
 	}
-	override gather(first: boolean) {
-		let upper = super.gather(first) as any;
-		if (first)
+	override gather(fully: boolean) {
+		let upper = super.gather(fully) as any;
+		if (fully)
 			upper.isPlayer = true;
 		return upper;
 	}
@@ -625,8 +625,8 @@ class chicken extends npc {
 		this.size = 0.5;
 		this.walkAgain = new timer(0);
 	}
-	override gather(first: boolean) {
-		let upper = super.gather(first) as any;
+	override gather(fully: boolean) {
+		let upper = super.gather(fully) as any;
 		// slod.sobj.attach_truthy(upper, this.pecking);
 		if (this.pecking)
 			upper.pecking = this.pecking;
