@@ -32,6 +32,7 @@ export namespace chickens {
 	export class chicken extends objects.superobject {
 		netwpos: vec2 = [0, 0]
 		netangle = 0
+		dead = false
 		group
 		mesh
 		target
@@ -301,21 +302,29 @@ export namespace chickens {
 			const headBob = 1.0;
 			const riser = 0.5;
 
-			this.swoop += ren.delta * 2.5;
+			if (!this.dead) {
+				this.swoop += ren.delta * 2.5;
 
-			const swoop1 = Math.cos(Math.PI * this.swoop);
-			const swoop2 = Math.cos(Math.PI * this.swoop - Math.PI);
+				const swoop1 = Math.cos(Math.PI * this.swoop);
+				const swoop2 = Math.cos(Math.PI * this.swoop - Math.PI);
 
-			this.groups.legl.rotation.x = swoop1 * legsSwoop * this.walkSmoother;
-			this.groups.legr.rotation.x = swoop2 * legsSwoop * this.walkSmoother;
-			//this.groups.arml.rotation.x = swoop1 * armsSwoop * this.walkSmoother;
-			//this.groups.armr.rotation.x = swoop2 * armsSwoop * this.walkSmoother;
-			this.groups.head.position.z = swoop1 * swoop2 * -headBob * this.walkSmoother;
-			this.groups.ground.position.y = -10 + swoop1 * swoop2 * riser * this.walkSmoother;
+				this.groups.legl.rotation.x = swoop1 * legsSwoop * this.walkSmoother;
+				this.groups.legr.rotation.x = swoop2 * legsSwoop * this.walkSmoother;
+				//this.groups.arml.rotation.x = swoop1 * armsSwoop * this.walkSmoother;
+				//this.groups.armr.rotation.x = swoop2 * armsSwoop * this.walkSmoother;
+				this.groups.head.position.z = swoop1 * swoop2 * -headBob * this.walkSmoother;
+				this.groups.ground.position.y = -10 + swoop1 * swoop2 * riser * this.walkSmoother;
 
-			this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
-			
-			if (this.sitting || app.key('q')) {
+				this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
+			}
+			else {
+				this.groups.ground.rotation.y = Math.PI / 4;
+				this.groups.ground.rotation.z = -Math.PI / 2;
+				console.log('were dead');
+
+			}
+
+			if (this.sitting /*|| app.key('q')*/) {
 				this.groups.legl.visible = false;
 				this.groups.legr.visible = false;
 				this.groups.ground.position.y -= 4;
@@ -323,8 +332,7 @@ export namespace chickens {
 				this.meshes.arml.rotation.set(0.0, 0, 0);
 				this.meshes.armr.rotation.set(0.0, 0, 0);
 			}
-			else
-			{
+			else {
 				this.groups.legl.visible = true;
 				this.groups.legr.visible = true;
 				this.meshes.body.rotation.set(-0.3, 0, 0);
@@ -346,8 +354,7 @@ export namespace chickens {
 				sprite.vars.orderBias = 0.25
 				this.meshes.water.visible = true;
 			}
-			else
-			{
+			else {
 				sprite.vars.orderBias = 1.0;
 				this.meshes.water.visible = false;
 			}
@@ -358,7 +365,7 @@ export namespace chickens {
 		angle = 0
 		walkSmoother = 1
 		randomWalker = 0
-		
+
 		nettick() {
 
 			//this.netangle = Math.PI / 4;

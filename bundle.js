@@ -2818,6 +2818,7 @@ void main() {
                 super(numbers.chickens);
                 this.netwpos = [0, 0];
                 this.netangle = 0;
+                this.dead = false;
                 this.created = false;
                 this.pecking = false;
                 this.sitting = false;
@@ -3031,17 +3032,24 @@ void main() {
                 const legsSwoop = 0.6;
                 const headBob = 1.0;
                 const riser = 0.5;
-                this.swoop += ren$1.delta * 2.5;
-                const swoop1 = Math.cos(Math.PI * this.swoop);
-                const swoop2 = Math.cos(Math.PI * this.swoop - Math.PI);
-                this.groups.legl.rotation.x = swoop1 * legsSwoop * this.walkSmoother;
-                this.groups.legr.rotation.x = swoop2 * legsSwoop * this.walkSmoother;
-                //this.groups.arml.rotation.x = swoop1 * armsSwoop * this.walkSmoother;
-                //this.groups.armr.rotation.x = swoop2 * armsSwoop * this.walkSmoother;
-                this.groups.head.position.z = swoop1 * swoop2 * -headBob * this.walkSmoother;
-                this.groups.ground.position.y = -10 + swoop1 * swoop2 * riser * this.walkSmoother;
-                this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
-                if (this.sitting || app$1.key('q')) {
+                if (!this.dead) {
+                    this.swoop += ren$1.delta * 2.5;
+                    const swoop1 = Math.cos(Math.PI * this.swoop);
+                    const swoop2 = Math.cos(Math.PI * this.swoop - Math.PI);
+                    this.groups.legl.rotation.x = swoop1 * legsSwoop * this.walkSmoother;
+                    this.groups.legr.rotation.x = swoop2 * legsSwoop * this.walkSmoother;
+                    //this.groups.arml.rotation.x = swoop1 * armsSwoop * this.walkSmoother;
+                    //this.groups.armr.rotation.x = swoop2 * armsSwoop * this.walkSmoother;
+                    this.groups.head.position.z = swoop1 * swoop2 * -headBob * this.walkSmoother;
+                    this.groups.ground.position.y = -10 + swoop1 * swoop2 * riser * this.walkSmoother;
+                    this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
+                }
+                else {
+                    this.groups.ground.rotation.y = Math.PI / 4;
+                    this.groups.ground.rotation.z = -Math.PI / 2;
+                    console.log('were dead');
+                }
+                if (this.sitting /*|| app.key('q')*/) {
                     this.groups.legl.visible = false;
                     this.groups.legr.visible = false;
                     this.groups.ground.position.y -= 4;
@@ -3303,16 +3311,19 @@ void main() {
                         }
                     });
                     process_news(chickens$1.chicken, 'chicken', data, (obj, sobj) => {
-                        const { wpos, angle, sitting } = sobj;
+                        const { wpos, angle, sitting, dead } = sobj;
                         obj.wpos = wpos;
                         obj.angle = angle;
                         obj.sitting = sitting;
+                        obj.dead = dead;
                     }, (obj, sobj) => {
-                        const { wpos, angle, pecking, sitting } = sobj;
+                        const { wpos, angle, pecking, sitting, dead } = sobj;
                         obj.netwpos = wpos;
                         obj.netangle = angle;
                         obj.pecking = pecking;
                         obj.sitting = sitting;
+                        obj.dead = dead;
+                        console.log('dead', dead);
                         // console.log('updating chicken!');
                     });
                     process_news(objects$1.crate, 'crate', data, (obj, sobj) => {

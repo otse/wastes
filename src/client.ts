@@ -136,17 +136,21 @@ export namespace client {
 
 				process_news(chickens.chicken, 'chicken', data,
 					(obj, sobj) => {
-						const { wpos, angle, sitting } = sobj;
+						const { wpos, angle, sitting, dead } = sobj;
 						obj.wpos = wpos;
 						obj.angle = angle;
 						obj.sitting = sitting;
+						obj.dead = dead;
 					},
 					(obj, sobj) => {
-						const { wpos, angle, pecking, sitting } = sobj;
+						const { wpos, angle, pecking, sitting, dead } = sobj;
 						obj.netwpos = wpos;
 						obj.netangle = angle;
 						obj.pecking = pecking;
 						obj.sitting = sitting;
+						obj.dead = dead;
+						console.log('dead',dead);
+						
 						// console.log('updating chicken!');
 					});
 

@@ -240,7 +240,11 @@ class connection {
 			}
 		}
 		if (json.player.shoot) {
-			this.you.shoot(this.you.angle);
+			const hasBullet = this.you.inventory.amount('bullet');
+			if (hasBullet) {
+				this.you.shoot(this.you.angle);
+				this.you.inventory.remove('bullet');
+			}
 		}
 		if (json.interactingWith) {
 			console.log('player is interacting with npc', json.interactingWith);
@@ -371,7 +375,7 @@ class supersobj extends slod.sobj {
 		this.bound = new aabb2([-size, -size], [size, size]);
 		this.bound.translate(this.wpos);
 	}
-	onhit() {
+	on_hit() {
 
 	}
 	shoot(angle) {
@@ -402,10 +406,11 @@ class supersobj extends slod.sobj {
 				return (c > d) ? 1 : -1;
 			});
 		}
-		for (let hit of hits)
-			console.log('we hit', hit.type);
-		if (hits.length)
-			hits[0].onhit();
+		//for (let hit of hits)
+		//	console.log('we hit', hit.type);
+		if (hits.length) {
+			hits[0].on_hit();
+		}
 	}
 }
 
@@ -509,6 +514,8 @@ class tree extends supersobj {
 class npc extends supersobj {
 	static id = 0;
 	isNpc = true
+	health = 100
+	dead = false
 	frozenBy?: slod.sobj
 	angle = 0
 	walkArea: aabb2
@@ -519,6 +526,16 @@ class npc extends supersobj {
 		super();
 		this.id = 'npc_' + npc.id++;
 		this.timer = new timer(0);
+	}
+	override on_hit() {
+		if (this.dead)
+			return;
+		this.health -= 10;
+		if (this.health <= 0) {
+			this.dead = true;
+			console.log('killed this npc');
+			this.needs_update();
+		}
 	}
 	wander() {
 		if (!this.frozenBy && this.walkArea) {
@@ -570,6 +587,8 @@ class npc extends supersobj {
 	override gather(fully: boolean) {
 		let upper = super.gather(fully) as any;
 		upper.angle = this.angle;
+		if (this.dead)
+			upper.dead = this.dead;
 		return upper;
 	}
 }
@@ -599,6 +618,9 @@ class pawn extends npc {
 		// console.log('syncing inventory with pawn-npc');
 		//}
 
+	}
+	override on_hit() {
+		super.on_hit();
 	}
 	override gather(fully: boolean) {
 		let upper = super.gather(fully) as any;
@@ -673,9 +695,18 @@ class chicken extends npc {
 		this.type = 'chicken';
 		this.id = 'chicken_' + chicken.id++;
 		this.randomWalker = Date.now();
+		this.health = 10;
 		this.speed = 0.75;
 		this.size = 0.5;
 		this.walkAgain = new timer(0);
+	}
+	override on_hit() {
+		super.on_hit();
+
+		if (this.dead) {
+			this.pecking = false;
+			this.sitting = false;
+		}
 	}
 	override gather(fully: boolean) {
 		let upper = super.gather(fully) as any;
@@ -687,6 +718,9 @@ class chicken extends npc {
 		return upper;
 	}
 	override tick() {
+		if (this.dead)
+			return;
+
 		if (pts.together(this.aimTarget) == 0) {
 			if (!this.pecking && !this.sitting && this.walkAgain?.elapsed(5000)) {
 				if (Math.random() > .25) {
