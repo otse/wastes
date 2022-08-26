@@ -523,7 +523,7 @@ namespace win {
 			if (this.modal !== undefined) {
 				this.modal.float(this.focusCur!, [0, 0]);
 			}
-			if (Date.now() - this.timer > 3 * 1000) {
+			if (Date.now() - this.timer > 4 * 1000) {
 				this.modal?.deletor();
 				this.modal = undefined;
 			}

@@ -14,6 +14,7 @@ var connections: connection[] = [];
 
 var heightmap: maps.scolormap
 var buildingmap: maps.scolormap
+var treemap: maps.scolormap
 var objectmap: maps.scolormap
 var colormap: maps.scolormap
 
@@ -38,6 +39,7 @@ function start() {
 
 	heightmap = new maps.scolormap('heightmap')
 	buildingmap = new maps.scolormap('buildingmap')
+	treemap = new maps.scolormap('treemap')
 	objectmap = new maps.scolormap('objectmap')
 	colormap = new maps.scolormap('colormap')
 
@@ -54,6 +56,22 @@ function start2() {
 		slod.add(obj);
 		return obj;
 	}
+
+	hooks.register('sectorCreate', (sector: slod.ssector) => {
+		pts.func(sector.small, (pos) => {
+			pos = pts.subtract(pos, [0, 0])
+			let pixel = treemap.pixel(pos);
+			if (pixel.is_color(colors.color_decidtree)) {
+				factory(tree, pos);
+				console.log('decid tree', pos);
+			}
+			else if (pixel.is_color(colors.color_deadtree)) {
+				factory(tree, pos);
+				console.log('dead tree', pos);
+			}
+		});
+		return false;
+	});
 
 	hooks.register('sectorCreate', (sector: slod.ssector) => {
 		pts.func(sector.small, (pos) => {
@@ -122,6 +140,11 @@ function start2() {
 	guard.walkArea = new aabb2([43, 51], [46, 58]);
 	slod.add(guard);
 	//}
+
+	let zomb = new zombie;
+	zomb.wpos = [34, 50];
+	zomb.walkArea = new aabb2([33, 48], [35, 51]);
+	slod.add(zomb);
 
 	let talker = new pawn;
 	talker.wpos = [43.8, 61.2];
@@ -511,6 +534,19 @@ class tree extends supersobj {
 	}*/
 }
 
+export function is_solid(pos: vec2) {
+	const impassable = ['wall', 'crate', 'shelves', 'tree', 'fence', 'deep water'];
+	pos = pts.round(pos);
+	let sector = slod.gworld.at(slod.sworld.big(pos));
+	let at = sector.stacked(pos);
+	for (let obj of at) {
+		if (obj.is_type(impassable)) {
+			return true;
+		}
+	}
+	return false;
+}
+
 // npc can be a chicken or a pawn
 class npc extends supersobj {
 	static id = 0;
@@ -526,6 +562,7 @@ class npc extends supersobj {
 	aimTarget: vec2 = [0, 0]
 	timer: timer
 	respawnTimer: timer
+	wanderWait = 2000
 	speed = 1.0
 	constructor() {
 		super();
@@ -542,9 +579,15 @@ class npc extends supersobj {
 			this.needs_update();
 		}
 	}
+	try_move_to(pos: vec2) {
+		let venture = pts.add(this.wpos, pos);
+		if (!is_solid(venture))
+			this.wpos = venture;
+
+	}
 	wander() {
 		if (!this.frozenBy && this.walkArea) {
-			if (this.timer.elapsed(2000)) {
+			if (this.timer.elapsed(this.wanderWait)) {
 				const target = this.walkArea.random_point();
 				this.aimTarget = pts.round(target);
 
@@ -565,8 +608,9 @@ class npc extends supersobj {
 			let x = speed * Math.sin(this.angle);
 			let y = speed * Math.cos(this.angle);
 
-			let venture = pts.add(this.wpos, [x, y]);
-			this.wpos = venture;
+			this.try_move_to([x, y]);
+			//let venture = pts.add(this.wpos, [x, y]);
+			//this.wpos = venture;
 
 			this.sector?.swap(this);
 
@@ -728,7 +772,7 @@ class chicken extends npc {
 	}
 	override respawn(oldNpc: npc) {
 		console.log('CHICKN RESPAWN');
-		
+
 		let npc = new chicken;
 		npc.respawns = oldNpc.respawns;
 		npc.wpos = oldNpc.originalWpos;
@@ -791,6 +835,20 @@ class chicken extends npc {
 	//override gather() {
 
 	//}
+}
+
+class zombie extends npc {
+	static id = 0
+	constructor() {
+		super();
+		this.type = 'zombie';
+		this.id = 'zombie_' + zombie.id++;
+		this.wanderWait = 4000;
+	}
+	override tick() {
+		super.tick();
+		this.wander();
+	}
 }
 
 

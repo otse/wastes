@@ -19,14 +19,13 @@ const dialogues: speech[][] = [
         // 3
         [`I protect the civilized borders.`, 1],
         [`It may not look that civil at first glance.`, 2],
-        [`But the county needs defendants.`, -1]
+        [`But this county needs its defendants.`, -1]
     ],
     [
         // 4
-        [`I live here.`, 1],
-        [`The bayou swallows you up.`, 2],
-        [`You stalkers think you're survivors.`, 3],
-        [`You'll be a zombie before you know it.`, -1],
+        [`The bayou swallows you up.`, 1],
+        [`You stalkers think you're survivors.`, 2],
+        [`But you'll be a zombie before you know it.`, -1],
     ]
 ]
 

@@ -5,6 +5,7 @@ import objects from "./objects";
 import win from "./win";
 import chickens from "./chickens";
 import dialogues from "./dialogue";
+import zombies from "./zombies";
 
 export namespace client {
 
@@ -129,7 +130,6 @@ export namespace client {
 						}
 						if (inventory) {
 							//console.log('update inventory');
-
 							obj.inventory = inventory;
 						}
 					});
@@ -149,8 +149,21 @@ export namespace client {
 						obj.pecking = pecking;
 						obj.sitting = sitting;
 						obj.dead = dead;
-						console.log('dead',dead);
-						
+						// console.log('updating chicken!');
+					});
+				
+				process_news(zombies.zombie, 'zombie', data,
+					(obj, sobj) => {
+						const { wpos, angle, dead } = sobj;
+						obj.wpos = wpos;
+						obj.angle = angle;
+						obj.dead = dead;
+					},
+					(obj, sobj) => {
+						const { wpos, angle, dead } = sobj;
+						obj.netwpos = wpos;
+						obj.netangle = angle;
+						obj.dead = dead;
 						// console.log('updating chicken!');
 					});
 

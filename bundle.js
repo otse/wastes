@@ -2611,7 +2611,7 @@ void main() {
                 if (this.modal !== undefined) {
                     this.modal.float(this.focusCur, [0, 0]);
                 }
-                if (Date.now() - this.timer > 3 * 1000) {
+                if (Date.now() - this.timer > 4 * 1000) {
                     (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
                     this.modal = undefined;
                 }
@@ -3045,6 +3045,10 @@ void main() {
                     this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
                 }
                 else {
+                    this.groups.legl.rotation.x = -0.5;
+                    this.groups.legr.rotation.x = 0.5;
+                    this.groups.head.position.z = 0;
+                    this.groups.ground.position.y = -10;
                     this.groups.ground.rotation.y = Math.PI / 4;
                     this.groups.ground.rotation.z = -Math.PI / 2;
                     console.log('were dead');
@@ -3190,16 +3194,302 @@ void main() {
             // 3
             [`I protect the civilized borders.`, 1],
             [`It may not look that civil at first glance.`, 2],
-            [`But the county needs defendants.`, -1]
+            [`But this county needs its defendants.`, -1]
         ],
         [
             // 4
-            [`I live here.`, 1],
-            [`The bayou swallows you up.`, 2],
-            [`You stalkers think you're survivors.`, 3],
-            [`You'll be a zombie before you know it.`, -1],
+            [`The bayou swallows you up.`, 1],
+            [`You stalkers think you're survivors.`, 2],
+            [`But you'll be a zombie before you know it.`, -1],
         ]
     ];
+
+    var zombies;
+    (function (zombies) {
+        class zombie extends objects$1.superobject {
+            constructor() {
+                super(numbers.pawns);
+                this.netwpos = [0, 0];
+                this.netangle = 0;
+                //inventory: objects.container
+                this.outfit = ['#444139', '#444139', '#484c4c', '#31362c'];
+                this.created = false;
+                this.groups = {};
+                this.meshes = {};
+                this.made = false;
+                this.swoop = 0;
+                this.angle = 0;
+                this.walkSmoother = 0;
+                this.randomWalker = 0;
+                this.type = 'zombie';
+                this.height = 24;
+                //this.inventory = new objects.container;
+                //this.inventory.add('money');
+            }
+            create() {
+                this.tiled();
+                this.size = pts.divide([50, 40], 1);
+                let shape = new sprite({
+                    binded: this,
+                    tuple: sprites$1.test100,
+                    cell: this.cell,
+                    //opacity: .5,
+                    orderBias: 1.0,
+                });
+                shape.subsize = [20, 40];
+                shape.rleft = -this.size[0] / 4;
+                shape.show();
+                if (!this.created) {
+                    this.created = true;
+                    // Set scale to increase pixels exponentially
+                    const scale = 1;
+                    // make wee guy target
+                    //this.group = new THREE.Group
+                    let size = pts.mult(this.size, scale);
+                    this.target = ren$1.make_render_target(size[0], size[1]);
+                    this.camera = ren$1.make_orthographic_camera(size[0], size[1]);
+                    this.scene = new THREE.Scene();
+                    //this.scene.background = new Color('gray');
+                    this.scene.rotation.set(Math.PI / 6, Math.PI / 4, 0);
+                    this.scene.position.set(0, 0, 0);
+                    this.scene.scale.set(scale, scale, scale);
+                    let amb = new THREE.AmbientLight('white');
+                    this.scene.add(amb);
+                    let sun = new THREE.DirectionalLight(0xffffff, 0.5);
+                    // left up right
+                    sun.position.set(-wastes.size, wastes.size * 1.5, wastes.size / 2);
+                    //sun.add(new AxesHelper(100));
+                    this.scene.add(sun);
+                    this.scene.add(sun.target);
+                }
+                const spritee = this.shape;
+                spritee.material.map = this.target.texture;
+            }
+            try_move_to(pos) {
+                let venture = pts.add(this.wpos, pos);
+                if (!objects$1.is_solid(venture))
+                    this.wpos = venture;
+            }
+            obj_manual_update() {
+                this.tiled();
+                //this.stack();
+                super.obj_manual_update();
+            }
+            superobject_setup_context_menu() {
+                win$1.contextmenu.reset();
+                win$1.contextmenu.options.options.push(["Examine", () => {
+                        return true;
+                    }, () => {
+                        win$1.descriptor.focus = this;
+                        win$1.descriptor.call_once("Probably succumbed to the rigors of trash.");
+                        //win.contextmenu.focus = undefined;
+                    }]);
+            }
+            make() {
+                if (this.made)
+                    return;
+                this.made = true;
+                const headSize = 5.5;
+                const gasMaskSize = 2.5;
+                const legsSize = 4;
+                const legsHeight = 12.5;
+                const armsSize = 3;
+                const armsHeight = 12;
+                const armsAngle = .0;
+                const bodyThick = 5;
+                const bodyWidth = 8;
+                const bodyHeight = 12;
+                let boxHead = new THREE.BoxGeometry(headSize, headSize, headSize, 1, 1, 1);
+                let materialHead = new THREE.MeshLambertMaterial({
+                    color: this.outfit[0]
+                });
+                let boxGasMask = new THREE.BoxGeometry(gasMaskSize, gasMaskSize, gasMaskSize, 1, 1, 1);
+                let materialGasMask = new THREE.MeshLambertMaterial({
+                    color: this.outfit[0]
+                });
+                let boxBody = new THREE.BoxGeometry(bodyWidth, bodyHeight, bodyThick, 1, 1, 1);
+                let materialBody = new THREE.MeshLambertMaterial({
+                    color: this.outfit[1]
+                });
+                let boxArms = new THREE.BoxGeometry(armsSize, armsHeight, armsSize, 1, 1, 1);
+                let materialArms = new THREE.MeshLambertMaterial({
+                    color: this.outfit[2]
+                });
+                let boxLegs = new THREE.BoxGeometry(legsSize, legsHeight, legsSize, 1, 1, 1);
+                let materialLegs = new THREE.MeshLambertMaterial({
+                    color: this.outfit[3]
+                });
+                // https://www.andersriggelsen.dk/glblendfunc.php
+                let planeWater = new THREE.PlaneGeometry(wastes.size * 2, wastes.size * 2);
+                let materialWater = new THREE.MeshLambertMaterial({
+                    color: new THREE__default["default"].Color('rgba(32, 64, 64, 255)'),
+                    opacity: 0.4,
+                    transparent: true,
+                    blending: THREE__default["default"].CustomBlending,
+                    blendEquation: THREE__default["default"].AddEquation,
+                    blendSrc: THREE__default["default"].DstAlphaFactor,
+                    blendDst: THREE__default["default"].OneMinusDstAlphaFactor
+                });
+                this.meshes.water = new THREE.Mesh(planeWater, materialWater);
+                this.meshes.water.rotation.x = -Math.PI / 2;
+                this.meshes.water.position.y = -bodyHeight * 1.25;
+                this.meshes.water.visible = false;
+                this.meshes.head = new THREE.Mesh(boxHead, materialHead);
+                this.meshes.gasMask = new THREE.Mesh(boxGasMask, materialGasMask);
+                this.meshes.body = new THREE.Mesh(boxBody, materialBody);
+                this.meshes.arml = new THREE.Mesh(boxArms, materialArms);
+                this.meshes.armr = new THREE.Mesh(boxArms, materialArms);
+                this.meshes.legl = new THREE.Mesh(boxLegs, materialLegs);
+                this.meshes.legr = new THREE.Mesh(boxLegs, materialLegs);
+                this.groups.head = new THREE.Group;
+                this.groups.gasMask = new THREE.Group;
+                this.groups.body = new THREE.Group;
+                this.groups.arml = new THREE.Group;
+                this.groups.armr = new THREE.Group;
+                this.groups.legl = new THREE.Group;
+                this.groups.legr = new THREE.Group;
+                this.groups.ground = new THREE.Group;
+                this.groups.basis = new THREE.Group;
+                this.groups.head.add(this.meshes.head);
+                this.groups.gasMask.add(this.meshes.gasMask);
+                this.groups.body.add(this.meshes.body);
+                this.groups.arml.add(this.meshes.arml);
+                this.groups.armr.add(this.meshes.armr);
+                this.groups.legl.add(this.meshes.legl);
+                this.groups.legr.add(this.meshes.legr);
+                this.groups.head.add(this.groups.gasMask);
+                this.groups.body.add(this.groups.head);
+                this.groups.body.add(this.groups.arml);
+                this.groups.body.add(this.groups.armr);
+                this.groups.body.add(this.groups.legl);
+                this.groups.body.add(this.groups.legr);
+                this.groups.ground.add(this.groups.body);
+                this.groups.basis.add(this.groups.ground);
+                this.groups.basis.add(this.meshes.water);
+                this.groups.head.position.set(0, bodyHeight / 2 + headSize / 2, 0);
+                this.groups.gasMask.position.set(0, -headSize / 2, headSize / 1.5);
+                this.groups.gasMask.rotation.set(-Math.PI / 4, 0, 0);
+                this.groups.body.position.set(0, bodyHeight, 0);
+                //this.meshes.armr.position.set(0, armsSize / 2, 0);
+                this.groups.armr.position.set(-bodyWidth / 2 - armsSize / 2, bodyHeight / 2 - armsSize / 2, 0);
+                this.groups.armr.rotation.set(0, 0, -armsAngle);
+                this.meshes.armr.position.set(0, -armsHeight / 2 + armsSize / 2, 0);
+                this.groups.arml.position.set(bodyWidth / 2 + armsSize / 2, bodyHeight / 2 - armsSize / 2, 0);
+                this.groups.arml.rotation.set(0, 0, armsAngle);
+                this.meshes.arml.position.set(0, -armsHeight / 2 + armsSize / 2, 0);
+                this.groups.legl.position.set(-legsSize / 2, -bodyHeight / 2, 0);
+                this.meshes.legl.position.set(0, -legsHeight / 2, 0);
+                this.groups.legr.position.set(legsSize / 2, -bodyHeight / 2, 0);
+                this.meshes.legr.position.set(0, -legsHeight / 2, 0);
+                this.groups.ground.position.set(0, -bodyHeight * 1.0, 0);
+                //mesh.rotation.set(Math.PI / 2, 0, 0);
+                this.scene.add(this.groups.basis);
+            }
+            render() {
+                ren$1.renderer.setRenderTarget(this.target);
+                ren$1.renderer.clear();
+                ren$1.renderer.render(this.scene, this.camera);
+            }
+            animateBodyParts() {
+                var _a;
+                this.walkSmoother = wastes.clamp(this.walkSmoother, 0, 1);
+                const legsSwoop = 0.8;
+                const armsSwoop = 0.5;
+                const rise = 0.5;
+                this.swoop += ren$1.delta * 2.5;
+                const swoop1 = Math.cos(Math.PI * this.swoop);
+                const swoop2 = Math.cos(Math.PI * this.swoop - Math.PI);
+                this.groups.legl.rotation.x = swoop1 * legsSwoop * this.walkSmoother;
+                this.groups.legr.rotation.x = swoop2 * legsSwoop * this.walkSmoother;
+                this.groups.arml.rotation.x = swoop1 * armsSwoop * this.walkSmoother;
+                this.groups.armr.rotation.x = swoop2 * armsSwoop * this.walkSmoother;
+                this.groups.ground.position.y = -12 + swoop1 * swoop2 * rise * this.walkSmoother;
+                this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
+                //if (this.aiming) {
+                this.groups.armr.rotation.x = -Math.PI / 2;
+                this.groups.arml.rotation.x = -Math.PI / 2;
+                //}
+                const sprite = this.shape;
+                if (((_a = this.tile) === null || _a === void 0 ? void 0 : _a.type) == 'shallow water') {
+                    sprite.vars.orderBias = 0.25;
+                    this.meshes.water.visible = true;
+                }
+                else {
+                    sprite.vars.orderBias = 1.0;
+                    this.meshes.water.visible = false;
+                }
+                this.render();
+            }
+            nettick() {
+                var _a;
+                if (this.type == 'you')
+                    return;
+                //this.wpos = tiles.hovering!.wpos;
+                if (!pts.together(this.netwpos))
+                    this.netwpos = this.wpos;
+                // tween netwpos into wpos
+                let tween = pts.mult(pts.subtract(this.netwpos, this.wpos), ren$1.delta * 2);
+                this.wpos = pts.add(this.wpos, tween);
+                (_a = this.sector) === null || _a === void 0 ? void 0 : _a.swap(this);
+                if (this.netangle - this.angle > Math.PI)
+                    this.angle += Math.PI * 2;
+                if (this.angle - this.netangle > Math.PI)
+                    this.angle -= Math.PI * 2;
+                let tweenAngle = (this.netangle - this.angle) * 0.1;
+                this.angle += tweenAngle;
+                const movement = pts.together(pts.abs(tween));
+                if (movement > 0.005) {
+                    //console.log('movement > 0.25');
+                    this.walkSmoother += ren$1.delta * 10;
+                }
+                else {
+                    this.walkSmoother -= ren$1.delta * 5;
+                }
+            }
+            tick() {
+                var _a;
+                if (!this.shape)
+                    return;
+                //if (this.type == 'you')
+                //	this.wpos = tiles.hovering!.wpos;
+                this.make();
+                this.animateBodyParts();
+                this.tiled();
+                //this.tile?.paint();
+                (_a = this.sector) === null || _a === void 0 ? void 0 : _a.swap(this);
+                // shade the pawn
+                let color = [1, 1, 1, 1];
+                const sprite = this.shape;
+                // We could have been nulled due to a hide, dispose
+                if (sprite) {
+                    const setShadow = () => {
+                        color = shadows$1.calc(color, pts.round(this.wpos));
+                        sprite.material.color.setRGB(color[0], color[1], color[2]);
+                    };
+                    this.superobject_hovering_pass();
+                    /*if (this.type != 'you' && sprite.mousedSquare(wastes.gview.mrpos)) {
+                        hovering_sprites.hover(sprite);
+                        sprite.material.color.set(GLOB.HOVER_COLOR);
+                    }
+                    else {
+                        hovering_sprites.unhover(sprite);
+                        setShadow();
+                    }*/
+                    if (this.tile && this.tile.hasDeck == false) {
+                        setShadow();
+                    }
+                    else {
+                        sprite.material.color.set('white');
+                    }
+                }
+                if (this.type == 'you') ;
+                this.stack(['pawn', 'zombie', 'you', 'tree', 'chicken', 'shelves', 'leaves', 'wall', 'door', 'roof', 'falsefront', 'panel']);
+                super.obj_manual_update();
+            }
+        }
+        zombies.zombie = zombie;
+    })(zombies || (zombies = {}));
+    var zombies$1 = zombies;
 
     var client;
     (function (client) {
@@ -3323,7 +3613,18 @@ void main() {
                         obj.pecking = pecking;
                         obj.sitting = sitting;
                         obj.dead = dead;
-                        console.log('dead', dead);
+                        // console.log('updating chicken!');
+                    });
+                    process_news(zombies$1.zombie, 'zombie', data, (obj, sobj) => {
+                        const { wpos, angle, dead } = sobj;
+                        obj.wpos = wpos;
+                        obj.angle = angle;
+                        obj.dead = dead;
+                    }, (obj, sobj) => {
+                        const { wpos, angle, dead } = sobj;
+                        obj.netwpos = wpos;
+                        obj.netangle = angle;
+                        obj.dead = dead;
                         // console.log('updating chicken!');
                     });
                     process_news(objects$1.crate, 'crate', data, (obj, sobj) => {
@@ -8389,10 +8690,6 @@ void main() {
             }
             animateBodyParts() {
                 var _a;
-                if (!this.groups.legl) {
-                    console.error('no groups leg left??');
-                    return;
-                }
                 const legsSwoop = 0.8;
                 const armsSwoop = 0.5;
                 const rise = 0.5;
@@ -8507,7 +8804,7 @@ void main() {
                     }
                 }
                 if (this.type == 'you') ;
-                this.stack(['pawn', 'you', 'chicken', 'shelves', 'leaves', 'wall', 'door', 'roof', 'falsefront', 'panel']);
+                this.stack(['pawn', 'you', 'zombie', 'tree', 'chicken', 'shelves', 'leaves', 'wall', 'door', 'roof', 'falsefront', 'panel']);
                 super.obj_manual_update();
             }
         }

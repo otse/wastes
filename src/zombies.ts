@@ -19,29 +19,17 @@ import wastes from "./wastes";
 import win from "./win";
 
 
-export namespace pawns {
-
-	export var you: pawn;
-
-	const wasterSprite = false;
+export namespace zombies {
 
 	type inventory = { stamp: number, tuples: [string, number][] }
 
-	export class pawn extends objects.superobject {
-		static noun = 'pawn'
-		isTrader = false
-		isPlayer = false
+	export class zombie extends objects.superobject {
 		inventory?: inventory
-		dialogue = dialogues[0]
 		netwpos: vec2 = [0, 0]
 		netangle = 0
 		subtype
 		//inventory: objects.container
-		items: string[] = []
-		gun: string = 'revolver'
 		outfit = ['#444139', '#444139', '#484c4c', '#31362c']
-		aiming = false
-		shoot = false
 		group
 		mesh
 		target
@@ -50,7 +38,7 @@ export namespace pawns {
 		created = false
 		constructor() {
 			super(numbers.pawns);
-			this.type = 'pawn';
+			this.type = 'zombie';
 			this.height = 24;
 			//this.inventory = new objects.container;
 			//this.inventory.add('money');
@@ -59,15 +47,11 @@ export namespace pawns {
 
 			this.tiled();
 
-			if (wasterSprite)
-				this.size = pts.divide([90, 180], 5);
-			else {
-				this.size = pts.divide([50, 40], 1);
-			}
+			this.size = pts.divide([50, 40], 1);
 
 			let shape = new sprite({
 				binded: this,
-				tuple: wasterSprite ? sprites.pchris : sprites.test100,
+				tuple: sprites.test100,
 				cell: this.cell,
 				//opacity: .5,
 				orderBias: 1.0,
@@ -108,10 +92,9 @@ export namespace pawns {
 				this.scene.add(sun.target);
 			}
 
-			if (!wasterSprite) {
-				const spritee = this.shape as sprite;
-				spritee.material.map = this.target.texture;
-			}
+			const spritee = this.shape as sprite;
+			spritee.material.map = this.target.texture;
+
 
 		}
 		try_move_to(pos: vec2) {
@@ -127,28 +110,15 @@ export namespace pawns {
 		}
 		override superobject_setup_context_menu() {
 			win.contextmenu.reset();
-			if (!this.isPlayer && this.type != 'you') {
-				win.contextmenu.options.options.push(["Talk to", () => {
-					return pts.distsimple(you.wpos, this.wpos) < 1;
-				}, () => {
-					win.dialogue.talkingTo = this;
-					win.dialogue.call_once();
-					client.interactingWith = this.id;
-				}]);
-				if (this.subtype == 'trader') {
-					win.contextmenu.options.options.push(["Trade", () => {
-						return pts.distsimple(you.wpos, this.wpos) < 1;
-					}, () => {
-						win.trader.tradeWith = this;
-						win.trader.call_once();
-						client.interactingWith = this.id;
-					}]);
-				}
-				else {
+			win.contextmenu.options.options.push(["Examine", () => {
+				return true;
+			}, () => {
+				win.descriptor.focus = this;
+				win.descriptor.call_once("Probably succumbed to the rigors of trash.");
+				//win.contextmenu.focus = undefined;
+			}]);
 
-					//win.contextmenu.options.options.push("See inventory");
-				}
-			}
+
 		}
 		groups: any = {}
 		meshes: any = {}
@@ -169,40 +139,6 @@ export namespace pawns {
 			const bodyThick = 5;
 			const bodyWidth = 8;
 			const bodyHeight = 12;
-
-			const gunBarrelHeight = 6;
-			const gunBarrelSize = 3;
-
-			const transforme = (thick, width, height, path) => {
-				const sizes = [width + width + thick + width, height]
-				let materials: any[] = [];
-
-				let transforms: any[] = [];
-				transforms.push(new Matrix3().setUvTransform( // left
-					width * 2 / sizes[0], 0, thick / sizes[0], 1, 0, 0, 1));
-				transforms.push(new Matrix3().setUvTransform( // right
-					width * 2 / sizes[0] + thick / sizes[0], 0, -thick / sizes[0], 1, 0, 0, 1));
-				transforms.push(new Matrix3().setUvTransform( // top
-					width * 2 / sizes[0] + thick / sizes[0], 0, thick / sizes[0], thick / sizes[1], 0, 0, 1));
-				transforms.push(new Matrix3()); // bottom ?
-				transforms.push(new Matrix3().setUvTransform( // front
-					0, 0, width / sizes[0], 1, 0, 0, 1));
-				transforms.push(new Matrix3().setUvTransform( // back
-					width / sizes[0], 0, width / sizes[0], 1, 0, 0, 1));
-
-				for (let i in transforms) {
-					materials.push(SpriteMaterial({
-						map: ren.load_texture(path, 0),
-					}, {
-						myUvTransform: transforms[i]
-					}));
-				}
-
-				return materials;
-			}
-
-			let materialsBody = transforme(bodyThick, bodyWidth, bodyHeight, `tex/pawn/body.png`)
-			let materialsArms = transforme(armsSize, armsSize, armsHeight, `tex/pawn/arms.png`)
 
 			let boxHead = new BoxGeometry(headSize, headSize, headSize, 1, 1, 1);
 			let materialHead = new MeshLambertMaterial({
@@ -241,16 +177,6 @@ export namespace pawns {
 				blendDst: THREE.OneMinusDstAlphaFactor
 			})
 
-			/*let boxGunGrip = new BoxGeometry(2, 5, 2, 1, 1, 1);
-			let materialGunGrip = new MeshLambertMaterial({
-				color: '#768383'
-			});
-	
-			let boxGunBarrel = new BoxGeometry(2, gunBarrelHeight, 2, 1, 1, 1);
-			let materialGunBarrel = new MeshLambertMaterial({
-				color: '#768383'
-			});*/
-
 			this.meshes.water = new Mesh(planeWater, materialWater);
 			this.meshes.water.rotation.x = -Math.PI / 2;
 			this.meshes.water.position.y = -bodyHeight * 1.25;
@@ -266,9 +192,6 @@ export namespace pawns {
 			this.meshes.legl = new Mesh(boxLegs, materialLegs);
 			this.meshes.legr = new Mesh(boxLegs, materialLegs);
 
-			/*this.meshes.gungrip = new Mesh(boxGunGrip, materialGunGrip);
-			this.meshes.gunbarrel = new Mesh(boxGunBarrel, materialGunBarrel);*/
-
 			this.groups.head = new Group;
 			this.groups.gasMask = new Group;
 			this.groups.body = new Group;
@@ -279,9 +202,6 @@ export namespace pawns {
 			this.groups.ground = new Group;
 			this.groups.basis = new Group;
 
-			/*this.groups.gungrip = new Group;
-			this.groups.gunbarrel = new Group;*/
-
 			this.groups.head.add(this.meshes.head);
 			this.groups.gasMask.add(this.meshes.gasMask);
 			this.groups.body.add(this.meshes.body);
@@ -291,12 +211,6 @@ export namespace pawns {
 			this.groups.legr.add(this.meshes.legr);
 
 			this.groups.head.add(this.groups.gasMask);
-
-			/*this.groups.gungrip.add(this.meshes.gungrip);
-			this.groups.gunbarrel.add(this.meshes.gunbarrel);*/
-
-			/*this.groups.gungrip.add(this.groups.gunbarrel);
-			this.groups.armr.add(this.groups.gungrip);*/
 
 			this.groups.body.add(this.groups.head);
 			this.groups.body.add(this.groups.arml);
@@ -322,10 +236,6 @@ export namespace pawns {
 			this.groups.arml.rotation.set(0, 0, armsAngle);
 			this.meshes.arml.position.set(0, -armsHeight / 2 + armsSize / 2, 0);
 
-			/*this.groups.gungrip.position.set(0, -armsHeight, 0);
-			this.meshes.gungrip.rotation.set(Math.PI / 2, 0, 0);
-			this.meshes.gunbarrel.position.set(0, -gunBarrelHeight / 2, 0);*/
-
 			this.groups.legl.position.set(-legsSize / 2, -bodyHeight / 2, 0);
 			this.meshes.legl.position.set(0, -legsHeight / 2, 0);
 
@@ -336,121 +246,15 @@ export namespace pawns {
 			//mesh.rotation.set(Math.PI / 2, 0, 0);
 
 			this.scene.add(this.groups.basis);
-
-			const loadGunAgain = true;
-			if (loadGunAgain) {
-				const gun = collada.load_model('collada/revolver', (model) => {
-					model.rotation.set(0, 0, Math.PI / 2);
-					model.position.set(0, -armsHeight + armsSize / 2, 0);
-					this.groups.armr.add(model);
-				});
-			}
-
 		}
 		render() {
 			ren.renderer.setRenderTarget(this.target);
 			ren.renderer.clear();
 			ren.renderer.render(this.scene, this.camera);
 		}
-		move() {
-
-			let speed = 0.038 * ren.delta * 60;
-			let x = 0;
-			let y = 0;
-			let wasd = true;
-
-			if (this.type == 'you') {
-				if (app.key('w')) {
-					x += -1;
-					y += -1;
-				}
-				if (app.key('s')) {
-					x += 1;
-					y += 1;
-				}
-				if (app.key('a')) {
-					x += -1;
-					y += 1;
-				}
-				if (app.key('d')) {
-					x += 1;
-					y += -1;
-				}
-				if (app.key('x')) {
-					speed *= 5;
-				}
-			}
-
-			const wposBasedAiming = true;
-
-
-			// We snap to aim onto tiles
-			if (this.type == 'you' && app.key('shift') && !win.genericHovering) {
-				wasd = false;
-				let pos = tiles.hovering?.wpos || [0, 0];
-				pos = pts.subtract(pos, pawns.you.wpos);
-				const dist = pts.distsimple(pos, wastes.gview.mwpos);
-				if (dist > 0.5) {
-					x = pos[0];
-					y = -pos[1];
-				}
-			}
-			else if (this.type == 'you' && (!x && !y) && app.button(0) >= 1 && !win.genericHovering) {
-				// Deduce x and y from click moving
-				wasd = false;
-				let mouse = wastes.gview.mwpos;
-				let pos = this.wpos;
-				pos = pts.add(pos, pts.divide([1, 1], 2));
-				mouse = pts.subtract(mouse, pos);
-				mouse[1] = -mouse[1];
-
-				const dist = pts.distsimple(pos, wastes.gview.mwpos);
-
-				if (dist > 0.5) {
-					x = mouse[0];
-					y = mouse[1];
-				}
-			}
-
-			if (x || y) {
-				// We have to deduce an angle and move that way
-				// Unless we're aiming with a gun
-				let angle = pts.angle([0, 0], [x, y]);
-				this.angle = angle;
-				x = speed * Math.sin(angle);
-				y = speed * Math.cos(angle);
-				if (!app.key('shift')) {
-					this.walkSmoother += ren.delta * 5;
-					this.try_move_to([x, y]);
-				}
-				else {
-					this.walkSmoother -= ren.delta * 5;
-				}
-			}
-			else
-				this.walkSmoother -= ren.delta * 5;
-
-			if (this.type == 'you') {
-				const sprite = this.shape as sprite;
-
-				if (app.key('v') == 1) {
-					wastes.FOLLOW_CAMERA = !wastes.FOLLOW_CAMERA;
-				}
-				if (wastes.FOLLOW_CAMERA) {
-					this.wtorpos();
-					this.obj_manual_update();
-					wastes.gview.follow = this;
-				}
-				else {
-					wastes.gview.follow = undefined;
-				}
-			}
-
+		animateBodyParts() {
 			this.walkSmoother = wastes.clamp(this.walkSmoother, 0, 1);
 
-		}
-		animateBodyParts() {
-			
 			const legsSwoop = 0.8;
 			const armsSwoop = 0.5;
 			const rise = 0.5;
@@ -467,37 +271,10 @@ export namespace pawns {
 			this.groups.ground.position.y = -12 + swoop1 * swoop2 * rise * this.walkSmoother;
 			this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
 
-			if (this.type == 'you') {
-				if (app.key('shift')) {
-					this.aiming = true;
-
-					if (app.button(0) == 1) {
-						console.log('shoot');
-
-						this.shoot = true;
-
-						for (let obj of lod.ggrid.visibleObjs) {
-							const cast = obj as objects.superobject;
-							if (cast.isSuper && cast.tileBound) {
-								const test = cast.tileBound.ray(
-									{
-										dir: [Math.sin(this.angle), Math.cos(this.angle)],
-										org: this.wpos
-									});
-								if (test) {
-									console.log('we hit something');
-									cast.onhit();
-								}
-							}
-						}
-					}
-				}
-				else
-					this.aiming = false;
-			}
-			if (this.aiming) {
+			//if (this.aiming) {
 				this.groups.armr.rotation.x = -Math.PI / 2;
-			}
+				this.groups.arml.rotation.x = -Math.PI / 2;
+			//}
 
 			const sprite = this.shape as sprite;
 			if (this.tile?.type == 'shallow water') {
@@ -561,8 +338,6 @@ export namespace pawns {
 
 			this.make();
 
-			this.move();
-
 			this.animateBodyParts();
 
 			this.tiled();
@@ -581,7 +356,7 @@ export namespace pawns {
 					color = shadows.calc(color, pts.round(this.wpos));
 					sprite.material.color.setRGB(color[0], color[1], color[2]);
 				}
-
+				
 				this.superobject_hovering_pass();
 				/*if (this.type != 'you' && sprite.mousedSquare(wastes.gview.mrpos)) {
 					hovering_sprites.hover(sprite);
@@ -591,7 +366,7 @@ export namespace pawns {
 					hovering_sprites.unhover(sprite);
 					setShadow();
 				}*/
-				
+
 				if (this.tile && this.tile.hasDeck == false) {
 					setShadow();
 				}
@@ -604,7 +379,7 @@ export namespace pawns {
 				//this.wpos = tiles.hovering!.wpos;
 			}
 
-			this.stack(['pawn', 'you', 'zombie', 'tree', 'chicken', 'shelves', 'leaves', 'wall', 'door', 'roof', 'falsefront', 'panel']);
+			this.stack(['pawn', 'zombie', 'you', 'tree', 'chicken', 'shelves', 'leaves', 'wall', 'door', 'roof', 'falsefront', 'panel']);
 			super.obj_manual_update();
 		}
 		//tick() {
@@ -614,4 +389,4 @@ export namespace pawns {
 
 }
 
-export default pawns;
+export default zombies;

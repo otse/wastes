@@ -318,6 +318,11 @@ export namespace chickens {
 				this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
 			}
 			else {
+				this.groups.legl.rotation.x = -0.5;
+				this.groups.legr.rotation.x = 0.5;
+				this.groups.head.position.z = 0;
+				this.groups.ground.position.y = -10;
+
 				this.groups.ground.rotation.y = Math.PI / 4;
 				this.groups.ground.rotation.z = -Math.PI / 2;
 				console.log('were dead');
