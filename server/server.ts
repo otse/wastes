@@ -67,6 +67,16 @@ function start2() {
 				factory(tree, pos);
 				console.log('dead tree', pos);
 			}
+
+			else if (pixel.is_color(colors.color_plywood_wall)) {
+				factory(wall, pos);
+			}
+			else if (pixel.is_color(colors.color_overgrown_wall)) {
+				factory(wall, pos);
+			}
+			else if (pixel.is_color(colors.color_door)) {
+				factory(door, pos);
+			}
 		});
 		return false;
 	});
@@ -91,7 +101,7 @@ function start2() {
 		})
 		return false;
 	})
-	
+
 	let vendor = new pawn;
 	//vendor.pawntype = 'trader';
 	vendor.walkArea = new aabb2([38, 49], [41, 49]);
@@ -121,9 +131,9 @@ function start2() {
 	talker.subtype = 'civilian';
 	talker.walkArea = new aabb2([43.5, 61.5], [45.5, 59.5]);
 	slod.add(talker);
-	
 
-	for (let i = 0; i < 2; i++) {
+
+	for (let i = 0; i < 1; i++) {
 		let shadowChicken = new chicken;
 		shadowChicken.wpos = [42, 53];
 		shadowChicken.walkArea = new aabb2([41, 54], [43, 51]);
@@ -345,6 +355,7 @@ const outfits: [head: string, body: string, arms: string, legs: string][] = [
 
 class supersobj extends slod.sobj {
 	isSuperSobj = true
+	solid = true
 	bound: aabb2
 	size = 1
 	constructor() {
@@ -364,6 +375,7 @@ class supersobj extends slod.sobj {
 
 	}
 	shoot(angle) {
+		let hits: supersobj[] = [];
 		for (let sobj of slod.ssector.visibles) {
 			if (sobj == this)
 				continue;
@@ -376,11 +388,51 @@ class supersobj extends slod.sobj {
 						org: this.wpos
 					});
 				if (test) {
-					console.log('we hit something', cast.type);
-					cast.onhit();
+					hits.push(cast);
+					//console.log('we hit something', cast.type);
+					//cast.onhit();
 				}
 			}
 		}
+		hits = hits.filter((e) => e.solid); // so we can shoot thru doors
+		if (hits.length) {
+			hits.sort((a, b) => {
+				let c = pts.distsimple(a.wpos, this.wpos);
+				let d = pts.distsimple(b.wpos, this.wpos);
+				return (c > d) ? 1 : -1;
+			});
+		}
+		for (let hit of hits)
+			console.log('we hit', hit.type);
+		if (hits.length)
+			hits[0].onhit();
+	}
+}
+
+class wall extends supersobj {
+	constructor() {
+		super();
+		this.type = 'wall';
+		console.log('make wall');
+
+	}
+}
+
+class door extends supersobj {
+	constructor() {
+		super();
+		this.type = 'door';
+	}
+	override tick() {
+		let open = false;
+		const stack = this.sector!.stacked(this.wpos);
+		for (const sobj of stack) {
+			if (sobj == this)
+				continue;
+			if (sobj.is_type(['pawn', 'chicken']))
+				open = true;
+		}
+		this.solid = !open;
 	}
 }
 

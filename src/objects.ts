@@ -179,7 +179,7 @@ namespace objects {
 	export class superobject extends lod.obj {
 		static focus: superobject
 		id = 'an_objected_0'
-		isObjected = true
+		isSuper = true
 		paintTimer = 0
 		paintedRed = false
 		solid = true

@@ -337,7 +337,7 @@ export namespace pawns {
 
 			this.scene.add(this.groups.basis);
 
-			const loadGunAgain = false;
+			const loadGunAgain = true;
 			if (loadGunAgain) {
 				const gun = collada.load_model('collada/revolver', (model) => {
 					model.rotation.set(0, 0, Math.PI / 2);
@@ -480,16 +480,16 @@ export namespace pawns {
 						this.shoot = true;
 
 						for (let obj of lod.ggrid.visibleObjs) {
-							const objected = obj as objects.superobject;
-							if (objected.isObjected && objected.tileBound) {
-								const test = objected.tileBound.ray(
+							const cast = obj as objects.superobject;
+							if (cast.isSuper && cast.tileBound) {
+								const test = cast.tileBound.ray(
 									{
 										dir: [Math.sin(this.angle), Math.cos(this.angle)],
 										org: this.wpos
 									});
 								if (test) {
 									console.log('we hit something');
-									objected.onhit();
+									cast.onhit();
 								}
 							}
 						}

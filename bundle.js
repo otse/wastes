@@ -1513,7 +1513,7 @@ void main() {
             constructor(counts) {
                 super(counts);
                 this.id = 'an_objected_0';
-                this.isObjected = true;
+                this.isSuper = true;
                 this.paintTimer = 0;
                 this.paintedRed = false;
                 this.solid = true;
@@ -8282,6 +8282,13 @@ void main() {
                 this.groups.ground.position.set(0, -bodyHeight * 1.0, 0);
                 //mesh.rotation.set(Math.PI / 2, 0, 0);
                 this.scene.add(this.groups.basis);
+                {
+                    collada$1.load_model('collada/revolver', (model) => {
+                        model.rotation.set(0, 0, Math.PI / 2);
+                        model.position.set(0, -armsHeight + armsSize / 2, 0);
+                        this.groups.armr.add(model);
+                    });
+                }
             }
             render() {
                 ren$1.renderer.setRenderTarget(this.target);
@@ -8394,15 +8401,15 @@ void main() {
                             console.log('shoot');
                             this.shoot = true;
                             for (let obj of lod$1.ggrid.visibleObjs) {
-                                const objected = obj;
-                                if (objected.isObjected && objected.tileBound) {
-                                    const test = objected.tileBound.ray({
+                                const cast = obj;
+                                if (cast.isSuper && cast.tileBound) {
+                                    const test = cast.tileBound.ray({
                                         dir: [Math.sin(this.angle), Math.cos(this.angle)],
                                         org: this.wpos
                                     });
                                     if (test) {
                                         console.log('we hit something');
-                                        objected.onhit();
+                                        cast.onhit();
                                     }
                                 }
                             }
