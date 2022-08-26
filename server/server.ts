@@ -136,6 +136,7 @@ function start2() {
 	for (let i = 0; i < 1; i++) {
 		let shadowChicken = new chicken;
 		shadowChicken.wpos = [42, 53];
+		shadowChicken.respawns = true;
 		shadowChicken.walkArea = new aabb2([41, 54], [43, 51]);
 		slod.add(shadowChicken);
 	}
@@ -513,6 +514,9 @@ class tree extends supersobj {
 // npc can be a chicken or a pawn
 class npc extends supersobj {
 	static id = 0;
+	originalWpos: vec2 = [0, 0]
+	respawns = false
+	respawned = false
 	isNpc = true
 	health = 100
 	dead = false
@@ -521,6 +525,7 @@ class npc extends supersobj {
 	walkArea: aabb2
 	aimTarget: vec2 = [0, 0]
 	timer: timer
+	respawnTimer: timer
 	speed = 1.0
 	constructor() {
 		super();
@@ -548,7 +553,7 @@ class npc extends supersobj {
 			}
 		}
 
-		if (!this.frozenBy && pts.together(this.aimTarget)) {
+		if (!this.frozenBy && !pts.equals(this.aimTarget, [0, 0])) {
 			let angle = pts.angle(this.wpos, this.aimTarget);
 
 			this.angle = -angle + Math.PI;
@@ -581,8 +586,28 @@ class npc extends supersobj {
 			}
 		}
 	}
+	respawn(oldNpc: npc) {
+		// override this
+	}
 	override tick() {
-		this.wander();
+		if (pts.equals(this.originalWpos, [0, 0])) {
+			this.originalWpos = pts.clone(this.wpos);
+			console.log('setting original wpos');
+
+		}
+		if (this.dead) {
+			if (!this.respawnTimer) {
+				this.respawnTimer = new timer(0);
+				console.log(`npc died, setting respawn timre`);
+			}
+			else if (this.respawnTimer.elapsed(10000)) {
+				slod.remove(this);
+			}
+			else if (!this.respawned && this.respawnTimer.elapsed(5000)) {
+				this.respawned = true;
+				this.respawn(this);
+			}
+		}
 	}
 	override gather(fully: boolean) {
 		let upper = super.gather(fully) as any;
@@ -613,6 +638,7 @@ class pawn extends npc {
 	}
 	override tick() {
 		super.tick();
+		this.wander();
 		//if (this.subtype == 'trader') {
 		//this.inventory.wpos = this.wpos;
 		// console.log('syncing inventory with pawn-npc');
@@ -651,7 +677,7 @@ class player extends pawn {
 
 		this.inventory.add('money', 10);
 
-		this.inventory.add('bullet', 10);
+		this.inventory.add('bullet', 20);
 		this.inventory.add('cork', 50);
 
 		console.log('amount of cork:', this.inventory.amount('cork'));
@@ -700,6 +726,15 @@ class chicken extends npc {
 		this.size = 0.5;
 		this.walkAgain = new timer(0);
 	}
+	override respawn(oldNpc: npc) {
+		console.log('CHICKN RESPAWN');
+		
+		let npc = new chicken;
+		npc.respawns = oldNpc.respawns;
+		npc.wpos = oldNpc.originalWpos;
+		npc.walkArea = oldNpc.walkArea;
+		slod.add(npc);
+	}
 	override on_hit() {
 		super.on_hit();
 
@@ -718,6 +753,8 @@ class chicken extends npc {
 		return upper;
 	}
 	override tick() {
+		super.tick();
+
 		if (this.dead)
 			return;
 
