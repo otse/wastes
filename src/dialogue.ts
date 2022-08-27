@@ -1,31 +1,31 @@
-type speech = [text: string, follow: number]
+type speech = string[]
 
-const dialogues: speech[][] = [
+const dialogues: speech[] = [
     [
         // skip 0
-        ['I got nothing to say.', -1]
+        'I got nothing to say.',
     ],
     [
         // 1
-        [`I'm a commmoner.`, -1]
+        `I'm a commmoner.`,
     ],
     [
         // 2
-        [`I'm the trader around here.`, 1],
-        [`I mostly trade scrap nowadays.`, 2],
-        [`Everyone tinkers their own things.`, -1],
+        `Did you hear a zombie?`,
+        `I'm the trader around here.`,
+        `I get visited by stalkers looking to fix their gear.`,
     ],
     [
         // 3
-        [`I protect the civilized borders.`, 1],
-        [`It may not look that civil at first glance.`, 2],
-        [`But this county needs its defendants.`, -1]
+        `I protect the civilized borders.`,
+        `It may not look that civil at first glance.`,
+        `But this county needs its defendants.`,
     ],
     [
         // 4
-        [`The bayou swallows you up.`, 1],
-        [`You stalkers think you're survivors.`, 2],
-        [`But you'll be a zombie before you know it.`, -1],
+        `You stalkers think you're survivors.`,
+        `It's a world of hurt out there.`,
+        `The bayou swallows you up.`,
     ]
 ]
 

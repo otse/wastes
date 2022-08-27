@@ -29,6 +29,7 @@ export namespace pawns {
 
 	export class pawn extends objects.superobject {
 		static noun = 'pawn'
+		dead = false
 		isTrader = false
 		isPlayer = false
 		inventory?: inventory
@@ -51,6 +52,7 @@ export namespace pawns {
 		constructor() {
 			super(numbers.pawns);
 			this.type = 'pawn';
+			this.title = 'pawn';
 			this.height = 24;
 			//this.inventory = new objects.container;
 			//this.inventory.add('money');
@@ -127,7 +129,7 @@ export namespace pawns {
 		}
 		override superobject_setup_context_menu() {
 			win.contextmenu.reset();
-			if (!this.isPlayer && this.type != 'you') {
+			if (!this.isPlayer && this.type != 'you' && !this.dead) {
 				win.contextmenu.options.options.push(["Talk to", () => {
 					return pts.distsimple(you.wpos, this.wpos) < 1;
 				}, () => {
@@ -142,6 +144,15 @@ export namespace pawns {
 						win.trader.tradeWith = this;
 						win.trader.call_once();
 						client.interactingWith = this.id;
+					}]);
+				}
+				if (this.examine) {
+					win.contextmenu.options.options.push(["Examine", () => {
+						return true;
+					}, () => {
+						win.descriptor.focus = this;
+						win.descriptor.call_once(this.examine);
+						//win.contextmenu.focus = undefined;
 					}]);
 				}
 				else {
@@ -450,64 +461,83 @@ export namespace pawns {
 
 		}
 		animateBodyParts() {
-			
+
 			const legsSwoop = 0.8;
 			const armsSwoop = 0.5;
 			const rise = 0.5;
 
 			this.swoop += ren.delta * 2.5;
 
-			const swoop1 = Math.cos(Math.PI * this.swoop);
-			const swoop2 = Math.cos(Math.PI * this.swoop - Math.PI);
+			if (!this.dead) {
+				const swoop1 = Math.cos(Math.PI * this.swoop);
+				const swoop2 = Math.cos(Math.PI * this.swoop - Math.PI);
 
-			this.groups.legl.rotation.x = swoop1 * legsSwoop * this.walkSmoother;
-			this.groups.legr.rotation.x = swoop2 * legsSwoop * this.walkSmoother;
-			this.groups.arml.rotation.x = swoop1 * armsSwoop * this.walkSmoother;
-			this.groups.armr.rotation.x = swoop2 * armsSwoop * this.walkSmoother;
-			this.groups.ground.position.y = -12 + swoop1 * swoop2 * rise * this.walkSmoother;
-			this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
+				this.groups.legl.rotation.x = swoop1 * legsSwoop * this.walkSmoother;
+				this.groups.legr.rotation.x = swoop2 * legsSwoop * this.walkSmoother;
+				this.groups.arml.rotation.x = swoop1 * armsSwoop * this.walkSmoother;
+				this.groups.armr.rotation.x = swoop2 * armsSwoop * this.walkSmoother;
+				this.groups.ground.position.y = -12 + swoop1 * swoop2 * rise * this.walkSmoother;
+				this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
 
-			if (this.type == 'you') {
-				if (app.key('shift')) {
-					this.aiming = true;
+				if (this.type == 'you') {
+					if (app.key('shift')) {
+						this.aiming = true;
 
-					if (app.button(0) == 1) {
-						console.log('shoot');
+						if (app.button(0) == 1) {
+							console.log('shoot');
 
-						this.shoot = true;
+							this.shoot = true;
 
-						for (let obj of lod.ggrid.visibleObjs) {
-							const cast = obj as objects.superobject;
-							if (cast.isSuper && cast.tileBound) {
-								const test = cast.tileBound.ray(
-									{
-										dir: [Math.sin(this.angle), Math.cos(this.angle)],
-										org: this.wpos
-									});
-								if (test) {
-									console.log('we hit something');
-									cast.onhit();
+							for (let obj of lod.ggrid.visibleObjs) {
+								const cast = obj as objects.superobject;
+								if (cast.isSuper && cast.tileBound) {
+									const test = cast.tileBound.ray(
+										{
+											dir: [Math.sin(this.angle), Math.cos(this.angle)],
+											org: this.wpos
+										});
+									if (test) {
+										console.log('we hit something');
+										cast.onhit();
+									}
 								}
 							}
 						}
 					}
+					else
+						this.aiming = false;
 				}
-				else
-					this.aiming = false;
-			}
-			if (this.aiming) {
-				this.groups.armr.rotation.x = -Math.PI / 2;
-			}
+				if (this.aiming) {
+					this.groups.armr.rotation.x = -Math.PI / 2;
+				}
 
-			const sprite = this.shape as sprite;
-			if (this.tile?.type == 'shallow water') {
-				sprite.vars.orderBias = 0.25
-				this.meshes.water.visible = true;
+				const sprite = this.shape as sprite;
+				if (this.tile?.type == 'shallow water') {
+					sprite.vars.orderBias = 0.25
+					this.meshes.water.visible = true;
+				}
+				else {
+					sprite.vars.orderBias = 1.0;
+					this.meshes.water.visible = false;
+				}
 			}
 			else {
-				sprite.vars.orderBias = 1.0;
-				this.meshes.water.visible = false;
+				// dead
+				this.groups.legl.rotation.x = -0.1;
+				this.groups.legr.rotation.x = 0.1;
+				this.groups.arml.rotation.x = 0.1;
+				this.groups.armr.rotation.x = -0.1;
+				this.groups.ground.position.y = -12;
+
+				this.groups.ground.rotation.x = Math.PI / 2;
+				this.groups.ground.rotation.y = 0;
+				this.groups.ground.rotation.z = -Math.PI / 2;
+
+				const sprite = this.shape as sprite;
+				sprite.vars.orderBias = -0.25;
 			}
+
+
 
 			this.render();
 		}
@@ -591,7 +621,7 @@ export namespace pawns {
 					hovering_sprites.unhover(sprite);
 					setShadow();
 				}*/
-				
+
 				if (this.tile && this.tile.hasDeck == false) {
 					setShadow();
 				}

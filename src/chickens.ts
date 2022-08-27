@@ -417,13 +417,15 @@ export namespace chickens {
 		override superobject_setup_context_menu() {
 			win.contextmenu.reset();
 
-			win.contextmenu.options.options.push(["Examine", () => {
-				return true;
-			}, () => {
-				win.descriptor.focus = this;
-				win.descriptor.call_once("Cluck cluck.");
-				//win.contextmenu.focus = undefined;
-			}]);
+			if (this.examine) {
+				win.contextmenu.options.options.push(["Examine", () => {
+					return true;
+				}, () => {
+					win.descriptor.focus = this;
+					win.descriptor.call_once(this.examine);
+					//win.contextmenu.focus = undefined;
+				}]);
+			}
 
 		}
 		override tick() {

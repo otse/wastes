@@ -450,7 +450,7 @@ namespace win {
 		static call_once() {
 			this.end_close_others();
 
-			this.modal = new modal(this.focus!.type);
+			this.modal = new modal(this.focus!.title);
 			this.modal.content.innerHTML = '';
 			this.modal.element.classList.add('contextmenu');
 
@@ -534,7 +534,7 @@ namespace win {
 		static talkingTo?: pawns.pawn
 		static talkingToCur?: pawns.pawn
 		static modal?: modal
-		static where = [0, 0];
+		static where = 0;
 		static init() {
 			hooks.register('viewRClick', (view) => {
 				// We right clickd outside
@@ -552,7 +552,7 @@ namespace win {
 			if (this.talkingTo && !this.modal) {
 				this.talkingToCur = this.talkingTo;
 				this.modal = new modal();
-				this.where[1] = 0;
+				this.where = 0;
 				this.change();
 			}
 		}
@@ -572,11 +572,13 @@ namespace win {
 			this.modal!.content.append(pawnImage);
 
 			let textArea = document.createElement('div');
-			textArea.innerHTML = this.talkingToCur!.dialogue[this.where[1]][0] + "&nbsp;";
+			if (this.talkingToCur!.dialogue[this.where])
+				textArea.innerHTML = this.talkingToCur!.dialogue[this.where] + "&nbsp;";
 			this.modal!.content.append(textArea);
 
-			const next = this.talkingToCur!.dialogue[this.where[1]][1];
-			if (next != -1) {
+			//const next = this.talkingToCur!.dialogue[this.where[1]][1];
+			const next = this.talkingToCur!.dialogue[this.where + 1];
+			if (next) {
 				let button = document.createElement('div');
 				button.innerHTML = '>>'
 				button.className = 'button';
@@ -584,7 +586,7 @@ namespace win {
 
 				button.onclick = (e) => {
 					console.log('woo');
-					this.where[1] = next as number;
+					this.where++;
 					genericHovering = false;
 					this.change();
 					//button.remove();
@@ -674,7 +676,7 @@ namespace win {
 			if (this.focus) {
 				this.focusCur = this.focus;
 
-				this.modal = new modal('container');
+				this.modal = new modal('Container');
 				this.modal.content.innerHTML = ''
 
 				this.update_inventory_view(true);

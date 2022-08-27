@@ -26,10 +26,11 @@ export namespace zombies {
 	export class zombie extends objects.superobject {
 		inventory?: inventory
 		netwpos: vec2 = [0, 0]
+		dead = false
 		netangle = 0
 		subtype
 		//inventory: objects.container
-		outfit = ['#444139', '#444139', '#484c4c', '#31362c']
+		outfit = ['#444139', '#3b4339', '#3b4339', '#3b4039']
 		group
 		mesh
 		target
@@ -110,15 +111,15 @@ export namespace zombies {
 		}
 		override superobject_setup_context_menu() {
 			win.contextmenu.reset();
-			win.contextmenu.options.options.push(["Examine", () => {
-				return true;
-			}, () => {
-				win.descriptor.focus = this;
-				win.descriptor.call_once("Probably succumbed to the rigors of trash.");
-				//win.contextmenu.focus = undefined;
-			}]);
-
-
+			if (this.examine) {
+				win.contextmenu.options.options.push(["Examine", () => {
+					return true;
+				}, () => {
+					win.descriptor.focus = this;
+					win.descriptor.call_once(this.examine);
+					//win.contextmenu.focus = undefined;
+				}]);
+			}
 		}
 		groups: any = {}
 		meshes: any = {}
@@ -255,35 +256,51 @@ export namespace zombies {
 		animateBodyParts() {
 			this.walkSmoother = wastes.clamp(this.walkSmoother, 0, 1);
 
-			const legsSwoop = 0.8;
-			const armsSwoop = 0.5;
-			const rise = 0.5;
+			if (!this.dead) {
+				const legsSwoop = 0.8;
+				const armsSwoop = 0.5;
+				const rise = 0.5;
 
-			this.swoop += ren.delta * 2.5;
+				this.swoop += ren.delta * 2.0;
 
-			const swoop1 = Math.cos(Math.PI * this.swoop);
-			const swoop2 = Math.cos(Math.PI * this.swoop - Math.PI);
+				const swoop1 = Math.cos(Math.PI * this.swoop);
+				const swoop2 = Math.cos(Math.PI * this.swoop - Math.PI);
 
-			this.groups.legl.rotation.x = swoop1 * legsSwoop * this.walkSmoother;
-			this.groups.legr.rotation.x = swoop2 * legsSwoop * this.walkSmoother;
-			this.groups.arml.rotation.x = swoop1 * armsSwoop * this.walkSmoother;
-			this.groups.armr.rotation.x = swoop2 * armsSwoop * this.walkSmoother;
-			this.groups.ground.position.y = -12 + swoop1 * swoop2 * rise * this.walkSmoother;
-			this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
+				this.groups.legl.rotation.x = swoop1 * legsSwoop * this.walkSmoother;
+				this.groups.legr.rotation.x = swoop2 * legsSwoop * this.walkSmoother;
+				this.groups.arml.rotation.x = swoop1 * armsSwoop * this.walkSmoother;
+				this.groups.armr.rotation.x = swoop2 * armsSwoop * this.walkSmoother;
+				this.groups.ground.position.y = -12 + swoop1 * swoop2 * rise * this.walkSmoother;
+				this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
 
-			//if (this.aiming) {
-				this.groups.armr.rotation.x = -Math.PI / 2;
-				this.groups.arml.rotation.x = -Math.PI / 2;
-			//}
+				this.groups.armr.rotation.x = -Math.PI / 2 * this.walkSmoother;
+				this.groups.arml.rotation.x = -Math.PI / 2 * this.walkSmoother;
+				//if (this.aiming) {
 
-			const sprite = this.shape as sprite;
-			if (this.tile?.type == 'shallow water') {
-				sprite.vars.orderBias = 0.25
-				this.meshes.water.visible = true;
+				const sprite = this.shape as sprite;
+				if (this.tile?.type == 'shallow water') {
+					//sprite.vars.orderBias = 0.25
+					this.meshes.water.visible = true;
+				}
+				else {
+					//sprite.vars.orderBias = 1.0;
+					this.meshes.water.visible = false;
+				}
 			}
 			else {
-				sprite.vars.orderBias = 1.0;
-				this.meshes.water.visible = false;
+				// dead
+				this.groups.legl.rotation.x = -0.1;
+				this.groups.legr.rotation.x = 0.1;
+				this.groups.arml.rotation.x = 0.1;
+				this.groups.armr.rotation.x = -0.1;
+				this.groups.ground.position.y = -12;
+
+				this.groups.ground.rotation.x = Math.PI / 2;
+				this.groups.ground.rotation.y = 0;
+				this.groups.ground.rotation.z = -Math.PI / 2;
+
+				const sprite = this.shape as sprite;
+				sprite.vars.orderBias = -0.25;
 			}
 
 			this.render();
@@ -321,10 +338,10 @@ export namespace zombies {
 			if (movement > 0.005) {
 				//console.log('movement > 0.25');
 
-				this.walkSmoother += ren.delta * 10;
+				this.walkSmoother += ren.delta * 5;
 			}
 			else {
-				this.walkSmoother -= ren.delta * 5;
+				this.walkSmoother -= ren.delta * 2.5;
 			}
 
 		}
@@ -356,7 +373,7 @@ export namespace zombies {
 					color = shadows.calc(color, pts.round(this.wpos));
 					sprite.material.color.setRGB(color[0], color[1], color[2]);
 				}
-				
+
 				this.superobject_hovering_pass();
 				/*if (this.type != 'you' && sprite.mousedSquare(wastes.gview.mrpos)) {
 					hovering_sprites.hover(sprite);

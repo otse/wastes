@@ -127,8 +127,10 @@ function start2() {
 	vendor.wpos = [37.5, 48.5];
 	vendor.subtype = 'trader';
 	vendor.isTrader = true;
+	vendor.title = 'Vendor';
 	vendor.inventory.add('scrap', -1);
 	vendor.inventory.add('junk', -1);
+	vendor.inventory.add('bullet', -1);
 	slod.add(vendor);
 
 	//for (let i = 0; i < 0; i++) {
@@ -136,6 +138,7 @@ function start2() {
 	guard.wpos = [45, 56];
 	//peacekeeper.outfit = []
 	guard.dialogue = 3;
+	guard.title = 'Guard';
 	guard.subtype = 'guard';
 	guard.walkArea = new aabb2([43, 51], [46, 58]);
 	slod.add(guard);
@@ -143,7 +146,11 @@ function start2() {
 
 	let zomb = new zombie;
 	zomb.wpos = [34, 50];
-	zomb.walkArea = new aabb2([33, 48], [35, 51]);
+	zomb.dead = true;
+	zomb.stayDead = true;
+	zomb.title = 'Faceplant';
+	zomb.examine = `Looks like a knocked out zombie.`
+	zomb.walkArea = new aabb2([33, 45], [35, 51]);
 	slod.add(zomb);
 
 	let talker = new pawn;
@@ -160,6 +167,7 @@ function start2() {
 		let shadowChicken = new chicken;
 		shadowChicken.wpos = [42, 53];
 		shadowChicken.respawns = true;
+		shadowChicken.examine = 'This chicken likes to keep to the shadows.';
 		shadowChicken.walkArea = new aabb2([41, 54], [43, 51]);
 		slod.add(shadowChicken);
 	}
@@ -383,6 +391,8 @@ const outfits: [head: string, body: string, arms: string, legs: string][] = [
 
 class supersobj extends slod.sobj {
 	isSuperSobj = true
+	title = ''
+	examine = ''
 	solid = true
 	bound: aabb2
 	size = 1
@@ -394,12 +404,22 @@ class supersobj extends slod.sobj {
 
 		this.rebound();
 	}
+	override gather(fully: boolean) {
+		let upper = super.gather(fully) as any;
+		if (fully) {
+			if (this.title)
+				upper.title = this.title;
+			if (this.examine)
+				upper.examine = this.examine;
+		}
+		return upper;
+	}
 	rebound() {
 		const size = this.size / 2;
 		this.bound = new aabb2([-size, -size], [size, size]);
 		this.bound.translate(this.wpos);
 	}
-	on_hit() {
+	on_hit(by: supersobj) {
 
 	}
 	shoot(angle) {
@@ -433,7 +453,7 @@ class supersobj extends slod.sobj {
 		//for (let hit of hits)
 		//	console.log('we hit', hit.type);
 		if (hits.length) {
-			hits[0].on_hit();
+			hits[0].on_hit(this);
 		}
 	}
 }
@@ -494,9 +514,9 @@ class shelves extends container {
 	constructor() {
 		super();
 		console.log('shelves', 1);
-
 		this.type = 'shelves';
 		this.id = 'shelves_' + container.id++;
+		//this.title = 'Shelves';
 		this.inventory.add('stuff', 5);
 		if (Math.random() > .5)
 			this.inventory.add('junk', 5);
@@ -510,9 +530,9 @@ class crate extends container {
 	constructor() {
 		super();
 		console.log('crate', 1);
-
 		this.type = 'crate';
 		this.id = 'crate_' + container.id++;
+		//this.title = 'Crate';
 		this.inventory.add('stuff', 5);
 		if (Math.random() > .5)
 			this.inventory.add('junk', 5);
@@ -551,11 +571,12 @@ export function is_solid(pos: vec2) {
 class npc extends supersobj {
 	static id = 0;
 	originalWpos: vec2 = [0, 0]
-	respawns = false
+	respawns = true
 	respawned = false
 	isNpc = true
 	health = 100
 	dead = false
+	stayDead = false
 	frozenBy?: slod.sobj
 	angle = 0
 	walkArea: aabb2
@@ -569,10 +590,10 @@ class npc extends supersobj {
 		this.id = 'npc_' + npc.id++;
 		this.timer = new timer(0);
 	}
-	override on_hit() {
+	override on_hit(by: supersobj) {
 		if (this.dead)
 			return;
-		this.health -= 10;
+		this.health -= 20;
 		if (this.health <= 0) {
 			this.dead = true;
 			console.log('killed this npc');
@@ -644,7 +665,7 @@ class npc extends supersobj {
 				this.respawnTimer = new timer(0);
 				console.log(`npc died, setting respawn timre`);
 			}
-			else if (this.respawnTimer.elapsed(10000)) {
+			else if (this.respawnTimer.elapsed(20000) && !this.stayDead) {
 				slod.remove(this);
 			}
 			else if (!this.respawned && this.respawnTimer.elapsed(5000)) {
@@ -674,14 +695,30 @@ class pawn extends npc {
 	constructor() {
 		super();
 		this.type = 'pawn';
+		this.title = 'pawn';
+		this.title = 'Pawn';
 		this.id = 'pawn_' + pawn.id++;
 		this.outfit = outfits[Math.floor(Math.random() * outfits.length)];
 
 		this.inventory = new inventory(this);
 
 	}
+	override respawn(oldNpc: pawn) {
+		console.log('PAWN RESPAWN');
+
+		let npc = new pawn;
+		npc.dialogue = oldNpc.dialogue;
+		npc.respawns = oldNpc.respawns;
+		npc.wpos = oldNpc.originalWpos;
+		npc.walkArea = oldNpc.walkArea;
+		slod.add(npc);
+	}
 	override tick() {
 		super.tick();
+
+		if (this.dead)
+			return;
+
 		this.wander();
 		//if (this.subtype == 'trader') {
 		//this.inventory.wpos = this.wpos;
@@ -689,8 +726,8 @@ class pawn extends npc {
 		//}
 
 	}
-	override on_hit() {
-		super.on_hit();
+	override on_hit(by: supersobj) {
+		super.on_hit(by);
 	}
 	override gather(fully: boolean) {
 		let upper = super.gather(fully) as any;
@@ -701,6 +738,8 @@ class pawn extends npc {
 			upper.dialogue = this.dialogue;
 			upper.subtype = this.subtype;
 		}
+		if (this.examine)
+			upper.examine = this.examine;
 		if (this.aiming)
 			upper.aiming = this.aiming;
 		if (fully || this.inventory.stamp == slod.stamp) {
@@ -717,6 +756,7 @@ class player extends pawn {
 	constructor() {
 		super();
 		this.type = 'pawn';
+		this.title = 'Player';
 		this.isPlayer = true;
 
 		this.inventory.add('money', 10);
@@ -763,6 +803,8 @@ class chicken extends npc {
 	constructor() {
 		super();
 		this.type = 'chicken';
+		this.title = 'Chicken';
+		this.examine = 'Cluck cluck.';
 		this.id = 'chicken_' + chicken.id++;
 		this.randomWalker = Date.now();
 		this.health = 10;
@@ -777,10 +819,12 @@ class chicken extends npc {
 		npc.respawns = oldNpc.respawns;
 		npc.wpos = oldNpc.originalWpos;
 		npc.walkArea = oldNpc.walkArea;
+		npc.title = oldNpc.title;
+		npc.examine = oldNpc.examine;
 		slod.add(npc);
 	}
-	override on_hit() {
-		super.on_hit();
+	override on_hit(by: supersobj) {
+		super.on_hit(by);
 
 		if (this.dead) {
 			this.pecking = false;
@@ -842,11 +886,14 @@ class zombie extends npc {
 	constructor() {
 		super();
 		this.type = 'zombie';
+		this.title = 'zombie';
 		this.id = 'zombie_' + zombie.id++;
 		this.wanderWait = 4000;
 	}
 	override tick() {
 		super.tick();
+		if (this.dead)
+			return;
 		this.wander();
 	}
 }

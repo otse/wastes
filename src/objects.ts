@@ -179,6 +179,8 @@ namespace objects {
 	export class superobject extends lod.obj {
 		static focus: superobject
 		id = 'an_objected_0'
+		title = ''
+		examine = ''
 		isSuper = true
 		paintTimer = 0
 		paintedRed = false
@@ -654,7 +656,8 @@ namespace objects {
 		inventory?: any
 		constructor() {
 			super(numbers.objs);
-			this.type = 'crate'
+			this.type = 'crate';
+			this.title = 'Crate';
 			this.height = 17;
 		}
 		override create() {
@@ -691,7 +694,8 @@ namespace objects {
 	export class shelves extends superobject {
 		constructor() {
 			super(numbers.objs);
-			this.type = 'shelves'
+			this.type = 'shelves';
+			this.title = 'Shelves';
 			this.height = 25;
 		}
 		override create() {

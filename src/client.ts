@@ -81,7 +81,7 @@ export namespace client {
 					if (!obj)
 						continue;
 					console.log('remove', obj.type);
-					
+
 					if (id == plyId) {
 						// prevent self-destruct by moving too fast
 						console.error(' you are probably going too fast ');
@@ -103,30 +103,36 @@ export namespace client {
 
 				process_news(pawns.pawn, 'pawn', data,
 					(obj: pawns.pawn, sobj) => {
-						const { wpos, angle, outfit, dialogue, aiming, inventory, subtype, isPlayer } = sobj;
+						const { wpos, angle } = sobj;
 						console.log('news pawn');
 						obj.wpos = wpos;
 						obj.angle = angle;
+						obj.dead = sobj.dead;
+						if (sobj.title)
+							obj.title = sobj.title;
+						if (sobj.examine)
+							obj.examine = sobj.examine;
+						obj.aiming = sobj.aiming;
 						obj.netwpos = wpos;
 						obj.netangle = angle;
-						if (!outfit)
+						if (!sobj.outfit)
 							console.error('no outfit for new pawn?');
-						if (outfit) {
-							obj.outfit = outfit;
+						if (sobj.outfit) {
+							obj.outfit = sobj.outfit;
 						}
-						obj.aiming = aiming;
-						obj.subtype = subtype;
-						if (dialogue)
-							obj.dialogue = dialogues[dialogue];
-						obj.isPlayer = isPlayer;
-						obj.inventory = inventory;
+						obj.subtype = sobj.subtype;
+						if (sobj.dialogue)
+							obj.dialogue = dialogues[sobj.dialogue];
+						obj.isPlayer = sobj.isPlayer;
+						obj.inventory = sobj.inventory;
 					},
 					(obj, sobj) => {
-						const { wpos, angle, aiming, inventory } = sobj;
+						const { wpos, angle, dead, aiming, inventory } = sobj;
 						if (obj.type != 'you') {
 							obj.netwpos = wpos;
 							obj.netangle = angle;
 							obj.aiming = aiming;
+							obj.dead = dead;
 						}
 						if (inventory) {
 							//console.log('update inventory');
@@ -140,6 +146,10 @@ export namespace client {
 						obj.wpos = wpos;
 						obj.angle = angle;
 						obj.sitting = sitting;
+						if (sobj.title)
+							obj.title = sobj.title;
+						if (sobj.examine)
+							obj.examine = sobj.examine;
 						obj.dead = dead;
 					},
 					(obj, sobj) => {
@@ -151,13 +161,17 @@ export namespace client {
 						obj.dead = dead;
 						// console.log('updating chicken!');
 					});
-				
+
 				process_news(zombies.zombie, 'zombie', data,
 					(obj, sobj) => {
 						const { wpos, angle, dead } = sobj;
 						obj.wpos = wpos;
 						obj.angle = angle;
 						obj.dead = dead;
+						if (sobj.title)
+							obj.title = sobj.title;
+						if (sobj.examine)
+							obj.examine = sobj.examine;
 					},
 					(obj, sobj) => {
 						const { wpos, angle, dead } = sobj;

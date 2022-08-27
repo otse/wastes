@@ -1513,6 +1513,8 @@ void main() {
             constructor(counts) {
                 super(counts);
                 this.id = 'an_objected_0';
+                this.title = '';
+                this.examine = '';
                 this.isSuper = true;
                 this.paintTimer = 0;
                 this.paintedRed = false;
@@ -1933,6 +1935,7 @@ void main() {
             constructor() {
                 super(numbers.objs);
                 this.type = 'crate';
+                this.title = 'Crate';
                 this.height = 17;
             }
             create() {
@@ -1968,6 +1971,7 @@ void main() {
             constructor() {
                 super(numbers.objs);
                 this.type = 'shelves';
+                this.title = 'Shelves';
                 this.height = 25;
             }
             create() {
@@ -2540,7 +2544,7 @@ void main() {
             }
             static call_once() {
                 this.end_close_others();
-                this.modal = new modal(this.focus.type);
+                this.modal = new modal(this.focus.title);
                 this.modal.content.innerHTML = '';
                 this.modal.element.classList.add('contextmenu');
                 for (let option of this.options.options) {
@@ -2636,7 +2640,7 @@ void main() {
                 if (this.talkingTo && !this.modal) {
                     this.talkingToCur = this.talkingTo;
                     this.modal = new modal();
-                    this.where[1] = 0;
+                    this.where = 0;
                     this.change();
                 }
             }
@@ -2653,17 +2657,19 @@ void main() {
                 pawnImage.className = 'pawnimage';
                 this.modal.content.append(pawnImage);
                 let textArea = document.createElement('div');
-                textArea.innerHTML = this.talkingToCur.dialogue[this.where[1]][0] + "&nbsp;";
+                if (this.talkingToCur.dialogue[this.where])
+                    textArea.innerHTML = this.talkingToCur.dialogue[this.where] + "&nbsp;";
                 this.modal.content.append(textArea);
-                const next = this.talkingToCur.dialogue[this.where[1]][1];
-                if (next != -1) {
+                //const next = this.talkingToCur!.dialogue[this.where[1]][1];
+                const next = this.talkingToCur.dialogue[this.where + 1];
+                if (next) {
                     let button = document.createElement('div');
                     button.innerHTML = '>>';
                     button.className = 'button';
                     textArea.append(button);
                     button.onclick = (e) => {
                         console.log('woo');
-                        this.where[1] = next;
+                        this.where++;
                         win_1.genericHovering = false;
                         this.change();
                         //button.remove();
@@ -2679,7 +2685,7 @@ void main() {
                 }
             }
         }
-        dialogue.where = [0, 0];
+        dialogue.where = 0;
         win_1.dialogue = dialogue;
         class container {
             static init() {
@@ -2738,7 +2744,7 @@ void main() {
                 }
                 if (this.focus) {
                     this.focusCur = this.focus;
-                    this.modal = new modal('container');
+                    this.modal = new modal('Container');
                     this.modal.content.innerHTML = '';
                     this.update_inventory_view(true);
                 }
@@ -3118,13 +3124,15 @@ void main() {
             }
             superobject_setup_context_menu() {
                 win$1.contextmenu.reset();
-                win$1.contextmenu.options.options.push(["Examine", () => {
-                        return true;
-                    }, () => {
-                        win$1.descriptor.focus = this;
-                        win$1.descriptor.call_once("Cluck cluck.");
-                        //win.contextmenu.focus = undefined;
-                    }]);
+                if (this.examine) {
+                    win$1.contextmenu.options.options.push(["Examine", () => {
+                            return true;
+                        }, () => {
+                            win$1.descriptor.focus = this;
+                            win$1.descriptor.call_once(this.examine);
+                            //win.contextmenu.focus = undefined;
+                        }]);
+                }
             }
             tick() {
                 // We are assumed to be onscreen
@@ -3178,29 +3186,29 @@ void main() {
     const dialogues = [
         [
             // skip 0
-            ['I got nothing to say.', -1]
+            'I got nothing to say.',
         ],
         [
             // 1
-            [`I'm a commmoner.`, -1]
+            `I'm a commmoner.`,
         ],
         [
             // 2
-            [`I'm the trader around here.`, 1],
-            [`I mostly trade scrap nowadays.`, 2],
-            [`Everyone tinkers their own things.`, -1],
+            `Did you hear a zombie?`,
+            `I'm the trader around here.`,
+            `I get visited by stalkers looking to fix their gear.`,
         ],
         [
             // 3
-            [`I protect the civilized borders.`, 1],
-            [`It may not look that civil at first glance.`, 2],
-            [`But this county needs its defendants.`, -1]
+            `I protect the civilized borders.`,
+            `It may not look that civil at first glance.`,
+            `But this county needs its defendants.`,
         ],
         [
             // 4
-            [`The bayou swallows you up.`, 1],
-            [`You stalkers think you're survivors.`, 2],
-            [`But you'll be a zombie before you know it.`, -1],
+            `You stalkers think you're survivors.`,
+            `It's a world of hurt out there.`,
+            `The bayou swallows you up.`,
         ]
     ];
 
@@ -3210,9 +3218,10 @@ void main() {
             constructor() {
                 super(numbers.pawns);
                 this.netwpos = [0, 0];
+                this.dead = false;
                 this.netangle = 0;
                 //inventory: objects.container
-                this.outfit = ['#444139', '#444139', '#484c4c', '#31362c'];
+                this.outfit = ['#444139', '#3b4339', '#3b4339', '#3b4039'];
                 this.created = false;
                 this.groups = {};
                 this.meshes = {};
@@ -3277,13 +3286,15 @@ void main() {
             }
             superobject_setup_context_menu() {
                 win$1.contextmenu.reset();
-                win$1.contextmenu.options.options.push(["Examine", () => {
-                        return true;
-                    }, () => {
-                        win$1.descriptor.focus = this;
-                        win$1.descriptor.call_once("Probably succumbed to the rigors of trash.");
-                        //win.contextmenu.focus = undefined;
-                    }]);
+                if (this.examine) {
+                    win$1.contextmenu.options.options.push(["Examine", () => {
+                            return true;
+                        }, () => {
+                            win$1.descriptor.focus = this;
+                            win$1.descriptor.call_once(this.examine);
+                            //win.contextmenu.focus = undefined;
+                        }]);
+                }
             }
             make() {
                 if (this.made)
@@ -3393,30 +3404,44 @@ void main() {
             animateBodyParts() {
                 var _a;
                 this.walkSmoother = wastes.clamp(this.walkSmoother, 0, 1);
-                const legsSwoop = 0.8;
-                const armsSwoop = 0.5;
-                const rise = 0.5;
-                this.swoop += ren$1.delta * 2.5;
-                const swoop1 = Math.cos(Math.PI * this.swoop);
-                const swoop2 = Math.cos(Math.PI * this.swoop - Math.PI);
-                this.groups.legl.rotation.x = swoop1 * legsSwoop * this.walkSmoother;
-                this.groups.legr.rotation.x = swoop2 * legsSwoop * this.walkSmoother;
-                this.groups.arml.rotation.x = swoop1 * armsSwoop * this.walkSmoother;
-                this.groups.armr.rotation.x = swoop2 * armsSwoop * this.walkSmoother;
-                this.groups.ground.position.y = -12 + swoop1 * swoop2 * rise * this.walkSmoother;
-                this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
-                //if (this.aiming) {
-                this.groups.armr.rotation.x = -Math.PI / 2;
-                this.groups.arml.rotation.x = -Math.PI / 2;
-                //}
-                const sprite = this.shape;
-                if (((_a = this.tile) === null || _a === void 0 ? void 0 : _a.type) == 'shallow water') {
-                    sprite.vars.orderBias = 0.25;
-                    this.meshes.water.visible = true;
+                if (!this.dead) {
+                    const legsSwoop = 0.8;
+                    const armsSwoop = 0.5;
+                    const rise = 0.5;
+                    this.swoop += ren$1.delta * 2.0;
+                    const swoop1 = Math.cos(Math.PI * this.swoop);
+                    const swoop2 = Math.cos(Math.PI * this.swoop - Math.PI);
+                    this.groups.legl.rotation.x = swoop1 * legsSwoop * this.walkSmoother;
+                    this.groups.legr.rotation.x = swoop2 * legsSwoop * this.walkSmoother;
+                    this.groups.arml.rotation.x = swoop1 * armsSwoop * this.walkSmoother;
+                    this.groups.armr.rotation.x = swoop2 * armsSwoop * this.walkSmoother;
+                    this.groups.ground.position.y = -12 + swoop1 * swoop2 * rise * this.walkSmoother;
+                    this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
+                    this.groups.armr.rotation.x = -Math.PI / 2 * this.walkSmoother;
+                    this.groups.arml.rotation.x = -Math.PI / 2 * this.walkSmoother;
+                    //if (this.aiming) {
+                    this.shape;
+                    if (((_a = this.tile) === null || _a === void 0 ? void 0 : _a.type) == 'shallow water') {
+                        //sprite.vars.orderBias = 0.25
+                        this.meshes.water.visible = true;
+                    }
+                    else {
+                        //sprite.vars.orderBias = 1.0;
+                        this.meshes.water.visible = false;
+                    }
                 }
                 else {
-                    sprite.vars.orderBias = 1.0;
-                    this.meshes.water.visible = false;
+                    // dead
+                    this.groups.legl.rotation.x = -0.1;
+                    this.groups.legr.rotation.x = 0.1;
+                    this.groups.arml.rotation.x = 0.1;
+                    this.groups.armr.rotation.x = -0.1;
+                    this.groups.ground.position.y = -12;
+                    this.groups.ground.rotation.x = Math.PI / 2;
+                    this.groups.ground.rotation.y = 0;
+                    this.groups.ground.rotation.z = -Math.PI / 2;
+                    const sprite = this.shape;
+                    sprite.vars.orderBias = -0.25;
                 }
                 this.render();
             }
@@ -3440,10 +3465,10 @@ void main() {
                 const movement = pts.together(pts.abs(tween));
                 if (movement > 0.005) {
                     //console.log('movement > 0.25');
-                    this.walkSmoother += ren$1.delta * 10;
+                    this.walkSmoother += ren$1.delta * 5;
                 }
                 else {
-                    this.walkSmoother -= ren$1.delta * 5;
+                    this.walkSmoother -= ren$1.delta * 2.5;
                 }
             }
             tick() {
@@ -3571,29 +3596,35 @@ void main() {
                             console.log('got a server sinventory');
                     }
                     process_news(pawns$1.pawn, 'pawn', data, (obj, sobj) => {
-                        const { wpos, angle, outfit, dialogue, aiming, inventory, subtype, isPlayer } = sobj;
+                        const { wpos, angle } = sobj;
                         console.log('news pawn');
                         obj.wpos = wpos;
                         obj.angle = angle;
+                        obj.dead = sobj.dead;
+                        if (sobj.title)
+                            obj.title = sobj.title;
+                        if (sobj.examine)
+                            obj.examine = sobj.examine;
+                        obj.aiming = sobj.aiming;
                         obj.netwpos = wpos;
                         obj.netangle = angle;
-                        if (!outfit)
+                        if (!sobj.outfit)
                             console.error('no outfit for new pawn?');
-                        if (outfit) {
-                            obj.outfit = outfit;
+                        if (sobj.outfit) {
+                            obj.outfit = sobj.outfit;
                         }
-                        obj.aiming = aiming;
-                        obj.subtype = subtype;
-                        if (dialogue)
-                            obj.dialogue = dialogues[dialogue];
-                        obj.isPlayer = isPlayer;
-                        obj.inventory = inventory;
+                        obj.subtype = sobj.subtype;
+                        if (sobj.dialogue)
+                            obj.dialogue = dialogues[sobj.dialogue];
+                        obj.isPlayer = sobj.isPlayer;
+                        obj.inventory = sobj.inventory;
                     }, (obj, sobj) => {
-                        const { wpos, angle, aiming, inventory } = sobj;
+                        const { wpos, angle, dead, aiming, inventory } = sobj;
                         if (obj.type != 'you') {
                             obj.netwpos = wpos;
                             obj.netangle = angle;
                             obj.aiming = aiming;
+                            obj.dead = dead;
                         }
                         if (inventory) {
                             //console.log('update inventory');
@@ -3605,6 +3636,10 @@ void main() {
                         obj.wpos = wpos;
                         obj.angle = angle;
                         obj.sitting = sitting;
+                        if (sobj.title)
+                            obj.title = sobj.title;
+                        if (sobj.examine)
+                            obj.examine = sobj.examine;
                         obj.dead = dead;
                     }, (obj, sobj) => {
                         const { wpos, angle, pecking, sitting, dead } = sobj;
@@ -3620,6 +3655,10 @@ void main() {
                         obj.wpos = wpos;
                         obj.angle = angle;
                         obj.dead = dead;
+                        if (sobj.title)
+                            obj.title = sobj.title;
+                        if (sobj.examine)
+                            obj.examine = sobj.examine;
                     }, (obj, sobj) => {
                         const { wpos, angle, dead } = sobj;
                         obj.netwpos = wpos;
@@ -8351,6 +8390,7 @@ void main() {
         class pawn extends objects$1.superobject {
             constructor() {
                 super(numbers.pawns);
+                this.dead = false;
                 this.isTrader = false;
                 this.isPlayer = false;
                 this.dialogue = dialogues[0];
@@ -8371,6 +8411,7 @@ void main() {
                 this.walkSmoother = 0;
                 this.randomWalker = 0;
                 this.type = 'pawn';
+                this.title = 'pawn';
                 this.height = 24;
                 //this.inventory = new objects.container;
                 //this.inventory.add('money');
@@ -8430,7 +8471,7 @@ void main() {
             }
             superobject_setup_context_menu() {
                 win$1.contextmenu.reset();
-                if (!this.isPlayer && this.type != 'you') {
+                if (!this.isPlayer && this.type != 'you' && !this.dead) {
                     win$1.contextmenu.options.options.push(["Talk to", () => {
                             return pts.distsimple(pawns.you.wpos, this.wpos) < 1;
                         }, () => {
@@ -8445,6 +8486,15 @@ void main() {
                                 win$1.trader.tradeWith = this;
                                 win$1.trader.call_once();
                                 client.interactingWith = this.id;
+                            }]);
+                    }
+                    if (this.examine) {
+                        win$1.contextmenu.options.options.push(["Examine", () => {
+                                return true;
+                            }, () => {
+                                win$1.descriptor.focus = this;
+                                win$1.descriptor.call_once(this.examine);
+                                //win.contextmenu.focus = undefined;
                             }]);
                     }
                 }
@@ -8694,49 +8744,64 @@ void main() {
                 const armsSwoop = 0.5;
                 const rise = 0.5;
                 this.swoop += ren$1.delta * 2.5;
-                const swoop1 = Math.cos(Math.PI * this.swoop);
-                const swoop2 = Math.cos(Math.PI * this.swoop - Math.PI);
-                this.groups.legl.rotation.x = swoop1 * legsSwoop * this.walkSmoother;
-                this.groups.legr.rotation.x = swoop2 * legsSwoop * this.walkSmoother;
-                this.groups.arml.rotation.x = swoop1 * armsSwoop * this.walkSmoother;
-                this.groups.armr.rotation.x = swoop2 * armsSwoop * this.walkSmoother;
-                this.groups.ground.position.y = -12 + swoop1 * swoop2 * rise * this.walkSmoother;
-                this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
-                if (this.type == 'you') {
-                    if (app$1.key('shift')) {
-                        this.aiming = true;
-                        if (app$1.button(0) == 1) {
-                            console.log('shoot');
-                            this.shoot = true;
-                            for (let obj of lod$1.ggrid.visibleObjs) {
-                                const cast = obj;
-                                if (cast.isSuper && cast.tileBound) {
-                                    const test = cast.tileBound.ray({
-                                        dir: [Math.sin(this.angle), Math.cos(this.angle)],
-                                        org: this.wpos
-                                    });
-                                    if (test) {
-                                        console.log('we hit something');
-                                        cast.onhit();
+                if (!this.dead) {
+                    const swoop1 = Math.cos(Math.PI * this.swoop);
+                    const swoop2 = Math.cos(Math.PI * this.swoop - Math.PI);
+                    this.groups.legl.rotation.x = swoop1 * legsSwoop * this.walkSmoother;
+                    this.groups.legr.rotation.x = swoop2 * legsSwoop * this.walkSmoother;
+                    this.groups.arml.rotation.x = swoop1 * armsSwoop * this.walkSmoother;
+                    this.groups.armr.rotation.x = swoop2 * armsSwoop * this.walkSmoother;
+                    this.groups.ground.position.y = -12 + swoop1 * swoop2 * rise * this.walkSmoother;
+                    this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
+                    if (this.type == 'you') {
+                        if (app$1.key('shift')) {
+                            this.aiming = true;
+                            if (app$1.button(0) == 1) {
+                                console.log('shoot');
+                                this.shoot = true;
+                                for (let obj of lod$1.ggrid.visibleObjs) {
+                                    const cast = obj;
+                                    if (cast.isSuper && cast.tileBound) {
+                                        const test = cast.tileBound.ray({
+                                            dir: [Math.sin(this.angle), Math.cos(this.angle)],
+                                            org: this.wpos
+                                        });
+                                        if (test) {
+                                            console.log('we hit something');
+                                            cast.onhit();
+                                        }
                                     }
                                 }
                             }
                         }
+                        else
+                            this.aiming = false;
                     }
-                    else
-                        this.aiming = false;
-                }
-                if (this.aiming) {
-                    this.groups.armr.rotation.x = -Math.PI / 2;
-                }
-                const sprite = this.shape;
-                if (((_a = this.tile) === null || _a === void 0 ? void 0 : _a.type) == 'shallow water') {
-                    sprite.vars.orderBias = 0.25;
-                    this.meshes.water.visible = true;
+                    if (this.aiming) {
+                        this.groups.armr.rotation.x = -Math.PI / 2;
+                    }
+                    const sprite = this.shape;
+                    if (((_a = this.tile) === null || _a === void 0 ? void 0 : _a.type) == 'shallow water') {
+                        sprite.vars.orderBias = 0.25;
+                        this.meshes.water.visible = true;
+                    }
+                    else {
+                        sprite.vars.orderBias = 1.0;
+                        this.meshes.water.visible = false;
+                    }
                 }
                 else {
-                    sprite.vars.orderBias = 1.0;
-                    this.meshes.water.visible = false;
+                    // dead
+                    this.groups.legl.rotation.x = -0.1;
+                    this.groups.legr.rotation.x = 0.1;
+                    this.groups.arml.rotation.x = 0.1;
+                    this.groups.armr.rotation.x = -0.1;
+                    this.groups.ground.position.y = -12;
+                    this.groups.ground.rotation.x = Math.PI / 2;
+                    this.groups.ground.rotation.y = 0;
+                    this.groups.ground.rotation.z = -Math.PI / 2;
+                    const sprite = this.shape;
+                    sprite.vars.orderBias = -0.25;
                 }
                 this.render();
             }
