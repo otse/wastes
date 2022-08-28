@@ -6112,17 +6112,17 @@ void main() {
                 function traversal(object) {
                     if (object.name && object.name.includes("Wall")) {
                         let cloned = object.clone();
-                        cloned.scale.multiplyScalar(0.5);
+                        cloned.scale.multiplyScalar(0.43);
                         console.log("making wall ", cloned.name, cloned);
                         let prefab = new building;
                         prefab.model = cloned;
-                        if (cloned.name.includes("Wall2")) {
-                            //console.log('were wall 2 mates', object);
-                            cloned.position.set(0, 0, 0);
-                            prefab.wpos = [47, 48];
-                        }
-                        else
-                            prefab.wpos = [45, 48];
+                        cloned.position.set(0, 0, 0);
+                        let pos = [object.position.x, object.position.y];
+                        pos = pts.divide(pos, 39.37008);
+                        pos = [-pos[1], pos[0]];
+                        pos = pts.add(pos, [45, 48]);
+                        console.log('original position is', object.position, pos);
+                        prefab.wpos = pos;
                         prefab.produce();
                         lod$1.add(prefab);
                     }
@@ -6174,6 +6174,11 @@ void main() {
             this.scene.position.set(0, 0, 0);
             let amb = new THREE.AmbientLight('white');
             this.scene.add(amb);
+            let sun = new THREE.DirectionalLight(0xffffff, 0.35);
+            sun.position.set(-wastes.size, wastes.size * 2, wastes.size / 2);
+            //sun.add(new AxesHelper(100));
+            this.group.add(sun);
+            this.group.add(sun.target);
         }
         create() {
             console.log('builing create');
