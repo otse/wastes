@@ -6096,19 +6096,38 @@ void main() {
 
     function building_factory() {
         new building_parts();
-        let prefab = new building;
+        /*let prefab = new building;
         prefab.wpos = [45, 48];
         prefab.produce();
-        lod$1.add(prefab);
+        lod.add(prefab);*/
     }
     class building_parts {
         constructor() {
-            collada$1.load_model('collada/building', 18, (model) => {
+            collada$1.load_model('collada/building', 1, (model) => {
                 model.rotation.set(0, 0, 0);
                 //this.group.add(model);
                 //this.group.position.set(0, -23, 0);
                 //this.scene.add(new AxesHelper(100));
                 console.log('add building to scene');
+                function traversal(object) {
+                    if (object.name && object.name.includes("Wall")) {
+                        let cloned = object.clone();
+                        cloned.scale.multiplyScalar(0.5);
+                        console.log("making wall ", cloned.name, cloned);
+                        let prefab = new building;
+                        prefab.model = cloned;
+                        if (cloned.name.includes("Wall2")) {
+                            //console.log('were wall 2 mates', object);
+                            cloned.position.set(0, 0, 0);
+                            prefab.wpos = [47, 48];
+                        }
+                        else
+                            prefab.wpos = [45, 48];
+                        prefab.produce();
+                        lod$1.add(prefab);
+                    }
+                }
+                model.traverse(traversal);
             });
         }
     }
@@ -6168,13 +6187,13 @@ void main() {
             shape.show();
             this.set_3d();
             shape.material.map = this.target.texture;
-            collada$1.load_model('collada/building', 18, (model) => {
-                model.rotation.set(0, 0, 0);
-                this.group.add(model);
-                this.group.position.set(0, -23, 0);
-                //this.scene.add(new AxesHelper(100));
-                console.log('add building to scene');
-            });
+            //const house = collada.load_model('collada/building', 18, (model) => {
+            //model.rotation.set(0, 0, 0);
+            this.group.add(this.model);
+            this.group.position.set(0, -23, 0);
+            //this.group.add(new AxesHelper(100));
+            console.log('add building to scene');
+            //});
             this.stack();
         }
     }
