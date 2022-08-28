@@ -104,7 +104,7 @@ namespace collada {
 			function fix(material: MeshLambertMaterial) {
 				//material.color = new THREE.Color('red');
 				material.minFilter = material.magFilter = THREE.LinearFilter;
-				material.side = THREE.DoubleSide;
+				//material.side = THREE.DoubleSide;
 			}
 			
 			function traversal(object) {

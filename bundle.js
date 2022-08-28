@@ -6054,7 +6054,7 @@ void main() {
                 function fix(material) {
                     //material.color = new THREE.Color('red');
                     material.minFilter = material.magFilter = THREE__default["default"].LinearFilter;
-                    material.side = THREE__default["default"].DoubleSide;
+                    //material.side = THREE.DoubleSide;
                 }
                 function traversal(object) {
                     if (object.material) {
@@ -6119,7 +6119,9 @@ void main() {
                         cloned.position.set(0, 0, 0);
                         let pos = [object.position.x, object.position.y];
                         pos = pts.divide(pos, 39.37008);
+                        pos = pts.round(pos);
                         pos = [-pos[1], pos[0]];
+                        console.log("prefab pos", pos);
                         pos = pts.add(pos, [45, 48]);
                         console.log('original position is', object.position, pos);
                         prefab.wpos = pos;
