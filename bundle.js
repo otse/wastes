@@ -377,6 +377,8 @@ void main() {
         }
         ren.calc = calc;
         function render() {
+            if (app$1.key('z') == 1)
+                    ren.materialPost.uniforms.compression.value = !ren.materialPost.uniforms.compression.value;
             /*alternate = ! alternate;
             if (alternate) {
                 return;
@@ -1374,2378 +1376,85 @@ void main() {
     })(colors || (colors = {}));
     var colors$1 = colors;
 
-    var objects;
-    (function (objects) {
-        function factory(type, pixel, pos, hints = {}) {
-            let obj = new type;
-            obj.hints = hints;
-            obj.pixel = pixel;
-            obj.wpos = pos;
-            lod$1.add(obj);
-            return obj;
+    class superobject extends lod$1.obj {
+        constructor(counts) {
+            super(counts);
+            this.id = 'an_objected_0';
+            this.title = '';
+            this.examine = '';
+            this.isSuper = true;
+            this.paintTimer = 0;
+            this.paintedRed = false;
+            this.solid = true;
+            this.cell = [0, 0];
+            this.heightAdd = 0;
+            this.calc = 0; // used for tree leaves
         }
-        objects.factory = factory;
-        function register() {
-            console.log(' objects register ');
-            wastes.heightmap = new colormap$1.colormap('heightmap');
-            wastes.objectmap = new colormap$1.colormap('objectmap');
-            wastes.buildingmap = new colormap$1.colormap('buildingmap');
-            wastes.treemap = new colormap$1.colormap('treemap');
-            wastes.colormap = new colormap$1.colormap('colormap');
-            wastes.roughmap = new colormap$1.colormap('roughmap');
-            wastes.roofmap = new colormap$1.colormap('roofmap');
-            hooks.register('sectorCreate', (sector) => {
-                pts.func(sector.small, (pos) => {
-                    let pixel = wastes.objectmap.pixel(pos);
-                    if (pixel.is_color(colors$1.color_acid_barrel)) ;
-                    else if (pixel.is_color(colors$1.color_wall_chest)) ;
-                    else if (pixel.is_color(colors$1.color_shelves)) {
-                        console.log('got shelves color');
-                        //factory(objects.shelves, pixel, pos);
-                    }
-                    else if (pixel.is_color(colors$1.color_panel)) {
-                        factory(objects.panel, pixel, pos);
-                    }
-                });
-                return false;
-            });
-            hooks.register('sectorCreate', (sector) => {
-                pts.func(sector.small, (pos) => {
-                    let pixel = wastes.roofmap.pixel(pos);
-                    if (pixel.is_color(colors$1.color_false_front)) ;
-                });
-                return false;
-            });
-            hooks.register('sectorCreate', (sector) => {
-                pts.func(sector.small, (pos) => {
-                    let pixel = wastes.treemap.pixel(pos);
-                    if (pixel.is_color(colors$1.color_decidtree)) {
-                        factory(objects.decidtree, pixel, pos, { type: 'decid' });
-                    }
-                    else if (pixel.is_color(colors$1.color_deadtree)) {
-                        factory(objects.deadtree, pixel, pos);
-                    }
-                });
-                return false;
-            });
-            hooks.register('sectorCreate', (sector) => {
-                pts.func(sector.small, (pos) => {
-                    let pixel = wastes.buildingmap.pixel(pos);
-                    if (pixel.is_color(colors$1.color_plywood_wall)) {
-                        factory(objects.deck, pixel, pos);
-                        factory(objects.wall, pixel, pos, { type: 'plywood' });
-                        factory(objects.roof, pixel, pos);
-                    }
-                    else if (pixel.is_color(colors$1.color_overgrown_wall)) {
-                        factory(objects.deck, pixel, pos);
-                        factory(objects.wall, pixel, pos, { type: 'overgrown' });
-                        factory(objects.roof, pixel, pos);
-                    }
-                    else if (pixel.is_color(colors$1.color_deringer_wall)) {
-                        factory(objects.deck, pixel, pos);
-                        factory(objects.wall, pixel, pos, { type: 'sideroom' });
-                        factory(objects.roof, pixel, pos);
-                    }
-                    else if (pixel.is_color(colors$1.color_medieval_wall)) {
-                        factory(objects.wall, pixel, pos, { type: 'medieval' });
-                    }
-                    else if (pixel.is_color(colors$1.color_scrappy_wall)) {
-                        factory(objects.wall, pixel, pos, { type: 'scrappy' });
-                        //factory(objects.roof, pixel, pos);
-                    }
-                    else if (pixel.is_color(colors$1.color_fence)) ;
-                    else if (pixel.is_color(colors$1.color_grass)) ;
-                    else if (pixel.is_color(colors$1.color_wheat)) {
-                        factory(objects.wheat, pixel, pos);
-                    }
-                    else if (pixel.is_color(colors$1.color_deck_and_roof)) {
-                        factory(objects.deck, pixel, pos);
-                        factory(objects.roof, pixel, pos);
-                    }
-                    else if (pixel.is_color(colors$1.color_porch)) {
-                        factory(objects.porch, pixel, pos);
-                    }
-                    else if (pixel.is_color(colors$1.color_rails)) {
-                        factory(objects.rails, pixel, pos);
-                    }
-                    else if (pixel.is_color(colors$1.color_door)) {
-                        factory(objects.deck, pixel, pos);
-                        factory(objects.door, pixel, pos);
-                        factory(objects.roof, pixel, pos);
-                    }
-                    else if (pixel.is_color(colors$1.color_wooden_door_and_deck)) {
-                        factory(objects.deck, pixel, pos);
-                        factory(objects.door, pixel, pos);
-                        //factory(objects.roof, pixel, pos);
-                    }
-                });
-                return false;
-            });
+        tiled() {
+            this.tile = tiles$1.get(pts.round(this.wpos));
+            this.tileBound = new aabb2([-.5, -.5], [.5, .5]);
+            this.tileBound.translate(this.wpos);
         }
-        objects.register = register;
-        function start() {
-            console.log(' objects start ');
-        }
-        objects.start = start;
-        function tick() {
-            if (app$1.key(' ') == 1) {
-                wastes.HIDE_ROOFS = !wastes.HIDE_ROOFS;
-                console.log('hide roofs', wastes.HIDE_ROOFS);
+        onhit() {
+            const sprite = this.shape;
+            if (sprite) {
+                sprite.material.color.set('red');
+                this.paintedRed = true;
             }
         }
-        objects.tick = tick;
-        function is_solid(pos) {
-            const impassable = ['wall', 'crate', 'shelves', 'tree', 'fence', 'deep water'];
-            pos = pts.round(pos);
-            if (tiles$1.get(pos) == undefined)
-                return true;
-            let sector = lod$1.gworld.at(lod$1.world.big(pos));
-            let at = sector.stacked(pos);
-            for (let obj of at) {
-                if (obj.is_type(impassable)) {
-                    return true;
-                }
-            }
-            return false;
+        hide() {
+            console.log('superobject hide');
+            hovering_sprites.unhover(this.shape);
+            super.hide();
         }
-        objects.is_solid = is_solid;
-        class superobject extends lod$1.obj {
-            constructor(counts) {
-                super(counts);
-                this.id = 'an_objected_0';
-                this.title = '';
-                this.examine = '';
-                this.isSuper = true;
-                this.paintTimer = 0;
-                this.paintedRed = false;
-                this.solid = true;
-                this.cell = [0, 0];
-                this.heightAdd = 0;
-                this.calc = 0; // used for tree leaves
+        nettick() {
+        }
+        superobject_hovering_pass() {
+            const sprite = this.shape;
+            if (!sprite)
+                return;
+            if (sprite.mousedSquare(wastes.gview.mrpos)) {
+                sprite.material.color.set('#c1ffcd');
+                hovering_sprites.hover(sprite);
             }
-            tiled() {
-                this.tile = tiles$1.get(pts.round(this.wpos));
-                this.tileBound = new aabb2([-.5, -.5], [.5, .5]);
-                this.tileBound.translate(this.wpos);
+            else {
+                sprite.material.color.set('white');
+                hovering_sprites.unhover(sprite);
             }
-            onhit() {
-                const sprite = this.shape;
-                if (sprite) {
-                    sprite.material.color.set('red');
-                    this.paintedRed = true;
-                }
-            }
-            hide() {
-                console.log('superobject hide');
-                hovering_sprites.unhover(this.shape);
-                super.hide();
-            }
-            nettick() {
-            }
-            superobject_hovering_pass() {
-                const sprite = this.shape;
-                if (!sprite)
-                    return;
-                if (sprite.mousedSquare(wastes.gview.mrpos)) {
-                    sprite.material.color.set('#c1ffcd');
-                    hovering_sprites.hover(sprite);
-                }
-                else {
+        }
+        tick() {
+            //this.superobject_hovering_pass();
+            if (this.paintedRed) {
+                this.paintTimer += ren$1.delta;
+                if (this.paintTimer > 1) {
+                    const sprite = this.shape;
                     sprite.material.color.set('white');
-                    hovering_sprites.unhover(sprite);
-                }
-            }
-            tick() {
-                //this.superobject_hovering_pass();
-                if (this.paintedRed) {
-                    this.paintTimer += ren$1.delta;
-                    if (this.paintTimer > 1) {
-                        const sprite = this.shape;
-                        sprite.material.color.set('white');
-                        this.paintedRed = false;
-                        this.paintTimer = 0;
-                    }
-                }
-            }
-            //update(): void {
-            //	this.tiled();
-            //	super.update();
-            //}
-            stack(fallthru = []) {
-                let calc = 0;
-                let stack = this.sector.stacked(pts.round(this.wpos));
-                for (let obj of stack) {
-                    if (obj.is_type(fallthru))
-                        continue;
-                    if (obj == this)
-                        break;
-                    calc += obj.z + obj.height;
-                }
-                this.calc = calc;
-                if (this.shape)
-                    this.shape.rup = calc + this.heightAdd;
-            }
-            superobject_setup_context_menu() {
-            }
-        }
-        objects.superobject = superobject;
-        class wall extends superobject {
-            constructor() {
-                super(numbers.walls);
-                this.type = 'wall';
-                this.height = 24;
-            }
-            create() {
-                var _a, _b, _c, _d, _e, _f;
-                this.tiled();
-                this.size = [24, 40];
-                this.cell = [255 - this.pixel.arrayRef[3], 0];
-                let tuple = sprites$1.dscrappywalls;
-                if (((_a = this.hints) === null || _a === void 0 ? void 0 : _a.type) == 'plywood')
-                    tuple = sprites$1.dderingerwalls;
-                if (((_b = this.hints) === null || _b === void 0 ? void 0 : _b.type) == 'overgrown')
-                    tuple = sprites$1.dderingerwalls;
-                if (((_c = this.hints) === null || _c === void 0 ? void 0 : _c.type) == 'deringer')
-                    tuple = sprites$1.dderingerwalls;
-                if (((_d = this.hints) === null || _d === void 0 ? void 0 : _d.type) == 'woody')
-                    tuple = sprites$1.dwoodywalls;
-                if (((_e = this.hints) === null || _e === void 0 ? void 0 : _e.type) == 'medieval')
-                    tuple = sprites$1.dmedievalwalls;
-                else if (((_f = this.hints) === null || _f === void 0 ? void 0 : _f.type) == 'ruddy')
-                    tuple = sprites$1.druddywalls;
-                else ;
-                new sprite({
-                    binded: this,
-                    tuple: tuple,
-                    cell: this.cell,
-                    orderBias: 1.0,
-                });
-                this.stack();
-            }
-            adapt() {
-                // change sprite to surrounding walls
-            }
-        }
-        objects.wall = wall;
-        class deck extends superobject {
-            constructor() {
-                super(numbers.floors);
-                this.type = 'deck';
-                this.height = 3;
-            }
-            onhit() { }
-            create() {
-                this.tiled();
-                this.tile.hasDeck = true;
-                //this.tile!.z -= 24;
-                this.size = [24, 17];
-                //if (this.pixel!.array[3] < 240)
-                //	this.cell = [240 - this.pixel!.array[3], 0];
-                new sprite({
-                    binded: this,
-                    tuple: sprites$1.ddeck,
-                    cell: this.cell,
-                    orderBias: .4,
-                });
-                this.stack();
-            }
-            tick() {
-                super.tick();
-                let pos = this.wpos;
-                let sector = lod$1.gworld.at(lod$1.world.big(pos));
-                let at = sector.stacked(pos);
-                for (let obj of at) {
-                    if (obj.type == 'you') {
-                        wastes.HIDE_ROOFS = true;
-                        break;
-                    }
+                    this.paintedRed = false;
+                    this.paintTimer = 0;
                 }
             }
         }
-        deck.timer = 0;
-        objects.deck = deck;
-        class porch extends superobject {
-            constructor() {
-                super(numbers.floors);
-                this.type = 'porch';
-                this.height = 3;
+        //update(): void {
+        //	this.tiled();
+        //	super.update();
+        //}
+        stack(fallthru = []) {
+            let calc = 0;
+            let stack = this.sector.stacked(pts.round(this.wpos));
+            for (let obj of stack) {
+                if (obj.is_type(fallthru))
+                    continue;
+                if (obj == this)
+                    break;
+                calc += obj.z + obj.height;
             }
-            onhit() { }
-            create() {
-                this.tiled();
-                //this.tile!.z -= 24;
-                this.size = [24, 17];
-                //if (this.pixel!.array[3] < 240)
-                //	this.cell = [240 - this.pixel!.array[3], 0];
-                let color = [255, 255, 255, 255];
-                color = shadows$1.calc(color, this.wpos);
-                new sprite({
-                    binded: this,
-                    tuple: sprites$1.dporch,
-                    cell: this.cell,
-                    orderBias: -0.45,
-                    color: color
-                });
-                this.stack();
-            }
+            this.calc = calc;
+            if (this.shape)
+                this.shape.rup = calc + this.heightAdd;
         }
-        porch.timer = 0;
-        objects.porch = porch;
-        class rails extends superobject {
-            constructor() {
-                super(numbers.floors);
-                this.type = 'porch';
-                this.height = 3;
-            }
-            create() {
-                this.tiled();
-                //this.tile!.z -= 24;
-                this.size = [24, 17];
-                //if (this.pixel!.array[3] < 240)
-                //	this.cell = [240 - this.pixel!.array[3], 0];
-                new sprite({
-                    binded: this,
-                    tuple: sprites$1.drails,
-                    cell: this.cell,
-                    orderBias: .4,
-                });
-                this.stack();
-            }
-            tick() {
-            }
+        superobject_setup_context_menu() {
         }
-        rails.timer = 0;
-        objects.rails = rails;
-        class deadtree extends superobject {
-            constructor() {
-                super(numbers.floors);
-                this.type = 'tree';
-                this.height = 24;
-            }
-            create() {
-                this.tiled();
-                this.size = [24, 50];
-                new sprite({
-                    binded: this,
-                    tuple: sprites$1.ddeadtreetrunk,
-                    orderBias: 0.6,
-                });
-                this.stack();
-            }
-        }
-        deadtree.timer = 0;
-        objects.deadtree = deadtree;
-        class decidtree extends superobject {
-            constructor() {
-                super(numbers.trees);
-                this.flowered = false;
-                this.type = 'tree';
-                this.height = 24;
-            }
-            create() {
-                this.tiled();
-                this.size = [24, 50];
-                //if (this.pixel!.array[3] < 240)
-                //	this.cell = [240 - this.pixel!.array[3], 0];
-                new sprite({
-                    binded: this,
-                    tuple: sprites$1.ddecidtreetrunk,
-                    orderBias: 0.6,
-                });
-                this.stack();
-                const tile = tiles$1.get(this.wpos);
-                if (!this.flowered) {
-                    this.flowered = true;
-                    for (let y = -1; y <= 1; y++)
-                        for (let x = -1; x <= 1; x++)
-                            if (!(x == 0 && y == 0))
-                                factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [x, y]), {
-                                    type: this.hints.type,
-                                    tree: this,
-                                    color: tile.color,
-                                    grid: [x, y]
-                                });
-                    //factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [0, 0]), { type: this.hints.type, color: tile.color, noVines: true });
-                    //factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [0, 0]), { type: this.hints.type, color: tile.color, noVines: true });
-                }
-            }
-        }
-        objects.decidtree = decidtree;
-        class treeleaves extends superobject {
-            constructor() {
-                super(numbers.leaves);
-                this.shaded = false;
-                this.hasVines = false;
-                this.type = 'leaves';
-                this.height = 14;
-                /*if (!this.hints.noVines || Math.random() > 0.5)
-                    this.hasVines = true;*/
-            }
-            onhit() {
-            }
-            create() {
-                let pixel = wastes.treemap.pixel(this.wpos);
-                if (!this.hints.noVines && pixel.arrayRef[3] == 254)
-                    this.hasVines = false; // true;
-                if (pixel.arrayRef[3] == 253)
-                    return;
-                this.tiled();
-                let tuple = sprites$1.dtreeleaves;
-                if (this.hasVines) {
-                    this.size = [24, 64];
-                    const grid = this.hints.grid || [0, 0];
-                    if (pts.equals(grid, [1, 0]) || pts.equals(grid, [1, 1])) {
-                        tuple = sprites$1.dvines2;
-                        //this.hints.color = [0, 0, 0, 255]
-                        console.log(' !! using dvines 2 !!');
-                    }
-                    else if (pts.equals(grid, [0, -1]) || pts.equals(grid, [-1, -1])) {
-                        tuple = sprites$1.dvines3;
-                        //this.hints.color = [0, 0, 0, 255]
-                    }
-                    else {
-                        tuple = sprites$1.dvines;
-                    }
-                }
-                else {
-                    this.size = [24, 31];
-                }
-                //this.try_create_vines();
-                //if (this.pixel!.array[3] < 240)
-                //	this.cell = [240 - this.pixel!.array[3], 0];
-                let color = this.hints.color || [255, 255, 255, 255];
-                let color2 = wastes.colormap.pixel(this.wpos);
-                if (!(255 - color2.arrayRef[3])) {
-                    if (this.hints.color) {
-                        color = [
-                            Math.floor(color[0] * 1.6),
-                            Math.floor(color[1] * 1.6),
-                            Math.floor(color[2] * 1.6),
-                            color[3],
-                        ];
-                    }
-                    new sprite({
-                        binded: this,
-                        tuple: tuple,
-                        orderBias: 0.7,
-                        color: color
-                    });
-                    //shadows.shade(this.wpos, 0.1);
-                    if (!this.shaded) {
-                        this.shaded = true;
-                        const shadow = 0.03;
-                        shadows$1.shade_matrix(this.wpos, [
-                            [shadow / 2, shadow, shadow / 2],
-                            [shadow, shadow, shadow],
-                            [shadow / 2, shadow, shadow / 2]
-                        ]);
-                    }
-                    if (this.hints.tree)
-                        this.special_leaves_stack();
-                    else
-                        this.stack();
-                }
-            }
-            special_leaves_stack() {
-                //console.log('special stack');
-                const tree = this.hints.tree;
-                if (this.shape) {
-                    const sprite = this.shape;
-                    this.z = tree.calc + tree.height;
-                    sprite.rup = this.z;
-                    if (this.hasVines) {
-                        sprite.rup2 = -33;
-                    }
-                }
-            }
-        }
-        objects.treeleaves = treeleaves;
-        class grass extends superobject {
-            constructor() {
-                super(numbers.roofs);
-                this.type = 'grass';
-                this.height = 4;
-                this.solid = false;
-            }
-            create() {
-                this.tiled();
-                this.size = [24, 30];
-                let color = tiles$1.get(this.wpos).color;
-                color = [
-                    Math.floor(color[0] * 1.5),
-                    Math.floor(color[1] * 1.5),
-                    Math.floor(color[2] * 2.0),
-                    color[3],
-                ];
-                this.cell = [255 - this.pixel.arrayRef[3], 0];
-                new sprite({
-                    binded: this,
-                    tuple: sprites$1.dgrass,
-                    cell: this.cell,
-                    orderBias: .6,
-                    color: color
-                });
-                this.stack();
-            }
-        }
-        objects.grass = grass;
-        class wheat extends superobject {
-            constructor() {
-                super(numbers.roofs);
-                this.type = 'wheat';
-                this.height = 4;
-            }
-            create() {
-                this.tiled();
-                this.size = [24, 30];
-                //let color =  tiles.get(this.wpos)!.color;
-                //this.cell = [Math.floor(Math.random() * 2), 0];
-                new sprite({
-                    binded: this,
-                    tuple: sprites$1.dwheat,
-                    cell: this.cell,
-                    //color: color,
-                    orderBias: .6
-                });
-                this.stack();
-            }
-        }
-        objects.wheat = wheat;
-        class panel extends superobject {
-            constructor() {
-                super(numbers.roofs);
-                this.ticker = 0;
-                this.type = 'panel';
-                this.height = 10;
-            }
-            create() {
-                this.tiled();
-                this.size = [8, 10];
-                //let color =  tiles.get(this.wpos)!.color;
-                //this.cell = [Math.floor(Math.random() * 2), 0];
-                return;
-            }
-            tick() {
-                return;
-                //console.log('boo');
-            }
-        }
-        objects.panel = panel;
-        class crate extends superobject {
-            constructor() {
-                super(numbers.objs);
-                this.type = 'crate';
-                this.title = 'Crate';
-                this.height = 17;
-            }
-            create() {
-                this.tiled();
-                this.size = [24, 40];
-                new sprite({
-                    binded: this,
-                    tuple: sprites$1.dcrate,
-                    cell: this.cell,
-                    orderBias: 1.0
-                });
-                this.stack(['roof', 'wall']);
-            }
-            tick() {
-                const sprite = this.shape;
-                if (!sprite)
-                    return;
-                this.superobject_hovering_pass();
-            }
-            superobject_setup_context_menu() {
-                console.log('setup context');
-                win$1.contextmenu.reset();
-                win$1.contextmenu.options.options.push(["See contents", () => {
-                        return pts.distsimple(pawns$1.you.wpos, this.wpos) < 1;
-                    }, () => {
-                        win$1.container.focus = this;
-                        win$1.container.call_once();
-                    }]);
-            }
-        }
-        objects.crate = crate;
-        class shelves extends superobject {
-            constructor() {
-                super(numbers.objs);
-                this.type = 'shelves';
-                this.title = 'Shelves';
-                this.height = 25;
-            }
-            create() {
-                this.tiled();
-                this.size = [20, 31];
-                //this.cell = [255 - this.pixel!.array[3], 0];
-                //return
-                new sprite({
-                    binded: this,
-                    tuple: sprites$1.dshelves,
-                    //cell: this.cell,
-                    orderBias: 1.0
-                });
-                //shape.rup2 = 9;
-                //shape.rleft = 6;
-                this.stack(['roof', 'wall']);
-            }
-            tick() {
-                this.shape;
-                this.superobject_hovering_pass();
-            }
-            superobject_setup_context_menu() {
-                console.log('setup context');
-                win$1.contextmenu.reset();
-                win$1.contextmenu.options.options.push(["See contents", () => {
-                        return pts.distsimple(pawns$1.you.wpos, this.wpos) < 1;
-                    }, () => {
-                        win$1.container.focus = this;
-                        win$1.container.call_once();
-                    }]);
-                /*win.contextmenu.options.options.push(["Store", () => {
-                    return pts.distsimple(pawns.you.wpos, this.wpos) < 1;
-                }, () => {
-                    //win.container.crate = this;
-                    //win.container.call_once();
-                }]);*/
-                win$1.contextmenu.options.options.push(["Examine", () => {
-                        return pts.distsimple(pawns$1.you.wpos, this.wpos) < 10;
-                    }, () => {
-                        win$1.descriptor.focus = this;
-                        win$1.descriptor.call_once("A shelves with not much on it.");
-                    }]);
-            }
-        }
-        objects.shelves = shelves;
-        class roof extends superobject {
-            constructor() {
-                super(numbers.roofs);
-                this.shaded = false;
-                this.type = 'roof';
-                this.height = 3;
-            }
-            onhit() { }
-            create() {
-                //return;
-                this.tiled();
-                this.size = [24, 17];
-                let shape = new sprite({
-                    binded: this,
-                    tuple: sprites$1.droof,
-                    orderBias: 1.6,
-                });
-                shape.rup = 29;
-                if (!this.shaded) {
-                    this.shaded = true;
-                    const shadow = .75;
-                    shadows$1.shade_matrix(this.wpos, [
-                        [0, 0, 0, 0, 0],
-                        [0, 0, 0, 0, 0],
-                        [0, 0, 0, 0, 0],
-                        [0, 0, 0, shadow, 0],
-                        [0, 0, 0, 0, shadow]
-                    ], true);
-                }
-            }
-            tick() {
-                super.tick();
-                const sprite = this.shape;
-                if (!sprite)
-                    return;
-                if (wastes.HIDE_ROOFS)
-                    sprite.mesh.visible = false;
-                else if (!wastes.HIDE_ROOFS)
-                    sprite.mesh.visible = true;
-            }
-        }
-        objects.roof = roof;
-        class falsefront extends superobject {
-            constructor() {
-                super(numbers.roofs);
-                this.type = 'falsefront';
-                this.height = 5;
-            }
-            create() {
-                this.tiled();
-                this.cell = [255 - this.pixel.arrayRef[3], 0];
-                this.size = [24, 40];
-                new sprite({
-                    binded: this,
-                    tuple: sprites$1.dfalsefronts,
-                    cell: this.cell,
-                    orderBias: 1.6,
-                });
-                this.stack();
-                //this.z = 29+4;
-            }
-            tick() {
-                const sprite = this.shape;
-                if (!sprite)
-                    return;
-                if (wastes.HIDE_ROOFS)
-                    sprite.mesh.visible = false;
-                else if (!wastes.HIDE_ROOFS)
-                    sprite.mesh.visible = true;
-            }
-        }
-        objects.falsefront = falsefront;
-        class acidbarrel extends superobject {
-            constructor() {
-                super(numbers.objs);
-                this.type = 'acidbarrel';
-                this.height = 4;
-            }
-            create() {
-                this.tiled();
-                this.size = [24, 35];
-                new sprite({
-                    binded: this,
-                    tuple: sprites$1.dacidbarrel,
-                    orderBias: .4,
-                });
-                this.stack();
-            }
-        }
-        objects.acidbarrel = acidbarrel;
-        class door extends superobject {
-            constructor() {
-                super(numbers.walls);
-                this.open = false;
-                this.type = 'door';
-                this.height = 23;
-            }
-            create() {
-                this.tiled();
-                this.size = [24, 40];
-                this.cell = [255 - this.pixel.arrayRef[3], 0];
-                new sprite({
-                    binded: this,
-                    tuple: sprites$1.ddoor,
-                    cell: this.cell,
-                    orderBias: door.order,
-                });
-                this.stack();
-            }
-            tick() {
-                super.tick();
-                if (!this.shape)
-                    return;
-                let pos = this.wpos;
-                let sector = lod$1.gworld.at(lod$1.world.big(pos));
-                let at = sector.stacked(pos);
-                let pawning = false;
-                for (let obj of at) {
-                    if (obj.is_type(['pawn', 'you'])) {
-                        pawning = true;
-                        let sprite = this.shape;
-                        sprite.vars.cell = pts.subtract(this.cell, [1, 0]);
-                        sprite.vars.orderBias = 1.55;
-                        sprite.retransform();
-                        sprite.shape_manual_update();
-                        this.open = true;
-                        break;
-                    }
-                }
-                if (!pawning) {
-                    let sprite = this.shape;
-                    sprite.vars.cell = this.cell;
-                    sprite.vars.orderBias = door.order;
-                    sprite.retransform();
-                    sprite.shape_manual_update();
-                    this.open = false;
-                }
-            }
-        }
-        door.order = .7;
-        objects.door = door;
-        class shrubs extends superobject {
-            constructor() {
-                super(numbers.trees);
-                this.type = 'shrubs';
-            }
-            create() {
-                this.size = [24, 15];
-                new sprite({
-                    binded: this,
-                    tuple: sprites$1.shrubs,
-                    orderBias: .5
-                });
-            }
-        }
-        objects.shrubs = shrubs;
-    })(objects || (objects = {}));
-    var objects$1 = objects;
-
-    var win;
-    (function (win_1) {
-        var win;
-        var toggle_character = false;
-        win_1.genericHovering = false;
-        win_1.started = false;
-        function start() {
-            win_1.started = true;
-            win = document.getElementById('win');
-            contextmenu.init();
-            container.init();
-            trader.init();
-            dialogue.init();
-            setTimeout(() => {
-                //message.message("Welcome", 1000);
-            }, 1000);
-        }
-        win_1.start = start;
-        function tick() {
-            if (!win_1.started)
-                return;
-            if (app$1.key('c') == 1) {
-                toggle_character = !toggle_character;
-                character.call_once(toggle_character);
-            }
-            if (app$1.key('b') == 1) ;
-            you.tick();
-            character.tick();
-            container.tick();
-            dialogue.tick();
-            contextmenu.tick();
-            message.tick();
-            descriptor.tick();
-            trader.tick();
-        }
-        win_1.tick = tick;
-        class modal {
-            constructor(title) {
-                this.element = document.createElement('div');
-                this.element.className = 'modal';
-                this.element.onmouseover = () => { this.hovering = true; win_1.genericHovering = true; };
-                this.element.onmouseleave = () => { this.hovering = false; win_1.genericHovering = false; };
-                //this.element.append('inventory')
-                if (title) {
-                    this.title = document.createElement('div');
-                    this.title.innerHTML = title;
-                    this.title.className = 'title';
-                    this.element.append(this.title);
-                }
-                this.content = document.createElement('div');
-                this.content.className = 'content';
-                this.content.innerHTML = 'content';
-                this.element.append(this.content);
-                win.append(this.element);
-            }
-            update(title) {
-                if (title)
-                    this.title.innerHTML = title;
-            }
-            reposition(pos) {
-                const round = pts.floor(pos);
-                this.element.style.top = round[1];
-                this.element.style.left = round[0];
-            }
-            deletor() {
-                this.element.remove();
-                if (this.hovering)
-                    win_1.genericHovering = false;
-            }
-            float(anchor, add = [0, 0]) {
-                //let pos = this.anchor.rtospos([-1.5, 2.5]);
-                let pos = anchor.rtospos();
-                pos = pts.add(pos, add);
-                pos = pts.add(pos, pts.divide(anchor.size, 2));
-                //pos = pts.add(pos, this.anchor.size);
-                //let pos = this.anchor.aabbScreen.center();
-                //let pos = lod.project(wastes.gview.mwpos);
-                pos = pts.subtract(pos, wastes.gview.rpos);
-                pos = pts.divide(pos, wastes.gview.zoom);
-                pos = pts.divide(pos, ren$1.ndpi);
-                //pos = pts.add(pos, pts.divide(ren.screenCorrected, 2));
-                //pos[1] -= ren.screenCorrected[1] / 2;
-                this.reposition([ren$1.screen[0] / 2 + pos[0], ren$1.screen[1] / 2 - pos[1]]);
-            }
-        }
-        class trader {
-            static hover_money_label_here() {
-            }
-            static init() {
-                hooks.register('viewRClick', (view) => {
-                    // We right click outside
-                    if (trader.modal && !trader.modal.hovering) {
-                        trader.end();
-                    }
-                    return false;
-                });
-            }
-            static end() {
-                var _a;
-                (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
-                this.modal = undefined;
-                this.tradeWithCur = undefined;
-                this.traderInventoryElement = undefined;
-                this.yourInventoryElement = undefined;
-            }
-            static call_once() {
-                if (this.tradeWith && this.tradeWithCur != this.tradeWith) {
-                    trader.end();
-                }
-                if (!this.modal) {
-                    this.modal = new modal('trader');
-                    this.modal.content.innerHTML = `buy:<br />`;
-                    this.modal.content.onmouseover = () => { win_1.genericHovering = true; };
-                    this.modal.content.onmouseleave = () => { win_1.genericHovering = false; };
-                    this.tradeWithCur = this.tradeWith;
-                    this.render_trader_inventory(true);
-                    let next = document.createElement('span');
-                    next.innerHTML += '<hr>sell:<br />';
-                    this.modal.content.append(next);
-                    this.render_your_inventory(true);
-                }
-            }
-            static render_trader_inventory(force) {
-                var _a;
-                if (!this.traderInventoryElement) {
-                    this.traderInventoryElement = document.createElement('div');
-                    this.traderInventoryElement.className = 'inventory';
-                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.content.append(this.traderInventoryElement);
-                }
-                let pawn = this.tradeWithCur;
-                const inventory = pawn.inventory;
-                if (inventory && this.traderStamp != inventory.stamp || force) {
-                    console.log('refresh trader inven');
-                    this.traderInventoryElement.innerHTML = ``;
-                    for (let tuple of inventory.tuples) {
-                        if (tuple[0] == 'money')
-                            continue;
-                        let button = document.createElement('div');
-                        //button.innerHTML = `<img width="20" height="20" src="tex/items/${tuple[0]}.png">`;
-                        button.innerHTML += tuple[0];
-                        button.className = 'item';
-                        if (tuple[1] > 1) {
-                            button.innerHTML += ` <span>×${tuple[1]}</span>`;
-                        }
-                        button.onclick = () => {
-                            client.wantToBuy = tuple[0];
-                        };
-                        let extra = document.createElement('span');
-                        button.append(extra);
-                        const rate = client.get_rate(tuple[0]) || ['', 0, 0];
-                        let buy = rate[1];
-                        extra.innerHTML = `&nbsp; - ${buy}ct`;
-                        this.traderInventoryElement.append(button);
-                        this.traderStamp = inventory.stamp;
-                    }
-                }
-            }
-            static render_your_inventory(force) {
-                var _a;
-                if (!this.yourInventoryElement) {
-                    this.yourInventoryElement = document.createElement('div');
-                    this.yourInventoryElement.className = 'inventory';
-                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.content.append(this.yourInventoryElement);
-                }
-                let you = pawns$1.you;
-                const inventory = you.inventory;
-                if (inventory && this.yourStamp != inventory.stamp || force) {
-                    this.yourInventoryElement.innerHTML = ``;
-                    for (let tuple of inventory.tuples) {
-                        if (tuple[0] == 'money')
-                            continue;
-                        let button = document.createElement('div');
-                        //button.innerHTML = `<img width="20" height="20" src="tex/items/${tuple[0]}.png">`;
-                        button.innerHTML += tuple[0];
-                        button.className = 'item';
-                        if (tuple[1] > 1) {
-                            button.innerHTML += ` <span>×${tuple[1]}</span>`;
-                        }
-                        button.onclick = () => {
-                            client.wantToSell = tuple[0];
-                        };
-                        let extra = document.createElement('span');
-                        button.append(extra);
-                        const rate = client.get_rate(tuple[0]) || ['', 0, 0];
-                        let sell = rate[2];
-                        extra.innerHTML = `&nbsp; - ${sell}ct`;
-                        this.yourInventoryElement.append(button);
-                        this.yourStamp = inventory.stamp;
-                    }
-                    let money = 0;
-                    for (let tuple of inventory.tuples)
-                        if (tuple[0] == 'money') {
-                            money = tuple[1];
-                            break;
-                        }
-                    let next = document.createElement('div');
-                    next.innerHTML += `your money: ${money}<br />`;
-                    this.yourInventoryElement.append(next);
-                }
-            }
-            static tick() {
-                if (this.tradeWithCur && pts.distsimple(this.tradeWithCur.wpos, pawns$1.you.wpos) > 1) {
-                    trader.end();
-                }
-                if (this.modal) {
-                    this.modal.float(this.tradeWithCur, [0, 0]);
-                    this.render_trader_inventory(false);
-                    this.render_your_inventory(false);
-                }
-            }
-        }
-        trader.traderStamp = 0;
-        trader.yourStamp = 0;
-        win_1.trader = trader;
-        class character {
-            static render_inventory(force) {
-                var _a;
-                if (!this.inventoryElement) {
-                    this.inventoryElement = document.createElement('div');
-                    this.inventoryElement.className = 'inventory';
-                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.content.append(character.inventoryElement);
-                }
-                const inventory = pawns$1.you.inventory;
-                if (!inventory)
-                    return;
-                if (inventory && this.inventoryStamp != inventory.stamp || force) {
-                    this.inventoryElement.innerHTML = ``;
-                    console.log('yes', inventory.tuples);
-                    //console.log(inventory);
-                    for (let tuple of inventory.tuples) {
-                        let button = document.createElement('div');
-                        //button.innerHTML = `<img width="20" height="20" src="tex/items/${tuple[0]}.png">`;
-                        button.innerHTML += tuple[0];
-                        if (tuple[1] > 1) {
-                            button.innerHTML += ` <span>×${tuple[1]}</span>`;
-                        }
-                        button.className = 'item';
-                        this.inventoryElement.append(button);
-                        this.inventoryStamp = inventory.stamp;
-                    }
-                }
-            }
-            static call_once(open) {
-                var _a;
-                this.open = open;
-                if (open && !this.modal) {
-                    this.modal = new modal('you');
-                    //this.modal.reposition(['100px', '30%']);
-                    this.modal.content.innerHTML = 'stats:<br />effectiveness: 100%<br /><hr>';
-                    this.modal.content.innerHTML += 'inventory:<br />';
-                    //inventory
-                    this.render_inventory(true);
-                    let next = document.createElement('p');
-                    next.innerHTML += '<hr>guns:<br />';
-                    if (pawns$1.you.gun)
-                        next.innerHTML += `<img class="gun" src="tex/guns/${pawns$1.you.gun}.png">`;
-                    this.modal.content.append(next);
-                }
-                else if (!open && this.modal) {
-                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
-                    this.modal = undefined;
-                    this.inventoryElement = undefined;
-                }
-            }
-            static tick() {
-                var _a;
-                if (this.open) {
-                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.float(pawns$1.you, [15, 20]);
-                    this.render_inventory(false);
-                }
-            }
-        }
-        character.open = false;
-        character.inventoryStamp = 0;
-        win_1.character = character;
-        class you {
-            static call(open) {
-                var _a;
-                if (open && !this.modal) {
-                    this.modal = new modal('you');
-                    this.modal.element.classList.add('you');
-                    this.modal.content.remove();
-                }
-                else if (!open && this.modal) {
-                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
-                    this.modal = undefined;
-                }
-            }
-            static tick() {
-                if (pawns$1.you && !pawns$1.you.isActive()) {
-                    this.call(true);
-                    this.modal.float(pawns$1.you, [-5, 5]);
-                    console.log('call and float');
-                }
-                else {
-                    this.call(false);
-                }
-            }
-        }
-        win_1.you = you;
-        class contextmenu {
-            static reset() {
-                this.buttons = [];
-                this.options.options = [];
-            }
-            static end_close_others() {
-                trader.end();
-                dialogue.end();
-                win_1.genericHovering = false;
-            }
-            static end() {
-                var _a;
-                (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
-                this.modal = undefined;
-                this.focusCur = undefined;
-                win_1.genericHovering = false;
-            }
-            static init() {
-                hooks.register('viewMClick', (view) => {
-                    var _a;
-                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
-                    this.modal = undefined;
-                    this.focus = undefined;
-                    return false;
-                });
-                hooks.register('viewRClick', (view) => {
-                    console.log('contextmenu on ?', this.focus);
-                    if (!hovering_sprites.sprites.length)
-                        this.focus = undefined;
-                    console.log('we got hovering sprites', hovering_sprites.sprites.length);
-                    hovering_sprites.sort_closest_to_mouse();
-                    if (hovering_sprites.sprites.length)
-                        this.focus = hovering_sprites.sprites[0].vars.binded;
-                    // We have a focus, but no window! This is the easiest scenario.
-                    if (this.focus && !this.modal) {
-                        this.focus.superobject_setup_context_menu();
-                        this.focusCur = this.focus;
-                        this.call_once();
-                    }
-                    // We click away from any sprites and we have a menu open: break it
-                    else if (!this.focus && this.modal) {
-                        contextmenu.end();
-                    }
-                    // We clicked on the already focussed sprite: break it
-                    else if (this.modal && this.focus && this.focus == this.focusCur) {
-                        contextmenu.end();
-                    }
-                    // We have an open modal, but focus on a different sprite: recreate it
-                    else if (this.modal && this.focus && this.focus != this.focusCur) {
-                        this.end();
-                        this.focus.superobject_setup_context_menu();
-                        this.focusCur = this.focus;
-                        this.call_once();
-                    }
-                    //else {
-                    //	this.modal?.deletor();
-                    //	this.focusCur = undefined;
-                    //}
-                    return false;
-                });
-            }
-            static destroy() {
-                var _a;
-                (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
-                //this.focusCur = undefined;
-            }
-            static call_once() {
-                this.end_close_others();
-                this.modal = new modal(this.focus.title);
-                this.modal.content.innerHTML = '';
-                this.modal.element.classList.add('contextmenu');
-                for (let option of this.options.options) {
-                    let button = document.createElement('div');
-                    button.innerHTML = option[0] + "&nbsp;";
-                    //if (tuple[1] > 1) {
-                    //	button.innerHTML += ` <span>×${tuple[1]}</span>`
-                    //}
-                    button.className = 'option';
-                    button.onclick = (e) => {
-                        var _a;
-                        if (option[1]()) {
-                            (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
-                            this.modal = undefined;
-                            win_1.genericHovering = false;
-                            option[2]();
-                        }
-                    };
-                    button.onmouseover = () => { win_1.genericHovering = true; };
-                    button.onmouseleave = () => { win_1.genericHovering = false; };
-                    this.modal.content.append(button);
-                    this.buttons.push([button, option]);
-                }
-            }
-            static update() {
-                //console.log('focusCur', this.focusCur);
-                for (let button of this.buttons) {
-                    const element = button[0];
-                    const option = button[1];
-                    if (!option[1]()) {
-                        element.classList.add('disabled');
-                    }
-                    else {
-                        element.classList.remove('disabled');
-                    }
-                }
-            }
-            static tick() {
-                //for (let hover of hoveringSprites) {
-                //	
-                //}
-                if (this.modal && this.focusCur) {
-                    this.update();
-                    this.modal.float(this.focusCur, [0, 0]);
-                }
-            }
-        }
-        contextmenu.buttons = [];
-        contextmenu.options = { options: [] };
-        win_1.contextmenu = contextmenu;
-        class descriptor {
-            static call_once(text = 'Examined') {
-                if (this.modal !== undefined) {
-                    this.modal.deletor();
-                    this.modal = undefined;
-                }
-                if (this.modal == undefined) {
-                    this.modal = new modal('descriptor');
-                    this.modal.title.remove();
-                    //this.modal.content.remove();
-                    this.modal.content.innerHTML = text;
-                    this.focusCur = this.focus;
-                    this.timer = Date.now();
-                }
-            }
-            static tick() {
-                var _a;
-                if (this.modal !== undefined) {
-                    this.modal.float(this.focusCur, [0, 0]);
-                }
-                if (Date.now() - this.timer > 4 * 1000) {
-                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
-                    this.modal = undefined;
-                }
-            }
-        }
-        descriptor.timer = 0;
-        win_1.descriptor = descriptor;
-        class dialogue {
-            static init() {
-                hooks.register('viewRClick', (view) => {
-                    // We right clickd outside
-                    if (dialogue.modal && !dialogue.modal.hovering)
-                        dialogue.end();
-                    return false;
-                });
-            }
-            static call_once() {
-                // We wish to talk to a different pawn
-                if (this.talkingTo != this.talkingToCur) {
-                    this.end();
-                }
-                if (this.talkingTo && !this.modal) {
-                    this.talkingToCur = this.talkingTo;
-                    this.modal = new modal();
-                    this.where = 0;
-                    this.change();
-                }
-            }
-            static end() {
-                var _a;
-                (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
-                this.modal = undefined;
-                this.talkingToCur = undefined;
-                win_1.genericHovering = false;
-            }
-            static change() {
-                this.modal.content.innerHTML = ''; // reset
-                let pawnImage = document.createElement('div');
-                pawnImage.className = 'pawnimage';
-                this.modal.content.append(pawnImage);
-                let textArea = document.createElement('div');
-                if (this.talkingToCur.dialogue[this.where])
-                    textArea.innerHTML = this.talkingToCur.dialogue[this.where] + "&nbsp;";
-                this.modal.content.append(textArea);
-                //const next = this.talkingToCur!.dialogue[this.where[1]][1];
-                const next = this.talkingToCur.dialogue[this.where + 1];
-                if (next) {
-                    let button = document.createElement('div');
-                    button.innerHTML = '>>';
-                    button.className = 'button';
-                    textArea.append(button);
-                    button.onclick = (e) => {
-                        console.log('woo');
-                        this.where++;
-                        win_1.genericHovering = false;
-                        this.change();
-                        //button.remove();
-                    };
-                }
-            }
-            static tick() {
-                if (this.modal && this.talkingToCur) {
-                    this.modal.float(this.talkingToCur, [0, 10]);
-                }
-                if (this.talkingToCur && pts.distsimple(pawns$1.you.wpos, this.talkingToCur.wpos) > 1) {
-                    this.end();
-                }
-            }
-        }
-        dialogue.where = 0;
-        win_1.dialogue = dialogue;
-        class container {
-            static init() {
-                hooks.register('viewRClick', (view) => {
-                    // We right clickd outside
-                    if (container.modal && !container.modal.hovering) {
-                        container.end();
-                    }
-                    return false;
-                });
-            }
-            static end() {
-                var _a;
-                (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
-                this.modal = undefined;
-                this.focusCur = undefined;
-                this.inventoryElement = undefined;
-            }
-            static update_inventory_view(force) {
-                if (!this.modal)
-                    return;
-                if (!this.inventoryElement) {
-                    this.inventoryElement = document.createElement('div');
-                    this.inventoryElement.className = 'inventory';
-                    this.modal.content.append(this.inventoryElement);
-                }
-                const cast = this.focus;
-                const inventory = cast.inventory;
-                if (this.stamp != inventory.stamp || force) {
-                    this.stamp = inventory.stamp;
-                    this.inventoryElement.innerHTML = ``;
-                    for (let tuple of inventory.tuples) {
-                        let item = document.createElement('div');
-                        item.innerHTML = tuple[0];
-                        if (tuple[1] > 1) {
-                            item.innerHTML += ` <span>×${tuple[1]}</span>`;
-                        }
-                        item.className = 'item';
-                        this.inventoryElement.append(item);
-                        item.onclick = (e) => {
-                            console.log('clicked');
-                            client.wantToGrab = [cast.id, tuple[0]];
-                            //cast.inventory.remove(tuple[0]);
-                            //pawns.you?.inventory.add(tuple[0]);
-                        };
-                        //item.onmouseover = () => { hoveringClickableElement = true; }
-                        //item.onmouseleave = () => { hoveringClickableElement = false; }
-                        //this.modal.content.innerHTML += item + '<br />';
-                    }
-                }
-            }
-            static call_once() {
-                // We are trying to open a different container
-                if (this.modal !== undefined) {
-                    this.end();
-                }
-                if (this.focus) {
-                    this.focusCur = this.focus;
-                    this.modal = new modal('Container');
-                    this.modal.content.innerHTML = '';
-                    this.update_inventory_view(true);
-                }
-            }
-            static tick() {
-                if (this.modal && this.focusCur) {
-                    this.modal.float(this.focusCur);
-                    this.update_inventory_view(false);
-                }
-                if (this.focusCur && pts.distsimple(pawns$1.you.wpos, this.focusCur.wpos) > 1) {
-                    this.end();
-                }
-            }
-        }
-        //static obj?: lod.obj
-        container.stamp = 0;
-        win_1.container = container;
-        class areatag {
-            static call(open, area, refresh = false) {
-                if (open) {
-                    console.log('boo');
-                    let element = document.createElement('div');
-                    element.className = 'area';
-                    element.innerHTML = ` ${(area === null || area === void 0 ? void 0 : area.name) || ''} `;
-                    win.append(element);
-                    setTimeout(() => {
-                        element.classList.add('fade');
-                        setTimeout(() => {
-                            element.remove();
-                        }, 3000);
-                    }, 1000);
-                }
-            }
-        }
-        win_1.areatag = areatag;
-        class message {
-            constructor() {
-                this.duration = 5;
-            }
-            static message(message, duration) {
-                this.messages.push({ message: message, duration: duration });
-            }
-            static tick() {
-                if (this.messages.length) {
-                    let shift = this.messages.shift();
-                    let element = document.createElement('div');
-                    element.className = 'message';
-                    element.innerHTML = shift.message;
-                    document.getElementById('messages').append(element);
-                    setTimeout(() => {
-                        element.classList.add('fade');
-                    }, shift.duration);
-                    setTimeout(() => {
-                        element.remove();
-                    }, shift.duration + 2000);
-                }
-            }
-        }
-        message.messages = [];
-        win_1.message = message;
-    })(win || (win = {}));
-    var win$1 = win;
-
-    var chickens;
-    (function (chickens) {
-        function start() {
-            //let chicken = new chickens.chicken;
-            //chicken.wpos = [46, 49];
-            //lod.add(chicken);
-            /*let chicken2 = new chickens.chicken;
-            chicken2.wpos = [42, 53];
-            lod.add(chicken2);*/
-        }
-        chickens.start = start;
-        class chicken extends objects$1.superobject {
-            constructor() {
-                super(numbers.chickens);
-                this.netwpos = [0, 0];
-                this.netangle = 0;
-                this.dead = false;
-                this.created = false;
-                this.pecking = false;
-                this.sitting = false;
-                //override setup_context() {
-                //	win.contextmenu.reset();
-                //}
-                this.groups = {};
-                this.meshes = {};
-                this.made = false;
-                this.swoop = 0;
-                this.angle = 0;
-                this.walkSmoother = 1;
-                this.randomWalker = 0;
-                this.type = 'chicken';
-                this.height = 24;
-            }
-            create() {
-                this.tiled();
-                this.size = pts.divide([25, 30], 1);
-                //this.subsize = [25, 40];
-                let shape = new sprite({
-                    binded: this,
-                    tuple: sprites$1.test100,
-                    //opacity: 0.5,
-                    orderBias: 1.0,
-                });
-                shape.dimetric = false;
-                shape.rleft = this.size[0] / 2;
-                shape.rup2 = this.size[1] / 2;
-                shape.show();
-                if (!this.created) {
-                    this.created = true;
-                    //console.log('creating chicken');
-                    // Set scale to increase pixels exponentially
-                    const scale = 1;
-                    // make wee guy target
-                    //this.group = new THREE.Group
-                    let size = pts.mult(this.size, scale);
-                    this.target = ren$1.make_render_target(size[0], size[1]);
-                    this.camera = ren$1.make_orthographic_camera(size[0], size[1]);
-                    this.scene = new THREE.Scene();
-                    //this.scene.background = new Color('#333');
-                    this.scene.rotation.set(Math.PI / 6, Math.PI / 4, 0);
-                    this.scene.scale.set(scale, scale, scale);
-                    this.scene.add(new THREE.AmbientLight('white'));
-                    let sun = new THREE.DirectionalLight(0xffffff, 0.5);
-                    // left up right
-                    sun.position.set(-wastes.size, wastes.size * 1.5, wastes.size / 2);
-                    //sun.add(new AxesHelper(100));
-                    this.scene.add(sun);
-                    this.scene.add(sun.target);
-                }
-                const spritee = this.shape;
-                spritee.material.map = this.target.texture;
-            }
-            try_move_to(pos) {
-                let venture = pts.add(this.wpos, pos);
-                if (!objects$1.is_solid(venture))
-                    this.wpos = venture;
-            }
-            obj_manual_update() {
-                this.tiled();
-                //this.stack();
-                super.obj_manual_update();
-            }
-            make() {
-                if (this.made)
-                    return;
-                this.made = true;
-                const headWidth = 2.5;
-                const headHeight = 5;
-                const headLength = 2.5;
-                const combWidth = 1;
-                const combHeight = 2;
-                const combLength = 2;
-                const beakWidth = 1.5;
-                const beakHeight = 1.5;
-                const beakLength = 2;
-                const legsWidth = 1;
-                const legsHeight = 3;
-                const legsLength = 1;
-                const armsWidth = 1;
-                const armsLength = 5;
-                const armsHeight = 3;
-                const armsAngle = .0;
-                const bodyWidth = 4;
-                const bodyHeight = 4;
-                const bodyLength = 7;
-                const feetWidth = 1.5;
-                const feetHeight = 1;
-                const feetLength = 1.5;
-                let boxHead = new THREE.BoxGeometry(headWidth, headHeight, headLength);
-                let materialHead = new THREE.MeshLambertMaterial({
-                    color: '#787a7a'
-                });
-                let boxComb = new THREE.BoxGeometry(combWidth, combHeight, combLength);
-                let materialComb = new THREE.MeshLambertMaterial({
-                    color: '#a52c2c'
-                });
-                let boxBeak = new THREE.BoxGeometry(beakWidth, beakHeight, beakLength);
-                let materialBeak = new THREE.MeshLambertMaterial({
-                    color: '#7f805f'
-                });
-                let boxBody = new THREE.BoxGeometry(bodyWidth, bodyHeight, bodyLength);
-                let materialBody = new THREE.MeshLambertMaterial({
-                    color: '#787a7a'
-                });
-                let boxArms = new THREE.BoxGeometry(armsWidth, armsHeight, armsLength);
-                let materialArms = new THREE.MeshLambertMaterial({
-                    color: '#787a7a'
-                });
-                let boxLegs = new THREE.BoxGeometry(legsWidth, legsHeight, legsLength);
-                let boxFeet = new THREE.BoxGeometry(feetWidth, feetHeight, feetLength);
-                let materialLegs = new THREE.MeshLambertMaterial({
-                    color: '#7f805f'
-                });
-                let planeWater = new THREE.PlaneGeometry(wastes.size * 2, wastes.size * 2);
-                let materialWater = new THREE.MeshLambertMaterial({
-                    color: new THREE__default["default"].Color('rgba(32, 64, 64, 255)'),
-                    opacity: 0.4,
-                    transparent: true,
-                    blending: THREE__default["default"].CustomBlending,
-                    blendEquation: THREE__default["default"].AddEquation,
-                    blendSrc: THREE__default["default"].DstAlphaFactor,
-                    blendDst: THREE__default["default"].OneMinusSrcAlphaFactor
-                });
-                this.meshes.water = new THREE.Mesh(planeWater, materialWater);
-                this.meshes.water.rotation.x = -Math.PI / 2;
-                this.meshes.water.position.y = -bodyHeight * 1.5;
-                this.meshes.water.visible = false;
-                this.meshes.head = new THREE.Mesh(boxHead, materialHead);
-                this.meshes.comb = new THREE.Mesh(boxComb, materialComb);
-                this.meshes.beak = new THREE.Mesh(boxBeak, materialBeak);
-                this.meshes.body = new THREE.Mesh(boxBody, materialBody);
-                this.meshes.arml = new THREE.Mesh(boxArms, materialArms);
-                this.meshes.armr = new THREE.Mesh(boxArms, materialArms);
-                this.meshes.legl = new THREE.Mesh(boxLegs, materialLegs);
-                this.meshes.legr = new THREE.Mesh(boxLegs, materialLegs);
-                this.meshes.footl = new THREE.Mesh(boxFeet, materialLegs);
-                this.meshes.footr = new THREE.Mesh(boxFeet, materialLegs);
-                this.groups.neck = new THREE.Group;
-                this.groups.head = new THREE.Group;
-                this.groups.beak = new THREE.Group;
-                this.groups.comb = new THREE.Group;
-                this.groups.body = new THREE.Group;
-                this.groups.arml = new THREE.Group;
-                this.groups.armr = new THREE.Group;
-                this.groups.legl = new THREE.Group;
-                this.groups.legr = new THREE.Group;
-                this.groups.footl = new THREE.Group;
-                this.groups.footr = new THREE.Group;
-                this.groups.ground = new THREE.Group;
-                this.groups.basis = new THREE.Group;
-                this.groups.neck.add(this.meshes.head);
-                this.groups.head.add(this.meshes.head);
-                this.groups.beak.add(this.meshes.beak);
-                this.groups.comb.add(this.meshes.comb);
-                this.groups.body.add(this.meshes.body);
-                this.groups.arml.add(this.meshes.arml);
-                this.groups.armr.add(this.meshes.armr);
-                this.groups.legl.add(this.meshes.legl);
-                this.groups.legr.add(this.meshes.legr);
-                this.groups.footl.add(this.meshes.footl);
-                this.groups.footr.add(this.meshes.footr);
-                this.groups.head.add(this.groups.beak);
-                this.groups.head.add(this.groups.comb);
-                this.groups.neck.add(this.groups.head);
-                this.groups.legl.add(this.groups.footl);
-                this.groups.legr.add(this.groups.footr);
-                this.groups.body.add(this.groups.neck);
-                this.groups.body.add(this.groups.arml);
-                this.groups.body.add(this.groups.armr);
-                this.groups.ground.add(this.groups.legl);
-                this.groups.ground.add(this.groups.legr);
-                this.groups.ground.add(this.groups.body);
-                this.groups.basis.add(this.groups.ground);
-                this.groups.basis.add(this.meshes.water);
-                this.groups.neck.position.set(0, bodyHeight / 2, bodyLength / 3);
-                this.groups.head.position.set(0, headHeight / 2, 0);
-                this.groups.comb.position.set(0, combHeight, combLength / 2);
-                this.groups.beak.position.set(0, 0, beakLength);
-                //this.groups.beak.rotation.set(-Math.PI / 4, 0, 0);
-                this.groups.body.position.set(0, bodyHeight, 0);
-                this.meshes.body.rotation.set(-0.3, 0, 0);
-                this.meshes.arml.rotation.set(-0.3, 0, 0);
-                this.meshes.armr.rotation.set(-0.3, 0, 0);
-                this.groups.armr.position.set(-bodyWidth / 2 - armsWidth / 2, bodyHeight / 2 - armsWidth / 2, 0);
-                this.groups.armr.rotation.set(0, 0, -armsAngle);
-                this.meshes.armr.position.set(0, -armsHeight / 2 + armsWidth / 2, 0);
-                this.groups.arml.position.set(bodyWidth / 2 + armsWidth / 2, bodyHeight / 2 - armsWidth / 2, 0);
-                this.groups.arml.rotation.set(0, 0, armsAngle);
-                this.meshes.arml.position.set(0, -armsHeight / 2 + armsWidth / 2, 0);
-                this.groups.legl.position.set(-legsWidth / 1, bodyHeight / 2, 0);
-                this.meshes.legl.position.set(0, -legsHeight / 2, 0);
-                this.groups.legr.position.set(legsWidth / 1, bodyHeight / 2, 0);
-                this.meshes.legr.position.set(0, -legsHeight / 2, 0);
-                this.groups.footl.position.set(0, -legsHeight, feetLength / 2);
-                this.groups.footr.position.set(0, -legsHeight, feetLength / 2);
-                this.groups.ground.position.set(0, -bodyHeight * 3, 0);
-                //mesh.rotation.set(Math.PI / 2, 0, 0);
-                this.scene.add(this.groups.basis);
-            }
-            render() {
-                ren$1.renderer.setRenderTarget(this.target);
-                ren$1.renderer.clear();
-                ren$1.renderer.render(this.scene, this.camera);
-            }
-            animateBodyParts() {
-                var _a;
-                this.walkSmoother = wastes.clamp(this.walkSmoother, 0, 1);
-                const legsSwoop = 0.6;
-                const headBob = 1.0;
-                const riser = 0.5;
-                if (!this.dead) {
-                    this.swoop += ren$1.delta * 2.5;
-                    const swoop1 = Math.cos(Math.PI * this.swoop);
-                    const swoop2 = Math.cos(Math.PI * this.swoop - Math.PI);
-                    this.groups.legl.rotation.x = swoop1 * legsSwoop * this.walkSmoother;
-                    this.groups.legr.rotation.x = swoop2 * legsSwoop * this.walkSmoother;
-                    //this.groups.arml.rotation.x = swoop1 * armsSwoop * this.walkSmoother;
-                    //this.groups.armr.rotation.x = swoop2 * armsSwoop * this.walkSmoother;
-                    this.groups.head.position.z = swoop1 * swoop2 * -headBob * this.walkSmoother;
-                    this.groups.ground.position.y = -10 + swoop1 * swoop2 * riser * this.walkSmoother;
-                    this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
-                }
-                else {
-                    this.groups.legl.rotation.x = -0.5;
-                    this.groups.legr.rotation.x = 0.5;
-                    this.groups.head.position.z = 0;
-                    this.groups.ground.position.y = -10;
-                    this.groups.ground.rotation.y = Math.PI / 4;
-                    this.groups.ground.rotation.z = -Math.PI / 2;
-                    console.log('were dead');
-                }
-                if (this.sitting /*|| app.key('q')*/) {
-                    this.groups.legl.visible = false;
-                    this.groups.legr.visible = false;
-                    this.groups.ground.position.y -= 4;
-                    this.meshes.body.rotation.set(0.0, 0, 0);
-                    this.meshes.arml.rotation.set(0.0, 0, 0);
-                    this.meshes.armr.rotation.set(0.0, 0, 0);
-                }
-                else {
-                    this.groups.legl.visible = true;
-                    this.groups.legr.visible = true;
-                    this.meshes.body.rotation.set(-0.3, 0, 0);
-                    this.meshes.arml.rotation.set(-0.3, 0, 0);
-                    this.meshes.armr.rotation.set(-0.3, 0, 0);
-                }
-                if (this.pecking) {
-                    this.groups.neck.rotation.x = 1.0;
-                    this.groups.body.rotation.x = 0.6;
-                }
-                else {
-                    this.groups.neck.rotation.x = 0;
-                    this.groups.body.rotation.x = 0;
-                }
-                const sprite = this.shape;
-                if (((_a = this.tile) === null || _a === void 0 ? void 0 : _a.type) == 'shallow water') {
-                    sprite.vars.orderBias = 0.25;
-                    this.meshes.water.visible = true;
-                }
-                else {
-                    sprite.vars.orderBias = 1.0;
-                    this.meshes.water.visible = false;
-                }
-                this.render();
-            }
-            nettick() {
-                //this.netangle = Math.PI / 4;
-                // Net tick can happen offscreen
-                var _a;
-                //this.wpos = tiles.hovering!.wpos;
-                //this.wpos = wastes.gview.mwpos;
-                if (this.pecking) ;
-                if (!pts.together(this.netwpos))
-                    this.netwpos = this.wpos;
-                // tween netwpos into wpos
-                let tween = pts.mult(pts.subtract(this.netwpos, this.wpos), ren$1.delta * 2);
-                this.wpos = pts.add(this.wpos, tween);
-                (_a = this.sector) === null || _a === void 0 ? void 0 : _a.swap(this);
-                //console.log('chicken nettick', this.wpos);
-                if (this.netangle - this.angle > Math.PI)
-                    this.angle += Math.PI * 2;
-                if (this.angle - this.netangle > Math.PI)
-                    this.angle -= Math.PI * 2;
-                let tweenAngle = (this.netangle - this.angle) * 0.1;
-                this.angle += tweenAngle;
-                const movement = pts.together(pts.abs(tween));
-                if (movement > 0.005) {
-                    //console.log('movement > 0.25');
-                    this.walkSmoother += ren$1.delta * 10;
-                }
-                else {
-                    this.walkSmoother -= ren$1.delta * 5;
-                }
-            }
-            superobject_setup_context_menu() {
-                win$1.contextmenu.reset();
-                if (this.examine) {
-                    win$1.contextmenu.options.options.push(["Examine", () => {
-                            return true;
-                        }, () => {
-                            win$1.descriptor.focus = this;
-                            win$1.descriptor.call_once(this.examine);
-                            //win.contextmenu.focus = undefined;
-                        }]);
-                }
-            }
-            tick() {
-                // We are assumed to be onscreen
-                // If we are visible
-                if (!this.shape)
-                    return;
-                //this.wpos = wastes.gview.mwpos;
-                this.make();
-                this.animateBodyParts();
-                this.tiled();
-                //this.tile?.paint();
-                //this.sector?.swap(this);
-                let color = [1, 1, 1, 1];
-                const sprite = this.shape;
-                // We could have been nulled due to a hide, dispose
-                if (sprite) {
-                    const setShadow = () => {
-                        color = shadows$1.calc(color, pts.round(this.wpos));
-                        sprite.material.color.setRGB(color[0], color[1], color[2]);
-                    };
-                    this.superobject_hovering_pass();
-                    /*if (sprite.mousedSquare(wastes.gview.mrpos)) {
-                        sprite.material.color.set(GLOB.HOVER_COLOR);
-                        hovering_sprites.hover(sprite);
-                        //win.contextmenu.focus = this;
-                    }
-                    else if (!sprite.mousedSquare(wastes.gview.mrpos)) {
-                        //if (win.contextmenu.focus == this)
-                        //	win.contextmenu.focus = undefined;
-                        hovering_sprites.unhover(sprite);
-                        setShadow();
-                    }
-                    else*/ if (this.tile && this.tile.hasDeck == false) {
-                        setShadow();
-                    }
-                    else if (!this.tile) ;
-                }
-                else {
-                    console.warn('no chicken sprite?????');
-                }
-                this.stack(['pawn', 'you', 'chicken', 'leaves', 'wall', 'door', 'roof', 'falsefront', 'panel']);
-                //sprite.roffset = [.5, .5];
-                //this.tile!.paint();
-                super.obj_manual_update();
-            }
-        }
-        chickens.chicken = chicken;
-    })(chickens || (chickens = {}));
-    var chickens$1 = chickens;
-
-    const dialogues = [
-        [
-            // skip 0
-            'I got nothing to say.',
-        ],
-        [
-            // 1
-            `I'm a commmoner.`,
-        ],
-        [
-            // 2
-            `Did you hear a zombie?`,
-            `I'm the trader around here.`,
-            `I get visited by stalkers looking to fix their gear.`,
-        ],
-        [
-            // 3
-            `I protect the civilized borders.`,
-            `It may not look that civil at first glance.`,
-            `But this county needs its defendants.`,
-        ],
-        [
-            // 4
-            `You stalkers think you're survivors.`,
-            `It's a world of hurt out there.`,
-            `The bayou swallows you up.`,
-        ]
-    ];
-
-    var zombies;
-    (function (zombies) {
-        class zombie extends objects$1.superobject {
-            constructor() {
-                super(numbers.pawns);
-                this.netwpos = [0, 0];
-                this.dead = false;
-                this.netangle = 0;
-                //inventory: objects.container
-                this.outfit = ['#444139', '#3b4339', '#3b4339', '#3b4039'];
-                this.created = false;
-                this.groups = {};
-                this.meshes = {};
-                this.made = false;
-                this.swoop = 0;
-                this.angle = 0;
-                this.walkSmoother = 0;
-                this.randomWalker = 0;
-                this.type = 'zombie';
-                this.height = 24;
-                //this.inventory = new objects.container;
-                //this.inventory.add('money');
-            }
-            create() {
-                this.tiled();
-                this.size = pts.divide([50, 40], 1);
-                let shape = new sprite({
-                    binded: this,
-                    tuple: sprites$1.test100,
-                    cell: this.cell,
-                    //opacity: .5,
-                    orderBias: 1.0,
-                });
-                shape.subsize = [20, 40];
-                shape.rleft = -this.size[0] / 4;
-                shape.show();
-                if (!this.created) {
-                    this.created = true;
-                    // Set scale to increase pixels exponentially
-                    const scale = 1;
-                    // make wee guy target
-                    //this.group = new THREE.Group
-                    let size = pts.mult(this.size, scale);
-                    this.target = ren$1.make_render_target(size[0], size[1]);
-                    this.camera = ren$1.make_orthographic_camera(size[0], size[1]);
-                    this.scene = new THREE.Scene();
-                    //this.scene.background = new Color('gray');
-                    this.scene.rotation.set(Math.PI / 6, Math.PI / 4, 0);
-                    this.scene.position.set(0, 0, 0);
-                    this.scene.scale.set(scale, scale, scale);
-                    let amb = new THREE.AmbientLight('white');
-                    this.scene.add(amb);
-                    let sun = new THREE.DirectionalLight(0xffffff, 0.5);
-                    // left up right
-                    sun.position.set(-wastes.size, wastes.size * 1.5, wastes.size / 2);
-                    //sun.add(new AxesHelper(100));
-                    this.scene.add(sun);
-                    this.scene.add(sun.target);
-                }
-                const spritee = this.shape;
-                spritee.material.map = this.target.texture;
-            }
-            try_move_to(pos) {
-                let venture = pts.add(this.wpos, pos);
-                if (!objects$1.is_solid(venture))
-                    this.wpos = venture;
-            }
-            obj_manual_update() {
-                this.tiled();
-                //this.stack();
-                super.obj_manual_update();
-            }
-            superobject_setup_context_menu() {
-                win$1.contextmenu.reset();
-                if (this.examine) {
-                    win$1.contextmenu.options.options.push(["Examine", () => {
-                            return true;
-                        }, () => {
-                            win$1.descriptor.focus = this;
-                            win$1.descriptor.call_once(this.examine);
-                            //win.contextmenu.focus = undefined;
-                        }]);
-                }
-            }
-            make() {
-                if (this.made)
-                    return;
-                this.made = true;
-                const headSize = 5.5;
-                const gasMaskSize = 2.5;
-                const legsSize = 4;
-                const legsHeight = 12.5;
-                const armsSize = 3;
-                const armsHeight = 12;
-                const armsAngle = .0;
-                const bodyThick = 5;
-                const bodyWidth = 8;
-                const bodyHeight = 12;
-                let boxHead = new THREE.BoxGeometry(headSize, headSize, headSize, 1, 1, 1);
-                let materialHead = new THREE.MeshLambertMaterial({
-                    color: this.outfit[0]
-                });
-                let boxGasMask = new THREE.BoxGeometry(gasMaskSize, gasMaskSize, gasMaskSize, 1, 1, 1);
-                let materialGasMask = new THREE.MeshLambertMaterial({
-                    color: this.outfit[0]
-                });
-                let boxBody = new THREE.BoxGeometry(bodyWidth, bodyHeight, bodyThick, 1, 1, 1);
-                let materialBody = new THREE.MeshLambertMaterial({
-                    color: this.outfit[1]
-                });
-                let boxArms = new THREE.BoxGeometry(armsSize, armsHeight, armsSize, 1, 1, 1);
-                let materialArms = new THREE.MeshLambertMaterial({
-                    color: this.outfit[2]
-                });
-                let boxLegs = new THREE.BoxGeometry(legsSize, legsHeight, legsSize, 1, 1, 1);
-                let materialLegs = new THREE.MeshLambertMaterial({
-                    color: this.outfit[3]
-                });
-                // https://www.andersriggelsen.dk/glblendfunc.php
-                let planeWater = new THREE.PlaneGeometry(wastes.size * 2, wastes.size * 2);
-                let materialWater = new THREE.MeshLambertMaterial({
-                    color: new THREE__default["default"].Color('rgba(32, 64, 64, 255)'),
-                    opacity: 0.4,
-                    transparent: true,
-                    blending: THREE__default["default"].CustomBlending,
-                    blendEquation: THREE__default["default"].AddEquation,
-                    blendSrc: THREE__default["default"].DstAlphaFactor,
-                    blendDst: THREE__default["default"].OneMinusDstAlphaFactor
-                });
-                this.meshes.water = new THREE.Mesh(planeWater, materialWater);
-                this.meshes.water.rotation.x = -Math.PI / 2;
-                this.meshes.water.position.y = -bodyHeight * 1.25;
-                this.meshes.water.visible = false;
-                this.meshes.head = new THREE.Mesh(boxHead, materialHead);
-                this.meshes.gasMask = new THREE.Mesh(boxGasMask, materialGasMask);
-                this.meshes.body = new THREE.Mesh(boxBody, materialBody);
-                this.meshes.arml = new THREE.Mesh(boxArms, materialArms);
-                this.meshes.armr = new THREE.Mesh(boxArms, materialArms);
-                this.meshes.legl = new THREE.Mesh(boxLegs, materialLegs);
-                this.meshes.legr = new THREE.Mesh(boxLegs, materialLegs);
-                this.groups.head = new THREE.Group;
-                this.groups.gasMask = new THREE.Group;
-                this.groups.body = new THREE.Group;
-                this.groups.arml = new THREE.Group;
-                this.groups.armr = new THREE.Group;
-                this.groups.legl = new THREE.Group;
-                this.groups.legr = new THREE.Group;
-                this.groups.ground = new THREE.Group;
-                this.groups.basis = new THREE.Group;
-                this.groups.head.add(this.meshes.head);
-                this.groups.gasMask.add(this.meshes.gasMask);
-                this.groups.body.add(this.meshes.body);
-                this.groups.arml.add(this.meshes.arml);
-                this.groups.armr.add(this.meshes.armr);
-                this.groups.legl.add(this.meshes.legl);
-                this.groups.legr.add(this.meshes.legr);
-                this.groups.head.add(this.groups.gasMask);
-                this.groups.body.add(this.groups.head);
-                this.groups.body.add(this.groups.arml);
-                this.groups.body.add(this.groups.armr);
-                this.groups.body.add(this.groups.legl);
-                this.groups.body.add(this.groups.legr);
-                this.groups.ground.add(this.groups.body);
-                this.groups.basis.add(this.groups.ground);
-                this.groups.basis.add(this.meshes.water);
-                this.groups.head.position.set(0, bodyHeight / 2 + headSize / 2, 0);
-                this.groups.gasMask.position.set(0, -headSize / 2, headSize / 1.5);
-                this.groups.gasMask.rotation.set(-Math.PI / 4, 0, 0);
-                this.groups.body.position.set(0, bodyHeight, 0);
-                //this.meshes.armr.position.set(0, armsSize / 2, 0);
-                this.groups.armr.position.set(-bodyWidth / 2 - armsSize / 2, bodyHeight / 2 - armsSize / 2, 0);
-                this.groups.armr.rotation.set(0, 0, -armsAngle);
-                this.meshes.armr.position.set(0, -armsHeight / 2 + armsSize / 2, 0);
-                this.groups.arml.position.set(bodyWidth / 2 + armsSize / 2, bodyHeight / 2 - armsSize / 2, 0);
-                this.groups.arml.rotation.set(0, 0, armsAngle);
-                this.meshes.arml.position.set(0, -armsHeight / 2 + armsSize / 2, 0);
-                this.groups.legl.position.set(-legsSize / 2, -bodyHeight / 2, 0);
-                this.meshes.legl.position.set(0, -legsHeight / 2, 0);
-                this.groups.legr.position.set(legsSize / 2, -bodyHeight / 2, 0);
-                this.meshes.legr.position.set(0, -legsHeight / 2, 0);
-                this.groups.ground.position.set(0, -bodyHeight * 1.0, 0);
-                //mesh.rotation.set(Math.PI / 2, 0, 0);
-                this.scene.add(this.groups.basis);
-            }
-            render() {
-                ren$1.renderer.setRenderTarget(this.target);
-                ren$1.renderer.clear();
-                ren$1.renderer.render(this.scene, this.camera);
-            }
-            animateBodyParts() {
-                var _a;
-                this.walkSmoother = wastes.clamp(this.walkSmoother, 0, 1);
-                if (!this.dead) {
-                    const legsSwoop = 0.8;
-                    const armsSwoop = 0.5;
-                    const rise = 0.5;
-                    this.swoop += ren$1.delta * 2.0;
-                    const swoop1 = Math.cos(Math.PI * this.swoop);
-                    const swoop2 = Math.cos(Math.PI * this.swoop - Math.PI);
-                    this.groups.legl.rotation.x = swoop1 * legsSwoop * this.walkSmoother;
-                    this.groups.legr.rotation.x = swoop2 * legsSwoop * this.walkSmoother;
-                    this.groups.arml.rotation.x = swoop1 * armsSwoop * this.walkSmoother;
-                    this.groups.armr.rotation.x = swoop2 * armsSwoop * this.walkSmoother;
-                    this.groups.ground.position.y = -12 + swoop1 * swoop2 * rise * this.walkSmoother;
-                    this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
-                    this.groups.armr.rotation.x = -Math.PI / 2 * this.walkSmoother;
-                    this.groups.arml.rotation.x = -Math.PI / 2 * this.walkSmoother;
-                    //if (this.aiming) {
-                    this.shape;
-                    if (((_a = this.tile) === null || _a === void 0 ? void 0 : _a.type) == 'shallow water') {
-                        //sprite.vars.orderBias = 0.25
-                        this.meshes.water.visible = true;
-                    }
-                    else {
-                        //sprite.vars.orderBias = 1.0;
-                        this.meshes.water.visible = false;
-                    }
-                }
-                else {
-                    // dead
-                    this.groups.legl.rotation.x = -0.1;
-                    this.groups.legr.rotation.x = 0.1;
-                    this.groups.arml.rotation.x = 0.1;
-                    this.groups.armr.rotation.x = -0.1;
-                    this.groups.ground.position.y = -12;
-                    this.groups.ground.rotation.x = Math.PI / 2;
-                    this.groups.ground.rotation.y = 0;
-                    this.groups.ground.rotation.z = -Math.PI / 2;
-                    const sprite = this.shape;
-                    sprite.vars.orderBias = -0.25;
-                }
-                this.render();
-            }
-            nettick() {
-                var _a;
-                if (this.type == 'you')
-                    return;
-                //this.wpos = tiles.hovering!.wpos;
-                if (!pts.together(this.netwpos))
-                    this.netwpos = this.wpos;
-                // tween netwpos into wpos
-                let tween = pts.mult(pts.subtract(this.netwpos, this.wpos), ren$1.delta * 2);
-                this.wpos = pts.add(this.wpos, tween);
-                (_a = this.sector) === null || _a === void 0 ? void 0 : _a.swap(this);
-                if (this.netangle - this.angle > Math.PI)
-                    this.angle += Math.PI * 2;
-                if (this.angle - this.netangle > Math.PI)
-                    this.angle -= Math.PI * 2;
-                let tweenAngle = (this.netangle - this.angle) * 0.1;
-                this.angle += tweenAngle;
-                const movement = pts.together(pts.abs(tween));
-                if (movement > 0.005) {
-                    //console.log('movement > 0.25');
-                    this.walkSmoother += ren$1.delta * 5;
-                }
-                else {
-                    this.walkSmoother -= ren$1.delta * 2.5;
-                }
-            }
-            tick() {
-                var _a;
-                if (!this.shape)
-                    return;
-                //if (this.type == 'you')
-                //	this.wpos = tiles.hovering!.wpos;
-                this.make();
-                this.animateBodyParts();
-                this.tiled();
-                //this.tile?.paint();
-                (_a = this.sector) === null || _a === void 0 ? void 0 : _a.swap(this);
-                // shade the pawn
-                let color = [1, 1, 1, 1];
-                const sprite = this.shape;
-                // We could have been nulled due to a hide, dispose
-                if (sprite) {
-                    const setShadow = () => {
-                        color = shadows$1.calc(color, pts.round(this.wpos));
-                        sprite.material.color.setRGB(color[0], color[1], color[2]);
-                    };
-                    this.superobject_hovering_pass();
-                    /*if (this.type != 'you' && sprite.mousedSquare(wastes.gview.mrpos)) {
-                        hovering_sprites.hover(sprite);
-                        sprite.material.color.set(GLOB.HOVER_COLOR);
-                    }
-                    else {
-                        hovering_sprites.unhover(sprite);
-                        setShadow();
-                    }*/
-                    if (this.tile && this.tile.hasDeck == false) {
-                        setShadow();
-                    }
-                    else {
-                        sprite.material.color.set('white');
-                    }
-                }
-                if (this.type == 'you') ;
-                this.stack(['pawn', 'zombie', 'you', 'tree', 'chicken', 'shelves', 'leaves', 'wall', 'door', 'roof', 'falsefront', 'panel']);
-                super.obj_manual_update();
-            }
-        }
-        zombies.zombie = zombie;
-    })(zombies || (zombies = {}));
-    var zombies$1 = zombies;
-
-    var client;
-    (function (client) {
-        client.objsId = {};
-        client.plyId = -1;
-        client.rates = [];
-        client.prices = [];
-        function get_rate(item) {
-            for (const rate of client.rates)
-                if (rate[0] == item)
-                    return rate;
-            return ['', 0, 0];
-        }
-        client.get_rate = get_rate;
-        client.interactingWith = '';
-        client.wantToBuy = '';
-        client.wantToSell = '';
-        client.wantToGrab = '';
-        client.tradeWithId = '';
-        function tick() {
-            for (let id in client.objsId) {
-                let obj = client.objsId[id];
-                if (obj.type != 'you')
-                    obj.nettick();
-            }
-        }
-        client.tick = tick;
-        function start() {
-            client.socket = new WebSocket("ws://86.93.147.154:8080");
-            client.socket.onopen = function (e) {
-                //console.log("[open] Connection established");
-                //console.log("Sending to server");
-                //socket.send("My name is John");
-            };
-            function process_news(type, typed, data, handle, update) {
-                for (let sobj of data.news) {
-                    const { id } = sobj;
-                    if (sobj.type != typed)
-                        continue;
-                    let obj = client.objsId[id];
-                    if (!obj) {
-                        // console.log('new sobj', typed, id);
-                        obj = client.objsId[id] = new type;
-                        obj.id = id;
-                        obj.networked = true;
-                        handle(obj, sobj);
-                        lod$1.add(obj);
-                    }
-                    else if (obj) {
-                        update(obj, sobj);
-                    }
-                }
-            }
-            client.socket.onmessage = function (event) {
-                const data = JSON.parse(event.data);
-                if (data.removes && data.removes.length) {
-                    // console.log('we have removes', data.removes);
-                    for (let id of data.removes) {
-                        let obj = client.objsId[id];
-                        if (!obj)
-                            continue;
-                        console.log('remove', obj.type);
-                        if (id == client.plyId) {
-                            // prevent self-destruct by moving too fast
-                            console.error(' you are probably going too fast ');
-                            continue;
-                        }
-                        obj.hide();
-                        obj.finalize();
-                        lod$1.remove(obj);
-                        delete client.objsId[id];
-                    }
-                }
-                if (data.news) {
-                    for (let sobj of data.news) {
-                        if (sobj.type == 'tree')
-                            console.log('got a server tree');
-                        if (sobj.type == 'inventory')
-                            console.log('got a server sinventory');
-                    }
-                    process_news(pawns$1.pawn, 'pawn', data, (obj, sobj) => {
-                        const { wpos, angle } = sobj;
-                        console.log('news pawn');
-                        obj.wpos = wpos;
-                        obj.angle = angle;
-                        obj.dead = sobj.dead;
-                        if (sobj.title)
-                            obj.title = sobj.title;
-                        if (sobj.examine)
-                            obj.examine = sobj.examine;
-                        obj.aiming = sobj.aiming;
-                        obj.netwpos = wpos;
-                        obj.netangle = angle;
-                        if (!sobj.outfit)
-                            console.error('no outfit for new pawn?');
-                        if (sobj.outfit) {
-                            obj.outfit = sobj.outfit;
-                        }
-                        obj.subtype = sobj.subtype;
-                        if (sobj.dialogue)
-                            obj.dialogue = dialogues[sobj.dialogue];
-                        obj.isPlayer = sobj.isPlayer;
-                        obj.inventory = sobj.inventory;
-                    }, (obj, sobj) => {
-                        const { wpos, angle, dead, aiming, inventory } = sobj;
-                        if (obj.type != 'you') {
-                            obj.netwpos = wpos;
-                            obj.netangle = angle;
-                            obj.aiming = aiming;
-                            obj.dead = dead;
-                        }
-                        if (inventory) {
-                            //console.log('update inventory');
-                            obj.inventory = inventory;
-                        }
-                    });
-                    process_news(chickens$1.chicken, 'chicken', data, (obj, sobj) => {
-                        const { wpos, angle, sitting, dead } = sobj;
-                        obj.wpos = wpos;
-                        obj.angle = angle;
-                        obj.sitting = sitting;
-                        if (sobj.title)
-                            obj.title = sobj.title;
-                        if (sobj.examine)
-                            obj.examine = sobj.examine;
-                        obj.dead = dead;
-                    }, (obj, sobj) => {
-                        const { wpos, angle, pecking, sitting, dead } = sobj;
-                        obj.netwpos = wpos;
-                        obj.netangle = angle;
-                        obj.pecking = pecking;
-                        obj.sitting = sitting;
-                        obj.dead = dead;
-                        // console.log('updating chicken!');
-                    });
-                    process_news(zombies$1.zombie, 'zombie', data, (obj, sobj) => {
-                        const { wpos, angle, dead } = sobj;
-                        obj.wpos = wpos;
-                        obj.angle = angle;
-                        obj.dead = dead;
-                        if (sobj.title)
-                            obj.title = sobj.title;
-                        if (sobj.examine)
-                            obj.examine = sobj.examine;
-                    }, (obj, sobj) => {
-                        const { wpos, angle, dead } = sobj;
-                        obj.netwpos = wpos;
-                        obj.netangle = angle;
-                        obj.dead = dead;
-                        // console.log('updating chicken!');
-                    });
-                    process_news(objects$1.crate, 'crate', data, (obj, sobj) => {
-                        const { wpos, inventory } = sobj;
-                        obj.wpos = wpos;
-                        obj.inventory = inventory;
-                        console.error('a new crate!');
-                    }, (obj, sobj) => {
-                        const { inventory } = sobj;
-                        if (inventory)
-                            obj.inventory = inventory;
-                        // console.log('updating chicken!');
-                    });
-                    process_news(objects$1.shelves, 'shelves', data, (obj, sobj) => {
-                        const { wpos, inventory } = sobj;
-                        obj.wpos = wpos;
-                        obj.inventory = inventory;
-                    }, (obj, sobj) => {
-                        const { inventory } = sobj;
-                        if (inventory)
-                            obj.inventory = inventory;
-                        // console.log('updating chicken!');
-                    });
-                }
-                if (data.playerId) {
-                    client.plyId = data.playerId;
-                    let pawn = client.objsId[client.plyId];
-                    if (pawn) {
-                        console.log('  got you pawn  ', client.plyId);
-                        pawns$1.you = pawn;
-                        pawn.type = 'you';
-                        wastes.gview.center = pawn;
-                    }
-                }
-                if (data.rates) {
-                    client.rates = data.rates;
-                    console.log('got rates');
-                }
-                if (data.messages) {
-                    for (let message of data.messages) {
-                        win$1.message.message(message[0], message[1] * 1000);
-                    }
-                }
-            };
-            setInterval(() => {
-                if (pawns$1.you) {
-                    let json = {
-                        player: {
-                            wpos: pawns$1.you.wpos,
-                            angle: pawns$1.you.angle,
-                            aiming: pawns$1.you.aiming,
-                            shoot: pawns$1.you.shoot
-                        }
-                    };
-                    pawns$1.you.shoot = false;
-                    if (client.interactingWith) {
-                        json.interactingWith = client.interactingWith;
-                        client.interactingWith = '';
-                    }
-                    if (client.wantToBuy) {
-                        json.wantToBuy = client.wantToBuy;
-                        client.wantToBuy = '';
-                    }
-                    if (client.wantToSell) {
-                        json.wantToSell = client.wantToSell;
-                        client.wantToSell = '';
-                    }
-                    if (client.wantToGrab) {
-                        json.wantToGrab = client.wantToGrab;
-                        client.wantToGrab = '';
-                    }
-                    if (client.tradeWithId) {
-                        json.tradeWithId = client.tradeWithId;
-                        client.tradeWithId = '';
-                    }
-                    const string = JSON.stringify(json);
-                    client.socket.send(string);
-                }
-            }, 333);
-        }
-        client.start = start;
-    })(client || (client = {}));
+    }
 
     class TGALoader extends THREE.DataTextureLoader {
 
@@ -8329,12 +6038,12 @@ void main() {
             });
         }
         collada_1.start = start;
-        function load_model(path, then) {
+        function load_model(path, zoom, then) {
             var myScene;
             const loadingManager = new THREE.LoadingManager(function () {
             });
             const loader = new ColladaLoader(loadingManager);
-            loader.load('collada/revolver.dae', function (collada) {
+            loader.load(path + '.dae', function (collada) {
                 //wastes.gview.zoomIndex = 0;
                 myScene = collada.scene;
                 new THREE.Group;
@@ -8360,7 +6069,7 @@ void main() {
                 //group.add(new AxesHelper(300));
                 //console.log(myScene.scale);
                 // 1 / 0.0254
-                const zoom = 30;
+                //const zoom = 30;
                 myScene.scale.multiplyScalar(zoom);
                 //elf.rotation.set(-Math.PI / 2, 0, 0);
                 //myScene.position.set(1, 0, 0);
@@ -8385,9 +6094,2374 @@ void main() {
     })(collada || (collada = {}));
     var collada$1 = collada;
 
+    function building_factory() {
+        let prefab = new building;
+        prefab.wpos = [45, 48];
+        prefab.produce();
+        lod$1.add(prefab);
+    }
+    class building extends superobject {
+        constructor() {
+            super([0, 0]);
+            this.size = [100, 100];
+        }
+        produce() {
+        }
+        // render this superobject
+        render() {
+            const sprite = this.shape;
+            sprite.material.map = this.target.texture;
+            ren$1.renderer.setRenderTarget(this.target);
+            ren$1.renderer.clear();
+            ren$1.renderer.render(this.scene, this.camera);
+        }
+        tick() {
+            this.render();
+            if (app$1.key('arrowleft')) {
+                this.scene.position.x -= 1;
+                console.log('', this.scene.position.x);
+            }
+            if (app$1.key('arrowright')) {
+                this.scene.position.x += 1;
+                console.log('', this.scene.position.x);
+            }
+        }
+        set_3d() {
+            // Set scale to increase pixels exponentially
+            const scale = 1;
+            let size = pts.mult(this.size, scale);
+            this.target = ren$1.make_render_target(size[0], size[1]);
+            this.camera = ren$1.make_orthographic_camera(size[0], size[1]);
+            this.scene = new THREE.Scene();
+            this.group = new THREE.Group();
+            this.group.add(new THREE.AxesHelper(100));
+            this.scene.add(this.group);
+            this.scene.scale.set(scale, scale, scale);
+            this.scene.background = new THREE.Color('gray');
+            this.scene.rotation.set(Math.PI / 6, Math.PI / 4, 0);
+            this.group.rotation.set(-Math.PI / 2, 0, 0);
+            this.scene.position.set(0, 0, 0);
+            let amb = new THREE.AmbientLight('white');
+            this.scene.add(amb);
+        }
+        create() {
+            console.log('builing create');
+            //this.size = [24, 40];
+            let shape = new sprite({
+                binded: this,
+                tuple: sprites$1.test100,
+                cell: [0, 0],
+                orderBias: 1.0,
+            });
+            shape.show();
+            this.set_3d();
+            shape.material.map = this.target.texture;
+            collada$1.load_model('collada/building', 32, (model) => {
+                model.rotation.set(0, 0, 0);
+                this.group.add(model);
+                //this.scene.add(new AxesHelper(100));
+                console.log('add building to scene');
+            });
+            this.stack();
+        }
+    }
+
+    var objects;
+    (function (objects) {
+        function factory(type, pixel, pos, hints = {}) {
+            let obj = new type;
+            obj.hints = hints;
+            obj.pixel = pixel;
+            obj.wpos = pos;
+            lod$1.add(obj);
+            return obj;
+        }
+        objects.factory = factory;
+        function register() {
+            console.log(' objects register ');
+            wastes.heightmap = new colormap$1.colormap('heightmap');
+            wastes.objectmap = new colormap$1.colormap('objectmap');
+            wastes.buildingmap = new colormap$1.colormap('buildingmap');
+            wastes.treemap = new colormap$1.colormap('treemap');
+            wastes.colormap = new colormap$1.colormap('colormap');
+            wastes.roughmap = new colormap$1.colormap('roughmap');
+            wastes.roofmap = new colormap$1.colormap('roofmap');
+            hooks.register('sectorCreate', (sector) => {
+                pts.func(sector.small, (pos) => {
+                    let pixel = wastes.objectmap.pixel(pos);
+                    if (pixel.is_color(colors$1.color_acid_barrel)) ;
+                    else if (pixel.is_color(colors$1.color_wall_chest)) ;
+                    else if (pixel.is_color(colors$1.color_shelves)) ;
+                    else if (pixel.is_color(colors$1.color_panel)) {
+                        factory(objects.panel, pixel, pos);
+                    }
+                });
+                return false;
+            });
+            hooks.register('sectorCreate', (sector) => {
+                pts.func(sector.small, (pos) => {
+                    let pixel = wastes.roofmap.pixel(pos);
+                    if (pixel.is_color(colors$1.color_false_front)) ;
+                });
+                return false;
+            });
+            hooks.register('sectorCreate', (sector) => {
+                pts.func(sector.small, (pos) => {
+                    let pixel = wastes.treemap.pixel(pos);
+                    if (pixel.is_color(colors$1.color_decidtree)) {
+                        factory(objects.decidtree, pixel, pos, { type: 'decid' });
+                    }
+                    else if (pixel.is_color(colors$1.color_deadtree)) {
+                        factory(objects.deadtree, pixel, pos);
+                    }
+                });
+                return false;
+            });
+            hooks.register('sectorCreate', (sector) => {
+                pts.func(sector.small, (pos) => {
+                    let pixel = wastes.buildingmap.pixel(pos);
+                    if (pixel.is_color(colors$1.color_plywood_wall)) {
+                        factory(objects.deck, pixel, pos);
+                        factory(objects.wall, pixel, pos, { type: 'plywood' });
+                        factory(objects.roof, pixel, pos);
+                    }
+                    else if (pixel.is_color(colors$1.color_overgrown_wall)) {
+                        factory(objects.deck, pixel, pos);
+                        factory(objects.wall, pixel, pos, { type: 'overgrown' });
+                        factory(objects.roof, pixel, pos);
+                    }
+                    else if (pixel.is_color(colors$1.color_deringer_wall)) {
+                        factory(objects.deck, pixel, pos);
+                        factory(objects.wall, pixel, pos, { type: 'sideroom' });
+                        factory(objects.roof, pixel, pos);
+                    }
+                    else if (pixel.is_color(colors$1.color_medieval_wall)) {
+                        factory(objects.wall, pixel, pos, { type: 'medieval' });
+                    }
+                    else if (pixel.is_color(colors$1.color_scrappy_wall)) {
+                        factory(objects.wall, pixel, pos, { type: 'scrappy' });
+                        //factory(objects.roof, pixel, pos);
+                    }
+                    else if (pixel.is_color(colors$1.color_fence)) ;
+                    else if (pixel.is_color(colors$1.color_grass)) ;
+                    else if (pixel.is_color(colors$1.color_wheat)) {
+                        factory(objects.wheat, pixel, pos);
+                    }
+                    else if (pixel.is_color(colors$1.color_deck_and_roof)) {
+                        factory(objects.deck, pixel, pos);
+                        factory(objects.roof, pixel, pos);
+                    }
+                    else if (pixel.is_color(colors$1.color_porch)) {
+                        factory(objects.porch, pixel, pos);
+                    }
+                    else if (pixel.is_color(colors$1.color_rails)) {
+                        factory(objects.rails, pixel, pos);
+                    }
+                    else if (pixel.is_color(colors$1.color_door)) {
+                        factory(objects.deck, pixel, pos);
+                        factory(objects.door, pixel, pos);
+                        factory(objects.roof, pixel, pos);
+                    }
+                    else if (pixel.is_color(colors$1.color_wooden_door_and_deck)) {
+                        factory(objects.deck, pixel, pos);
+                        factory(objects.door, pixel, pos);
+                        //factory(objects.roof, pixel, pos);
+                    }
+                });
+                return false;
+            });
+        }
+        objects.register = register;
+        function start() {
+            console.log(' objects start ');
+            building_factory();
+            //prefab.wpos = [45, 48];
+            //prefab.produce();
+            //lod.add(prefab);
+        }
+        objects.start = start;
+        function tick() {
+            if (app$1.key(' ') == 1) {
+                wastes.HIDE_ROOFS = !wastes.HIDE_ROOFS;
+                console.log('hide roofs', wastes.HIDE_ROOFS);
+            }
+        }
+        objects.tick = tick;
+        function is_solid(pos) {
+            const impassable = ['wall', 'crate', 'shelves', 'tree', 'fence', 'deep water'];
+            pos = pts.round(pos);
+            if (tiles$1.get(pos) == undefined)
+                return true;
+            let sector = lod$1.gworld.at(lod$1.world.big(pos));
+            let at = sector.stacked(pos);
+            for (let obj of at) {
+                if (obj.is_type(impassable)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        objects.is_solid = is_solid;
+        class wall extends superobject {
+            constructor() {
+                super(numbers.walls);
+                this.type = 'wall';
+                this.height = 24;
+            }
+            create() {
+                var _a, _b, _c, _d, _e, _f;
+                this.tiled();
+                this.size = [24, 40];
+                this.cell = [255 - this.pixel.arrayRef[3], 0];
+                let tuple = sprites$1.dscrappywalls;
+                if (((_a = this.hints) === null || _a === void 0 ? void 0 : _a.type) == 'plywood')
+                    tuple = sprites$1.dderingerwalls;
+                if (((_b = this.hints) === null || _b === void 0 ? void 0 : _b.type) == 'overgrown')
+                    tuple = sprites$1.dderingerwalls;
+                if (((_c = this.hints) === null || _c === void 0 ? void 0 : _c.type) == 'deringer')
+                    tuple = sprites$1.dderingerwalls;
+                if (((_d = this.hints) === null || _d === void 0 ? void 0 : _d.type) == 'woody')
+                    tuple = sprites$1.dwoodywalls;
+                if (((_e = this.hints) === null || _e === void 0 ? void 0 : _e.type) == 'medieval')
+                    tuple = sprites$1.dmedievalwalls;
+                else if (((_f = this.hints) === null || _f === void 0 ? void 0 : _f.type) == 'ruddy')
+                    tuple = sprites$1.druddywalls;
+                else ;
+                new sprite({
+                    binded: this,
+                    tuple: tuple,
+                    cell: this.cell,
+                    orderBias: 1.0,
+                });
+                this.stack();
+            }
+            adapt() {
+                // change sprite to surrounding walls
+            }
+        }
+        objects.wall = wall;
+        class deck extends superobject {
+            constructor() {
+                super(numbers.floors);
+                this.type = 'deck';
+                this.height = 3;
+            }
+            onhit() { }
+            create() {
+                this.tiled();
+                this.tile.hasDeck = true;
+                //this.tile!.z -= 24;
+                this.size = [24, 17];
+                //if (this.pixel!.array[3] < 240)
+                //	this.cell = [240 - this.pixel!.array[3], 0];
+                new sprite({
+                    binded: this,
+                    tuple: sprites$1.ddeck,
+                    cell: this.cell,
+                    orderBias: .4,
+                });
+                this.stack();
+            }
+            tick() {
+                super.tick();
+                let pos = this.wpos;
+                let sector = lod$1.gworld.at(lod$1.world.big(pos));
+                let at = sector.stacked(pos);
+                for (let obj of at) {
+                    if (obj.type == 'you') {
+                        wastes.HIDE_ROOFS = true;
+                        break;
+                    }
+                }
+            }
+        }
+        deck.timer = 0;
+        objects.deck = deck;
+        class porch extends superobject {
+            constructor() {
+                super(numbers.floors);
+                this.type = 'porch';
+                this.height = 3;
+            }
+            onhit() { }
+            create() {
+                this.tiled();
+                //this.tile!.z -= 24;
+                this.size = [24, 17];
+                //if (this.pixel!.array[3] < 240)
+                //	this.cell = [240 - this.pixel!.array[3], 0];
+                let color = [255, 255, 255, 255];
+                color = shadows$1.calc(color, this.wpos);
+                new sprite({
+                    binded: this,
+                    tuple: sprites$1.dporch,
+                    cell: this.cell,
+                    orderBias: -0.45,
+                    color: color
+                });
+                this.stack();
+            }
+        }
+        porch.timer = 0;
+        objects.porch = porch;
+        class rails extends superobject {
+            constructor() {
+                super(numbers.floors);
+                this.type = 'porch';
+                this.height = 3;
+            }
+            create() {
+                this.tiled();
+                //this.tile!.z -= 24;
+                this.size = [24, 17];
+                //if (this.pixel!.array[3] < 240)
+                //	this.cell = [240 - this.pixel!.array[3], 0];
+                new sprite({
+                    binded: this,
+                    tuple: sprites$1.drails,
+                    cell: this.cell,
+                    orderBias: .4,
+                });
+                this.stack();
+            }
+            tick() {
+            }
+        }
+        rails.timer = 0;
+        objects.rails = rails;
+        class deadtree extends superobject {
+            constructor() {
+                super(numbers.floors);
+                this.type = 'tree';
+                this.height = 24;
+            }
+            create() {
+                this.tiled();
+                this.size = [24, 50];
+                new sprite({
+                    binded: this,
+                    tuple: sprites$1.ddeadtreetrunk,
+                    orderBias: 0.6,
+                });
+                this.stack();
+            }
+        }
+        deadtree.timer = 0;
+        objects.deadtree = deadtree;
+        class decidtree extends superobject {
+            constructor() {
+                super(numbers.trees);
+                this.flowered = false;
+                this.type = 'tree';
+                this.height = 24;
+            }
+            create() {
+                this.tiled();
+                this.size = [24, 50];
+                //if (this.pixel!.array[3] < 240)
+                //	this.cell = [240 - this.pixel!.array[3], 0];
+                new sprite({
+                    binded: this,
+                    tuple: sprites$1.ddecidtreetrunk,
+                    orderBias: 0.6,
+                });
+                this.stack();
+                const tile = tiles$1.get(this.wpos);
+                if (!this.flowered) {
+                    this.flowered = true;
+                    for (let y = -1; y <= 1; y++)
+                        for (let x = -1; x <= 1; x++)
+                            if (!(x == 0 && y == 0))
+                                factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [x, y]), {
+                                    type: this.hints.type,
+                                    tree: this,
+                                    color: tile.color,
+                                    grid: [x, y]
+                                });
+                    //factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [0, 0]), { type: this.hints.type, color: tile.color, noVines: true });
+                    //factory(objects.treeleaves, this.pixel, pts.add(this.wpos, [0, 0]), { type: this.hints.type, color: tile.color, noVines: true });
+                }
+            }
+        }
+        objects.decidtree = decidtree;
+        class treeleaves extends superobject {
+            constructor() {
+                super(numbers.leaves);
+                this.shaded = false;
+                this.hasVines = false;
+                this.type = 'leaves';
+                this.height = 14;
+                /*if (!this.hints.noVines || Math.random() > 0.5)
+                    this.hasVines = true;*/
+            }
+            onhit() {
+            }
+            create() {
+                let pixel = wastes.treemap.pixel(this.wpos);
+                if (!this.hints.noVines && pixel.arrayRef[3] == 254)
+                    this.hasVines = false; // true;
+                if (pixel.arrayRef[3] == 253)
+                    return;
+                this.tiled();
+                let tuple = sprites$1.dtreeleaves;
+                if (this.hasVines) {
+                    this.size = [24, 64];
+                    const grid = this.hints.grid || [0, 0];
+                    if (pts.equals(grid, [1, 0]) || pts.equals(grid, [1, 1])) {
+                        tuple = sprites$1.dvines2;
+                        //this.hints.color = [0, 0, 0, 255]
+                        console.log(' !! using dvines 2 !!');
+                    }
+                    else if (pts.equals(grid, [0, -1]) || pts.equals(grid, [-1, -1])) {
+                        tuple = sprites$1.dvines3;
+                        //this.hints.color = [0, 0, 0, 255]
+                    }
+                    else {
+                        tuple = sprites$1.dvines;
+                    }
+                }
+                else {
+                    this.size = [24, 31];
+                }
+                //this.try_create_vines();
+                //if (this.pixel!.array[3] < 240)
+                //	this.cell = [240 - this.pixel!.array[3], 0];
+                let color = this.hints.color || [255, 255, 255, 255];
+                let color2 = wastes.colormap.pixel(this.wpos);
+                if (!(255 - color2.arrayRef[3])) {
+                    if (this.hints.color) {
+                        color = [
+                            Math.floor(color[0] * 1.6),
+                            Math.floor(color[1] * 1.6),
+                            Math.floor(color[2] * 1.6),
+                            color[3],
+                        ];
+                    }
+                    new sprite({
+                        binded: this,
+                        tuple: tuple,
+                        orderBias: 0.7,
+                        color: color
+                    });
+                    //shadows.shade(this.wpos, 0.1);
+                    if (!this.shaded) {
+                        this.shaded = true;
+                        const shadow = 0.03;
+                        shadows$1.shade_matrix(this.wpos, [
+                            [shadow / 2, shadow, shadow / 2],
+                            [shadow, shadow, shadow],
+                            [shadow / 2, shadow, shadow / 2]
+                        ]);
+                    }
+                    if (this.hints.tree)
+                        this.special_leaves_stack();
+                    else
+                        this.stack();
+                }
+            }
+            special_leaves_stack() {
+                //console.log('special stack');
+                const tree = this.hints.tree;
+                if (this.shape) {
+                    const sprite = this.shape;
+                    this.z = tree.calc + tree.height;
+                    sprite.rup = this.z;
+                    if (this.hasVines) {
+                        sprite.rup2 = -33;
+                    }
+                }
+            }
+        }
+        objects.treeleaves = treeleaves;
+        class grass extends superobject {
+            constructor() {
+                super(numbers.roofs);
+                this.type = 'grass';
+                this.height = 4;
+                this.solid = false;
+            }
+            create() {
+                this.tiled();
+                this.size = [24, 30];
+                let color = tiles$1.get(this.wpos).color;
+                color = [
+                    Math.floor(color[0] * 1.5),
+                    Math.floor(color[1] * 1.5),
+                    Math.floor(color[2] * 2.0),
+                    color[3],
+                ];
+                this.cell = [255 - this.pixel.arrayRef[3], 0];
+                new sprite({
+                    binded: this,
+                    tuple: sprites$1.dgrass,
+                    cell: this.cell,
+                    orderBias: .6,
+                    color: color
+                });
+                this.stack();
+            }
+        }
+        objects.grass = grass;
+        class wheat extends superobject {
+            constructor() {
+                super(numbers.roofs);
+                this.type = 'wheat';
+                this.height = 4;
+            }
+            create() {
+                this.tiled();
+                this.size = [24, 30];
+                //let color =  tiles.get(this.wpos)!.color;
+                //this.cell = [Math.floor(Math.random() * 2), 0];
+                new sprite({
+                    binded: this,
+                    tuple: sprites$1.dwheat,
+                    cell: this.cell,
+                    //color: color,
+                    orderBias: .6
+                });
+                this.stack();
+            }
+        }
+        objects.wheat = wheat;
+        class panel extends superobject {
+            constructor() {
+                super(numbers.roofs);
+                this.ticker = 0;
+                this.type = 'panel';
+                this.height = 10;
+            }
+            create() {
+                this.tiled();
+                this.size = [8, 10];
+                //let color =  tiles.get(this.wpos)!.color;
+                //this.cell = [Math.floor(Math.random() * 2), 0];
+                return;
+            }
+            tick() {
+                return;
+                //console.log('boo');
+            }
+        }
+        objects.panel = panel;
+        class crate extends superobject {
+            constructor() {
+                super(numbers.objs);
+                this.type = 'crate';
+                this.title = 'Crate';
+                this.height = 17;
+            }
+            create() {
+                this.tiled();
+                this.size = [24, 40];
+                new sprite({
+                    binded: this,
+                    tuple: sprites$1.dcrate,
+                    cell: this.cell,
+                    orderBias: 1.0
+                });
+                this.stack(['roof', 'wall']);
+            }
+            tick() {
+                const sprite = this.shape;
+                if (!sprite)
+                    return;
+                this.superobject_hovering_pass();
+            }
+            superobject_setup_context_menu() {
+                console.log('setup context');
+                win$1.contextmenu.reset();
+                win$1.contextmenu.options.options.push(["See contents", () => {
+                        return pts.distsimple(pawns$1.you.wpos, this.wpos) < 1;
+                    }, () => {
+                        win$1.container.focus = this;
+                        win$1.container.call_once();
+                    }]);
+            }
+        }
+        objects.crate = crate;
+        class shelves extends superobject {
+            constructor() {
+                super(numbers.objs);
+                this.type = 'shelves';
+                this.title = 'Shelves';
+                this.height = 25;
+            }
+            create() {
+                this.tiled();
+                this.size = [20, 31];
+                //this.cell = [255 - this.pixel!.array[3], 0];
+                //return
+                new sprite({
+                    binded: this,
+                    tuple: sprites$1.dshelves,
+                    //cell: this.cell,
+                    orderBias: 1.0
+                });
+                //shape.rup2 = 9;
+                //shape.rleft = 6;
+                this.stack(['roof', 'wall']);
+            }
+            tick() {
+                this.shape;
+                this.superobject_hovering_pass();
+            }
+            superobject_setup_context_menu() {
+                console.log('setup context');
+                win$1.contextmenu.reset();
+                win$1.contextmenu.options.options.push(["See contents", () => {
+                        return pts.distsimple(pawns$1.you.wpos, this.wpos) < 1;
+                    }, () => {
+                        win$1.container.focus = this;
+                        win$1.container.call_once();
+                    }]);
+                /*win.contextmenu.options.options.push(["Store", () => {
+                    return pts.distsimple(pawns.you.wpos, this.wpos) < 1;
+                }, () => {
+                    //win.container.crate = this;
+                    //win.container.call_once();
+                }]);*/
+                win$1.contextmenu.options.options.push(["Examine", () => {
+                        return pts.distsimple(pawns$1.you.wpos, this.wpos) < 10;
+                    }, () => {
+                        win$1.descriptor.focus = this;
+                        win$1.descriptor.call_once("A shelves with not much on it.");
+                    }]);
+            }
+        }
+        objects.shelves = shelves;
+        class roof extends superobject {
+            constructor() {
+                super(numbers.roofs);
+                this.shaded = false;
+                this.type = 'roof';
+                this.height = 3;
+            }
+            onhit() { }
+            create() {
+                //return;
+                this.tiled();
+                this.size = [24, 17];
+                let shape = new sprite({
+                    binded: this,
+                    tuple: sprites$1.droof,
+                    orderBias: 1.6,
+                });
+                shape.rup = 29;
+                if (!this.shaded) {
+                    this.shaded = true;
+                    const shadow = .75;
+                    shadows$1.shade_matrix(this.wpos, [
+                        [0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0],
+                        [0, 0, 0, shadow, 0],
+                        [0, 0, 0, 0, shadow]
+                    ], true);
+                }
+            }
+            tick() {
+                super.tick();
+                const sprite = this.shape;
+                if (!sprite)
+                    return;
+                if (wastes.HIDE_ROOFS)
+                    sprite.mesh.visible = false;
+                else if (!wastes.HIDE_ROOFS)
+                    sprite.mesh.visible = true;
+            }
+        }
+        objects.roof = roof;
+        class falsefront extends superobject {
+            constructor() {
+                super(numbers.roofs);
+                this.type = 'falsefront';
+                this.height = 5;
+            }
+            create() {
+                this.tiled();
+                this.cell = [255 - this.pixel.arrayRef[3], 0];
+                this.size = [24, 40];
+                new sprite({
+                    binded: this,
+                    tuple: sprites$1.dfalsefronts,
+                    cell: this.cell,
+                    orderBias: 1.6,
+                });
+                this.stack();
+                //this.z = 29+4;
+            }
+            tick() {
+                const sprite = this.shape;
+                if (!sprite)
+                    return;
+                if (wastes.HIDE_ROOFS)
+                    sprite.mesh.visible = false;
+                else if (!wastes.HIDE_ROOFS)
+                    sprite.mesh.visible = true;
+            }
+        }
+        objects.falsefront = falsefront;
+        class acidbarrel extends superobject {
+            constructor() {
+                super(numbers.objs);
+                this.type = 'acidbarrel';
+                this.height = 4;
+            }
+            create() {
+                this.tiled();
+                this.size = [24, 35];
+                new sprite({
+                    binded: this,
+                    tuple: sprites$1.dacidbarrel,
+                    orderBias: .4,
+                });
+                this.stack();
+            }
+        }
+        objects.acidbarrel = acidbarrel;
+        class door extends superobject {
+            constructor() {
+                super(numbers.walls);
+                this.open = false;
+                this.type = 'door';
+                this.height = 23;
+            }
+            create() {
+                this.tiled();
+                this.size = [24, 40];
+                this.cell = [255 - this.pixel.arrayRef[3], 0];
+                new sprite({
+                    binded: this,
+                    tuple: sprites$1.ddoor,
+                    cell: this.cell,
+                    orderBias: door.order,
+                });
+                this.stack();
+            }
+            tick() {
+                super.tick();
+                if (!this.shape)
+                    return;
+                let pos = this.wpos;
+                let sector = lod$1.gworld.at(lod$1.world.big(pos));
+                let at = sector.stacked(pos);
+                let pawning = false;
+                for (let obj of at) {
+                    if (obj.is_type(['pawn', 'you'])) {
+                        pawning = true;
+                        let sprite = this.shape;
+                        sprite.vars.cell = pts.subtract(this.cell, [1, 0]);
+                        sprite.vars.orderBias = 1.55;
+                        sprite.retransform();
+                        sprite.shape_manual_update();
+                        this.open = true;
+                        break;
+                    }
+                }
+                if (!pawning) {
+                    let sprite = this.shape;
+                    sprite.vars.cell = this.cell;
+                    sprite.vars.orderBias = door.order;
+                    sprite.retransform();
+                    sprite.shape_manual_update();
+                    this.open = false;
+                }
+            }
+        }
+        door.order = .7;
+        objects.door = door;
+        class shrubs extends superobject {
+            constructor() {
+                super(numbers.trees);
+                this.type = 'shrubs';
+            }
+            create() {
+                this.size = [24, 15];
+                new sprite({
+                    binded: this,
+                    tuple: sprites$1.shrubs,
+                    orderBias: .5
+                });
+            }
+        }
+        objects.shrubs = shrubs;
+    })(objects || (objects = {}));
+    var objects$1 = objects;
+
+    var win;
+    (function (win_1) {
+        var win;
+        var toggle_character = false;
+        win_1.genericHovering = false;
+        win_1.started = false;
+        function start() {
+            win_1.started = true;
+            win = document.getElementById('win');
+            contextmenu.init();
+            container.init();
+            trader.init();
+            dialogue.init();
+            setTimeout(() => {
+                //message.message("Welcome", 1000);
+            }, 1000);
+        }
+        win_1.start = start;
+        function tick() {
+            if (!win_1.started)
+                return;
+            if (app$1.key('c') == 1) {
+                toggle_character = !toggle_character;
+                character.call_once(toggle_character);
+            }
+            if (app$1.key('b') == 1) ;
+            you.tick();
+            character.tick();
+            container.tick();
+            dialogue.tick();
+            contextmenu.tick();
+            message.tick();
+            descriptor.tick();
+            trader.tick();
+        }
+        win_1.tick = tick;
+        class modal {
+            constructor(title) {
+                this.element = document.createElement('div');
+                this.element.className = 'modal';
+                this.element.onmouseover = () => { this.hovering = true; win_1.genericHovering = true; };
+                this.element.onmouseleave = () => { this.hovering = false; win_1.genericHovering = false; };
+                //this.element.append('inventory')
+                if (title) {
+                    this.title = document.createElement('div');
+                    this.title.innerHTML = title;
+                    this.title.className = 'title';
+                    this.element.append(this.title);
+                }
+                this.content = document.createElement('div');
+                this.content.className = 'content';
+                this.content.innerHTML = 'content';
+                this.element.append(this.content);
+                win.append(this.element);
+            }
+            update(title) {
+                if (title)
+                    this.title.innerHTML = title;
+            }
+            reposition(pos) {
+                const round = pts.floor(pos);
+                this.element.style.top = round[1];
+                this.element.style.left = round[0];
+            }
+            deletor() {
+                this.element.remove();
+                if (this.hovering)
+                    win_1.genericHovering = false;
+            }
+            float(anchor, add = [0, 0]) {
+                //let pos = this.anchor.rtospos([-1.5, 2.5]);
+                let pos = anchor.rtospos();
+                pos = pts.add(pos, add);
+                pos = pts.add(pos, pts.divide(anchor.size, 2));
+                //pos = pts.add(pos, this.anchor.size);
+                //let pos = this.anchor.aabbScreen.center();
+                //let pos = lod.project(wastes.gview.mwpos);
+                pos = pts.subtract(pos, wastes.gview.rpos);
+                pos = pts.divide(pos, wastes.gview.zoom);
+                pos = pts.divide(pos, ren$1.ndpi);
+                //pos = pts.add(pos, pts.divide(ren.screenCorrected, 2));
+                //pos[1] -= ren.screenCorrected[1] / 2;
+                this.reposition([ren$1.screen[0] / 2 + pos[0], ren$1.screen[1] / 2 - pos[1]]);
+            }
+        }
+        class trader {
+            static hover_money_label_here() {
+            }
+            static init() {
+                hooks.register('viewRClick', (view) => {
+                    // We right click outside
+                    if (trader.modal && !trader.modal.hovering) {
+                        trader.end();
+                    }
+                    return false;
+                });
+            }
+            static end() {
+                var _a;
+                (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
+                this.modal = undefined;
+                this.tradeWithCur = undefined;
+                this.traderInventoryElement = undefined;
+                this.yourInventoryElement = undefined;
+            }
+            static call_once() {
+                if (this.tradeWith && this.tradeWithCur != this.tradeWith) {
+                    trader.end();
+                }
+                if (!this.modal) {
+                    this.modal = new modal('trader');
+                    this.modal.content.innerHTML = `buy:<br />`;
+                    this.modal.content.onmouseover = () => { win_1.genericHovering = true; };
+                    this.modal.content.onmouseleave = () => { win_1.genericHovering = false; };
+                    this.tradeWithCur = this.tradeWith;
+                    this.render_trader_inventory(true);
+                    let next = document.createElement('span');
+                    next.innerHTML += '<hr>sell:<br />';
+                    this.modal.content.append(next);
+                    this.render_your_inventory(true);
+                }
+            }
+            static render_trader_inventory(force) {
+                var _a;
+                if (!this.traderInventoryElement) {
+                    this.traderInventoryElement = document.createElement('div');
+                    this.traderInventoryElement.className = 'inventory';
+                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.content.append(this.traderInventoryElement);
+                }
+                let pawn = this.tradeWithCur;
+                const inventory = pawn.inventory;
+                if (inventory && this.traderStamp != inventory.stamp || force) {
+                    console.log('refresh trader inven');
+                    this.traderInventoryElement.innerHTML = ``;
+                    for (let tuple of inventory.tuples) {
+                        if (tuple[0] == 'money')
+                            continue;
+                        let button = document.createElement('div');
+                        //button.innerHTML = `<img width="20" height="20" src="tex/items/${tuple[0]}.png">`;
+                        button.innerHTML += tuple[0];
+                        button.className = 'item';
+                        if (tuple[1] > 1) {
+                            button.innerHTML += ` <span>×${tuple[1]}</span>`;
+                        }
+                        button.onclick = () => {
+                            client.wantToBuy = tuple[0];
+                        };
+                        let extra = document.createElement('span');
+                        button.append(extra);
+                        const rate = client.get_rate(tuple[0]) || ['', 0, 0];
+                        let buy = rate[1];
+                        extra.innerHTML = `&nbsp; - ${buy}ct`;
+                        this.traderInventoryElement.append(button);
+                        this.traderStamp = inventory.stamp;
+                    }
+                }
+            }
+            static render_your_inventory(force) {
+                var _a;
+                if (!this.yourInventoryElement) {
+                    this.yourInventoryElement = document.createElement('div');
+                    this.yourInventoryElement.className = 'inventory';
+                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.content.append(this.yourInventoryElement);
+                }
+                let you = pawns$1.you;
+                const inventory = you.inventory;
+                if (inventory && this.yourStamp != inventory.stamp || force) {
+                    this.yourInventoryElement.innerHTML = ``;
+                    for (let tuple of inventory.tuples) {
+                        if (tuple[0] == 'money')
+                            continue;
+                        let button = document.createElement('div');
+                        //button.innerHTML = `<img width="20" height="20" src="tex/items/${tuple[0]}.png">`;
+                        button.innerHTML += tuple[0];
+                        button.className = 'item';
+                        if (tuple[1] > 1) {
+                            button.innerHTML += ` <span>×${tuple[1]}</span>`;
+                        }
+                        button.onclick = () => {
+                            client.wantToSell = tuple[0];
+                        };
+                        let extra = document.createElement('span');
+                        button.append(extra);
+                        const rate = client.get_rate(tuple[0]) || ['', 0, 0];
+                        let sell = rate[2];
+                        extra.innerHTML = `&nbsp; - ${sell}ct`;
+                        this.yourInventoryElement.append(button);
+                        this.yourStamp = inventory.stamp;
+                    }
+                    let money = 0;
+                    for (let tuple of inventory.tuples)
+                        if (tuple[0] == 'money') {
+                            money = tuple[1];
+                            break;
+                        }
+                    let next = document.createElement('div');
+                    next.innerHTML += `your money: ${money}<br />`;
+                    this.yourInventoryElement.append(next);
+                }
+            }
+            static tick() {
+                if (this.tradeWithCur && pts.distsimple(this.tradeWithCur.wpos, pawns$1.you.wpos) > 1) {
+                    trader.end();
+                }
+                if (this.modal) {
+                    this.modal.float(this.tradeWithCur, [0, 0]);
+                    this.render_trader_inventory(false);
+                    this.render_your_inventory(false);
+                }
+            }
+        }
+        trader.traderStamp = 0;
+        trader.yourStamp = 0;
+        win_1.trader = trader;
+        class character {
+            static render_inventory(force) {
+                var _a;
+                if (!this.inventoryElement) {
+                    this.inventoryElement = document.createElement('div');
+                    this.inventoryElement.className = 'inventory';
+                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.content.append(character.inventoryElement);
+                }
+                const inventory = pawns$1.you.inventory;
+                if (!inventory)
+                    return;
+                if (inventory && this.inventoryStamp != inventory.stamp || force) {
+                    this.inventoryElement.innerHTML = ``;
+                    console.log('yes', inventory.tuples);
+                    //console.log(inventory);
+                    for (let tuple of inventory.tuples) {
+                        let button = document.createElement('div');
+                        //button.innerHTML = `<img width="20" height="20" src="tex/items/${tuple[0]}.png">`;
+                        button.innerHTML += tuple[0];
+                        if (tuple[1] > 1) {
+                            button.innerHTML += ` <span>×${tuple[1]}</span>`;
+                        }
+                        button.className = 'item';
+                        this.inventoryElement.append(button);
+                        this.inventoryStamp = inventory.stamp;
+                    }
+                }
+            }
+            static call_once(open) {
+                var _a;
+                this.open = open;
+                if (open && !this.modal) {
+                    this.modal = new modal('you');
+                    //this.modal.reposition(['100px', '30%']);
+                    this.modal.content.innerHTML = 'stats:<br />effectiveness: 100%<br /><hr>';
+                    this.modal.content.innerHTML += 'inventory:<br />';
+                    //inventory
+                    this.render_inventory(true);
+                    let next = document.createElement('p');
+                    next.innerHTML += '<hr>guns:<br />';
+                    if (pawns$1.you.gun)
+                        next.innerHTML += `<img class="gun" src="tex/guns/${pawns$1.you.gun}.png">`;
+                    this.modal.content.append(next);
+                }
+                else if (!open && this.modal) {
+                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
+                    this.modal = undefined;
+                    this.inventoryElement = undefined;
+                }
+            }
+            static tick() {
+                var _a;
+                if (this.open) {
+                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.float(pawns$1.you, [15, 20]);
+                    this.render_inventory(false);
+                }
+            }
+        }
+        character.open = false;
+        character.inventoryStamp = 0;
+        win_1.character = character;
+        class you {
+            static call(open) {
+                var _a;
+                if (open && !this.modal) {
+                    this.modal = new modal('you');
+                    this.modal.element.classList.add('you');
+                    this.modal.content.remove();
+                }
+                else if (!open && this.modal) {
+                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
+                    this.modal = undefined;
+                }
+            }
+            static tick() {
+                if (pawns$1.you && !pawns$1.you.isActive()) {
+                    this.call(true);
+                    this.modal.float(pawns$1.you, [-5, 5]);
+                    console.log('call and float');
+                }
+                else {
+                    this.call(false);
+                }
+            }
+        }
+        win_1.you = you;
+        class contextmenu {
+            static reset() {
+                this.buttons = [];
+                this.options.options = [];
+            }
+            static end_close_others() {
+                trader.end();
+                dialogue.end();
+                win_1.genericHovering = false;
+            }
+            static end() {
+                var _a;
+                (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
+                this.modal = undefined;
+                this.focusCur = undefined;
+                win_1.genericHovering = false;
+            }
+            static init() {
+                hooks.register('viewMClick', (view) => {
+                    var _a;
+                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
+                    this.modal = undefined;
+                    this.focus = undefined;
+                    return false;
+                });
+                hooks.register('viewRClick', (view) => {
+                    console.log('contextmenu on ?', this.focus);
+                    if (!hovering_sprites.sprites.length)
+                        this.focus = undefined;
+                    console.log('we got hovering sprites', hovering_sprites.sprites.length);
+                    hovering_sprites.sort_closest_to_mouse();
+                    if (hovering_sprites.sprites.length)
+                        this.focus = hovering_sprites.sprites[0].vars.binded;
+                    // We have a focus, but no window! This is the easiest scenario.
+                    if (this.focus && !this.modal) {
+                        this.focus.superobject_setup_context_menu();
+                        this.focusCur = this.focus;
+                        this.call_once();
+                    }
+                    // We click away from any sprites and we have a menu open: break it
+                    else if (!this.focus && this.modal) {
+                        contextmenu.end();
+                    }
+                    // We clicked on the already focussed sprite: break it
+                    else if (this.modal && this.focus && this.focus == this.focusCur) {
+                        contextmenu.end();
+                    }
+                    // We have an open modal, but focus on a different sprite: recreate it
+                    else if (this.modal && this.focus && this.focus != this.focusCur) {
+                        this.end();
+                        this.focus.superobject_setup_context_menu();
+                        this.focusCur = this.focus;
+                        this.call_once();
+                    }
+                    //else {
+                    //	this.modal?.deletor();
+                    //	this.focusCur = undefined;
+                    //}
+                    return false;
+                });
+            }
+            static destroy() {
+                var _a;
+                (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
+                //this.focusCur = undefined;
+            }
+            static call_once() {
+                this.end_close_others();
+                this.modal = new modal(this.focus.title);
+                this.modal.content.innerHTML = '';
+                this.modal.element.classList.add('contextmenu');
+                for (let option of this.options.options) {
+                    let button = document.createElement('div');
+                    button.innerHTML = option[0] + "&nbsp;";
+                    //if (tuple[1] > 1) {
+                    //	button.innerHTML += ` <span>×${tuple[1]}</span>`
+                    //}
+                    button.className = 'option';
+                    button.onclick = (e) => {
+                        var _a;
+                        if (option[1]()) {
+                            (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
+                            this.modal = undefined;
+                            win_1.genericHovering = false;
+                            option[2]();
+                        }
+                    };
+                    button.onmouseover = () => { win_1.genericHovering = true; };
+                    button.onmouseleave = () => { win_1.genericHovering = false; };
+                    this.modal.content.append(button);
+                    this.buttons.push([button, option]);
+                }
+            }
+            static update() {
+                //console.log('focusCur', this.focusCur);
+                for (let button of this.buttons) {
+                    const element = button[0];
+                    const option = button[1];
+                    if (!option[1]()) {
+                        element.classList.add('disabled');
+                    }
+                    else {
+                        element.classList.remove('disabled');
+                    }
+                }
+            }
+            static tick() {
+                //for (let hover of hoveringSprites) {
+                //	
+                //}
+                if (this.modal && this.focusCur) {
+                    this.update();
+                    this.modal.float(this.focusCur, [0, 0]);
+                }
+            }
+        }
+        contextmenu.buttons = [];
+        contextmenu.options = { options: [] };
+        win_1.contextmenu = contextmenu;
+        class descriptor {
+            static call_once(text = 'Examined') {
+                if (this.modal !== undefined) {
+                    this.modal.deletor();
+                    this.modal = undefined;
+                }
+                if (this.modal == undefined) {
+                    this.modal = new modal('descriptor');
+                    this.modal.title.remove();
+                    //this.modal.content.remove();
+                    this.modal.content.innerHTML = text;
+                    this.focusCur = this.focus;
+                    this.timer = Date.now();
+                }
+            }
+            static tick() {
+                var _a;
+                if (this.modal !== undefined) {
+                    this.modal.float(this.focusCur, [0, 0]);
+                }
+                if (Date.now() - this.timer > 4 * 1000) {
+                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
+                    this.modal = undefined;
+                }
+            }
+        }
+        descriptor.timer = 0;
+        win_1.descriptor = descriptor;
+        class dialogue {
+            static init() {
+                hooks.register('viewRClick', (view) => {
+                    // We right clickd outside
+                    if (dialogue.modal && !dialogue.modal.hovering)
+                        dialogue.end();
+                    return false;
+                });
+            }
+            static call_once() {
+                // We wish to talk to a different pawn
+                if (this.talkingTo != this.talkingToCur) {
+                    this.end();
+                }
+                if (this.talkingTo && !this.modal) {
+                    this.talkingToCur = this.talkingTo;
+                    this.modal = new modal();
+                    this.where = 0;
+                    this.change();
+                }
+            }
+            static end() {
+                var _a;
+                (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
+                this.modal = undefined;
+                this.talkingToCur = undefined;
+                win_1.genericHovering = false;
+            }
+            static change() {
+                this.modal.content.innerHTML = ''; // reset
+                let pawnImage = document.createElement('div');
+                pawnImage.className = 'pawnimage';
+                this.modal.content.append(pawnImage);
+                let textArea = document.createElement('div');
+                if (this.talkingToCur.dialogue[this.where])
+                    textArea.innerHTML = this.talkingToCur.dialogue[this.where] + "&nbsp;";
+                this.modal.content.append(textArea);
+                //const next = this.talkingToCur!.dialogue[this.where[1]][1];
+                const next = this.talkingToCur.dialogue[this.where + 1];
+                if (next) {
+                    let button = document.createElement('div');
+                    button.innerHTML = '>>';
+                    button.className = 'button';
+                    textArea.append(button);
+                    button.onclick = (e) => {
+                        console.log('woo');
+                        this.where++;
+                        win_1.genericHovering = false;
+                        this.change();
+                        //button.remove();
+                    };
+                }
+            }
+            static tick() {
+                if (this.modal && this.talkingToCur) {
+                    this.modal.float(this.talkingToCur, [0, 10]);
+                }
+                if (this.talkingToCur && pts.distsimple(pawns$1.you.wpos, this.talkingToCur.wpos) > 1) {
+                    this.end();
+                }
+            }
+        }
+        dialogue.where = 0;
+        win_1.dialogue = dialogue;
+        class container {
+            static init() {
+                hooks.register('viewRClick', (view) => {
+                    // We right clickd outside
+                    if (container.modal && !container.modal.hovering) {
+                        container.end();
+                    }
+                    return false;
+                });
+            }
+            static end() {
+                var _a;
+                (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
+                this.modal = undefined;
+                this.focusCur = undefined;
+                this.inventoryElement = undefined;
+            }
+            static update_inventory_view(force) {
+                if (!this.modal)
+                    return;
+                if (!this.inventoryElement) {
+                    this.inventoryElement = document.createElement('div');
+                    this.inventoryElement.className = 'inventory';
+                    this.modal.content.append(this.inventoryElement);
+                }
+                const cast = this.focus;
+                const inventory = cast.inventory;
+                if (this.stamp != inventory.stamp || force) {
+                    this.stamp = inventory.stamp;
+                    this.inventoryElement.innerHTML = ``;
+                    for (let tuple of inventory.tuples) {
+                        let item = document.createElement('div');
+                        item.innerHTML = tuple[0];
+                        if (tuple[1] > 1) {
+                            item.innerHTML += ` <span>×${tuple[1]}</span>`;
+                        }
+                        item.className = 'item';
+                        this.inventoryElement.append(item);
+                        item.onclick = (e) => {
+                            console.log('clicked');
+                            client.wantToGrab = [cast.id, tuple[0]];
+                            //cast.inventory.remove(tuple[0]);
+                            //pawns.you?.inventory.add(tuple[0]);
+                        };
+                        //item.onmouseover = () => { hoveringClickableElement = true; }
+                        //item.onmouseleave = () => { hoveringClickableElement = false; }
+                        //this.modal.content.innerHTML += item + '<br />';
+                    }
+                }
+            }
+            static call_once() {
+                // We are trying to open a different container
+                if (this.modal !== undefined) {
+                    this.end();
+                }
+                if (this.focus) {
+                    this.focusCur = this.focus;
+                    this.modal = new modal('Container');
+                    this.modal.content.innerHTML = '';
+                    this.update_inventory_view(true);
+                }
+            }
+            static tick() {
+                if (this.modal && this.focusCur) {
+                    this.modal.float(this.focusCur);
+                    this.update_inventory_view(false);
+                }
+                if (this.focusCur && pts.distsimple(pawns$1.you.wpos, this.focusCur.wpos) > 1) {
+                    this.end();
+                }
+            }
+        }
+        //static obj?: lod.obj
+        container.stamp = 0;
+        win_1.container = container;
+        class areatag {
+            static call(open, area, refresh = false) {
+                if (open) {
+                    console.log('boo');
+                    let element = document.createElement('div');
+                    element.className = 'area';
+                    element.innerHTML = ` ${(area === null || area === void 0 ? void 0 : area.name) || ''} `;
+                    win.append(element);
+                    setTimeout(() => {
+                        element.classList.add('fade');
+                        setTimeout(() => {
+                            element.remove();
+                        }, 3000);
+                    }, 1000);
+                }
+            }
+        }
+        win_1.areatag = areatag;
+        class message {
+            constructor() {
+                this.duration = 5;
+            }
+            static message(message, duration) {
+                this.messages.push({ message: message, duration: duration });
+            }
+            static tick() {
+                if (this.messages.length) {
+                    let shift = this.messages.shift();
+                    let element = document.createElement('div');
+                    element.className = 'message';
+                    element.innerHTML = shift.message;
+                    document.getElementById('messages').append(element);
+                    setTimeout(() => {
+                        element.classList.add('fade');
+                    }, shift.duration);
+                    setTimeout(() => {
+                        element.remove();
+                    }, shift.duration + 2000);
+                }
+            }
+        }
+        message.messages = [];
+        win_1.message = message;
+    })(win || (win = {}));
+    var win$1 = win;
+
+    var chickens;
+    (function (chickens) {
+        function start() {
+            //let chicken = new chickens.chicken;
+            //chicken.wpos = [46, 49];
+            //lod.add(chicken);
+            /*let chicken2 = new chickens.chicken;
+            chicken2.wpos = [42, 53];
+            lod.add(chicken2);*/
+        }
+        chickens.start = start;
+        class chicken extends superobject {
+            constructor() {
+                super(numbers.chickens);
+                this.netwpos = [0, 0];
+                this.netangle = 0;
+                this.dead = false;
+                this.created = false;
+                this.pecking = false;
+                this.sitting = false;
+                //override setup_context() {
+                //	win.contextmenu.reset();
+                //}
+                this.groups = {};
+                this.meshes = {};
+                this.made = false;
+                this.swoop = 0;
+                this.angle = 0;
+                this.walkSmoother = 1;
+                this.randomWalker = 0;
+                this.type = 'chicken';
+                this.height = 24;
+            }
+            create() {
+                this.tiled();
+                this.size = pts.divide([25, 30], 1);
+                //this.subsize = [25, 40];
+                let shape = new sprite({
+                    binded: this,
+                    tuple: sprites$1.test100,
+                    //opacity: 0.5,
+                    orderBias: 1.0,
+                });
+                shape.dimetric = false;
+                shape.rleft = this.size[0] / 2;
+                shape.rup2 = this.size[1] / 2;
+                shape.show();
+                if (!this.created) {
+                    this.created = true;
+                    //console.log('creating chicken');
+                    // Set scale to increase pixels exponentially
+                    const scale = 1;
+                    // make wee guy target
+                    //this.group = new THREE.Group
+                    let size = pts.mult(this.size, scale);
+                    this.target = ren$1.make_render_target(size[0], size[1]);
+                    this.camera = ren$1.make_orthographic_camera(size[0], size[1]);
+                    this.scene = new THREE.Scene();
+                    //this.scene.background = new Color('#333');
+                    this.scene.rotation.set(Math.PI / 6, Math.PI / 4, 0);
+                    this.scene.scale.set(scale, scale, scale);
+                    this.scene.add(new THREE.AmbientLight('white'));
+                    let sun = new THREE.DirectionalLight(0xffffff, 0.5);
+                    // left up right
+                    sun.position.set(-wastes.size, wastes.size * 1.5, wastes.size / 2);
+                    //sun.add(new AxesHelper(100));
+                    this.scene.add(sun);
+                    this.scene.add(sun.target);
+                }
+                const spritee = this.shape;
+                spritee.material.map = this.target.texture;
+            }
+            try_move_to(pos) {
+                let venture = pts.add(this.wpos, pos);
+                if (!objects$1.is_solid(venture))
+                    this.wpos = venture;
+            }
+            obj_manual_update() {
+                this.tiled();
+                //this.stack();
+                super.obj_manual_update();
+            }
+            make() {
+                if (this.made)
+                    return;
+                this.made = true;
+                const headWidth = 2.5;
+                const headHeight = 5;
+                const headLength = 2.5;
+                const combWidth = 1;
+                const combHeight = 2;
+                const combLength = 2;
+                const beakWidth = 1.5;
+                const beakHeight = 1.5;
+                const beakLength = 2;
+                const legsWidth = 1;
+                const legsHeight = 3;
+                const legsLength = 1;
+                const armsWidth = 1;
+                const armsLength = 5;
+                const armsHeight = 3;
+                const armsAngle = .0;
+                const bodyWidth = 4;
+                const bodyHeight = 4;
+                const bodyLength = 7;
+                const feetWidth = 1.5;
+                const feetHeight = 1;
+                const feetLength = 1.5;
+                let boxHead = new THREE.BoxGeometry(headWidth, headHeight, headLength);
+                let materialHead = new THREE.MeshLambertMaterial({
+                    color: '#787a7a'
+                });
+                let boxComb = new THREE.BoxGeometry(combWidth, combHeight, combLength);
+                let materialComb = new THREE.MeshLambertMaterial({
+                    color: '#a52c2c'
+                });
+                let boxBeak = new THREE.BoxGeometry(beakWidth, beakHeight, beakLength);
+                let materialBeak = new THREE.MeshLambertMaterial({
+                    color: '#7f805f'
+                });
+                let boxBody = new THREE.BoxGeometry(bodyWidth, bodyHeight, bodyLength);
+                let materialBody = new THREE.MeshLambertMaterial({
+                    color: '#787a7a'
+                });
+                let boxArms = new THREE.BoxGeometry(armsWidth, armsHeight, armsLength);
+                let materialArms = new THREE.MeshLambertMaterial({
+                    color: '#787a7a'
+                });
+                let boxLegs = new THREE.BoxGeometry(legsWidth, legsHeight, legsLength);
+                let boxFeet = new THREE.BoxGeometry(feetWidth, feetHeight, feetLength);
+                let materialLegs = new THREE.MeshLambertMaterial({
+                    color: '#7f805f'
+                });
+                let planeWater = new THREE.PlaneGeometry(wastes.size * 2, wastes.size * 2);
+                let materialWater = new THREE.MeshLambertMaterial({
+                    color: new THREE__default["default"].Color('rgba(32, 64, 64, 255)'),
+                    opacity: 0.4,
+                    transparent: true,
+                    blending: THREE__default["default"].CustomBlending,
+                    blendEquation: THREE__default["default"].AddEquation,
+                    blendSrc: THREE__default["default"].DstAlphaFactor,
+                    blendDst: THREE__default["default"].OneMinusSrcAlphaFactor
+                });
+                this.meshes.water = new THREE.Mesh(planeWater, materialWater);
+                this.meshes.water.rotation.x = -Math.PI / 2;
+                this.meshes.water.position.y = -bodyHeight * 1.5;
+                this.meshes.water.visible = false;
+                this.meshes.head = new THREE.Mesh(boxHead, materialHead);
+                this.meshes.comb = new THREE.Mesh(boxComb, materialComb);
+                this.meshes.beak = new THREE.Mesh(boxBeak, materialBeak);
+                this.meshes.body = new THREE.Mesh(boxBody, materialBody);
+                this.meshes.arml = new THREE.Mesh(boxArms, materialArms);
+                this.meshes.armr = new THREE.Mesh(boxArms, materialArms);
+                this.meshes.legl = new THREE.Mesh(boxLegs, materialLegs);
+                this.meshes.legr = new THREE.Mesh(boxLegs, materialLegs);
+                this.meshes.footl = new THREE.Mesh(boxFeet, materialLegs);
+                this.meshes.footr = new THREE.Mesh(boxFeet, materialLegs);
+                this.groups.neck = new THREE.Group;
+                this.groups.head = new THREE.Group;
+                this.groups.beak = new THREE.Group;
+                this.groups.comb = new THREE.Group;
+                this.groups.body = new THREE.Group;
+                this.groups.arml = new THREE.Group;
+                this.groups.armr = new THREE.Group;
+                this.groups.legl = new THREE.Group;
+                this.groups.legr = new THREE.Group;
+                this.groups.footl = new THREE.Group;
+                this.groups.footr = new THREE.Group;
+                this.groups.ground = new THREE.Group;
+                this.groups.basis = new THREE.Group;
+                this.groups.neck.add(this.meshes.head);
+                this.groups.head.add(this.meshes.head);
+                this.groups.beak.add(this.meshes.beak);
+                this.groups.comb.add(this.meshes.comb);
+                this.groups.body.add(this.meshes.body);
+                this.groups.arml.add(this.meshes.arml);
+                this.groups.armr.add(this.meshes.armr);
+                this.groups.legl.add(this.meshes.legl);
+                this.groups.legr.add(this.meshes.legr);
+                this.groups.footl.add(this.meshes.footl);
+                this.groups.footr.add(this.meshes.footr);
+                this.groups.head.add(this.groups.beak);
+                this.groups.head.add(this.groups.comb);
+                this.groups.neck.add(this.groups.head);
+                this.groups.legl.add(this.groups.footl);
+                this.groups.legr.add(this.groups.footr);
+                this.groups.body.add(this.groups.neck);
+                this.groups.body.add(this.groups.arml);
+                this.groups.body.add(this.groups.armr);
+                this.groups.ground.add(this.groups.legl);
+                this.groups.ground.add(this.groups.legr);
+                this.groups.ground.add(this.groups.body);
+                this.groups.basis.add(this.groups.ground);
+                this.groups.basis.add(this.meshes.water);
+                this.groups.neck.position.set(0, bodyHeight / 2, bodyLength / 3);
+                this.groups.head.position.set(0, headHeight / 2, 0);
+                this.groups.comb.position.set(0, combHeight, combLength / 2);
+                this.groups.beak.position.set(0, 0, beakLength);
+                //this.groups.beak.rotation.set(-Math.PI / 4, 0, 0);
+                this.groups.body.position.set(0, bodyHeight, 0);
+                this.meshes.body.rotation.set(-0.3, 0, 0);
+                this.meshes.arml.rotation.set(-0.3, 0, 0);
+                this.meshes.armr.rotation.set(-0.3, 0, 0);
+                this.groups.armr.position.set(-bodyWidth / 2 - armsWidth / 2, bodyHeight / 2 - armsWidth / 2, 0);
+                this.groups.armr.rotation.set(0, 0, -armsAngle);
+                this.meshes.armr.position.set(0, -armsHeight / 2 + armsWidth / 2, 0);
+                this.groups.arml.position.set(bodyWidth / 2 + armsWidth / 2, bodyHeight / 2 - armsWidth / 2, 0);
+                this.groups.arml.rotation.set(0, 0, armsAngle);
+                this.meshes.arml.position.set(0, -armsHeight / 2 + armsWidth / 2, 0);
+                this.groups.legl.position.set(-legsWidth / 1, bodyHeight / 2, 0);
+                this.meshes.legl.position.set(0, -legsHeight / 2, 0);
+                this.groups.legr.position.set(legsWidth / 1, bodyHeight / 2, 0);
+                this.meshes.legr.position.set(0, -legsHeight / 2, 0);
+                this.groups.footl.position.set(0, -legsHeight, feetLength / 2);
+                this.groups.footr.position.set(0, -legsHeight, feetLength / 2);
+                this.groups.ground.position.set(0, -bodyHeight * 3, 0);
+                //mesh.rotation.set(Math.PI / 2, 0, 0);
+                this.scene.add(this.groups.basis);
+            }
+            render() {
+                ren$1.renderer.setRenderTarget(this.target);
+                ren$1.renderer.clear();
+                ren$1.renderer.render(this.scene, this.camera);
+            }
+            animateBodyParts() {
+                var _a;
+                this.walkSmoother = wastes.clamp(this.walkSmoother, 0, 1);
+                const legsSwoop = 0.6;
+                const headBob = 1.0;
+                const riser = 0.5;
+                if (!this.dead) {
+                    this.swoop += ren$1.delta * 2.5;
+                    const swoop1 = Math.cos(Math.PI * this.swoop);
+                    const swoop2 = Math.cos(Math.PI * this.swoop - Math.PI);
+                    this.groups.legl.rotation.x = swoop1 * legsSwoop * this.walkSmoother;
+                    this.groups.legr.rotation.x = swoop2 * legsSwoop * this.walkSmoother;
+                    //this.groups.arml.rotation.x = swoop1 * armsSwoop * this.walkSmoother;
+                    //this.groups.armr.rotation.x = swoop2 * armsSwoop * this.walkSmoother;
+                    this.groups.head.position.z = swoop1 * swoop2 * -headBob * this.walkSmoother;
+                    this.groups.ground.position.y = -10 + swoop1 * swoop2 * riser * this.walkSmoother;
+                    this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
+                }
+                else {
+                    this.groups.legl.rotation.x = -0.5;
+                    this.groups.legr.rotation.x = 0.5;
+                    this.groups.head.position.z = 0;
+                    this.groups.ground.position.y = -10;
+                    this.groups.ground.rotation.y = Math.PI / 4;
+                    this.groups.ground.rotation.z = -Math.PI / 2;
+                    console.log('were dead');
+                }
+                if (this.sitting /*|| app.key('q')*/) {
+                    this.groups.legl.visible = false;
+                    this.groups.legr.visible = false;
+                    this.groups.ground.position.y -= 4;
+                    this.meshes.body.rotation.set(0.0, 0, 0);
+                    this.meshes.arml.rotation.set(0.0, 0, 0);
+                    this.meshes.armr.rotation.set(0.0, 0, 0);
+                }
+                else {
+                    this.groups.legl.visible = true;
+                    this.groups.legr.visible = true;
+                    this.meshes.body.rotation.set(-0.3, 0, 0);
+                    this.meshes.arml.rotation.set(-0.3, 0, 0);
+                    this.meshes.armr.rotation.set(-0.3, 0, 0);
+                }
+                if (this.pecking) {
+                    this.groups.neck.rotation.x = 1.0;
+                    this.groups.body.rotation.x = 0.6;
+                }
+                else {
+                    this.groups.neck.rotation.x = 0;
+                    this.groups.body.rotation.x = 0;
+                }
+                const sprite = this.shape;
+                if (((_a = this.tile) === null || _a === void 0 ? void 0 : _a.type) == 'shallow water') {
+                    sprite.vars.orderBias = 0.25;
+                    this.meshes.water.visible = true;
+                }
+                else {
+                    sprite.vars.orderBias = 1.0;
+                    this.meshes.water.visible = false;
+                }
+                this.render();
+            }
+            nettick() {
+                //this.netangle = Math.PI / 4;
+                // Net tick can happen offscreen
+                var _a;
+                //this.wpos = tiles.hovering!.wpos;
+                //this.wpos = wastes.gview.mwpos;
+                if (this.pecking) ;
+                if (!pts.together(this.netwpos))
+                    this.netwpos = this.wpos;
+                // tween netwpos into wpos
+                let tween = pts.mult(pts.subtract(this.netwpos, this.wpos), ren$1.delta * 2);
+                this.wpos = pts.add(this.wpos, tween);
+                (_a = this.sector) === null || _a === void 0 ? void 0 : _a.swap(this);
+                //console.log('chicken nettick', this.wpos);
+                if (this.netangle - this.angle > Math.PI)
+                    this.angle += Math.PI * 2;
+                if (this.angle - this.netangle > Math.PI)
+                    this.angle -= Math.PI * 2;
+                let tweenAngle = (this.netangle - this.angle) * 0.1;
+                this.angle += tweenAngle;
+                const movement = pts.together(pts.abs(tween));
+                if (movement > 0.005) {
+                    //console.log('movement > 0.25');
+                    this.walkSmoother += ren$1.delta * 10;
+                }
+                else {
+                    this.walkSmoother -= ren$1.delta * 5;
+                }
+            }
+            superobject_setup_context_menu() {
+                win$1.contextmenu.reset();
+                if (this.examine) {
+                    win$1.contextmenu.options.options.push(["Examine", () => {
+                            return true;
+                        }, () => {
+                            win$1.descriptor.focus = this;
+                            win$1.descriptor.call_once(this.examine);
+                            //win.contextmenu.focus = undefined;
+                        }]);
+                }
+            }
+            tick() {
+                // We are assumed to be onscreen
+                // If we are visible
+                if (!this.shape)
+                    return;
+                //this.wpos = wastes.gview.mwpos;
+                this.make();
+                this.animateBodyParts();
+                this.tiled();
+                //this.tile?.paint();
+                //this.sector?.swap(this);
+                let color = [1, 1, 1, 1];
+                const sprite = this.shape;
+                // We could have been nulled due to a hide, dispose
+                if (sprite) {
+                    const setShadow = () => {
+                        color = shadows$1.calc(color, pts.round(this.wpos));
+                        sprite.material.color.setRGB(color[0], color[1], color[2]);
+                    };
+                    this.superobject_hovering_pass();
+                    /*if (sprite.mousedSquare(wastes.gview.mrpos)) {
+                        sprite.material.color.set(GLOB.HOVER_COLOR);
+                        hovering_sprites.hover(sprite);
+                        //win.contextmenu.focus = this;
+                    }
+                    else if (!sprite.mousedSquare(wastes.gview.mrpos)) {
+                        //if (win.contextmenu.focus == this)
+                        //	win.contextmenu.focus = undefined;
+                        hovering_sprites.unhover(sprite);
+                        setShadow();
+                    }
+                    else*/ if (this.tile && this.tile.hasDeck == false) {
+                        setShadow();
+                    }
+                    else if (!this.tile) ;
+                }
+                else {
+                    console.warn('no chicken sprite?????');
+                }
+                this.stack(['pawn', 'you', 'chicken', 'leaves', 'wall', 'door', 'roof', 'falsefront', 'panel']);
+                //sprite.roffset = [.5, .5];
+                //this.tile!.paint();
+                super.obj_manual_update();
+            }
+        }
+        chickens.chicken = chicken;
+    })(chickens || (chickens = {}));
+    var chickens$1 = chickens;
+
+    const dialogues = [
+        [
+            // skip 0
+            'I got nothing to say.',
+        ],
+        [
+            // 1
+            `I'm a commmoner.`,
+        ],
+        [
+            // 2
+            `Did you hear a zombie?`,
+            `I'm the trader around here.`,
+            `I get visited by stalkers looking to fix their gear.`,
+        ],
+        [
+            // 3
+            `I protect the civilized borders.`,
+            `It may not look that civil at first glance.`,
+            `But this county needs its defendants.`,
+        ],
+        [
+            // 4
+            `You stalkers think you're survivors.`,
+            `It's a world of hurt out there.`,
+            `The bayou swallows you up.`,
+        ]
+    ];
+
+    var zombies;
+    (function (zombies) {
+        class zombie extends superobject {
+            constructor() {
+                super(numbers.pawns);
+                this.netwpos = [0, 0];
+                this.dead = false;
+                this.netangle = 0;
+                //inventory: objects.container
+                this.outfit = ['#444139', '#3b4339', '#3b4339', '#3b4039'];
+                this.created = false;
+                this.groups = {};
+                this.meshes = {};
+                this.made = false;
+                this.swoop = 0;
+                this.angle = 0;
+                this.walkSmoother = 0;
+                this.randomWalker = 0;
+                this.type = 'zombie';
+                this.height = 24;
+                //this.inventory = new objects.container;
+                //this.inventory.add('money');
+            }
+            create() {
+                this.tiled();
+                this.size = pts.divide([50, 40], 1);
+                let shape = new sprite({
+                    binded: this,
+                    tuple: sprites$1.test100,
+                    cell: this.cell,
+                    //opacity: .5,
+                    orderBias: 1.0,
+                });
+                shape.subsize = [20, 40];
+                shape.rleft = -this.size[0] / 4;
+                shape.show();
+                if (!this.created) {
+                    this.created = true;
+                    // Set scale to increase pixels exponentially
+                    const scale = 1;
+                    // make wee guy target
+                    //this.group = new THREE.Group
+                    let size = pts.mult(this.size, scale);
+                    this.target = ren$1.make_render_target(size[0], size[1]);
+                    this.camera = ren$1.make_orthographic_camera(size[0], size[1]);
+                    this.scene = new THREE.Scene();
+                    //this.scene.background = new Color('gray');
+                    this.scene.rotation.set(Math.PI / 6, Math.PI / 4, 0);
+                    this.scene.position.set(0, 0, 0);
+                    this.scene.scale.set(scale, scale, scale);
+                    let amb = new THREE.AmbientLight('white');
+                    this.scene.add(amb);
+                    let sun = new THREE.DirectionalLight(0xffffff, 0.5);
+                    // left up right
+                    sun.position.set(-wastes.size, wastes.size * 1.5, wastes.size / 2);
+                    //sun.add(new AxesHelper(100));
+                    this.scene.add(sun);
+                    this.scene.add(sun.target);
+                }
+                const spritee = this.shape;
+                spritee.material.map = this.target.texture;
+            }
+            try_move_to(pos) {
+                let venture = pts.add(this.wpos, pos);
+                if (!objects$1.is_solid(venture))
+                    this.wpos = venture;
+            }
+            obj_manual_update() {
+                this.tiled();
+                //this.stack();
+                super.obj_manual_update();
+            }
+            superobject_setup_context_menu() {
+                win$1.contextmenu.reset();
+                if (this.examine) {
+                    win$1.contextmenu.options.options.push(["Examine", () => {
+                            return true;
+                        }, () => {
+                            win$1.descriptor.focus = this;
+                            win$1.descriptor.call_once(this.examine);
+                            //win.contextmenu.focus = undefined;
+                        }]);
+                }
+            }
+            make() {
+                if (this.made)
+                    return;
+                this.made = true;
+                const headSize = 5.5;
+                const gasMaskSize = 2.5;
+                const legsSize = 4;
+                const legsHeight = 12.5;
+                const armsSize = 3;
+                const armsHeight = 12;
+                const armsAngle = .0;
+                const bodyThick = 5;
+                const bodyWidth = 8;
+                const bodyHeight = 12;
+                let boxHead = new THREE.BoxGeometry(headSize, headSize, headSize, 1, 1, 1);
+                let materialHead = new THREE.MeshLambertMaterial({
+                    color: this.outfit[0]
+                });
+                let boxGasMask = new THREE.BoxGeometry(gasMaskSize, gasMaskSize, gasMaskSize, 1, 1, 1);
+                let materialGasMask = new THREE.MeshLambertMaterial({
+                    color: this.outfit[0]
+                });
+                let boxBody = new THREE.BoxGeometry(bodyWidth, bodyHeight, bodyThick, 1, 1, 1);
+                let materialBody = new THREE.MeshLambertMaterial({
+                    color: this.outfit[1]
+                });
+                let boxArms = new THREE.BoxGeometry(armsSize, armsHeight, armsSize, 1, 1, 1);
+                let materialArms = new THREE.MeshLambertMaterial({
+                    color: this.outfit[2]
+                });
+                let boxLegs = new THREE.BoxGeometry(legsSize, legsHeight, legsSize, 1, 1, 1);
+                let materialLegs = new THREE.MeshLambertMaterial({
+                    color: this.outfit[3]
+                });
+                // https://www.andersriggelsen.dk/glblendfunc.php
+                let planeWater = new THREE.PlaneGeometry(wastes.size * 2, wastes.size * 2);
+                let materialWater = new THREE.MeshLambertMaterial({
+                    color: new THREE__default["default"].Color('rgba(32, 64, 64, 255)'),
+                    opacity: 0.4,
+                    transparent: true,
+                    blending: THREE__default["default"].CustomBlending,
+                    blendEquation: THREE__default["default"].AddEquation,
+                    blendSrc: THREE__default["default"].DstAlphaFactor,
+                    blendDst: THREE__default["default"].OneMinusDstAlphaFactor
+                });
+                this.meshes.water = new THREE.Mesh(planeWater, materialWater);
+                this.meshes.water.rotation.x = -Math.PI / 2;
+                this.meshes.water.position.y = -bodyHeight * 1.25;
+                this.meshes.water.visible = false;
+                this.meshes.head = new THREE.Mesh(boxHead, materialHead);
+                this.meshes.gasMask = new THREE.Mesh(boxGasMask, materialGasMask);
+                this.meshes.body = new THREE.Mesh(boxBody, materialBody);
+                this.meshes.arml = new THREE.Mesh(boxArms, materialArms);
+                this.meshes.armr = new THREE.Mesh(boxArms, materialArms);
+                this.meshes.legl = new THREE.Mesh(boxLegs, materialLegs);
+                this.meshes.legr = new THREE.Mesh(boxLegs, materialLegs);
+                this.groups.head = new THREE.Group;
+                this.groups.gasMask = new THREE.Group;
+                this.groups.body = new THREE.Group;
+                this.groups.arml = new THREE.Group;
+                this.groups.armr = new THREE.Group;
+                this.groups.legl = new THREE.Group;
+                this.groups.legr = new THREE.Group;
+                this.groups.ground = new THREE.Group;
+                this.groups.basis = new THREE.Group;
+                this.groups.head.add(this.meshes.head);
+                this.groups.gasMask.add(this.meshes.gasMask);
+                this.groups.body.add(this.meshes.body);
+                this.groups.arml.add(this.meshes.arml);
+                this.groups.armr.add(this.meshes.armr);
+                this.groups.legl.add(this.meshes.legl);
+                this.groups.legr.add(this.meshes.legr);
+                this.groups.head.add(this.groups.gasMask);
+                this.groups.body.add(this.groups.head);
+                this.groups.body.add(this.groups.arml);
+                this.groups.body.add(this.groups.armr);
+                this.groups.body.add(this.groups.legl);
+                this.groups.body.add(this.groups.legr);
+                this.groups.ground.add(this.groups.body);
+                this.groups.basis.add(this.groups.ground);
+                this.groups.basis.add(this.meshes.water);
+                this.groups.head.position.set(0, bodyHeight / 2 + headSize / 2, 0);
+                this.groups.gasMask.position.set(0, -headSize / 2, headSize / 1.5);
+                this.groups.gasMask.rotation.set(-Math.PI / 4, 0, 0);
+                this.groups.body.position.set(0, bodyHeight, 0);
+                //this.meshes.armr.position.set(0, armsSize / 2, 0);
+                this.groups.armr.position.set(-bodyWidth / 2 - armsSize / 2, bodyHeight / 2 - armsSize / 2, 0);
+                this.groups.armr.rotation.set(0, 0, -armsAngle);
+                this.meshes.armr.position.set(0, -armsHeight / 2 + armsSize / 2, 0);
+                this.groups.arml.position.set(bodyWidth / 2 + armsSize / 2, bodyHeight / 2 - armsSize / 2, 0);
+                this.groups.arml.rotation.set(0, 0, armsAngle);
+                this.meshes.arml.position.set(0, -armsHeight / 2 + armsSize / 2, 0);
+                this.groups.legl.position.set(-legsSize / 2, -bodyHeight / 2, 0);
+                this.meshes.legl.position.set(0, -legsHeight / 2, 0);
+                this.groups.legr.position.set(legsSize / 2, -bodyHeight / 2, 0);
+                this.meshes.legr.position.set(0, -legsHeight / 2, 0);
+                this.groups.ground.position.set(0, -bodyHeight * 1.0, 0);
+                //mesh.rotation.set(Math.PI / 2, 0, 0);
+                this.scene.add(this.groups.basis);
+            }
+            render() {
+                ren$1.renderer.setRenderTarget(this.target);
+                ren$1.renderer.clear();
+                ren$1.renderer.render(this.scene, this.camera);
+            }
+            animateBodyParts() {
+                var _a;
+                this.walkSmoother = wastes.clamp(this.walkSmoother, 0, 1);
+                if (!this.dead) {
+                    const legsSwoop = 0.8;
+                    const armsSwoop = 0.5;
+                    const rise = 0.5;
+                    this.swoop += ren$1.delta * 2.0;
+                    const swoop1 = Math.cos(Math.PI * this.swoop);
+                    const swoop2 = Math.cos(Math.PI * this.swoop - Math.PI);
+                    this.groups.legl.rotation.x = swoop1 * legsSwoop * this.walkSmoother;
+                    this.groups.legr.rotation.x = swoop2 * legsSwoop * this.walkSmoother;
+                    this.groups.arml.rotation.x = swoop1 * armsSwoop * this.walkSmoother;
+                    this.groups.armr.rotation.x = swoop2 * armsSwoop * this.walkSmoother;
+                    this.groups.ground.position.y = -12 + swoop1 * swoop2 * rise * this.walkSmoother;
+                    this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
+                    this.groups.armr.rotation.x = -Math.PI / 2 * this.walkSmoother;
+                    this.groups.arml.rotation.x = -Math.PI / 2 * this.walkSmoother;
+                    //if (this.aiming) {
+                    this.shape;
+                    if (((_a = this.tile) === null || _a === void 0 ? void 0 : _a.type) == 'shallow water') {
+                        //sprite.vars.orderBias = 0.25
+                        this.meshes.water.visible = true;
+                    }
+                    else {
+                        //sprite.vars.orderBias = 1.0;
+                        this.meshes.water.visible = false;
+                    }
+                }
+                else {
+                    // dead
+                    this.groups.legl.rotation.x = -0.1;
+                    this.groups.legr.rotation.x = 0.1;
+                    this.groups.arml.rotation.x = 0.1;
+                    this.groups.armr.rotation.x = -0.1;
+                    this.groups.ground.position.y = -12;
+                    this.groups.ground.rotation.x = Math.PI / 2;
+                    this.groups.ground.rotation.y = 0;
+                    this.groups.ground.rotation.z = -Math.PI / 2;
+                    const sprite = this.shape;
+                    sprite.vars.orderBias = -0.25;
+                }
+                this.render();
+            }
+            nettick() {
+                var _a;
+                if (this.type == 'you')
+                    return;
+                //this.wpos = tiles.hovering!.wpos;
+                if (!pts.together(this.netwpos))
+                    this.netwpos = this.wpos;
+                // tween netwpos into wpos
+                let tween = pts.mult(pts.subtract(this.netwpos, this.wpos), ren$1.delta * 2);
+                this.wpos = pts.add(this.wpos, tween);
+                (_a = this.sector) === null || _a === void 0 ? void 0 : _a.swap(this);
+                if (this.netangle - this.angle > Math.PI)
+                    this.angle += Math.PI * 2;
+                if (this.angle - this.netangle > Math.PI)
+                    this.angle -= Math.PI * 2;
+                let tweenAngle = (this.netangle - this.angle) * 0.1;
+                this.angle += tweenAngle;
+                const movement = pts.together(pts.abs(tween));
+                if (movement > 0.005) {
+                    //console.log('movement > 0.25');
+                    this.walkSmoother += ren$1.delta * 5;
+                }
+                else {
+                    this.walkSmoother -= ren$1.delta * 2.5;
+                }
+            }
+            tick() {
+                var _a;
+                if (!this.shape)
+                    return;
+                //if (this.type == 'you')
+                //	this.wpos = tiles.hovering!.wpos;
+                this.make();
+                this.animateBodyParts();
+                this.tiled();
+                //this.tile?.paint();
+                (_a = this.sector) === null || _a === void 0 ? void 0 : _a.swap(this);
+                // shade the pawn
+                let color = [1, 1, 1, 1];
+                const sprite = this.shape;
+                // We could have been nulled due to a hide, dispose
+                if (sprite) {
+                    const setShadow = () => {
+                        color = shadows$1.calc(color, pts.round(this.wpos));
+                        sprite.material.color.setRGB(color[0], color[1], color[2]);
+                    };
+                    this.superobject_hovering_pass();
+                    /*if (this.type != 'you' && sprite.mousedSquare(wastes.gview.mrpos)) {
+                        hovering_sprites.hover(sprite);
+                        sprite.material.color.set(GLOB.HOVER_COLOR);
+                    }
+                    else {
+                        hovering_sprites.unhover(sprite);
+                        setShadow();
+                    }*/
+                    if (this.tile && this.tile.hasDeck == false) {
+                        setShadow();
+                    }
+                    else {
+                        sprite.material.color.set('white');
+                    }
+                }
+                if (this.type == 'you') ;
+                this.stack(['pawn', 'zombie', 'you', 'tree', 'chicken', 'shelves', 'leaves', 'wall', 'door', 'roof', 'falsefront', 'panel']);
+                super.obj_manual_update();
+            }
+        }
+        zombies.zombie = zombie;
+    })(zombies || (zombies = {}));
+    var zombies$1 = zombies;
+
+    var client;
+    (function (client) {
+        client.objsId = {};
+        client.plyId = -1;
+        client.rates = [];
+        client.prices = [];
+        function get_rate(item) {
+            for (const rate of client.rates)
+                if (rate[0] == item)
+                    return rate;
+            return ['', 0, 0];
+        }
+        client.get_rate = get_rate;
+        client.interactingWith = '';
+        client.wantToBuy = '';
+        client.wantToSell = '';
+        client.wantToGrab = '';
+        client.tradeWithId = '';
+        function tick() {
+            for (let id in client.objsId) {
+                let obj = client.objsId[id];
+                if (obj.type != 'you')
+                    obj.nettick();
+            }
+        }
+        client.tick = tick;
+        function start() {
+            client.socket = new WebSocket("ws://86.93.147.154:8080");
+            client.socket.onopen = function (e) {
+                //console.log("[open] Connection established");
+                //console.log("Sending to server");
+                //socket.send("My name is John");
+            };
+            function process_news(type, typed, data, handle, update) {
+                for (let sobj of data.news) {
+                    const { id } = sobj;
+                    if (sobj.type != typed)
+                        continue;
+                    let obj = client.objsId[id];
+                    if (!obj) {
+                        // console.log('new sobj', typed, id);
+                        obj = client.objsId[id] = new type;
+                        obj.id = id;
+                        obj.networked = true;
+                        handle(obj, sobj);
+                        lod$1.add(obj);
+                    }
+                    else if (obj) {
+                        update(obj, sobj);
+                    }
+                }
+            }
+            client.socket.onmessage = function (event) {
+                const data = JSON.parse(event.data);
+                if (data.removes && data.removes.length) {
+                    // console.log('we have removes', data.removes);
+                    for (let id of data.removes) {
+                        let obj = client.objsId[id];
+                        if (!obj)
+                            continue;
+                        console.log('remove', obj.type);
+                        if (id == client.plyId) {
+                            // prevent self-destruct by moving too fast
+                            console.error(' you are probably going too fast ');
+                            continue;
+                        }
+                        obj.hide();
+                        obj.finalize();
+                        lod$1.remove(obj);
+                        delete client.objsId[id];
+                    }
+                }
+                if (data.news) {
+                    for (let sobj of data.news) {
+                        //if (sobj.type == 'tree')
+                        //console.log('got a server tree');
+                    }
+                    process_news(pawns$1.pawn, 'pawn', data, (obj, sobj) => {
+                        const { wpos, angle } = sobj;
+                        // console.log('news pawn');
+                        obj.wpos = wpos;
+                        obj.angle = angle;
+                        obj.dead = sobj.dead;
+                        if (sobj.title)
+                            obj.title = sobj.title;
+                        if (sobj.examine)
+                            obj.examine = sobj.examine;
+                        obj.aiming = sobj.aiming;
+                        obj.netwpos = wpos;
+                        obj.netangle = angle;
+                        if (!sobj.outfit)
+                            console.error('no outfit for new pawn?');
+                        if (sobj.outfit) {
+                            obj.outfit = sobj.outfit;
+                        }
+                        obj.subtype = sobj.subtype;
+                        if (sobj.dialogue)
+                            obj.dialogue = dialogues[sobj.dialogue];
+                        obj.isPlayer = sobj.isPlayer;
+                        obj.inventory = sobj.inventory;
+                    }, (obj, sobj) => {
+                        const { wpos, angle, dead, aiming, inventory } = sobj;
+                        if (obj.type != 'you') {
+                            obj.netwpos = wpos;
+                            obj.netangle = angle;
+                            obj.aiming = aiming;
+                            obj.dead = dead;
+                        }
+                        if (inventory) {
+                            //console.log('update inventory');
+                            obj.inventory = inventory;
+                        }
+                    });
+                    process_news(chickens$1.chicken, 'chicken', data, (obj, sobj) => {
+                        const { wpos, angle, sitting, dead } = sobj;
+                        obj.wpos = wpos;
+                        obj.angle = angle;
+                        obj.sitting = sitting;
+                        if (sobj.title)
+                            obj.title = sobj.title;
+                        if (sobj.examine)
+                            obj.examine = sobj.examine;
+                        obj.dead = dead;
+                    }, (obj, sobj) => {
+                        const { wpos, angle, pecking, sitting, dead } = sobj;
+                        obj.netwpos = wpos;
+                        obj.netangle = angle;
+                        obj.pecking = pecking;
+                        obj.sitting = sitting;
+                        obj.dead = dead;
+                        // console.log('updating chicken!');
+                    });
+                    process_news(zombies$1.zombie, 'zombie', data, (obj, sobj) => {
+                        const { wpos, angle, dead } = sobj;
+                        obj.wpos = wpos;
+                        obj.angle = angle;
+                        obj.dead = dead;
+                        if (sobj.title)
+                            obj.title = sobj.title;
+                        if (sobj.examine)
+                            obj.examine = sobj.examine;
+                    }, (obj, sobj) => {
+                        const { wpos, angle, dead } = sobj;
+                        obj.netwpos = wpos;
+                        obj.netangle = angle;
+                        obj.dead = dead;
+                        // console.log('updating chicken!');
+                    });
+                    process_news(objects$1.crate, 'crate', data, (obj, sobj) => {
+                        const { wpos, inventory } = sobj;
+                        obj.wpos = wpos;
+                        obj.inventory = inventory;
+                        console.error('a new crate!');
+                    }, (obj, sobj) => {
+                        const { inventory } = sobj;
+                        if (inventory)
+                            obj.inventory = inventory;
+                        // console.log('updating chicken!');
+                    });
+                    process_news(objects$1.shelves, 'shelves', data, (obj, sobj) => {
+                        const { wpos, inventory } = sobj;
+                        obj.wpos = wpos;
+                        obj.inventory = inventory;
+                    }, (obj, sobj) => {
+                        const { inventory } = sobj;
+                        if (inventory)
+                            obj.inventory = inventory;
+                        // console.log('updating chicken!');
+                    });
+                }
+                if (data.playerId) {
+                    client.plyId = data.playerId;
+                    let pawn = client.objsId[client.plyId];
+                    if (pawn) {
+                        console.log('  got you pawn  ', client.plyId);
+                        pawns$1.you = pawn;
+                        pawn.type = 'you';
+                        wastes.gview.center = pawn;
+                    }
+                }
+                if (data.rates) {
+                    client.rates = data.rates;
+                    console.log('got rates');
+                }
+                if (data.messages) {
+                    for (let message of data.messages) {
+                        win$1.message.message(message[0], message[1] * 1000);
+                    }
+                }
+            };
+            setInterval(() => {
+                if (pawns$1.you) {
+                    let json = {
+                        player: {
+                            wpos: pawns$1.you.wpos,
+                            angle: pawns$1.you.angle,
+                            aiming: pawns$1.you.aiming,
+                            shoot: pawns$1.you.shoot
+                        }
+                    };
+                    pawns$1.you.shoot = false;
+                    if (client.interactingWith) {
+                        json.interactingWith = client.interactingWith;
+                        client.interactingWith = '';
+                    }
+                    if (client.wantToBuy) {
+                        json.wantToBuy = client.wantToBuy;
+                        client.wantToBuy = '';
+                    }
+                    if (client.wantToSell) {
+                        json.wantToSell = client.wantToSell;
+                        client.wantToSell = '';
+                    }
+                    if (client.wantToGrab) {
+                        json.wantToGrab = client.wantToGrab;
+                        client.wantToGrab = '';
+                    }
+                    if (client.tradeWithId) {
+                        json.tradeWithId = client.tradeWithId;
+                        client.tradeWithId = '';
+                    }
+                    const string = JSON.stringify(json);
+                    client.socket.send(string);
+                }
+            }, 333);
+        }
+        client.start = start;
+    })(client || (client = {}));
+    var client$1 = client;
+
     var pawns;
     (function (pawns) {
-        class pawn extends objects$1.superobject {
+        class pawn extends superobject {
             constructor() {
                 super(numbers.pawns);
                 this.dead = false;
@@ -8645,7 +8719,8 @@ void main() {
                 //mesh.rotation.set(Math.PI / 2, 0, 0);
                 this.scene.add(this.groups.basis);
                 {
-                    collada$1.load_model('collada/revolver', (model) => {
+                    collada$1.load_model('collada/revolver', 30, (model) => {
+                        console.log('add gun to pawn');
                         model.rotation.set(0, 0, Math.PI / 2);
                         model.position.set(0, -armsHeight + armsSize / 2, 0);
                         this.groups.armr.add(model);
@@ -8803,7 +8878,6 @@ void main() {
                     const sprite = this.shape;
                     sprite.vars.orderBias = -0.25;
                 }
-                this.render();
             }
             nettick() {
                 var _a;
@@ -8840,6 +8914,7 @@ void main() {
                 this.make();
                 this.move();
                 this.animateBodyParts();
+                this.render();
                 this.tiled();
                 //this.tile?.paint();
                 (_a = this.sector) === null || _a === void 0 ? void 0 : _a.swap(this);
@@ -8911,7 +8986,7 @@ void main() {
         function start() {
             tiles.started = true;
             console.log(' tiles start ');
-            lod$1.gworld.at(lod$1.world.big(wastes.gview.wpos));
+            //lod.gworld.at(lod.world.big(wastes.gview.wpos));
         }
         tiles.start = start;
         function tick() {
@@ -9606,7 +9681,7 @@ void main() {
 
     var fences;
     (function (fences) {
-        class fence extends objects$1.superobject {
+        class fence extends superobject {
             constructor() {
                 super(numbers.walls);
                 this.type = 'wall';
@@ -9697,15 +9772,15 @@ void main() {
                 wastes.gview = view.make();
                 objects$1.register();
                 tiles$1.register();
-                sprites.start();
-                shadows.start();
+                sprites$1.start();
+                shadows$1.start();
                 tiles$1.start();
                 objects$1.start();
                 rooms$1.start();
                 areas$1.start();
                 win$1.start();
                 tests$1.start();
-                client.start();
+                client$1.start();
                 chickens$1.start();
                 wastes.gview.center = new lod$1.obj();
                 wastes.gview.center.wpos = [44, 52];
@@ -9745,7 +9820,7 @@ void main() {
             tiles$1.tick();
             shear$1.tick();
             collada$1.tick();
-            client.tick();
+            client$1.tick();
             objects$1.tick();
             rooms$1.tick();
             areas$1.tick();

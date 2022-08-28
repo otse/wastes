@@ -81,7 +81,7 @@ namespace collada {
 
 	}
 
-	export function load_model(path, then: (model) => any) {
+	export function load_model(path, zoom, then: (model) => any) {
 
 		var myScene;
 		
@@ -89,7 +89,7 @@ namespace collada {
 		});
 
 		const loader = new ColladaLoader(loadingManager);
-		loader.load('collada/revolver.dae', function (collada) {
+		loader.load(path + '.dae', function (collada) {
 
 			//wastes.gview.zoomIndex = 0;
 
@@ -123,7 +123,7 @@ namespace collada {
 			//console.log(myScene.scale);
 
 			// 1 / 0.0254
-			const zoom = 30;
+			//const zoom = 30;
 			myScene.scale.multiplyScalar(zoom);
 
 			//elf.rotation.set(-Math.PI / 2, 0, 0);

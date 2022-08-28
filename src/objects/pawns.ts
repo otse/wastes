@@ -1,22 +1,23 @@
 import { default as THREE, Scene, Color, Group, AxesHelper, Mesh, BoxGeometry, PlaneGeometry, DirectionalLight, AmbientLight, PlaneBufferGeometry, MeshLambertMaterial, Shader, Matrix3, Vector2 } from "three";
-import aabb2 from "./aabb2";
+import aabb2 from "../aabb2";
 
-import app from "./app";
-import { client } from "./client";
-import collada from "./collada";
-import dialogues from "./dialogue";
-import GLOB from "./glob";
-import lod, { numbers } from "./lod";
+import app from "../app";
+import { client } from "../client";
+import collada from "../collada";
+import dialogues from "../dialogue";
+import GLOB from "../glob";
+import lod, { numbers } from "../lod";
 
 import objects from "./objects";
-import pts from "./pts";
-import ren from "./renderer";
-import shadows from "./shadows";
-import sprite, { hovering_sprites, SpriteMaterial } from "./sprite";
-import sprites from "./sprites";
-import tiles from "./tiles";
-import wastes from "./wastes";
-import win from "./win";
+import { superobject } from "./superobject";
+import pts from "../pts";
+import ren from "../renderer";
+import shadows from "../shadows";
+import sprite, { hovering_sprites, SpriteMaterial } from "../sprite";
+import sprites from "../sprites";
+import tiles from "../tiles";
+import wastes from "../wastes";
+import win from "../win";
 
 
 export namespace pawns {
@@ -27,7 +28,7 @@ export namespace pawns {
 
 	type inventory = { stamp: number, tuples: [string, number][] }
 
-	export class pawn extends objects.superobject {
+	export class pawn extends superobject {
 		static noun = 'pawn'
 		dead = false
 		isTrader = false
@@ -350,7 +351,9 @@ export namespace pawns {
 
 			const loadGunAgain = true;
 			if (loadGunAgain) {
-				const gun = collada.load_model('collada/revolver', (model) => {
+				const gun = collada.load_model('collada/revolver', 30, (model) => {
+					console.log('add gun to pawn');
+					
 					model.rotation.set(0, 0, Math.PI / 2);
 					model.position.set(0, -armsHeight + armsSize / 2, 0);
 					this.groups.armr.add(model);
@@ -489,7 +492,7 @@ export namespace pawns {
 							this.shoot = true;
 
 							for (let obj of lod.ggrid.visibleObjs) {
-								const cast = obj as objects.superobject;
+								const cast = obj as superobject;
 								if (cast.isSuper && cast.tileBound) {
 									const test = cast.tileBound.ray(
 										{
@@ -537,9 +540,6 @@ export namespace pawns {
 				sprite.vars.orderBias = -0.25;
 			}
 
-
-
-			this.render();
 		}
 		swoop = 0
 		angle = 0
@@ -594,6 +594,8 @@ export namespace pawns {
 			this.move();
 
 			this.animateBodyParts();
+
+			this.render();
 
 			this.tiled();
 			//this.tile?.paint();

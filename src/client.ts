@@ -1,11 +1,12 @@
 import lod from "./lod";
-import pawns from "./pawns";
+import pawns from "./objects/pawns";
 import wastes from "./wastes";
-import objects from "./objects";
+import objects from "./objects/objects";
 import win from "./win";
-import chickens from "./chickens";
+import chickens from "./objects/chickens";
 import dialogues from "./dialogue";
-import zombies from "./zombies";
+import zombies from "./objects/zombies";
+import { superobject } from "./objects/superobject";
 
 export namespace client {
 
@@ -34,7 +35,7 @@ export namespace client {
 
 	export function tick() {
 		for (let id in objsId) {
-			let obj = objsId[id] as objects.superobject;
+			let obj = objsId[id] as superobject;
 			if (obj.type != 'you')
 				obj.nettick();
 		}
@@ -50,7 +51,7 @@ export namespace client {
 			//socket.send("My name is John");
 		};
 
-		function process_news<type extends objects.superobject>(
+		function process_news<type extends superobject>(
 			type: { new(): type }, typed: string, data: any, handle, update) {
 			for (let sobj of data.news) {
 				const { id } = sobj;
@@ -95,16 +96,14 @@ export namespace client {
 			}
 			if (data.news) {
 				for (let sobj of data.news) {
-					if (sobj.type == 'tree')
-						console.log('got a server tree');
-					if (sobj.type == 'inventory')
-						console.log('got a server sinventory');
+					//if (sobj.type == 'tree')
+						//console.log('got a server tree');
 				}
 
 				process_news(pawns.pawn, 'pawn', data,
 					(obj: pawns.pawn, sobj) => {
 						const { wpos, angle } = sobj;
-						console.log('news pawn');
+						// console.log('news pawn');
 						obj.wpos = wpos;
 						obj.angle = angle;
 						obj.dead = sobj.dead;
@@ -272,3 +271,5 @@ export namespace client {
 		}, 333);
 	}
 }
+
+export default client;

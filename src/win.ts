@@ -6,11 +6,12 @@ import pts from "./pts";
 
 import ren from './renderer';
 import wastes, { pawns } from "./wastes";
-import objects from "./objects";
+import objects from "./objects/objects";
 import areas from "./areas";
 import hooks from "./hooks";
 import { client } from "./client";
 import { hovering_sprites } from "./sprite";
+import { superobject } from "./objects/superobject";
 
 namespace win {
 
@@ -374,7 +375,7 @@ namespace win {
 	}
 
 	export class contextmenu {
-		static focus?: objects.superobject
+		static focus?: superobject
 		static focusCur?: lod.obj
 		static modal?: modal
 		static buttons: any = []
@@ -412,7 +413,7 @@ namespace win {
 				hovering_sprites.sort_closest_to_mouse();
 
 				if (hovering_sprites.sprites.length)
-					this.focus = hovering_sprites.sprites[0].vars.binded as objects.superobject;
+					this.focus = hovering_sprites.sprites[0].vars.binded as superobject;
 
 				// We have a focus, but no window! This is the easiest scenario.
 				if (this.focus && !this.modal) {
@@ -604,8 +605,8 @@ namespace win {
 	}
 
 	export class container {
-		static focus?: objects.superobject
-		static focusCur?: objects.superobject
+		static focus?: superobject
+		static focusCur?: superobject
 		//static obj?: lod.obj
 		static stamp = 0
 		static modal?: modal

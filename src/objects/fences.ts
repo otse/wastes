@@ -1,10 +1,11 @@
-import { numbers } from "./lod";
-import { objects } from "./wastes";
-import sprite from "./sprite";
-import sprites from "./sprites";
+import { numbers } from "../lod";
+import { objects } from "../wastes";
+import sprite from "../sprite";
+import sprites from "../sprites";
+import { superobject } from "./superobject";
 
 export namespace fences {
-	export class fence extends objects.superobject {
+	export class fence extends superobject {
 		static camera
 		static target
 		static made = false

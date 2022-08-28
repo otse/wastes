@@ -3,22 +3,21 @@ import testing_chamber from "./testing_chamber";
 import tests from "./tests";
 import view from "./view";
 import tiles from "./tiles";
-import objects from "./objects";
+import objects from "./objects/objects";
 import modeler from "./modeler";
-import { sprites } from "./sprites";
-import tree from "./tree";
+import sprites from "./sprites";
 import shear from "./shear";
 import collada from "./collada";
-import pawns from "./pawns";
+import pawns from "./objects/pawns";
 import win from "./win";
 import rooms from "./rooms";
 import areas from "./areas";
 import colormap from "./colormap";
-import { shadows } from "./shadows";
+import shadows from "./shadows";
 import aabb2 from "./aabb2";
-import { client } from "./client";
-import chickens from "./chickens";
-import fences from "./fences";
+import client from "./client";
+import chickens from "./objects/chickens";
+import fences from "./objects/fences";
 import GLOB from "./glob";
 
 export { win, pawns, objects, fences }; // fixes creepy rollup error
@@ -107,6 +106,7 @@ export namespace wastes {
 			gview = view.make();
 			objects.register();
 			tiles.register();
+
 			sprites.start();
 			shadows.start();
 			tiles.start();

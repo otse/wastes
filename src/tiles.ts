@@ -9,7 +9,7 @@ import hooks from "./hooks";
 import sprite from "./sprite";
 import sprites from "./sprites";
 import shadows from "./shadows";
-import pawns from "./pawns";
+import pawns from "./objects/pawns";
 
 export namespace tiles {
 
@@ -60,7 +60,7 @@ export namespace tiles {
 
 		console.log(' tiles start ');
 
-		lod.gworld.at(lod.world.big(wastes.gview.wpos));
+		//lod.gworld.at(lod.world.big(wastes.gview.wpos));
 	}
 
 	export function tick() {

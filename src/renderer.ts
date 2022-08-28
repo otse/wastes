@@ -125,7 +125,7 @@ namespace ren {
 	let alternate = true;
 	export function render() {
 
-		const allowColorDepthToggle = false;
+		const allowColorDepthToggle = true;
 
 		if (allowColorDepthToggle)
 			if (app.key('z') == 1)

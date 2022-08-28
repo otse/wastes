@@ -9,7 +9,7 @@ import lod, { numbers } from "./lod";
 import wastes from "./wastes";
 import hooks from "./hooks";
 import tiles from "./tiles";
-import pawns from "./pawns";
+import pawns from "./objects/pawns";
 
 // the view manages what it sees
 

@@ -1,29 +1,30 @@
 import { default as THREE, Scene, Color, Group, AxesHelper, Mesh, BoxGeometry, PlaneGeometry, DirectionalLight, AmbientLight, PlaneBufferGeometry, MeshLambertMaterial, Shader, Matrix3, Vector2 } from "three";
-import aabb2 from "./aabb2";
+import aabb2 from "../aabb2";
 
-import app from "./app";
-import { client } from "./client";
-import collada from "./collada";
-import dialogues from "./dialogue";
-import GLOB from "./glob";
-import lod, { numbers } from "./lod";
+import app from "../app";
+import { client } from "../client";
+import collada from "../collada";
+import dialogues from "../dialogue";
+import GLOB from "../glob";
+import lod, { numbers } from "../lod";
 
 import objects from "./objects";
-import pts from "./pts";
-import ren from "./renderer";
-import shadows from "./shadows";
-import sprite, { hovering_sprites, SpriteMaterial } from "./sprite";
-import sprites from "./sprites";
-import tiles from "./tiles";
-import wastes from "./wastes";
-import win from "./win";
+import { superobject } from "./superobject";
+import pts from "../pts";
+import ren from "../renderer";
+import shadows from "../shadows";
+import sprite, { hovering_sprites, SpriteMaterial } from "../sprite";
+import sprites from "../sprites";
+import tiles from "../tiles";
+import wastes from "../wastes";
+import win from "../win";
 
 
 export namespace zombies {
 
 	type inventory = { stamp: number, tuples: [string, number][] }
 
-	export class zombie extends objects.superobject {
+	export class zombie extends superobject {
 		inventory?: inventory
 		netwpos: vec2 = [0, 0]
 		dead = false
