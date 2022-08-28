@@ -13,10 +13,27 @@ import app from "../app";
 import pts from "../pts";
 
 export function building_factory() {
+
+	new building_parts();
 	let prefab = new building;
 	prefab.wpos = [45, 48];
 	prefab.produce();
 	lod.add(prefab);
+}
+
+class building_parts {
+	constructor() {
+
+		const house = collada.load_model('collada/building', 18, (model) => {
+			model.rotation.set(0, 0, 0);
+
+			//this.group.add(model);
+			//this.group.position.set(0, -23, 0);
+			//this.scene.add(new AxesHelper(100));
+			console.log('add building to scene');
+
+		});
+	}
 }
 
 class building extends superobject {
@@ -27,7 +44,7 @@ class building extends superobject {
 	constructor() {
 		super([0, 0]);
 
-		this.size = [100, 100];
+		this.size = [24, 40];
 	}
 	produce() {
 
@@ -47,12 +64,12 @@ class building extends superobject {
 
 		if (app.key('arrowleft')) {
 			this.scene.position.x -= 1;
-			console.log('',this.scene.position.x);
-			
+			console.log('', this.scene.position.x);
+
 		}
 		if (app.key('arrowright')) {
 			this.scene.position.x += 1;
-			console.log('',this.scene.position.x);
+			console.log('', this.scene.position.x);
 		}
 	}
 	set_3d() {
@@ -66,10 +83,10 @@ class building extends superobject {
 		this.camera = ren.make_orthographic_camera(size[0], size[1]);
 		this.scene = new Scene()
 		this.group = new Group()
-		this.group.add(new AxesHelper(100));
+		//this.group.add(new AxesHelper(25));
 		this.scene.add(this.group);
 		this.scene.scale.set(scale, scale, scale);
-		this.scene.background = new Color('gray');
+		//this.scene.background = new Color('gray');
 		this.scene.rotation.set(Math.PI / 6, Math.PI / 4, 0);
 		this.group.rotation.set(-Math.PI / 2, 0, 0);
 		this.scene.position.set(0, 0, 0);
@@ -95,13 +112,14 @@ class building extends superobject {
 
 		shape.material.map = this.target.texture;
 
-		const house = collada.load_model('collada/building', 32, (model) => {
+		const house = collada.load_model('collada/building', 18, (model) => {
 			model.rotation.set(0, 0, 0);
 
 			this.group.add(model);
+			this.group.position.set(0, -23, 0);
 			//this.scene.add(new AxesHelper(100));
 			console.log('add building to scene');
-			
+
 		});
 
 		this.stack();

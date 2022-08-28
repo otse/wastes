@@ -6095,15 +6095,27 @@ void main() {
     var collada$1 = collada;
 
     function building_factory() {
+        new building_parts();
         let prefab = new building;
         prefab.wpos = [45, 48];
         prefab.produce();
         lod$1.add(prefab);
     }
+    class building_parts {
+        constructor() {
+            collada$1.load_model('collada/building', 18, (model) => {
+                model.rotation.set(0, 0, 0);
+                //this.group.add(model);
+                //this.group.position.set(0, -23, 0);
+                //this.scene.add(new AxesHelper(100));
+                console.log('add building to scene');
+            });
+        }
+    }
     class building extends superobject {
         constructor() {
             super([0, 0]);
-            this.size = [100, 100];
+            this.size = [24, 40];
         }
         produce() {
         }
@@ -6134,10 +6146,10 @@ void main() {
             this.camera = ren$1.make_orthographic_camera(size[0], size[1]);
             this.scene = new THREE.Scene();
             this.group = new THREE.Group();
-            this.group.add(new THREE.AxesHelper(100));
+            //this.group.add(new AxesHelper(25));
             this.scene.add(this.group);
             this.scene.scale.set(scale, scale, scale);
-            this.scene.background = new THREE.Color('gray');
+            //this.scene.background = new Color('gray');
             this.scene.rotation.set(Math.PI / 6, Math.PI / 4, 0);
             this.group.rotation.set(-Math.PI / 2, 0, 0);
             this.scene.position.set(0, 0, 0);
@@ -6156,9 +6168,10 @@ void main() {
             shape.show();
             this.set_3d();
             shape.material.map = this.target.texture;
-            collada$1.load_model('collada/building', 32, (model) => {
+            collada$1.load_model('collada/building', 18, (model) => {
                 model.rotation.set(0, 0, 0);
                 this.group.add(model);
+                this.group.position.set(0, -23, 0);
                 //this.scene.add(new AxesHelper(100));
                 console.log('add building to scene');
             });
