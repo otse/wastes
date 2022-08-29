@@ -16,7 +16,7 @@ import app from "../app";
 import colormap from "../colormap";
 import shadows from "../shadows";
 import colors from "../colors";
-import { building_factory } from "./building";
+import { building_factory } from "./prefabs";
 import { superobject } from "./superobject";
 
 namespace objects {
@@ -55,7 +55,7 @@ namespace objects {
 				}
 				else if (pixel.is_color(colors.color_shelves)) {
 					//console.log('got shelves color');
-					
+
 					//factory(objects.shelves, pixel, pos);
 				}
 				else if (pixel.is_color(colors.color_panel)) {
@@ -152,7 +152,7 @@ namespace objects {
 	export function start() {
 
 		console.log(' objects start ');
-		
+
 		let prefab = building_factory();
 		//prefab.wpos = [45, 48];
 		//prefab.produce();
@@ -176,6 +176,8 @@ namespace objects {
 		let sector = lod.gworld.at(lod.world.big(pos));
 		let at = sector.stacked(pos);
 		for (let obj of at) {
+			if (obj.is_type(['door']))
+				return false;
 			if (obj.is_type(impassable)) {
 				return true;
 			}
@@ -183,7 +185,7 @@ namespace objects {
 		return false;
 	}
 
-	
+
 
 	export class wall extends superobject {
 		constructor() {
@@ -764,7 +766,8 @@ namespace objects {
 		override create() {
 			this.tiled();
 			this.size = [24, 40];
-			this.cell = [255 - this.pixel!.arrayRef[3], 0];
+			if (this.pixel)
+				this.cell = [255 - this.pixel!.arrayRef[3], 0];
 			let shape = new sprite({
 				binded: this,
 				tuple: sprites.ddoor,

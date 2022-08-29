@@ -6094,117 +6094,6 @@ void main() {
     })(collada || (collada = {}));
     var collada$1 = collada;
 
-    function building_factory() {
-        new building_parts();
-        /*let prefab = new building;
-        prefab.wpos = [45, 48];
-        prefab.produce();
-        lod.add(prefab);*/
-    }
-    class building_parts {
-        constructor() {
-            collada$1.load_model('collada/building', 1, (model) => {
-                model.rotation.set(0, 0, 0);
-                //this.group.add(model);
-                //this.group.position.set(0, -23, 0);
-                //this.scene.add(new AxesHelper(100));
-                console.log('add building to scene');
-                function traversal(object) {
-                    if (object.name && object.name.includes("Wall")) {
-                        let cloned = object.clone();
-                        cloned.scale.multiplyScalar(0.43);
-                        console.log("making wall ", cloned.name, cloned);
-                        let prefab = new building;
-                        prefab.model = cloned;
-                        cloned.position.set(0, 0, 0);
-                        let pos = [object.position.x, object.position.y];
-                        pos = pts.divide(pos, 39.37008);
-                        pos = pts.round(pos);
-                        pos = [-pos[1], pos[0]];
-                        console.log("prefab pos", pos);
-                        pos = pts.add(pos, [45, 48]);
-                        console.log('original position is', object.position, pos);
-                        prefab.wpos = pos;
-                        prefab.produce();
-                        lod$1.add(prefab);
-                    }
-                }
-                model.traverse(traversal);
-            });
-        }
-    }
-    class building extends superobject {
-        constructor() {
-            super([0, 0]);
-            this.size = [24, 40];
-        }
-        produce() {
-        }
-        // render this superobject
-        render() {
-            const sprite = this.shape;
-            sprite.material.map = this.target.texture;
-            ren$1.renderer.setRenderTarget(this.target);
-            ren$1.renderer.clear();
-            ren$1.renderer.render(this.scene, this.camera);
-        }
-        tick() {
-            this.render();
-            if (app$1.key('arrowleft')) {
-                this.scene.position.x -= 1;
-                console.log('', this.scene.position.x);
-            }
-            if (app$1.key('arrowright')) {
-                this.scene.position.x += 1;
-                console.log('', this.scene.position.x);
-            }
-        }
-        set_3d() {
-            // Set scale to increase pixels exponentially
-            const scale = 1;
-            let size = pts.mult(this.size, scale);
-            this.target = ren$1.make_render_target(size[0], size[1]);
-            this.camera = ren$1.make_orthographic_camera(size[0], size[1]);
-            this.scene = new THREE.Scene();
-            this.group = new THREE.Group();
-            //this.group.add(new AxesHelper(25));
-            this.scene.add(this.group);
-            this.scene.scale.set(scale, scale, scale);
-            //this.scene.background = new Color('gray');
-            this.scene.rotation.set(Math.PI / 6, Math.PI / 4, 0);
-            this.group.rotation.set(-Math.PI / 2, 0, 0);
-            this.scene.position.set(0, 0, 0);
-            let amb = new THREE.AmbientLight('white');
-            this.scene.add(amb);
-            let sun = new THREE.DirectionalLight(0xffffff, 0.35);
-            sun.position.set(-wastes.size, wastes.size * 2, wastes.size / 2);
-            //sun.add(new AxesHelper(100));
-            this.group.add(sun);
-            this.group.add(sun.target);
-        }
-        create() {
-            console.log('builing create');
-            //this.size = [24, 40];
-            let shape = new sprite({
-                binded: this,
-                tuple: sprites$1.test100,
-                cell: [0, 0],
-                orderBias: 1.0,
-            });
-            shape.show();
-            this.set_3d();
-            shape.material.map = this.target.texture;
-            //const house = collada.load_model('collada/building', 18, (model) => {
-            //model.rotation.set(0, 0, 0);
-            this.group.add(this.model);
-            this.group.position.set(0, -23, 0);
-            //this.group.add(new AxesHelper(100));
-            console.log('add building to scene');
-            //});
-            this.stack();
-        }
-    }
-
     var objects;
     (function (objects) {
         function factory(type, pixel, pos, hints = {}) {
@@ -6313,7 +6202,6 @@ void main() {
         objects.register = register;
         function start() {
             console.log(' objects start ');
-            building_factory();
             //prefab.wpos = [45, 48];
             //prefab.produce();
             //lod.add(prefab);
@@ -6334,6 +6222,8 @@ void main() {
             let sector = lod$1.gworld.at(lod$1.world.big(pos));
             let at = sector.stacked(pos);
             for (let obj of at) {
+                if (obj.is_type(['door']))
+                    return false;
                 if (obj.is_type(impassable)) {
                     return true;
                 }
@@ -6869,7 +6759,8 @@ void main() {
             create() {
                 this.tiled();
                 this.size = [24, 40];
-                this.cell = [255 - this.pixel.arrayRef[3], 0];
+                if (this.pixel)
+                    this.cell = [255 - this.pixel.arrayRef[3], 0];
                 new sprite({
                     binded: this,
                     tuple: sprites$1.ddoor,
@@ -7959,8 +7850,8 @@ void main() {
         [
             // 4
             `You stalkers think you're survivors.`,
-            `It's a world of hurt out there.`,
             `The bayou swallows you up.`,
+            `If you don't get shot you'll be maimed.`,
         ]
     ];
 
@@ -8156,7 +8047,7 @@ void main() {
             animateBodyParts() {
                 var _a;
                 this.walkSmoother = wastes.clamp(this.walkSmoother, 0, 1);
-                if (!this.dead) {
+                if (!this.dead || app$1.key("j")) {
                     const legsSwoop = 0.8;
                     const armsSwoop = 0.5;
                     const rise = 0.5;
@@ -8167,6 +8058,7 @@ void main() {
                     this.groups.legr.rotation.x = swoop2 * legsSwoop * this.walkSmoother;
                     this.groups.arml.rotation.x = swoop1 * armsSwoop * this.walkSmoother;
                     this.groups.armr.rotation.x = swoop2 * armsSwoop * this.walkSmoother;
+                    this.groups.ground.position.x = 0;
                     this.groups.ground.position.y = -12 + swoop1 * swoop2 * rise * this.walkSmoother;
                     this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
                     this.groups.armr.rotation.x = -Math.PI / 2 * this.walkSmoother;
@@ -8189,6 +8081,7 @@ void main() {
                     this.groups.arml.rotation.x = 0.1;
                     this.groups.armr.rotation.x = -0.1;
                     this.groups.ground.position.y = -12;
+                    this.groups.ground.position.x = -12;
                     this.groups.ground.rotation.x = Math.PI / 2;
                     this.groups.ground.rotation.y = 0;
                     this.groups.ground.rotation.z = -Math.PI / 2;
@@ -8865,6 +8758,7 @@ void main() {
                     this.groups.legr.rotation.x = swoop2 * legsSwoop * this.walkSmoother;
                     this.groups.arml.rotation.x = swoop1 * armsSwoop * this.walkSmoother;
                     this.groups.armr.rotation.x = swoop2 * armsSwoop * this.walkSmoother;
+                    this.groups.ground.position.x = 0;
                     this.groups.ground.position.y = -12 + swoop1 * swoop2 * rise * this.walkSmoother;
                     this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
                     if (this.type == 'you') {
@@ -8911,6 +8805,7 @@ void main() {
                     this.groups.arml.rotation.x = 0.1;
                     this.groups.armr.rotation.x = -0.1;
                     this.groups.ground.position.y = -12;
+                    this.groups.ground.position.x = -12;
                     this.groups.ground.rotation.x = Math.PI / 2;
                     this.groups.ground.rotation.y = 0;
                     this.groups.ground.rotation.z = -Math.PI / 2;
@@ -9119,7 +9014,7 @@ void main() {
                     this.color = wastes.colormap.pixel(this.wpos).arrayRef;
                     this.color = shadows$1.calc(this.color, this.wpos);
                 }
-                this.myOrderBias = -0.5; // + (this.z / 4);// + (this.height / 10);
+                this.myOrderBias = -2.; // + (this.z / 4);// + (this.height / 10);
                 let shape = new sprite({
                     binded: this,
                     tuple: this.tuple,

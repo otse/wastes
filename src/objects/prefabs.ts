@@ -13,9 +13,16 @@ import app from "../app";
 import pts from "../pts";
 import wastes from "../wastes";
 
+/*
+this file is a success attempt at piecing apart a sketchup building
+it however isn't more convenient than making buildings with colormaps
+
+the code deserves to stay around
+*/
+
 export function building_factory() {
 
-	new building_parts();
+	//new building_parts();
 
 	/*let prefab = new building;
 	prefab.wpos = [45, 48];
@@ -24,7 +31,7 @@ export function building_factory() {
 }
 
 class building_parts {
-	constructor() {
+	constructor(corner: vec2 = [45, 48]) {
 
 		const house = collada.load_model('collada/building', 1, (model) => {
 			model.rotation.set(0, 0, 0);
@@ -34,49 +41,89 @@ class building_parts {
 			//this.scene.add(new AxesHelper(100));
 			console.log('add building to scene');
 
-			function traversal(object) {
-				if (object.name && object.name.includes("Wall")) {
+			function convert(object, target, array, bias) {
+				if (object.name && object.name.includes(target)) {
 					let cloned = object.clone();
 					cloned.scale.multiplyScalar(0.43);
 
-					console.log("making wall ", cloned.name, cloned);
+					//console.log("making wall ", cloned.name, cloned);
+					let height = parseInt(object.name.split(target)[1]);
+					console.log(`${target} height ${height}`);
 
-					let prefab = new building;
-					prefab.model = cloned;
+					let thing = new prefab;
+					array.push(thing);
+					thing.model = cloned;
+					thing.type = target;
+					thing.bias = bias;
+					thing.height = height;
+					//
 					cloned.position.set(0, 0, 0);
 					let pos: vec2 = [object.position.x, object.position.y];
 					pos = pts.divide(pos, 39.37008);
 					pos = pts.round(pos);
 					pos = [-pos[1], pos[0]];
 					console.log("prefab pos", pos);
-					pos = pts.add(pos, [45, 48]);
-					console.log('original position is', object.position, pos);
-					prefab.wpos = pos;
-					prefab.produce();
-					lod.add(prefab);
+					pos = pts.add(pos, corner);
+					//console.log('original position is', object.position, pos);
+					thing.wpos = pos;
+					lod.add(thing);
 				}
 			}
 
-			model.traverse(traversal);
+			let walls: prefab[] = [];
+			let floors: prefab[] = [];
+
+			function traverse_floors(object) {
+				convert(object, "floor", floors, .4);
+			}
+
+			function traverse_walls(object) {
+				convert(object, "wall", walls, 1.0);
+			}
+			
+			model.traverse(traverse_floors);
+
+			model.traverse((object) => {
+				if (object.name && object.name.includes('door')) {
+					console.log('this a door');
+
+					let pos: vec2 = [object.position.x, object.position.y];
+					pos = pts.divide(pos, 39.37008);
+					pos = pts.round(pos);
+					pos = [-pos[1], pos[0]];
+					pos = pts.add(pos, corner);
+
+					let door = new objects.door;
+					door.cell = [1, 0];
+					door.wpos = pos;
+					
+					lod.add(door);
+
+					console.log('placing door');
+					
+					
+				}
+			});
+
+			model.traverse(traverse_walls);
 
 		});
 	}
 }
 
-class building extends superobject {
+class prefab extends superobject {
 	model
 	offset
+	bias
 	target
 	scene
 	group
 	camera
+	sun
 	constructor() {
 		super([0, 0]);
 
 		this.size = [24, 40];
-	}
-	produce() {
-
 	}
 	// render this superobject
 	render() {
@@ -91,15 +138,27 @@ class building extends superobject {
 
 		this.render();
 
-		if (app.key('arrowleft')) {
-			this.scene.position.x -= 1;
-			console.log('', this.scene.position.x);
+		if (app.key('7')) {
+			this.sun.position.x -= 1;
+		}
+		if (app.key('9')) {
+			this.sun.position.x += 1;
+		}
+		if (app.key('4')) {
+			this.sun.position.y -= 1;
+		}
+		if (app.key('6')) {
+			this.sun.position.y += 1;
+		}
+		if (app.key('1')) {
+			this.sun.position.z -= 1;
+		}
+		if (app.key('3')) {
+			this.sun.position.z += 1;
+		}
 
-		}
-		if (app.key('arrowright')) {
-			this.scene.position.x += 1;
-			console.log('', this.scene.position.x);
-		}
+		console.log('sun', this.sun.position);
+		
 	}
 	set_3d() {
 
@@ -119,18 +178,20 @@ class building extends superobject {
 		this.scene.rotation.set(Math.PI / 6, Math.PI / 4, 0);
 		this.group.rotation.set(-Math.PI / 2, 0, 0);
 		this.scene.position.set(0, 0, 0);
-		let amb = new AmbientLight('white');
+		let amb = new AmbientLight('#888888');
 		this.scene.add(amb);
 
-		let sun = new DirectionalLight(0xffffff, 0.35);
-		sun.position.set(-wastes.size, wastes.size * 2, wastes.size / 2);
+		this.sun = new DirectionalLight(0xffffff, 0.25);
+		const size2 = 10;
+		this.sun.position.set(-size2, 0, size2 / 2);
 		//sun.add(new AxesHelper(100));
-		this.group.add(sun);
-		this.group.add(sun.target);
+		this.group.add(this.sun);
+		this.group.add(this.sun.target);
+		//sun.target.add(new AxesHelper);
 
 	}
 	override create() {
-		console.log('builing create');
+		//console.log('builing create');
 
 		//this.size = [24, 40];
 
@@ -138,7 +199,7 @@ class building extends superobject {
 			binded: this,
 			tuple: sprites.test100,
 			cell: [0, 0],
-			orderBias: 1.0,
+			orderBias: this.bias
 		});
 
 		shape.show();
@@ -153,18 +214,14 @@ class building extends superobject {
 		this.group.add(this.model);
 		this.group.position.set(0, -23, 0);
 		//this.group.add(new AxesHelper(100));
-		console.log('add building to scene');
+		//console.log('add building to scene');
 
 		//});
 
 		this.stack();
+		console.log('after stack', this.shape);
+		
 	}
 }
 
-class prefab extends superobject {
-	constructor() {
-		super([0, 0]);
-	}
-}
-
-export default building;
+export default prefab;

@@ -479,6 +479,7 @@ export namespace pawns {
 				this.groups.legr.rotation.x = swoop2 * legsSwoop * this.walkSmoother;
 				this.groups.arml.rotation.x = swoop1 * armsSwoop * this.walkSmoother;
 				this.groups.armr.rotation.x = swoop2 * armsSwoop * this.walkSmoother;
+				this.groups.ground.position.x = 0;
 				this.groups.ground.position.y = -12 + swoop1 * swoop2 * rise * this.walkSmoother;
 				this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
 
@@ -531,6 +532,7 @@ export namespace pawns {
 				this.groups.arml.rotation.x = 0.1;
 				this.groups.armr.rotation.x = -0.1;
 				this.groups.ground.position.y = -12;
+				this.groups.ground.position.x = -12;
 
 				this.groups.ground.rotation.x = Math.PI / 2;
 				this.groups.ground.rotation.y = 0;

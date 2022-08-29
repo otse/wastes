@@ -177,7 +177,7 @@ export namespace tiles {
 				this.color = wastes.colormap.pixel(this.wpos).arrayRef;
 				this.color = shadows.calc(this.color, this.wpos);
 			}
-			this.myOrderBias = -0.5;// + (this.z / 4);// + (this.height / 10);
+			this.myOrderBias = -2.;// + (this.z / 4);// + (this.height / 10);
 			if (dont_show_tiles)
 				return
 			let shape = new sprite({
