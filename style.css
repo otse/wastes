@@ -15,6 +15,10 @@
 	bborder: 2px gray inset;
 }
 
+.modal.trader {
+	width: 300px;
+}
+
 .modal .title {
     margin: 0px;
     padding: 0px;
@@ -28,6 +32,37 @@
 	padding: 6px;
 	background: darkgray;
 	background: #cfcfcf;
+}
+
+.modal .content.trader {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.modal .content .trader.layout {
+	display: flex;
+}
+
+.modal .content .inventory {
+	width: 50%;
+}
+
+.modal .content .inventory .item {
+    display: inline-block;
+    margin-right: 1ex;
+    /* border: 1px gray inset; */
+    padding: 0px;
+    margin: 2px;
+    color: #615e0f;
+    cursor: pointer;
+}
+
+.modal .inventory .item>span {
+	display: inline-block;
+}
+
+.modal .inventory .item:hover {
+	color: purple;
 }
 
 .modal.contextmenu .content {
@@ -80,17 +115,6 @@ option.disabled:hover {}
 	cursor: pointer;
 }
 
-.modal .inventory .item {
-	display: inline-block;
-	margin-right: 1ex;
-	border: 1px gray inset;
-	padding: 0px;
-	margin: 2px;
-	color: #333;
-	cursor: pointer;
-	lline-height: 34px;
-}
-
 .modal .pawnimage {
 	width: 200px;
     height: 200px;
@@ -98,14 +122,6 @@ option.disabled:hover {}
 	margin-bottom: -20px;
 	background: url('art/Untitled2.png');
 	background-size: cover;
-}
-
-.modal .inventory .item>span {
-	display: inline-block;
-}
-
-.modal .inventory .item:hover {
-	color: purple;
 }
 
 .modal .gun {

@@ -24,6 +24,12 @@ var rates: [item: string, buy: number, sell: number][] = [
 	['bullet', 2, 1],
 ]
 
+function find_rate(item: string) {
+	for (let tuple of rates)
+		if (tuple[0] == item)
+			return tuple;
+}
+
 /*var prices: [item: string, value: number][] = [
 	['scrap', 5],
 	['junk', 5],
@@ -167,7 +173,7 @@ function start2() {
 		let shadowChicken = new chicken;
 		shadowChicken.wpos = [42, 53];
 		shadowChicken.respawns = true;
-		shadowChicken.examine = 'This chicken likes to keep to the shadows.';
+		shadowChicken.examine = 'This chicken likes the shadow.';
 		shadowChicken.walkArea = new aabb2([41, 54], [43, 51]);
 		slod.add(shadowChicken);
 	}
@@ -294,8 +300,14 @@ class connection {
 			let trader = this.you.freezingNpc as pawn;
 			if (trader && trader.type == 'pawn') {
 				if (trader.inventory.get(json.wantToBuy)) {
-					trader.inventory.remove(json.wantToBuy);
-					this.you.inventory.add(json.wantToBuy);
+					const money = this.you.inventory.get("money");
+					const rate = find_rate(json.wantToBuy);
+					const cost = rate && rate[1] || 1;
+					if (money && money[1] >= cost) {
+						trader.inventory.remove(json.wantToBuy);
+						this.you.inventory.add(json.wantToBuy);
+						money[1] -= cost;
+					}
 				}
 			}
 			else
@@ -306,10 +318,13 @@ class connection {
 			let trader = this.you.freezingNpc as pawn;
 			if (trader && trader.type == 'pawn') {
 				let tuple;
-				if (tuple = this.you.inventory.get(json.wantToSell)) {
+				if (this.you.inventory.get(json.wantToSell)) {
+					const money = this.you.inventory.get("money");
+					const rate = find_rate(json.wantToSell);
+					const cost = rate && rate[2] || 1;
 					this.you.inventory.remove(json.wantToSell);
+					this.you.inventory.add("money", cost);
 					trader.inventory.add(json.wantToSell);
-					console.log('after sell player has left', tuple[1]);
 				}
 			}
 			else
@@ -695,7 +710,6 @@ class pawn extends npc {
 	constructor() {
 		super();
 		this.type = 'pawn';
-		this.title = 'pawn';
 		this.title = 'Pawn';
 		this.id = 'pawn_' + pawn.id++;
 		this.outfit = outfits[Math.floor(Math.random() * outfits.length)];
@@ -707,10 +721,15 @@ class pawn extends npc {
 		console.log('PAWN RESPAWN');
 
 		let npc = new pawn;
+		npc.title = oldNpc.title;
 		npc.dialogue = oldNpc.dialogue;
 		npc.respawns = oldNpc.respawns;
 		npc.wpos = oldNpc.originalWpos;
 		npc.walkArea = oldNpc.walkArea;
+		npc.inventory = oldNpc.inventory;
+		npc.inventory.owner = npc;
+		npc.subtype = oldNpc.subtype;
+		npc.isTrader = oldNpc.isTrader;
 		slod.add(npc);
 	}
 	override tick() {
@@ -850,14 +869,12 @@ class chicken extends npc {
 			if (!this.pecking && !this.sitting && this.walkAgain?.elapsed(5000)) {
 				if (Math.random() > .25) {
 					this.pecking = true;
-					this.needs_update();
-					this.walkAgain = new timer(0);
 				}
 				else {
 					this.sitting = true;
-					this.needs_update();
-					this.walkAgain = new timer(0);
 				}
+				this.needs_update();
+				this.walkAgain = new timer(0);
 			}
 		}
 
@@ -886,7 +903,7 @@ class zombie extends npc {
 	constructor() {
 		super();
 		this.type = 'zombie';
-		this.title = 'zombie';
+		this.title = 'Zombie';
 		this.id = 'zombie_' + zombie.id++;
 		this.wanderWait = 4000;
 	}

@@ -125,8 +125,10 @@ namespace win {
 	export class trader {
 		static tradeWith?: lod.obj
 		static tradeWithCur?: lod.obj
+		static secondContent
 		static traderInventoryElement?
 		static yourInventoryElement?
+		static traderLayout?
 		static traderStamp = 0
 		static yourStamp = 0
 		static modal?: modal
@@ -155,19 +157,25 @@ namespace win {
 				trader.end();
 			}
 			if (!this.modal) {
-				this.modal = new modal('trader',);
-				this.modal.content.innerHTML = `buy:<br />`;
+				this.modal = new modal('Trader',);
+				this.modal.element.classList.add('trader');
+				this.modal.content.innerHTML = `<div style="width: 50%;">Buy:</div><div style="width: 50%;">Sell:</div>`;
+				this.modal.content.classList.add('trader');
 
-				this.modal!.content.onmouseover = () => { genericHovering = true; }
-				this.modal!.content.onmouseleave = () => { genericHovering = false; }
+				this.traderLayout = document.createElement('div');
+				this.traderLayout.className = 'trader layout';
+				this.modal.content.append(this.traderLayout);
+
+				this.modal.content.onmouseover = () => { genericHovering = true; }
+				this.modal.content.onmouseleave = () => { genericHovering = false; }
 
 				this.tradeWithCur = this.tradeWith;
 				this.render_trader_inventory(true);
 
-				let next = document.createElement('span');
-				next.innerHTML += '<hr>sell:<br />';
+				//let next = document.createElement('span');
+				//next.innerHTML += '<hr>sell:<br />';
 
-				this.modal.content.append(next);
+				//this.modal.content.append(next);
 
 				this.render_your_inventory(true);
 
@@ -177,7 +185,7 @@ namespace win {
 			if (!this.traderInventoryElement) {
 				this.traderInventoryElement = document.createElement('div');
 				this.traderInventoryElement.className = 'inventory';
-				this.modal?.content.append(this.traderInventoryElement);
+				this.traderLayout.append(this.traderInventoryElement);
 			}
 			let pawn = this.tradeWithCur as pawns.pawn;
 
@@ -205,7 +213,7 @@ namespace win {
 					let extra = document.createElement('span');
 					button.append(extra);
 
-					const rate = client.get_rate(tuple[0]) || ['', 0, 0];
+					const rate = client.get_rate(tuple[0]);
 					let buy = rate[1];
 					extra.innerHTML = `&nbsp; - ${buy}ct`;
 
@@ -219,7 +227,7 @@ namespace win {
 			if (!this.yourInventoryElement) {
 				this.yourInventoryElement = document.createElement('div');
 				this.yourInventoryElement.className = 'inventory';
-				this.modal?.content.append(this.yourInventoryElement);
+				this.traderLayout.append(this.yourInventoryElement);
 			}
 			let you = pawns.you;
 
@@ -245,7 +253,7 @@ namespace win {
 					let extra = document.createElement('span');
 					button.append(extra);
 
-					const rate = client.get_rate(tuple[0]) || ['', 0, 0];
+					const rate = client.get_rate(tuple[0]);
 					let sell = rate[2];
 					extra.innerHTML = `&nbsp; - ${sell}ct`;
 					this.yourInventoryElement.append(button);
@@ -260,7 +268,7 @@ namespace win {
 						break;
 					}
 				let next = document.createElement('div');
-				next.innerHTML += `your money: ${money}<br />`;
+				next.innerHTML += `your money: ${money} ct<br />`;
 				this.yourInventoryElement.append(next);
 			}
 		}

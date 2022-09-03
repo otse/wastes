@@ -453,8 +453,10 @@ namespace objects {
 					binded: this,
 					tuple: tuple,
 					orderBias: 0.7,
-					color: color
+					color: color,
+					masked: true
 				});
+				shape.writez = false;
 				//shadows.shade(this.wpos, 0.1);
 				if (!this.shaded) {
 					this.shaded = true;
@@ -687,7 +689,7 @@ namespace objects {
 			shape.rup = 29;
 			if (!this.shaded) {
 				this.shaded = true;
-				const shadow = .75;
+				const shadow = .7;
 				shadows.shade_matrix(this.wpos, [
 					[0, 0, 0, 0, 0],
 					[0, 0, 0, 0, 0],

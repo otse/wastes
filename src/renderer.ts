@@ -58,6 +58,21 @@ void main() {
 	gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
 }`
 
+/*
+masking theory
+
+render trees to fullscreen target
+render pawns to fullscreen target
+if pawns underlap trees
+underlap defines as two gray pixels
+render it grey
+
+theory 2
+render pawns to fullscreen target
+pass a uv offset to treeleaves
+if pawn overlaps, render behind-grey
+*/
+
 // three quarter
 
 namespace ren {
@@ -75,11 +90,13 @@ namespace ren {
 	}
 	export var scene: Scene
 	export var scene2: Scene
+	export var sceneMask: Scene
 
 	export var camera: PerspectiveCamera
 	export var camera2: OrthographicCamera
 
 	export var target: WebGLRenderTarget
+	export var targetMask: WebGLRenderTarget
 	export var renderer: WebGLRenderer
 
 	export var ambientLight: AmbientLight
@@ -137,9 +154,15 @@ namespace ren {
 		}*/
 		calc();
 
+		renderer.setRenderTarget(targetMask);
+		renderer.clear();
+		renderer.render(sceneMask, camera);
+
 		renderer.setRenderTarget(target);
 		renderer.clear();
 		renderer.render(scene, camera);
+
+		//scene.overrideMaterial = new THREE.MeshDepthMaterial();
 
 		renderer.setRenderTarget(null);
 		renderer.clear();
@@ -164,8 +187,10 @@ namespace ren {
 		//groups.axisSwap.scale.set(1, -1, 1);
 		scene.add(groups.axisSwap);
 		scene.background = new Color('#333');
-
+		
 		scene2 = new Scene();
+		sceneMask = new Scene();
+		sceneMask.background = new Color('#fff');
 
 		ambientLight = new AmbientLight(0xffffff, 1);
 		scene.add(ambientLight);
@@ -179,6 +204,7 @@ namespace ren {
 				magFilter: THREE.NearestFilter,
 				format: THREE.RGBAFormat
 			});
+		targetMask = target.clone();
 
 		renderer = new WebGLRenderer({ antialias: false });
 		renderer.setPixelRatio(ndpi);
@@ -232,6 +258,7 @@ namespace ren {
 		      new is ${pts.to_string(screenCorrected)}`);
 
 		target.setSize(screenCorrected[0], screenCorrected[1]);
+		targetMask.setSize(screenCorrected[0], screenCorrected[1]);
 
 		plane = new PlaneBufferGeometry(screenCorrected[0], screenCorrected[1]);
 
@@ -242,7 +269,7 @@ namespace ren {
 
 		if (cameraMode) {
 			camera = new PerspectiveCamera(
-				70, window.innerWidth / window.innerHeight, 1, 3000);
+				70, window.innerWidth / window.innerHeight, 1, 1000);
 			//camera.zoom = camera.aspect; // scales "to fit" rather than zooming out
 			camera.position.z = 800;
 		}
@@ -287,7 +314,7 @@ namespace ren {
 	}
 
 	export function make_orthographic_camera(w, h) {
-		let camera = new OrthographicCamera(w / - 2, w / 2, h / 2, h / - 2, - 10000, 10000);
+		let camera = new OrthographicCamera(w / - 2, w / 2, h / 2, h / - 2, -10, 100);
 		camera.updateProjectionMatrix();
 		return camera;
 	}

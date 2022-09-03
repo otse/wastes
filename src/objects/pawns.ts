@@ -74,6 +74,7 @@ export namespace pawns {
 				cell: this.cell,
 				//opacity: .5,
 				orderBias: 1.0,
+				mask: true
 			});
 			shape.subsize = [20, 40];
 			shape.rleft = -this.size[0] / 4;
@@ -480,7 +481,7 @@ export namespace pawns {
 				this.groups.arml.rotation.x = swoop1 * armsSwoop * this.walkSmoother;
 				this.groups.armr.rotation.x = swoop2 * armsSwoop * this.walkSmoother;
 				this.groups.ground.position.x = 0;
-				this.groups.ground.position.y = -12 + swoop1 * swoop2 * rise * this.walkSmoother;
+				this.groups.ground.position.y = -10 ;//+ swoop1 * swoop2 * rise * this.walkSmoother;
 				this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
 
 				if (this.type == 'you') {

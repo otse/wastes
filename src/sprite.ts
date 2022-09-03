@@ -1,4 +1,4 @@
-import { Color, Mesh, BoxGeometry, PlaneBufferGeometry, MeshLambertMaterial, MeshLambertMaterialParameters, Shader, Matrix3, Vector2 } from "three";
+import { Color, Mesh, BoxGeometry, PlaneGeometry, MeshLambertMaterial, MeshLambertMaterialParameters, Shader, Matrix3, Vector2 } from "three";
 import aabb2 from "./aabb2";
 
 import lod, { numbers } from "./lod";
@@ -14,8 +14,9 @@ interface SpriteParameters {
 	cell?: vec2,
 	color?: vec4,
 	opacity?: number
-	mask?: string,
 	orderBias?: number
+	mask?: boolean,
+	masked?: boolean
 };
 
 export namespace sprite {
@@ -50,6 +51,8 @@ export namespace hovering_sprites {
 };
 
 export class sprite extends lod.shape {
+	static masks: sprite[] = []
+	writez = true
 	dimetric = true
 	aabbScreen: aabb2
 	subsize: vec2 = [0, 0]
@@ -58,9 +61,10 @@ export class sprite extends lod.shape {
 	rleft = 0
 	calc: vec2 = [0, 0]
 	mesh: Mesh
+	meshMask: Mesh
 	wireframe: Mesh
 	material: MeshLambertMaterial
-	geometry: PlaneBufferGeometry
+	geometry: PlaneGeometry
 	roffset: vec2 = [0, 0]
 	myUvTransform: Matrix3
 	constructor(
@@ -101,6 +105,8 @@ export class sprite extends lod.shape {
 		this.geometry?.dispose();
 		this.material?.dispose();
 		this.mesh.parent?.remove(this.mesh);
+		if (this.vars.mask)
+			this.meshMask.parent?.remove(this.meshMask);
 		if (show_wire_frames)
 			this.wireframe.parent?.remove(this.wireframe);
 	}
@@ -133,6 +139,12 @@ export class sprite extends lod.shape {
 			this.mesh.renderOrder = -pos[1] + pos[0] + this.vars.orderBias! + zBasedBias;
 			this.mesh.rotation.z = this.vars.binded.ro;
 			this.mesh.updateMatrix();
+
+			if (this.vars.mask) {
+				this.meshMask.position.fromArray([...calc, 0]);
+				this.meshMask.renderOrder = -pos[1] + pos[0] + this.vars.orderBias!;
+				this.meshMask.updateMatrix();
+			}
 			if (show_wire_frames) {
 				this.wireframe.position.fromArray([...calc, 0]);
 				this.wireframe.renderOrder = this.mesh.renderOrder + 10;
@@ -150,7 +162,7 @@ export class sprite extends lod.shape {
 
 		this.retransform();
 
-		this.geometry = new PlaneBufferGeometry(this.vars.binded.size[0], this.vars.binded.size[1]);
+		this.geometry = new PlaneGeometry(this.vars.binded.size[0], this.vars.binded.size[1]);
 		let color;
 		if (this.vars.binded!.sector!.color) {
 			color = new Color(this.vars.binded.sector!.color);
@@ -159,19 +171,33 @@ export class sprite extends lod.shape {
 			const c = this.vars.color || [255, 255, 255, 255];
 			color = new Color(`rgb(${Math.round(c[0])},${Math.round(c[1])},${Math.round(c[2])})`);
 		}
+		let defines = {} as any;
+		if (this.vars.masked) {
+			defines.BOO = 1;
+			console.log('boo masked');
+
+		}
 		this.material = SpriteMaterial({
 			map: ren.load_texture(`${this.vars.tuple[3]}.png`, 0),
 			transparent: true,
 			color: color,
-			opacity: this.vars.opacity
+			opacity: this.vars.opacity,
+			depthWrite: false,
+			depthTest: false,
 		}, {
-			myUvTransform: this.myUvTransform
-		});
+			myUvTransform: this.myUvTransform,
+			masked: this.vars.masked
+		}, defines);
 		this.mesh = new Mesh(this.geometry, this.material);
 		this.mesh.frustumCulled = false;
 		this.mesh.matrixAutoUpdate = false;
-		this.vars.binded.sector?.group.add(this.mesh);
+		if (this.vars.mask)
+			this.meshMask = this.mesh.clone();
+		// this.vars.binded.sector?.group.add(this.mesh);
 		ren.groups.axisSwap.add(this.mesh);
+
+		if (this.vars.mask)
+			ren.sceneMask.add(this.meshMask);
 
 		if (show_wire_frames) {
 			this.wireframe = new Mesh(this.geometry, new MeshLambertMaterial({ wireframe: true }));
@@ -184,19 +210,34 @@ export class sprite extends lod.shape {
 	}
 };
 
-export function SpriteMaterial(parameters: MeshLambertMaterialParameters, uniforms: any) {
+export function SpriteMaterial(parameters: MeshLambertMaterialParameters, uniforms: any, defines: any = {}) {
 	let material = new MeshLambertMaterial(parameters)
 	material.customProgramCacheKey = function () {
 		return 'spritemat';
 	}
 	material.name = "spritemat";
+	material.defines = defines;
 	material.onBeforeCompile = function (shader: Shader) {
-		shader.defines = {};
+
 		shader.uniforms.myUvTransform = { value: uniforms.myUvTransform }
+		if (uniforms.masked) {
+			shader.uniforms.tMask = { value: ren.targetMask.texture }
+			console.log('add tmask');
+		}
 		shader.vertexShader = shader.vertexShader.replace(
 			`#include <common>`,
 			`#include <common>
+			varying vec2 myPosition;
 			uniform mat3 myUvTransform;
+			`
+		);
+		shader.vertexShader = shader.vertexShader.replace(
+			`#include <worldpos_vertex>`,
+			`#include <worldpos_vertex>
+			vec4 worldPosition = vec4( transformed, 1.0 );
+			worldPosition = modelMatrix * worldPosition;
+
+			myPosition = (projectionMatrix * mvPosition).xy;
 			`
 		);
 		shader.vertexShader = shader.vertexShader.replace(
@@ -204,6 +245,27 @@ export function SpriteMaterial(parameters: MeshLambertMaterialParameters, unifor
 			`
 			#ifdef USE_UV
 			vUv = ( myUvTransform * vec3( uv, 1 ) ).xy;
+			#endif
+			`
+		);
+		shader.fragmentShader = shader.fragmentShader.replace(
+			`#include <map_pars_fragment>`,
+			`
+			#include <map_pars_fragment>
+			varying vec2 myPosition;
+			uniform sampler2D tMask;
+			`
+		);
+		shader.fragmentShader = shader.fragmentShader.replace(
+			`#include <map_fragment>`,
+			`
+			#include <map_fragment>
+			#ifdef BOO
+			vec2 myPos = myPosition / 2.0;
+			myPos += vec2(0.5, 0.5);
+			vec4 texelColor = texture2D( tMask, myPos );
+
+			diffuseColor.rgb *= texelColor.rgb;
 			#endif
 			`
 		);

@@ -59,6 +59,7 @@ export namespace chickens {
 				tuple: sprites.test100,
 				//opacity: 0.5,
 				orderBias: 1.0,
+				mask: true
 			});
 			shape.dimetric = false;
 			shape.rleft = this.size[0] / 2;
@@ -314,7 +315,7 @@ export namespace chickens {
 				//this.groups.arml.rotation.x = swoop1 * armsSwoop * this.walkSmoother;
 				//this.groups.armr.rotation.x = swoop2 * armsSwoop * this.walkSmoother;
 				this.groups.head.position.z = swoop1 * swoop2 * -headBob * this.walkSmoother;
-				this.groups.ground.position.y = -10 + swoop1 * swoop2 * riser * this.walkSmoother;
+				this.groups.ground.position.y = -10 ;//+ swoop1 * swoop2 * riser * this.walkSmoother;
 
 				this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
 			}

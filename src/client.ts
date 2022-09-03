@@ -23,7 +23,7 @@ export namespace client {
 		for (const rate of rates)
 			if (rate[0] == item)
 				return rate;
-		return ['', 0, 0];
+		return ['', 1, 1];
 	}
 
 	export var interactingWith = ''

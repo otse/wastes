@@ -343,6 +343,20 @@ void main() {
 	vUv = uv;
 	gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
 }`;
+    /*
+    masking theory
+
+    render trees to fullscreen target
+    render pawns to fullscreen target
+    if pawns underlap trees
+    underlap defines as two gray pixels
+    render it grey
+
+    theory 2
+    render pawns to fullscreen target
+    pass a uv offset to treeleaves
+    if pawn overlaps, render behind-grey
+    */
     // three quarter
     var ren;
     (function (ren) {
@@ -384,9 +398,13 @@ void main() {
                 return;
             }*/
             calc();
+            ren.renderer.setRenderTarget(ren.targetMask);
+            ren.renderer.clear();
+            ren.renderer.render(ren.sceneMask, ren.camera);
             ren.renderer.setRenderTarget(ren.target);
             ren.renderer.clear();
             ren.renderer.render(ren.scene, ren.camera);
+            //scene.overrideMaterial = new THREE.MeshDepthMaterial();
             ren.renderer.setRenderTarget(null);
             ren.renderer.clear();
             ren.renderer.render(ren.scene2, ren.camera2);
@@ -404,6 +422,8 @@ void main() {
             ren.scene.add(groups.axisSwap);
             ren.scene.background = new THREE.Color('#333');
             ren.scene2 = new THREE.Scene();
+            ren.sceneMask = new THREE.Scene();
+            ren.sceneMask.background = new THREE.Color('#fff');
             ren.ambientLight = new THREE.AmbientLight(0xffffff, 1);
             ren.scene.add(ren.ambientLight);
             if (ren.DPI_UPSCALED_RT)
@@ -413,6 +433,7 @@ void main() {
                 magFilter: THREE__default["default"].NearestFilter,
                 format: THREE__default["default"].RGBAFormat
             });
+            ren.targetMask = ren.target.clone();
             ren.renderer = new THREE.WebGLRenderer({ antialias: false });
             ren.renderer.setPixelRatio(ren.ndpi);
             ren.renderer.setSize(100, 100);
@@ -455,6 +476,7 @@ void main() {
 		window inner ${pts.to_string(ren.screen)}\n
 		      new is ${pts.to_string(ren.screenCorrected)}`);
             ren.target.setSize(ren.screenCorrected[0], ren.screenCorrected[1]);
+            ren.targetMask.setSize(ren.screenCorrected[0], ren.screenCorrected[1]);
             ren.plane = new THREE.PlaneBufferGeometry(ren.screenCorrected[0], ren.screenCorrected[1]);
             if (ren.quadPost)
                 ren.quadPost.geometry = ren.plane;
@@ -496,7 +518,7 @@ void main() {
         }
         ren.make_render_target = make_render_target;
         function make_orthographic_camera(w, h) {
-            let camera = new THREE.OrthographicCamera(w / -2, w / 2, h / 2, h / -2, -10000, 10000);
+            let camera = new THREE.OrthographicCamera(w / -2, w / 2, h / 2, h / -2, -10, 100);
             camera.updateProjectionMatrix();
             return camera;
         }
@@ -959,6 +981,7 @@ void main() {
         constructor(vars) {
             super(vars.binded, numbers.sprites);
             this.vars = vars;
+            this.writez = true;
             this.dimetric = true;
             this.subsize = [0, 0];
             this.rup = 0;
@@ -991,13 +1014,15 @@ void main() {
                 return true;
         }
         dispose() {
-            var _a, _b, _c;
+            var _a, _b, _c, _d;
             if (!this.mesh)
                 return;
             hovering_sprites.unhover(this);
             (_a = this.geometry) === null || _a === void 0 ? void 0 : _a.dispose();
             (_b = this.material) === null || _b === void 0 ? void 0 : _b.dispose();
             (_c = this.mesh.parent) === null || _c === void 0 ? void 0 : _c.remove(this.mesh);
+            if (this.vars.mask)
+                (_d = this.meshMask.parent) === null || _d === void 0 ? void 0 : _d.remove(this.meshMask);
         }
         shape_manual_update() {
             if (!this.mesh)
@@ -1023,6 +1048,11 @@ void main() {
                 this.mesh.renderOrder = -pos[1] + pos[0] + this.vars.orderBias + zBasedBias;
                 this.mesh.rotation.z = this.vars.binded.ro;
                 this.mesh.updateMatrix();
+                if (this.vars.mask) {
+                    this.meshMask.position.fromArray([...calc, 0]);
+                    this.meshMask.renderOrder = -pos[1] + pos[0] + this.vars.orderBias;
+                    this.meshMask.updateMatrix();
+                }
             }
         }
         retransform() {
@@ -1030,10 +1060,9 @@ void main() {
         }
         create() {
             //console.log('create');
-            var _a;
             this.vars.binded;
             this.retransform();
-            this.geometry = new THREE.PlaneBufferGeometry(this.vars.binded.size[0], this.vars.binded.size[1]);
+            this.geometry = new THREE.PlaneGeometry(this.vars.binded.size[0], this.vars.binded.size[1]);
             let color;
             if (this.vars.binded.sector.color) {
                 color = new THREE.Color(this.vars.binded.sector.color);
@@ -1042,37 +1071,76 @@ void main() {
                 const c = this.vars.color || [255, 255, 255, 255];
                 color = new THREE.Color(`rgb(${Math.round(c[0])},${Math.round(c[1])},${Math.round(c[2])})`);
             }
+            let defines = {};
+            if (this.vars.masked) {
+                defines.BOO = 1;
+                console.log('boo masked');
+            }
             this.material = SpriteMaterial({
                 map: ren$1.load_texture(`${this.vars.tuple[3]}.png`, 0),
                 transparent: true,
                 color: color,
-                opacity: this.vars.opacity
+                opacity: this.vars.opacity,
+                depthWrite: false,
+                depthTest: false,
             }, {
-                myUvTransform: this.myUvTransform
-            });
+                myUvTransform: this.myUvTransform,
+                masked: this.vars.masked
+            }, defines);
             this.mesh = new THREE.Mesh(this.geometry, this.material);
             this.mesh.frustumCulled = false;
             this.mesh.matrixAutoUpdate = false;
-            (_a = this.vars.binded.sector) === null || _a === void 0 ? void 0 : _a.group.add(this.mesh);
+            if (this.vars.mask)
+                this.meshMask = this.mesh.clone();
+            // this.vars.binded.sector?.group.add(this.mesh);
             ren$1.groups.axisSwap.add(this.mesh);
+            if (this.vars.mask)
+                ren$1.sceneMask.add(this.meshMask);
             this.shape_manual_update();
         }
     }
-    function SpriteMaterial(parameters, uniforms) {
+    sprite.masks = [];
+    function SpriteMaterial(parameters, uniforms, defines = {}) {
         let material = new THREE.MeshLambertMaterial(parameters);
         material.customProgramCacheKey = function () {
             return 'spritemat';
         };
         material.name = "spritemat";
+        material.defines = defines;
         material.onBeforeCompile = function (shader) {
-            shader.defines = {};
             shader.uniforms.myUvTransform = { value: uniforms.myUvTransform };
+            if (uniforms.masked) {
+                shader.uniforms.tMask = { value: ren$1.targetMask.texture };
+                console.log('add tmask');
+            }
             shader.vertexShader = shader.vertexShader.replace(`#include <common>`, `#include <common>
+			varying vec2 myPosition;
 			uniform mat3 myUvTransform;
+			`);
+            shader.vertexShader = shader.vertexShader.replace(`#include <worldpos_vertex>`, `#include <worldpos_vertex>
+			vec4 worldPosition = vec4( transformed, 1.0 );
+			worldPosition = modelMatrix * worldPosition;
+
+			myPosition = (projectionMatrix * mvPosition).xy;
 			`);
             shader.vertexShader = shader.vertexShader.replace(`#include <uv_vertex>`, `
 			#ifdef USE_UV
 			vUv = ( myUvTransform * vec3( uv, 1 ) ).xy;
+			#endif
+			`);
+            shader.fragmentShader = shader.fragmentShader.replace(`#include <map_pars_fragment>`, `
+			#include <map_pars_fragment>
+			varying vec2 myPosition;
+			uniform sampler2D tMask;
+			`);
+            shader.fragmentShader = shader.fragmentShader.replace(`#include <map_fragment>`, `
+			#include <map_fragment>
+			#ifdef BOO
+			vec2 myPos = myPosition / 2.0;
+			myPos += vec2(0.5, 0.5);
+			vec4 texelColor = texture2D( tMask, myPos );
+
+			diffuseColor.rgb *= texelColor.rgb;
 			#endif
 			`);
         };
@@ -1289,7 +1357,7 @@ void main() {
 
     var shadows;
     (function (shadows) {
-        // takes care of soft shadows cast by tree-leaves and walls
+        // takes care of shadows cast by tree-leaves and walls
         const default_shade = 1.0;
         shadows.data = [];
         function shade(pos, amount, set = false) {
@@ -6466,12 +6534,14 @@ void main() {
                             color[3],
                         ];
                     }
-                    new sprite({
+                    let shape = new sprite({
                         binded: this,
                         tuple: tuple,
                         orderBias: 0.7,
-                        color: color
+                        color: color,
+                        masked: true
                     });
+                    shape.writez = false;
                     //shadows.shade(this.wpos, 0.1);
                     if (!this.shaded) {
                         this.shaded = true;
@@ -6679,7 +6749,7 @@ void main() {
                 shape.rup = 29;
                 if (!this.shaded) {
                     this.shaded = true;
-                    const shadow = .75;
+                    const shadow = .7;
                     shadows$1.shade_matrix(this.wpos, [
                         [0, 0, 0, 0, 0],
                         [0, 0, 0, 0, 0],
@@ -6929,24 +6999,28 @@ void main() {
                     trader.end();
                 }
                 if (!this.modal) {
-                    this.modal = new modal('trader');
-                    this.modal.content.innerHTML = `buy:<br />`;
+                    this.modal = new modal('Trader');
+                    this.modal.element.classList.add('trader');
+                    this.modal.content.innerHTML = `<div style="width: 50%;">Buy:</div><div style="width: 50%;">Sell:</div>`;
+                    this.modal.content.classList.add('trader');
+                    this.traderLayout = document.createElement('div');
+                    this.traderLayout.className = 'trader layout';
+                    this.modal.content.append(this.traderLayout);
                     this.modal.content.onmouseover = () => { win_1.genericHovering = true; };
                     this.modal.content.onmouseleave = () => { win_1.genericHovering = false; };
                     this.tradeWithCur = this.tradeWith;
                     this.render_trader_inventory(true);
-                    let next = document.createElement('span');
-                    next.innerHTML += '<hr>sell:<br />';
-                    this.modal.content.append(next);
+                    //let next = document.createElement('span');
+                    //next.innerHTML += '<hr>sell:<br />';
+                    //this.modal.content.append(next);
                     this.render_your_inventory(true);
                 }
             }
             static render_trader_inventory(force) {
-                var _a;
                 if (!this.traderInventoryElement) {
                     this.traderInventoryElement = document.createElement('div');
                     this.traderInventoryElement.className = 'inventory';
-                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.content.append(this.traderInventoryElement);
+                    this.traderLayout.append(this.traderInventoryElement);
                 }
                 let pawn = this.tradeWithCur;
                 const inventory = pawn.inventory;
@@ -6968,7 +7042,7 @@ void main() {
                         };
                         let extra = document.createElement('span');
                         button.append(extra);
-                        const rate = client.get_rate(tuple[0]) || ['', 0, 0];
+                        const rate = client.get_rate(tuple[0]);
                         let buy = rate[1];
                         extra.innerHTML = `&nbsp; - ${buy}ct`;
                         this.traderInventoryElement.append(button);
@@ -6977,11 +7051,10 @@ void main() {
                 }
             }
             static render_your_inventory(force) {
-                var _a;
                 if (!this.yourInventoryElement) {
                     this.yourInventoryElement = document.createElement('div');
                     this.yourInventoryElement.className = 'inventory';
-                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.content.append(this.yourInventoryElement);
+                    this.traderLayout.append(this.yourInventoryElement);
                 }
                 let you = pawns$1.you;
                 const inventory = you.inventory;
@@ -7002,7 +7075,7 @@ void main() {
                         };
                         let extra = document.createElement('span');
                         button.append(extra);
-                        const rate = client.get_rate(tuple[0]) || ['', 0, 0];
+                        const rate = client.get_rate(tuple[0]);
                         let sell = rate[2];
                         extra.innerHTML = `&nbsp; - ${sell}ct`;
                         this.yourInventoryElement.append(button);
@@ -7015,7 +7088,7 @@ void main() {
                             break;
                         }
                     let next = document.createElement('div');
-                    next.innerHTML += `your money: ${money}<br />`;
+                    next.innerHTML += `your money: ${money} ct<br />`;
                     this.yourInventoryElement.append(next);
                 }
             }
@@ -7493,6 +7566,7 @@ void main() {
                     tuple: sprites$1.test100,
                     //opacity: 0.5,
                     orderBias: 1.0,
+                    mask: true
                 });
                 shape.dimetric = false;
                 shape.rleft = this.size[0] / 2;
@@ -7680,7 +7754,6 @@ void main() {
                 this.walkSmoother = wastes.clamp(this.walkSmoother, 0, 1);
                 const legsSwoop = 0.6;
                 const headBob = 1.0;
-                const riser = 0.5;
                 if (!this.dead) {
                     this.swoop += ren$1.delta * 2.5;
                     const swoop1 = Math.cos(Math.PI * this.swoop);
@@ -7690,7 +7763,7 @@ void main() {
                     //this.groups.arml.rotation.x = swoop1 * armsSwoop * this.walkSmoother;
                     //this.groups.armr.rotation.x = swoop2 * armsSwoop * this.walkSmoother;
                     this.groups.head.position.z = swoop1 * swoop2 * -headBob * this.walkSmoother;
-                    this.groups.ground.position.y = -10 + swoop1 * swoop2 * riser * this.walkSmoother;
+                    this.groups.ground.position.y = -10; //+ swoop1 * swoop2 * riser * this.walkSmoother;
                     this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
                 }
                 else {
@@ -8171,7 +8244,7 @@ void main() {
             for (const rate of client.rates)
                 if (rate[0] == item)
                     return rate;
-            return ['', 0, 0];
+            return ['', 1, 1];
         }
         client.get_rate = get_rate;
         client.interactingWith = '';
@@ -8433,6 +8506,7 @@ void main() {
                     cell: this.cell,
                     //opacity: .5,
                     orderBias: 1.0,
+                    mask: true
                 });
                 shape.subsize = [20, 40];
                 shape.rleft = -this.size[0] / 4;
@@ -8749,7 +8823,6 @@ void main() {
                 var _a;
                 const legsSwoop = 0.8;
                 const armsSwoop = 0.5;
-                const rise = 0.5;
                 this.swoop += ren$1.delta * 2.5;
                 if (!this.dead) {
                     const swoop1 = Math.cos(Math.PI * this.swoop);
@@ -8759,7 +8832,7 @@ void main() {
                     this.groups.arml.rotation.x = swoop1 * armsSwoop * this.walkSmoother;
                     this.groups.armr.rotation.x = swoop2 * armsSwoop * this.walkSmoother;
                     this.groups.ground.position.x = 0;
-                    this.groups.ground.position.y = -12 + swoop1 * swoop2 * rise * this.walkSmoother;
+                    this.groups.ground.position.y = -10; //+ swoop1 * swoop2 * rise * this.walkSmoother;
                     this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
                     if (this.type == 'you') {
                         if (app$1.key('shift')) {

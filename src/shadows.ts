@@ -10,7 +10,7 @@ import pts from "./pts";
 
 export namespace shadows {
 
-	// takes care of soft shadows cast by tree-leaves and walls
+	// takes care of shadows cast by tree-leaves and walls
 
 	const default_shade = 1.0;
 
