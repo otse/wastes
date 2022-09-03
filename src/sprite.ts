@@ -3,7 +3,7 @@ import aabb2 from "./aabb2";
 
 import lod, { numbers } from "./lod";
 import pts from "./pts";
-import ren from "./renderer";
+import ren, { THREE } from "./renderer";
 import sprites from "./sprites";
 import tiles from "./tiles";
 import wastes from "./wastes";
@@ -16,6 +16,7 @@ interface SpriteParameters {
 	opacity?: number
 	orderBias?: number
 	mask?: boolean,
+	negativeMask?: boolean
 	masked?: boolean
 };
 
@@ -173,9 +174,7 @@ export class sprite extends lod.shape {
 		}
 		let defines = {} as any;
 		if (this.vars.masked) {
-			defines.BOO = 1;
-			console.log('boo masked');
-
+			defines.MASKED = 1;
 		}
 		this.material = SpriteMaterial({
 			map: ren.load_texture(`${this.vars.tuple[3]}.png`, 0),
@@ -191,8 +190,16 @@ export class sprite extends lod.shape {
 		this.mesh = new Mesh(this.geometry, this.material);
 		this.mesh.frustumCulled = false;
 		this.mesh.matrixAutoUpdate = false;
-		if (this.vars.mask)
+		if (this.vars.mask) {
 			this.meshMask = this.mesh.clone();
+			if (this.vars.negativeMask) {
+				this.meshMask.material = this.material.clone();
+				console.log('were a negative mask');
+				this.meshMask.material.blending = THREE.CustomBlending;
+				this.meshMask.material.blendEquation = THREE.ReverseSubtractEquation;
+				
+			}
+		}
 		// this.vars.binded.sector?.group.add(this.mesh);
 		ren.groups.axisSwap.add(this.mesh);
 
@@ -260,12 +267,12 @@ export function SpriteMaterial(parameters: MeshLambertMaterialParameters, unifor
 			`#include <map_fragment>`,
 			`
 			#include <map_fragment>
-			#ifdef BOO
+			#ifdef MASKED
 			vec2 myPos = myPosition / 2.0;
 			myPos += vec2(0.5, 0.5);
 			vec4 texelColor = texture2D( tMask, myPos );
 			
-			texelColor.rgb = mix(texelColor.rgb, vec3(0.2, 0.35, 0.2), 0.5);
+			texelColor.rgb = mix(texelColor.rgb, vec3(0.15, 0.3, 0.15), 0.8);
 			
 			if (texelColor.a > 0.5)
 			diffuseColor.rgb = texelColor.rgb;

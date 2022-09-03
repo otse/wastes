@@ -363,6 +363,8 @@ namespace objects {
 				binded: this,
 				tuple: sprites.ddecidtreetrunk,
 				orderBias: 0.6,
+				mask: true,
+				negativeMask: true
 			});
 			this.stack();
 			const tile = tiles.get(this.wpos)!;

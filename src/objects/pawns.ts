@@ -113,8 +113,10 @@ export namespace pawns {
 			}
 
 			if (!wasterSprite) {
-				const spritee = this.shape as sprite;
-				spritee.material.map = this.target.texture;
+				const sprite = this.shape as sprite;
+				sprite.material.map = this.target.texture;
+				if (sprite.vars.mask)
+					sprite.meshMask.material.map = this.target.texture;
 			}
 
 		}

@@ -425,12 +425,6 @@ void main() {
             ren.sceneMask = new THREE.Scene();
             //sceneMask.background = new Color('#fff');
             ren.sceneMask.add(new THREE.AmbientLight(0xffffff, 1));
-            let sun = new THREE.DirectionalLight(0xffffff, 0.5);
-            // left up right
-            sun.position.set(-wastes.size, wastes.size * 1.5, wastes.size / 2);
-            //sun.add(new AxesHelper(100));
-            //sceneMask.add(sun);
-            //sceneMask.add(sun.target);
             ren.ambientLight = new THREE.AmbientLight(0xffffff, 1);
             ren.scene.add(ren.ambientLight);
             if (ren.DPI_UPSCALED_RT)
@@ -1081,8 +1075,7 @@ void main() {
             }
             let defines = {};
             if (this.vars.masked) {
-                defines.BOO = 1;
-                console.log('boo masked');
+                defines.MASKED = 1;
             }
             this.material = SpriteMaterial({
                 map: ren$1.load_texture(`${this.vars.tuple[3]}.png`, 0),
@@ -1098,8 +1091,15 @@ void main() {
             this.mesh = new THREE.Mesh(this.geometry, this.material);
             this.mesh.frustumCulled = false;
             this.mesh.matrixAutoUpdate = false;
-            if (this.vars.mask)
+            if (this.vars.mask) {
                 this.meshMask = this.mesh.clone();
+                if (this.vars.negativeMask) {
+                    this.meshMask.material = this.material.clone();
+                    console.log('were a negative mask');
+                    this.meshMask.material.blending = THREE__default["default"].CustomBlending;
+                    this.meshMask.material.blendEquation = THREE__default["default"].ReverseSubtractEquation;
+                }
+            }
             // this.vars.binded.sector?.group.add(this.mesh);
             ren$1.groups.axisSwap.add(this.mesh);
             if (this.vars.mask)
@@ -1143,12 +1143,12 @@ void main() {
 			`);
             shader.fragmentShader = shader.fragmentShader.replace(`#include <map_fragment>`, `
 			#include <map_fragment>
-			#ifdef BOO
+			#ifdef MASKED
 			vec2 myPos = myPosition / 2.0;
 			myPos += vec2(0.5, 0.5);
 			vec4 texelColor = texture2D( tMask, myPos );
 			
-			texelColor.rgb = mix(texelColor.rgb, vec3(0.2, 0.35, 0.2), 0.5);
+			texelColor.rgb = mix(texelColor.rgb, vec3(0.15, 0.3, 0.15), 0.8);
 			
 			if (texelColor.a > 0.5)
 			diffuseColor.rgb = texelColor.rgb;
@@ -6472,6 +6472,8 @@ void main() {
                     binded: this,
                     tuple: sprites$1.ddecidtreetrunk,
                     orderBias: 0.6,
+                    mask: true,
+                    negativeMask: true
                 });
                 this.stack();
                 const tile = tiles$1.get(this.wpos);
@@ -7851,14 +7853,16 @@ void main() {
             }
             superobject_setup_context_menu() {
                 win$1.contextmenu.reset();
-                if (this.examine) {
-                    win$1.contextmenu.options.options.push(["Examine", () => {
-                            return true;
-                        }, () => {
-                            win$1.descriptor.focus = this;
-                            win$1.descriptor.call_once(this.examine);
-                            //win.contextmenu.focus = undefined;
-                        }]);
+                if (!this.dead) {
+                    if (this.examine) {
+                        win$1.contextmenu.options.options.push(["Examine", () => {
+                                return true;
+                            }, () => {
+                                win$1.descriptor.focus = this;
+                                win$1.descriptor.call_once(this.examine);
+                                //win.contextmenu.focus = undefined;
+                            }]);
+                    }
                 }
             }
             tick() {
@@ -8546,8 +8550,10 @@ void main() {
                     this.scene.add(sun.target);
                 }
                 {
-                    const spritee = this.shape;
-                    spritee.material.map = this.target.texture;
+                    const sprite = this.shape;
+                    sprite.material.map = this.target.texture;
+                    if (sprite.vars.mask)
+                        sprite.meshMask.material.map = this.target.texture;
                 }
             }
             try_move_to(pos) {
