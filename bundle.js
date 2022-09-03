@@ -423,7 +423,14 @@ void main() {
             ren.scene.background = new THREE.Color('#333');
             ren.scene2 = new THREE.Scene();
             ren.sceneMask = new THREE.Scene();
-            ren.sceneMask.background = new THREE.Color('#fff');
+            //sceneMask.background = new Color('#fff');
+            ren.sceneMask.add(new THREE.AmbientLight(0xffffff, 1));
+            let sun = new THREE.DirectionalLight(0xffffff, 0.5);
+            // left up right
+            sun.position.set(-wastes.size, wastes.size * 1.5, wastes.size / 2);
+            //sun.add(new AxesHelper(100));
+            //sceneMask.add(sun);
+            //sceneMask.add(sun.target);
             ren.ambientLight = new THREE.AmbientLight(0xffffff, 1);
             ren.scene.add(ren.ambientLight);
             if (ren.DPI_UPSCALED_RT)
@@ -438,7 +445,8 @@ void main() {
             ren.renderer.setPixelRatio(ren.ndpi);
             ren.renderer.setSize(100, 100);
             ren.renderer.autoClear = true;
-            ren.renderer.setClearColor(0xffffff, 0);
+            ren.renderer.setClearColor(0xffffff, 0.0);
+            //renderer.setClearAlpha(1.0);
             document.body.appendChild(ren.renderer.domElement);
             window.addEventListener('resize', onWindowResize, false);
             ren.materialPost = new THREE.ShaderMaterial({
@@ -1139,8 +1147,11 @@ void main() {
 			vec2 myPos = myPosition / 2.0;
 			myPos += vec2(0.5, 0.5);
 			vec4 texelColor = texture2D( tMask, myPos );
-
-			diffuseColor.rgb *= texelColor.rgb;
+			
+			texelColor.rgb = mix(texelColor.rgb, vec3(0.2, 0.35, 0.2), 0.5);
+			
+			if (texelColor.a > 0.5)
+			diffuseColor.rgb = texelColor.rgb;
 			#endif
 			`);
         };

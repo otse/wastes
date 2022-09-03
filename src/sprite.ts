@@ -264,8 +264,11 @@ export function SpriteMaterial(parameters: MeshLambertMaterialParameters, unifor
 			vec2 myPos = myPosition / 2.0;
 			myPos += vec2(0.5, 0.5);
 			vec4 texelColor = texture2D( tMask, myPos );
-
-			diffuseColor.rgb *= texelColor.rgb;
+			
+			texelColor.rgb = mix(texelColor.rgb, vec3(0.2, 0.35, 0.2), 0.5);
+			
+			if (texelColor.a > 0.5)
+			diffuseColor.rgb = texelColor.rgb;
 			#endif
 			`
 		);

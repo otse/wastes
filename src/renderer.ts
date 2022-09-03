@@ -189,8 +189,17 @@ namespace ren {
 		scene.background = new Color('#333');
 		
 		scene2 = new Scene();
+
 		sceneMask = new Scene();
-		sceneMask.background = new Color('#fff');
+		//sceneMask.background = new Color('#fff');
+		sceneMask.add(new AmbientLight(0xffffff, 1));
+		let sun = new DirectionalLight(0xffffff, 0.5);
+		// left up right
+		sun.position.set(-wastes.size, wastes.size * 1.5, wastes.size / 2);
+		//sun.add(new AxesHelper(100));
+
+		//sceneMask.add(sun);
+		//sceneMask.add(sun.target);
 
 		ambientLight = new AmbientLight(0xffffff, 1);
 		scene.add(ambientLight);
@@ -210,7 +219,8 @@ namespace ren {
 		renderer.setPixelRatio(ndpi);
 		renderer.setSize(100, 100);
 		renderer.autoClear = true;
-		renderer.setClearColor(0xffffff, 0);
+		renderer.setClearColor(0xffffff, 0.0);
+		//renderer.setClearAlpha(1.0);
 
 		document.body.appendChild(renderer.domElement);
 
