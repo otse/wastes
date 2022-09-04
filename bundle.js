@@ -7976,6 +7976,7 @@ void main() {
                     cell: this.cell,
                     //opacity: .5,
                     orderBias: 1.0,
+                    mask: true
                 });
                 shape.subsize = [20, 40];
                 shape.rleft = -this.size[0] / 4;
@@ -8333,6 +8334,7 @@ void main() {
                         obj.wpos = wpos;
                         obj.angle = angle;
                         obj.dead = sobj.dead;
+                        obj.wielding = sobj.wielding;
                         if (sobj.title)
                             obj.title = sobj.title;
                         if (sobj.examine)
@@ -8480,13 +8482,56 @@ void main() {
     })(client || (client = {}));
     var client$1 = client;
 
+    var guns;
+    (function (guns) {
+        guns.revolver = {
+            name: 'revolver',
+            handgun: true,
+            model: undefined,
+        };
+        guns.rifle = {
+            name: 'rifle',
+            handgun: false,
+            model: undefined,
+        };
+        guns.lasermusket = {
+            name: 'lasermusket',
+            handgun: false,
+            model: undefined,
+        };
+        function init() {
+            collada$1.load_model('collada/revolver', 22, (model) => {
+                guns.revolver.model = model;
+                wastes.resourced("REVOLVER");
+            });
+            collada$1.load_model('collada/rifle', 22, (model) => {
+                guns.rifle.model = model;
+                wastes.resourced("RIFLE");
+            });
+            collada$1.load_model('collada/lasermusket', 22, (model) => {
+                guns.lasermusket.model = model;
+                wastes.resourced("LASER_MUSKET");
+            });
+        }
+        guns.init = init;
+        function get(name) {
+            if (name == 'revolver')
+                return guns.revolver;
+            else if (name == 'rifle')
+                return guns.rifle;
+            else if (name == 'lasermusket')
+                return guns.lasermusket;
+        }
+        guns.get = get;
+    })(guns || (guns = {}));
+    var guns$1 = guns;
+
     var pawns;
     (function (pawns) {
         class pawn extends superobject {
             constructor() {
                 super(numbers.pawns);
                 this.dead = false;
-                this.holdingRifle = true;
                 this.isTrader = false;
                 this.isPlayer = false;
                 this.dialogue = dialogues[0];
@@ -8494,7 +8539,6 @@ void main() {
                 this.netangle = 0;
                 //inventory: objects.container
                 this.items = [];
-                this.gun = 'revolver';
                 this.outfit = ['#444139', '#444139', '#484c4c', '#31362c'];
                 this.aiming = false;
                 this.shoot = false;
@@ -8747,13 +8791,16 @@ void main() {
                 this.groups.ground.position.set(0, -bodyHeight * 1.0, 0);
                 //mesh.rotation.set(Math.PI / 2, 0, 0);
                 this.scene.add(this.groups.basis);
-                {
-                    collada$1.load_model('collada/lasermusket', 22, (model) => {
-                        console.log('add gun to pawn');
-                        model.rotation.set(0, 0, Math.PI / 2);
-                        //model.position.set(0, -armsHeight + armsSize / 2, 0);
-                        this.groups.handr.add(model);
-                    });
+                this.re_wield();
+            }
+            re_wield() {
+                if (this.wielding != 'none') {
+                    this.gun = guns$1.get(this.wielding);
+                    const group = this.gun.model.clone();
+                    group.rotation.set(0, 0, Math.PI / 2);
+                    //model.position.set(0, -armsHeight + armsSize / 2, 0);
+                    this.groups.handr.remove(...this.groups.handr.children);
+                    this.groups.handr.add(group);
                 }
             }
             render() {
@@ -8860,7 +8907,7 @@ void main() {
                     this.groups.armr.rotation.z = 0;
                     this.groups.handr.rotation.x = 0;
                     this.groups.handr.rotation.z = 0;
-                    if (this.holdingRifle) {
+                    if (this.gun && !this.gun.handgun) {
                         this.groups.handr.rotation.x = -Math.PI / 2;
                     }
                     this.groups.ground.position.x = 0;
@@ -8891,19 +8938,19 @@ void main() {
                             this.aiming = false;
                     }
                     if (this.aiming) {
-                        if (!this.holdingRifle) {
+                        if (this.gun && this.gun.handgun) {
                             this.groups.armr.rotation.x = -Math.PI / 2;
                         }
                         else {
-                            this.groups.armr.rotation.x = -Math.PI / 10; // arm forward
-                            this.groups.armr.rotation.z = 0.15; // arm outward
+                            this.groups.armr.rotation.x = -Math.PI / 9; // arm forward
+                            this.groups.armr.rotation.z = 0.2; // arm inward
                             this.groups.arml.rotation.x = -Math.PI / 6;
                             this.groups.arml.rotation.z = -Math.PI / 5;
                             this.groups.handr.rotation.x = -Math.PI / 3; // hand up
-                            this.groups.handr.rotation.z = 0.3;
+                            this.groups.handr.rotation.z = 0.4; // hand left right
                             this.groups.head.rotation.z = 0.2;
-                            this.groups.ground.rotation.y -= 0.4;
-                            this.groups.head.rotation.y = 0.4;
+                            this.groups.ground.rotation.y -= 0.5;
+                            this.groups.head.rotation.y = 0.5;
                         }
                     }
                     const sprite = this.shape;
@@ -9774,9 +9821,12 @@ void main() {
         (function (RESOURCES) {
             RESOURCES[RESOURCES["RC_UNDEFINED"] = 0] = "RC_UNDEFINED";
             RESOURCES[RESOURCES["POPULAR_ASSETS"] = 1] = "POPULAR_ASSETS";
-            RESOURCES[RESOURCES["CANT_FIND"] = 2] = "CANT_FIND";
-            RESOURCES[RESOURCES["READY"] = 3] = "READY";
-            RESOURCES[RESOURCES["COUNT"] = 4] = "COUNT";
+            //CANT_FIND,
+            RESOURCES[RESOURCES["REVOLVER"] = 2] = "REVOLVER";
+            RESOURCES[RESOURCES["RIFLE"] = 3] = "RIFLE";
+            RESOURCES[RESOURCES["LASER_MUSKET"] = 4] = "LASER_MUSKET";
+            RESOURCES[RESOURCES["READY"] = 5] = "READY";
+            RESOURCES[RESOURCES["COUNT"] = 6] = "COUNT";
         })(RESOURCES = wastes.RESOURCES || (wastes.RESOURCES = {}));
         let time;
         let resources_loaded = 0b0;
@@ -9793,7 +9843,7 @@ void main() {
             if (count == RESOURCES.COUNT)
                 start();
         }
-        const MAX_WAIT = 250;
+        const MAX_WAIT = 1500;
         function reasonable_waiter() {
             if (time + MAX_WAIT < new Date().getTime()) {
                 console.warn(` passed reasonable wait time for resources `);
@@ -9858,6 +9908,7 @@ void main() {
             resourced('POPULAR_ASSETS');
             resourced('READY');
             window['wastes'] = wastes;
+            guns$1.init();
         }
         wastes.init = init;
         function tick() {

@@ -18,6 +18,7 @@ import sprites from "../sprites";
 import tiles from "../tiles";
 import wastes from "../wastes";
 import win from "../win";
+import guns from "./guns";
 
 
 export namespace pawns {
@@ -26,12 +27,14 @@ export namespace pawns {
 
 	const wasterSprite = false;
 
+
 	type inventory = { stamp: number, tuples: [string, number][] }
 
 	export class pawn extends superobject {
 		static noun = 'pawn'
 		dead = false
-		holdingRifle = true
+		wielding: 'none'
+		gun: guns.gun
 		isTrader = false
 		isPlayer = false
 		inventory?: inventory
@@ -41,7 +44,6 @@ export namespace pawns {
 		subtype
 		//inventory: objects.container
 		items: string[] = []
-		gun: string = 'revolver'
 		outfit = ['#444139', '#444139', '#484c4c', '#31362c']
 		aiming = false
 		shoot = false
@@ -358,17 +360,18 @@ export namespace pawns {
 
 			this.scene.add(this.groups.basis);
 
-			const loadGunAgain = true;
-			if (loadGunAgain) {
-				const gun = collada.load_model('collada/lasermusket', 22, (model) => {
-					console.log('add gun to pawn');
+			this.re_wield();
+		}
+		re_wield() {
+			if (this.wielding != 'none') {
+				this.gun = guns.get(this.wielding)!;
+				const group = this.gun.model.clone();
 
-					model.rotation.set(0, 0, Math.PI / 2);
-					//model.position.set(0, -armsHeight + armsSize / 2, 0);
-					this.groups.handr.add(model);
-				});
+				group.rotation.set(0, 0, Math.PI / 2);
+				//model.position.set(0, -armsHeight + armsSize / 2, 0);
+				this.groups.handr.remove(...this.groups.handr.children);
+				this.groups.handr.add(group);
 			}
-
 		}
 		render() {
 			ren.renderer.setRenderTarget(this.target);
@@ -495,7 +498,7 @@ export namespace pawns {
 				this.groups.armr.rotation.z = 0;
 				this.groups.handr.rotation.x = 0;
 				this.groups.handr.rotation.z = 0;
-				if (this.holdingRifle) {
+				if (this.gun && !this.gun.handgun) {
 					this.groups.handr.rotation.x = -Math.PI / 2;
 				}
 				else {
@@ -533,19 +536,19 @@ export namespace pawns {
 						this.aiming = false;
 				}
 				if (this.aiming) {
-					if (!this.holdingRifle) {
+					if (this.gun && this.gun.handgun) {
 						this.groups.armr.rotation.x = -Math.PI / 2;
 					}
 					else {
-						this.groups.armr.rotation.x = -Math.PI / 10; // arm forward
-						this.groups.armr.rotation.z = 0.15; // arm outward
+						this.groups.armr.rotation.x = -Math.PI / 9; // arm forward
+						this.groups.armr.rotation.z = 0.2; // arm inward
 						this.groups.arml.rotation.x = -Math.PI / 6;
 						this.groups.arml.rotation.z = -Math.PI / 5;
 						this.groups.handr.rotation.x = -Math.PI / 3; // hand up
-						this.groups.handr.rotation.z = 0.3;
+						this.groups.handr.rotation.z = 0.4; // hand left right
 						this.groups.head.rotation.z = 0.2;
-						this.groups.ground.rotation.y -= 0.4;
-						this.groups.head.rotation.y = 0.4;
+						this.groups.ground.rotation.y -= 0.5;
+						this.groups.head.rotation.y = 0.5;
 					}
 				}
 				else {

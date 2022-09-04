@@ -107,6 +107,7 @@ export namespace client {
 						obj.wpos = wpos;
 						obj.angle = angle;
 						obj.dead = sobj.dead;
+						obj.wielding = sobj.wielding;
 						if (sobj.title)
 							obj.title = sobj.title;
 						if (sobj.examine)

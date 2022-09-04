@@ -57,6 +57,7 @@ export namespace zombies {
 				cell: this.cell,
 				//opacity: .5,
 				orderBias: 1.0,
+				mask: true
 			});
 			shape.subsize = [20, 40];
 			shape.rleft = -this.size[0] / 4;

@@ -36,6 +36,10 @@ function find_rate(item: string) {
 	['bullet', 1]
 ]*/
 
+function sample(a) {
+	return a[Math.floor(Math.random() * a.length)];
+}
+
 function start() {
 
 	new slod.sworld();
@@ -698,11 +702,13 @@ class npc extends supersobj {
 	}
 }
 
+const guns = ['revolver', 'rifle', 'lasermusket']
 class pawn extends npc {
 	static id = 0
 	inventory: inventory
 	outfit: string[] = []
 	subtype = ''
+	wielding = ''
 	dialogue = 0
 	aiming = false
 	isPlayer = false
@@ -713,7 +719,7 @@ class pawn extends npc {
 		this.title = 'Pawn';
 		this.id = 'pawn_' + pawn.id++;
 		this.outfit = outfits[Math.floor(Math.random() * outfits.length)];
-
+		this.wielding = sample(guns)
 		this.inventory = new inventory(this);
 
 	}
@@ -751,11 +757,12 @@ class pawn extends npc {
 	override gather(fully: boolean) {
 		let upper = super.gather(fully) as any;
 		if (fully) {
-			console.log('pawn first');
+			console.log('pawn fully');
 			//console.log('outfit');
 			upper.outfit = this.outfit;
 			upper.dialogue = this.dialogue;
 			upper.subtype = this.subtype;
+			upper.wielding = this.wielding;
 		}
 		if (this.examine)
 			upper.examine = this.examine;

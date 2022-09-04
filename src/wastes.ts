@@ -19,6 +19,7 @@ import client from "./client";
 import chickens from "./objects/chickens";
 import fences from "./objects/fences";
 import GLOB from "./glob";
+import guns from "./objects/guns";
 
 export { win, pawns, objects, fences }; // fixes creepy rollup error
 
@@ -54,7 +55,10 @@ export namespace wastes {
 	export enum RESOURCES {
 		RC_UNDEFINED = 0,
 		POPULAR_ASSETS,
-		CANT_FIND,
+		//CANT_FIND,
+		REVOLVER,
+		RIFLE,
+		LASER_MUSKET,
 		READY,
 		COUNT
 	};
@@ -74,7 +78,7 @@ export namespace wastes {
 			start();
 	}
 
-	const MAX_WAIT = 250;
+	const MAX_WAIT = 1500;
 	function reasonable_waiter() {
 		if (time + MAX_WAIT < new Date().getTime()) {
 			console.warn(` passed reasonable wait time for resources `);
@@ -148,6 +152,8 @@ export namespace wastes {
 		resourced('POPULAR_ASSETS');
 		resourced('READY');
 		window['wastes'] = wastes;
+		guns.init();
+
 	}
 
 	export function tick() {
