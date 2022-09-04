@@ -317,7 +317,7 @@ namespace ren {
 	}
 
 	export function make_orthographic_camera(w, h) {
-		let camera = new OrthographicCamera(w / - 2, w / 2, h / 2, h / - 2, -10, 100);
+		let camera = new OrthographicCamera(w / - 2, w / 2, h / 2, h / - 2, -100, 100);
 		camera.updateProjectionMatrix();
 		return camera;
 	}

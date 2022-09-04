@@ -520,7 +520,7 @@ void main() {
         }
         ren.make_render_target = make_render_target;
         function make_orthographic_camera(w, h) {
-            let camera = new THREE.OrthographicCamera(w / -2, w / 2, h / 2, h / -2, -10, 100);
+            let camera = new THREE.OrthographicCamera(w / -2, w / 2, h / 2, h / -2, -100, 100);
             camera.updateProjectionMatrix();
             return camera;
         }
@@ -1095,7 +1095,6 @@ void main() {
                 this.meshMask = this.mesh.clone();
                 if (this.vars.negativeMask) {
                     this.meshMask.material = this.material.clone();
-                    console.log('were a negative mask');
                     this.meshMask.material.blending = THREE__default["default"].CustomBlending;
                     this.meshMask.material.blendEquation = THREE__default["default"].ReverseSubtractEquation;
                 }
@@ -1129,7 +1128,7 @@ void main() {
 			vec4 worldPosition = vec4( transformed, 1.0 );
 			worldPosition = modelMatrix * worldPosition;
 
-			myPosition = (projectionMatrix * mvPosition).xy;
+			myPosition = (projectionMatrix * mvPosition).xy / 2.0 + vec2(0.5, 0.5);
 			`);
             shader.vertexShader = shader.vertexShader.replace(`#include <uv_vertex>`, `
 			#ifdef USE_UV
@@ -1144,11 +1143,9 @@ void main() {
             shader.fragmentShader = shader.fragmentShader.replace(`#include <map_fragment>`, `
 			#include <map_fragment>
 			#ifdef MASKED
-			vec2 myPos = myPosition / 2.0;
-			myPos += vec2(0.5, 0.5);
-			vec4 texelColor = texture2D( tMask, myPos );
+			vec4 texelColor = texture2D( tMask, myPosition );
 			
-			texelColor.rgb = mix(texelColor.rgb, vec3(0.15, 0.3, 0.15), 0.8);
+			texelColor.rgb = mix(texelColor.rgb, vec3(0.15, 0.3, 0.15), 0.7);
 			
 			if (texelColor.a > 0.5)
 			diffuseColor.rgb = texelColor.rgb;
@@ -1517,6 +1514,10 @@ void main() {
         //	this.tiled();
         //	super.update();
         //}
+        /*
+        this function sadly defies logic
+        
+        */
         stack(fallthru = []) {
             let calc = 0;
             let stack = this.sector.stacked(pts.round(this.wpos));
@@ -8485,6 +8486,7 @@ void main() {
             constructor() {
                 super(numbers.pawns);
                 this.dead = false;
+                this.holdingRifle = true;
                 this.isTrader = false;
                 this.isPlayer = false;
                 this.dialogue = dialogues[0];
@@ -8694,6 +8696,7 @@ void main() {
                 this.groups.body = new THREE.Group;
                 this.groups.arml = new THREE.Group;
                 this.groups.armr = new THREE.Group;
+                this.groups.handr = new THREE.Group;
                 this.groups.legl = new THREE.Group;
                 this.groups.legr = new THREE.Group;
                 this.groups.ground = new THREE.Group;
@@ -8707,6 +8710,7 @@ void main() {
                 this.groups.armr.add(this.meshes.armr);
                 this.groups.legl.add(this.meshes.legl);
                 this.groups.legr.add(this.meshes.legr);
+                this.groups.armr.add(this.groups.handr);
                 this.groups.head.add(this.groups.gasMask);
                 /*this.groups.gungrip.add(this.meshes.gungrip);
                 this.groups.gunbarrel.add(this.meshes.gunbarrel);*/
@@ -8720,6 +8724,8 @@ void main() {
                 this.groups.ground.add(this.groups.body);
                 this.groups.basis.add(this.groups.ground);
                 this.groups.basis.add(this.meshes.water);
+                //this.groups.handr.add(new AxesHelper(10));
+                this.groups.handr.position.set(0, -armsHeight, 0);
                 this.groups.head.position.set(0, bodyHeight / 2 + headSize / 2, 0);
                 this.groups.gasMask.position.set(0, -headSize / 2, headSize / 1.5);
                 this.groups.gasMask.rotation.set(-Math.PI / 4, 0, 0);
@@ -8742,11 +8748,11 @@ void main() {
                 //mesh.rotation.set(Math.PI / 2, 0, 0);
                 this.scene.add(this.groups.basis);
                 {
-                    collada$1.load_model('collada/revolver', 30, (model) => {
+                    collada$1.load_model('collada/lasermusket', 22, (model) => {
                         console.log('add gun to pawn');
                         model.rotation.set(0, 0, Math.PI / 2);
-                        model.position.set(0, -armsHeight + armsSize / 2, 0);
-                        this.groups.armr.add(model);
+                        //model.position.set(0, -armsHeight + armsSize / 2, 0);
+                        this.groups.handr.add(model);
                     });
                 }
             }
@@ -8847,7 +8853,14 @@ void main() {
                     this.groups.legl.rotation.x = swoop1 * legsSwoop * this.walkSmoother;
                     this.groups.legr.rotation.x = swoop2 * legsSwoop * this.walkSmoother;
                     this.groups.arml.rotation.x = swoop1 * armsSwoop * this.walkSmoother;
+                    this.groups.arml.rotation.z = 0;
                     this.groups.armr.rotation.x = swoop2 * armsSwoop * this.walkSmoother;
+                    this.groups.armr.rotation.z = 0;
+                    this.groups.handr.rotation.x = 0;
+                    this.groups.handr.rotation.z = 0;
+                    if (this.holdingRifle) {
+                        this.groups.handr.rotation.x = -Math.PI / 2;
+                    }
                     this.groups.ground.position.x = 0;
                     this.groups.ground.position.y = -10; //+ swoop1 * swoop2 * rise * this.walkSmoother;
                     this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
@@ -8876,7 +8889,17 @@ void main() {
                             this.aiming = false;
                     }
                     if (this.aiming) {
-                        this.groups.armr.rotation.x = -Math.PI / 2;
+                        if (!this.holdingRifle) {
+                            this.groups.armr.rotation.x = -Math.PI / 2;
+                        }
+                        else {
+                            this.groups.armr.rotation.x = -Math.PI / 10;
+                            this.groups.armr.rotation.z = 0.3;
+                            this.groups.arml.rotation.x = -Math.PI / 6;
+                            this.groups.arml.rotation.z = -Math.PI / 5;
+                            this.groups.handr.rotation.x = -Math.PI / 2.4;
+                            this.groups.handr.rotation.z = -0.15;
+                        }
                     }
                     const sprite = this.shape;
                     if (((_a = this.tile) === null || _a === void 0 ? void 0 : _a.type) == 'shallow water') {

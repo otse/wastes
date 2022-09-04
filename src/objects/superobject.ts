@@ -75,6 +75,10 @@ export class superobject extends lod.obj {
     //	this.tiled();
     //	super.update();
     //}
+    /*
+    this function sadly defies logic
+    
+    */
     stack(fallthru: string[] = []) {
         let calc = 0;
         let stack = this.sector!.stacked(pts.round(this.wpos));

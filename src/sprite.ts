@@ -194,7 +194,6 @@ export class sprite extends lod.shape {
 			this.meshMask = this.mesh.clone();
 			if (this.vars.negativeMask) {
 				this.meshMask.material = this.material.clone();
-				console.log('were a negative mask');
 				this.meshMask.material.blending = THREE.CustomBlending;
 				this.meshMask.material.blendEquation = THREE.ReverseSubtractEquation;
 				
@@ -244,7 +243,7 @@ export function SpriteMaterial(parameters: MeshLambertMaterialParameters, unifor
 			vec4 worldPosition = vec4( transformed, 1.0 );
 			worldPosition = modelMatrix * worldPosition;
 
-			myPosition = (projectionMatrix * mvPosition).xy;
+			myPosition = (projectionMatrix * mvPosition).xy / 2.0 + vec2(0.5, 0.5);
 			`
 		);
 		shader.vertexShader = shader.vertexShader.replace(
@@ -268,11 +267,9 @@ export function SpriteMaterial(parameters: MeshLambertMaterialParameters, unifor
 			`
 			#include <map_fragment>
 			#ifdef MASKED
-			vec2 myPos = myPosition / 2.0;
-			myPos += vec2(0.5, 0.5);
-			vec4 texelColor = texture2D( tMask, myPos );
+			vec4 texelColor = texture2D( tMask, myPosition );
 			
-			texelColor.rgb = mix(texelColor.rgb, vec3(0.15, 0.3, 0.15), 0.8);
+			texelColor.rgb = mix(texelColor.rgb, vec3(0.15, 0.3, 0.15), 0.7);
 			
 			if (texelColor.a > 0.5)
 			diffuseColor.rgb = texelColor.rgb;

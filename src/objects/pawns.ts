@@ -31,6 +31,7 @@ export namespace pawns {
 	export class pawn extends superobject {
 		static noun = 'pawn'
 		dead = false
+		holdingRifle = true
 		isTrader = false
 		isPlayer = false
 		inventory?: inventory
@@ -289,6 +290,7 @@ export namespace pawns {
 			this.groups.body = new Group;
 			this.groups.arml = new Group;
 			this.groups.armr = new Group;
+			this.groups.handr = new Group;
 			this.groups.legl = new Group;
 			this.groups.legr = new Group;
 			this.groups.ground = new Group;
@@ -305,6 +307,7 @@ export namespace pawns {
 			this.groups.legl.add(this.meshes.legl);
 			this.groups.legr.add(this.meshes.legr);
 
+			this.groups.armr.add(this.groups.handr);
 			this.groups.head.add(this.groups.gasMask);
 
 			/*this.groups.gungrip.add(this.meshes.gungrip);
@@ -322,6 +325,9 @@ export namespace pawns {
 
 			this.groups.basis.add(this.groups.ground);
 			this.groups.basis.add(this.meshes.water);
+
+			//this.groups.handr.add(new AxesHelper(10));
+			this.groups.handr.position.set(0, -armsHeight, 0)
 
 			this.groups.head.position.set(0, bodyHeight / 2 + headSize / 2, 0);
 			this.groups.gasMask.position.set(0, -headSize / 2, headSize / 1.5);
@@ -354,12 +360,12 @@ export namespace pawns {
 
 			const loadGunAgain = true;
 			if (loadGunAgain) {
-				const gun = collada.load_model('collada/revolver', 30, (model) => {
+				const gun = collada.load_model('collada/lasermusket', 22, (model) => {
 					console.log('add gun to pawn');
-					
+
 					model.rotation.set(0, 0, Math.PI / 2);
-					model.position.set(0, -armsHeight + armsSize / 2, 0);
-					this.groups.armr.add(model);
+					//model.position.set(0, -armsHeight + armsSize / 2, 0);
+					this.groups.handr.add(model);
 				});
 			}
 
@@ -481,9 +487,18 @@ export namespace pawns {
 				this.groups.legl.rotation.x = swoop1 * legsSwoop * this.walkSmoother;
 				this.groups.legr.rotation.x = swoop2 * legsSwoop * this.walkSmoother;
 				this.groups.arml.rotation.x = swoop1 * armsSwoop * this.walkSmoother;
+				this.groups.arml.rotation.z = 0;
 				this.groups.armr.rotation.x = swoop2 * armsSwoop * this.walkSmoother;
+				this.groups.armr.rotation.z = 0;
+				this.groups.handr.rotation.x = 0;
+				this.groups.handr.rotation.z = 0;
+				if (this.holdingRifle) {
+					this.groups.handr.rotation.x = -Math.PI / 2;
+				}
+				else {
+				}
 				this.groups.ground.position.x = 0;
-				this.groups.ground.position.y = -10 ;//+ swoop1 * swoop2 * rise * this.walkSmoother;
+				this.groups.ground.position.y = -10;//+ swoop1 * swoop2 * rise * this.walkSmoother;
 				this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
 
 				if (this.type == 'you') {
@@ -515,7 +530,20 @@ export namespace pawns {
 						this.aiming = false;
 				}
 				if (this.aiming) {
-					this.groups.armr.rotation.x = -Math.PI / 2;
+					if (!this.holdingRifle) {
+						this.groups.armr.rotation.x = -Math.PI / 2;
+					}
+					else {
+						this.groups.armr.rotation.x = -Math.PI / 10;
+						this.groups.armr.rotation.z = 0.3;
+						this.groups.arml.rotation.x = -Math.PI / 6;
+						this.groups.arml.rotation.z = -Math.PI / 5;
+						this.groups.handr.rotation.x = -Math.PI / 2.4;
+						this.groups.handr.rotation.z = -0.15;
+					}
+				}
+				else {
+
 				}
 
 				const sprite = this.shape as sprite;
