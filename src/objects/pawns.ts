@@ -484,6 +484,9 @@ export namespace pawns {
 				const swoop1 = Math.cos(Math.PI * this.swoop);
 				const swoop2 = Math.cos(Math.PI * this.swoop - Math.PI);
 
+				this.groups.head.rotation.y = 0;
+				this.groups.head.rotation.z = 0;
+
 				this.groups.legl.rotation.x = swoop1 * legsSwoop * this.walkSmoother;
 				this.groups.legr.rotation.x = swoop2 * legsSwoop * this.walkSmoother;
 				this.groups.arml.rotation.x = swoop1 * armsSwoop * this.walkSmoother;
@@ -534,12 +537,15 @@ export namespace pawns {
 						this.groups.armr.rotation.x = -Math.PI / 2;
 					}
 					else {
-						this.groups.armr.rotation.x = -Math.PI / 10;
-						this.groups.armr.rotation.z = 0.3;
+						this.groups.armr.rotation.x = -Math.PI / 10; // arm forward
+						this.groups.armr.rotation.z = 0.15; // arm outward
 						this.groups.arml.rotation.x = -Math.PI / 6;
 						this.groups.arml.rotation.z = -Math.PI / 5;
-						this.groups.handr.rotation.x = -Math.PI / 2.4;
-						this.groups.handr.rotation.z = -0.15;
+						this.groups.handr.rotation.x = -Math.PI / 3; // hand up
+						this.groups.handr.rotation.z = 0.3;
+						this.groups.head.rotation.z = 0.2;
+						this.groups.ground.rotation.y -= 0.4;
+						this.groups.head.rotation.y = 0.4;
 					}
 				}
 				else {
