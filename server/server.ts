@@ -163,6 +163,12 @@ function start2() {
 	zomb.walkArea = new aabb2([33, 45], [35, 51]);
 	slod.add(zomb);
 
+	// behind talker zombie
+	let zomb2 = new zombie;
+	zomb2.wpos = [45, 67];
+	zomb2.walkArea = new aabb2([43, 65], [49, 70]);
+	slod.add(zomb2);
+
 	let talker = new pawn;
 	talker.wpos = [43.8, 61.2];
 	//peacekeeper.outfit = []
@@ -684,12 +690,14 @@ class npc extends supersobj {
 				this.respawnTimer = new timer(0);
 				console.log(`npc died, setting respawn timre`);
 			}
-			else if (this.respawnTimer.elapsed(20000) && !this.stayDead) {
-				slod.remove(this);
-			}
-			else if (!this.respawned && this.respawnTimer.elapsed(5000)) {
-				this.respawned = true;
-				this.respawn(this);
+			if (!this.stayDead) {
+				if (this.respawnTimer.elapsed(20000)) {
+					slod.remove(this);
+				}
+				else if (!this.respawned && this.respawnTimer.elapsed(5000)) {
+					this.respawn(this);
+					this.respawned = true;
+				}
 			}
 		}
 	}
@@ -763,9 +771,9 @@ class pawn extends npc {
 			upper.dialogue = this.dialogue;
 			upper.subtype = this.subtype;
 			upper.wielding = this.wielding;
+			if (this.examine)
+				upper.examine = this.examine;
 		}
-		if (this.examine)
-			upper.examine = this.examine;
 		if (this.aiming)
 			upper.aiming = this.aiming;
 		if (fully || this.inventory.stamp == slod.stamp) {
@@ -919,6 +927,15 @@ class zombie extends npc {
 		if (this.dead)
 			return;
 		this.wander();
+	}
+	override respawn(oldNpc: npc) {
+		let npc = new zombie;
+		//npc.respawns = oldNpc.respawns;
+		npc.wpos = oldNpc.originalWpos;
+		npc.walkArea = oldNpc.walkArea;
+		//npc.title = oldNpc.title;
+		//npc.examine = oldNpc.examine;
+		slod.add(npc);
 	}
 }
 

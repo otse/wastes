@@ -13,6 +13,7 @@
 	width: 250px;
 	color: black;
 	bborder: 2px gray inset;
+	user-select: none;
 }
 
 .modal.trader {
@@ -50,6 +51,7 @@
 .modal .content .inventory .item {
     display: inline-block;
     margin-right: 1ex;
+	white-space: nowrap;
     /* border: 1px gray inset; */
     padding: 0px;
     margin: 2px;
@@ -127,12 +129,13 @@ option.disabled:hover {}
 .modal .gun {
 	display: block;
 	width: 200px;
-	height: 150px;
+	hheight: 150px;
 }
 
 .area {
 	position: absolute;
 	color: white;
+	user-select: none;
 	font-size: 2em;
 	right: 20%;
 	bottom: 20%;

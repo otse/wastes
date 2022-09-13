@@ -479,7 +479,7 @@ void main() {
 		      new is ${pts.to_string(ren.screenCorrected)}`);
             ren.target.setSize(ren.screenCorrected[0], ren.screenCorrected[1]);
             ren.targetMask.setSize(ren.screenCorrected[0], ren.screenCorrected[1]);
-            ren.plane = new THREE.PlaneBufferGeometry(ren.screenCorrected[0], ren.screenCorrected[1]);
+            ren.plane = new THREE.PlaneGeometry(ren.screenCorrected[0], ren.screenCorrected[1]);
             if (ren.quadPost)
                 ren.quadPost.geometry = ren.plane;
             {
@@ -803,6 +803,7 @@ void main() {
                 this.size = [100, 100];
                 this.ro = 0;
                 this.z = 0; // z is only used by tiles
+                this.calcz = 0;
                 this.height = 0;
                 this.heightAdd = 0;
                 this.counts[1]++;
@@ -1077,6 +1078,8 @@ void main() {
             if (this.vars.masked) {
                 defines.MASKED = 1;
             }
+            const c = this.vars.maskColor || [0.15, 0.3, 0.15];
+            const maskColor = new THREE.Vector3(c[0], c[1], c[2]);
             this.material = SpriteMaterial({
                 map: ren$1.load_texture(`${this.vars.tuple[3]}.png`, 0),
                 transparent: true,
@@ -1086,7 +1089,8 @@ void main() {
                 depthTest: false,
             }, {
                 myUvTransform: this.myUvTransform,
-                masked: this.vars.masked
+                masked: this.vars.masked,
+                maskColor: maskColor
             }, defines);
             this.mesh = new THREE.Mesh(this.geometry, this.material);
             this.mesh.frustumCulled = false;
@@ -1118,6 +1122,7 @@ void main() {
             shader.uniforms.myUvTransform = { value: uniforms.myUvTransform };
             if (uniforms.masked) {
                 shader.uniforms.tMask = { value: ren$1.targetMask.texture };
+                shader.uniforms.maskColor = { value: uniforms.maskColor };
                 console.log('add tmask');
             }
             shader.vertexShader = shader.vertexShader.replace(`#include <common>`, `#include <common>
@@ -1125,8 +1130,8 @@ void main() {
 			uniform mat3 myUvTransform;
 			`);
             shader.vertexShader = shader.vertexShader.replace(`#include <worldpos_vertex>`, `#include <worldpos_vertex>
-			vec4 worldPosition = vec4( transformed, 1.0 );
-			worldPosition = modelMatrix * worldPosition;
+			//vec4 worldPosition = vec4( transformed, 1.0 );
+			//worldPosition = modelMatrix * worldPosition;
 
 			myPosition = (projectionMatrix * mvPosition).xy / 2.0 + vec2(0.5, 0.5);
 			`);
@@ -1139,13 +1144,14 @@ void main() {
 			#include <map_pars_fragment>
 			varying vec2 myPosition;
 			uniform sampler2D tMask;
+			uniform vec3 maskColor;
 			`);
             shader.fragmentShader = shader.fragmentShader.replace(`#include <map_fragment>`, `
 			#include <map_fragment>
 			#ifdef MASKED
 			vec4 texelColor = texture2D( tMask, myPosition );
 			
-			texelColor.rgb = mix(texelColor.rgb, vec3(0.15, 0.3, 0.15), 0.7);
+			texelColor.rgb = mix(texelColor.rgb, maskColor, 0.7);
 			
 			if (texelColor.a > 0.5)
 			diffuseColor.rgb = texelColor.rgb;
@@ -1453,6 +1459,7 @@ void main() {
     var colors$1 = colors;
 
     class superobject extends lod$1.obj {
+        //calc = 0 // used for tree leaves
         constructor(counts) {
             super(counts);
             this.id = 'an_objected_0';
@@ -1464,7 +1471,6 @@ void main() {
             this.solid = true;
             this.cell = [0, 0];
             this.heightAdd = 0;
-            this.calc = 0; // used for tree leaves
         }
         tiled() {
             this.tile = tiles$1.get(pts.round(this.wpos));
@@ -1515,12 +1521,13 @@ void main() {
         //	super.update();
         //}
         /*
-        this function sadly defies logic
+        this function stacks with z and height
         
         */
         stack(fallthru = []) {
             let calc = 0;
             let stack = this.sector.stacked(pts.round(this.wpos));
+            calc += this.z; // this fixes a bug
             for (let obj of stack) {
                 if (obj.is_type(fallthru))
                     continue;
@@ -1528,9 +1535,10 @@ void main() {
                     break;
                 calc += obj.z + obj.height;
             }
-            this.calc = calc;
-            if (this.shape)
-                this.shape.rup = calc + this.heightAdd;
+            this.calcz = calc;
+            const sprite = this.shape;
+            if (sprite)
+                sprite.rup = calc + this.heightAdd;
         }
         superobject_setup_context_menu() {
         }
@@ -6174,6 +6182,191 @@ void main() {
     })(collada || (collada = {}));
     var collada$1 = collada;
 
+    /*
+    this file is a success attempt at piecing apart a sketchup building
+    it however isn't more convenient than making buildings with colormaps
+
+    the code deserves to stay around
+    */
+    function building_factory() {
+        new building_parts();
+        /*let prefab = new building;
+        prefab.wpos = [45, 48];
+        prefab.produce();
+        lod.add(prefab);*/
+    }
+    class building_parts {
+        constructor(corner = [41, 42]) {
+            collada$1.load_model('collada/watertower', 1, (model) => {
+                model.rotation.set(0, 0, 0);
+                //this.group.add(model);
+                //this.group.position.set(0, -23, 0);
+                //this.scene.add(new AxesHelper(100));
+                console.log('add building to scene');
+                function convert(object, target, array, bias) {
+                    if (object.name && object.name.includes(target)) {
+                        let cloned = object.clone();
+                        cloned.scale.multiplyScalar(0.43);
+                        let z = 0;
+                        //console.log("making wall ", cloned.name, cloned);
+                        let height = object.name.split(target)[1];
+                        if (height.includes("_")) {
+                            const split = height.split("_");
+                            height = parseInt(split[0]);
+                            z = parseInt(split[1]);
+                            console.log('Z is', z);
+                        }
+                        else {
+                            height = parseInt(height);
+                        }
+                        console.log(`${target} height ${height}`);
+                        let thing = new prefab;
+                        array.push(thing);
+                        thing.model = cloned;
+                        thing.type = target;
+                        thing.bias = bias;
+                        thing.height = height;
+                        thing.z = z;
+                        //
+                        cloned.position.set(0, 0, 0);
+                        let pos = [object.position.x, object.position.y];
+                        pos = pts.divide(pos, 39.37008);
+                        pos = pts.round(pos);
+                        pos = [-pos[1], pos[0]];
+                        //console.log("prefab pos", pos);
+                        pos = pts.add(pos, corner);
+                        //console.log('original position is', object.position, pos);
+                        thing.wpos = pos;
+                        lod$1.add(thing);
+                    }
+                }
+                let walls = [];
+                let waters = [];
+                let floors = [];
+                function traverse_floors(object) {
+                    convert(object, "floor", floors, .4);
+                }
+                function traverse_walls(object) {
+                    convert(object, "wall", walls, 1.0);
+                }
+                function traverse_water(object) {
+                    convert(object, "water", waters, 0.5);
+                }
+                model.traverse(traverse_floors);
+                model.traverse((object) => {
+                    if (object.name && object.name.includes('door')) {
+                        console.log('this a door');
+                        let pos = [object.position.x, object.position.y];
+                        pos = pts.divide(pos, 39.37008);
+                        pos = pts.round(pos);
+                        pos = [-pos[1], pos[0]];
+                        pos = pts.add(pos, corner);
+                        let door = new objects$1.door;
+                        door.cell = [1, 0];
+                        door.wpos = pos;
+                        lod$1.add(door);
+                        console.log('placing door');
+                    }
+                });
+                model.traverse(traverse_walls);
+                model.traverse(traverse_water);
+            });
+        }
+    }
+    class prefab extends superobject {
+        constructor() {
+            super([0, 0]);
+            // render this superobject
+            this.rendered = 0;
+            this.size = [24, 40];
+        }
+        render() {
+            this.rendered++;
+            // assume after 60 frames we've rendered this prefab with textures
+            if (this.rendered > 60)
+                return;
+            const sprite = this.shape;
+            sprite.material.map = this.target.texture;
+            ren$1.renderer.setRenderTarget(this.target);
+            ren$1.renderer.clear();
+            ren$1.renderer.render(this.scene, this.camera);
+        }
+        tick() {
+            this.render();
+            /*
+            if (app.key('7')) {
+                this.sun.position.x -= 1;
+            }
+            if (app.key('9')) {
+                this.sun.position.x += 1;
+            }
+            if (app.key('4')) {
+                this.sun.position.y -= 1;
+            }
+            if (app.key('6')) {
+                this.sun.position.y += 1;
+            }
+            if (app.key('1')) {
+                this.sun.position.z -= 1;
+            }
+            if (app.key('3')) {
+                this.sun.position.z += 1;
+            }
+            */
+            //console.log('sun', this.sun.position);
+        }
+        set_3d() {
+            // Set scale to increase pixels exponentially
+            const scale = 1;
+            let size = pts.mult(this.size, scale);
+            this.target = ren$1.make_render_target(size[0], size[1]);
+            this.camera = ren$1.make_orthographic_camera(size[0], size[1]);
+            this.scene = new THREE.Scene();
+            this.group = new THREE.Group();
+            //this.group.add(new AxesHelper(25));
+            this.scene.add(this.group);
+            this.scene.scale.set(scale, scale, scale);
+            //this.scene.background = new Color('gray');
+            this.scene.rotation.set(Math.PI / 6, Math.PI / 4, 0);
+            this.group.rotation.set(-Math.PI / 2, 0, 0);
+            this.scene.position.set(0, 0, 0);
+            let amb = new THREE.AmbientLight('#888888');
+            this.scene.add(amb);
+            this.sun = new THREE.DirectionalLight(0xffffff, 0.25);
+            const size2 = 10;
+            this.sun.position.set(-size2, 0, size2 / 2);
+            //sun.add(new AxesHelper(100));
+            this.group.add(this.sun);
+            this.group.add(this.sun.target);
+            //sun.target.add(new AxesHelper);
+        }
+        create() {
+            //console.log('builing create');
+            //this.size = [24, 40];
+            let shape = new sprite({
+                binded: this,
+                tuple: sprites$1.test100,
+                cell: [0, 0],
+                orderBias: this.bias,
+                masked: true,
+                maskColor: [0.3, 0.3, 0.3]
+            });
+            shape.show();
+            this.rendered = 0;
+            this.set_3d();
+            shape.material.map = this.target.texture;
+            //const house = collada.load_model('collada/building', 18, (model) => {
+            //model.rotation.set(0, 0, 0);
+            this.group.add(this.model);
+            this.group.position.set(0, -23, 0);
+            //this.group.add(new AxesHelper(100));
+            //console.log('add building to scene');
+            //});
+            this.stack();
+            //console.log('after stack', this.shape);
+        }
+    }
+
     var objects;
     (function (objects) {
         function factory(type, pixel, pos, hints = {}) {
@@ -6282,6 +6475,7 @@ void main() {
         objects.register = register;
         function start() {
             console.log(' objects start ');
+            building_factory();
             //prefab.wpos = [45, 48];
             //prefab.produce();
             //lod.add(prefab);
@@ -6304,7 +6498,7 @@ void main() {
             for (let obj of at) {
                 if (obj.is_type(['door']))
                     return false;
-                if (obj.is_type(impassable)) {
+                if (obj.is_type(impassable) && obj.calcz < 20) {
                     return true;
                 }
             }
@@ -6405,7 +6599,7 @@ void main() {
                     binded: this,
                     tuple: sprites$1.dporch,
                     cell: this.cell,
-                    orderBias: -0.45,
+                    orderBias: 0.1,
                     color: color
                 });
                 this.stack();
@@ -6472,7 +6666,7 @@ void main() {
                 new sprite({
                     binded: this,
                     tuple: sprites$1.ddecidtreetrunk,
-                    orderBias: 0.6,
+                    orderBias: 1.0,
                     mask: true,
                     negativeMask: true
                 });
@@ -6577,7 +6771,7 @@ void main() {
                 const tree = this.hints.tree;
                 if (this.shape) {
                     const sprite = this.shape;
-                    this.z = tree.calc + tree.height;
+                    this.z = tree.calcz + tree.height;
                     sprite.rup = this.z;
                     if (this.hasVines) {
                         sprite.rup2 = -33;
@@ -7161,7 +7355,7 @@ void main() {
                     let next = document.createElement('p');
                     next.innerHTML += '<hr>guns:<br />';
                     if (pawns$1.you.gun)
-                        next.innerHTML += `<img class="gun" src="tex/guns/${pawns$1.you.gun}.png">`;
+                        next.innerHTML += `<img class="gun" src="tex/guns/${pawns$1.you.gun.name}.png">`;
                     this.modal.content.append(next);
                 }
                 else if (!open && this.modal) {
@@ -8176,7 +8370,7 @@ void main() {
                     this.groups.ground.rotation.y = 0;
                     this.groups.ground.rotation.z = -Math.PI / 2;
                     const sprite = this.shape;
-                    sprite.vars.orderBias = -0.25;
+                    sprite.vars.orderBias = 1.05;
                 }
                 this.render();
             }
@@ -8358,8 +8552,8 @@ void main() {
                             obj.netwpos = wpos;
                             obj.netangle = angle;
                             obj.aiming = aiming;
-                            obj.dead = dead;
                         }
+                        obj.dead = dead;
                         if (inventory) {
                             //console.log('update inventory');
                             obj.inventory = inventory;
@@ -8794,12 +8988,11 @@ void main() {
                 this.re_wield();
             }
             re_wield() {
+                this.groups.handr.remove(...this.groups.handr.children);
                 if (this.wielding != 'none') {
                     this.gun = guns$1.get(this.wielding);
                     const group = this.gun.model.clone();
                     group.rotation.set(0, 0, Math.PI / 2);
-                    //model.position.set(0, -armsHeight + armsSize / 2, 0);
-                    this.groups.handr.remove(...this.groups.handr.children);
                     this.groups.handr.add(group);
                 }
             }
@@ -8941,16 +9134,16 @@ void main() {
                         if (this.gun && this.gun.handgun) {
                             this.groups.armr.rotation.x = -Math.PI / 2;
                         }
-                        else {
+                        else if (this.gun && !this.gun.handgun) {
                             this.groups.armr.rotation.x = -Math.PI / 9; // arm forward
-                            this.groups.armr.rotation.z = 0.2; // arm inward
-                            this.groups.arml.rotation.x = -Math.PI / 6;
-                            this.groups.arml.rotation.z = -Math.PI / 5;
-                            this.groups.handr.rotation.x = -Math.PI / 3; // hand up
-                            this.groups.handr.rotation.z = 0.4; // hand left right
-                            this.groups.head.rotation.z = 0.2;
-                            this.groups.ground.rotation.y -= 0.5;
-                            this.groups.head.rotation.y = 0.5;
+                            this.groups.armr.rotation.z = 0.1; // arm inward
+                            this.groups.arml.rotation.x = -Math.PI / 6; // forward
+                            this.groups.arml.rotation.z = -Math.PI / 5; // inward
+                            this.groups.handr.rotation.x = -Math.PI / 2.5; // hand up
+                            //this.groups.handr.rotation.z = -0.05; // hand left right
+                            //this.groups.head.rotation.z = 0.2;
+                            //this.groups.head.rotation.y = 0.5;
+                            //this.groups.ground.rotation.y -= 0.5;
                         }
                     }
                     const sprite = this.shape;
@@ -8974,8 +9167,10 @@ void main() {
                     this.groups.ground.rotation.x = Math.PI / 2;
                     this.groups.ground.rotation.y = 0;
                     this.groups.ground.rotation.z = -Math.PI / 2;
+                    this.groups.handr.rotation.x = 0;
+                    this.groups.handr.rotation.z = 0;
                     const sprite = this.shape;
-                    sprite.vars.orderBias = -0.25;
+                    sprite.vars.orderBias = 1.05;
                 }
             }
             nettick() {
@@ -9011,10 +9206,11 @@ void main() {
                 //if (this.type == 'you')
                 //	this.wpos = tiles.hovering!.wpos;
                 this.make();
-                this.move();
+                if (!this.dead)
+                    this.move();
+                this.tiled();
                 this.animateBodyParts();
                 this.render();
-                this.tiled();
                 //this.tile?.paint();
                 (_a = this.sector) === null || _a === void 0 ? void 0 : _a.swap(this);
                 // shade the pawn
@@ -9179,7 +9375,7 @@ void main() {
                     this.color = wastes.colormap.pixel(this.wpos).arrayRef;
                     this.color = shadows$1.calc(this.color, this.wpos);
                 }
-                this.myOrderBias = -2.; // + (this.z / 4);// + (this.height / 10);
+                this.myOrderBias = (this.z / 5); // + (this.height / 10);
                 let shape = new sprite({
                     binded: this,
                     tuple: this.tuple,

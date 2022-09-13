@@ -304,7 +304,7 @@ export namespace zombies {
 				this.groups.ground.rotation.z = -Math.PI / 2;
 
 				const sprite = this.shape as sprite;
-				sprite.vars.orderBias = -0.25;
+				sprite.vars.orderBias = 1.05;
 			}
 
 			this.render();

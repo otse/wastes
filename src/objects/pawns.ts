@@ -363,14 +363,18 @@ export namespace pawns {
 			this.re_wield();
 		}
 		re_wield() {
+			this.groups.handr.remove(...this.groups.handr.children);
+
 			if (this.wielding != 'none') {
 				this.gun = guns.get(this.wielding)!;
-				const group = this.gun.model.clone();
 
+				const group = this.gun.model.clone();
 				group.rotation.set(0, 0, Math.PI / 2);
-				//model.position.set(0, -armsHeight + armsSize / 2, 0);
-				this.groups.handr.remove(...this.groups.handr.children);
+
 				this.groups.handr.add(group);
+			}
+			else
+			{
 			}
 		}
 		render() {
@@ -539,16 +543,16 @@ export namespace pawns {
 					if (this.gun && this.gun.handgun) {
 						this.groups.armr.rotation.x = -Math.PI / 2;
 					}
-					else {
+					else if (this.gun && !this.gun.handgun) {
 						this.groups.armr.rotation.x = -Math.PI / 9; // arm forward
-						this.groups.armr.rotation.z = 0.2; // arm inward
-						this.groups.arml.rotation.x = -Math.PI / 6;
-						this.groups.arml.rotation.z = -Math.PI / 5;
-						this.groups.handr.rotation.x = -Math.PI / 3; // hand up
-						this.groups.handr.rotation.z = 0.4; // hand left right
-						this.groups.head.rotation.z = 0.2;
-						this.groups.ground.rotation.y -= 0.5;
-						this.groups.head.rotation.y = 0.5;
+						this.groups.armr.rotation.z = 0.1; // arm inward
+						this.groups.arml.rotation.x = -Math.PI / 6; // forward
+						this.groups.arml.rotation.z = -Math.PI / 5; // inward
+						this.groups.handr.rotation.x = -Math.PI / 2.5; // hand up
+						//this.groups.handr.rotation.z = -0.05; // hand left right
+						//this.groups.head.rotation.z = 0.2;
+						//this.groups.head.rotation.y = 0.5;
+						//this.groups.ground.rotation.y -= 0.5;
 					}
 				}
 				else {
@@ -577,9 +581,11 @@ export namespace pawns {
 				this.groups.ground.rotation.x = Math.PI / 2;
 				this.groups.ground.rotation.y = 0;
 				this.groups.ground.rotation.z = -Math.PI / 2;
+				this.groups.handr.rotation.x = 0;
+				this.groups.handr.rotation.z = 0;
 
 				const sprite = this.shape as sprite;
-				sprite.vars.orderBias = -0.25;
+				sprite.vars.orderBias = 1.05;
 			}
 
 		}
@@ -633,13 +639,15 @@ export namespace pawns {
 
 			this.make();
 
-			this.move();
+			if (!this.dead)
+				this.move();
+
+			this.tiled();
 
 			this.animateBodyParts();
 
 			this.render();
 
-			this.tiled();
 			//this.tile?.paint();
 			this.sector?.swap(this);
 

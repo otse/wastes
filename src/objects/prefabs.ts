@@ -22,7 +22,7 @@ the code deserves to stay around
 
 export function building_factory() {
 
-	//new building_parts();
+	new building_parts();
 
 	/*let prefab = new building;
 	prefab.wpos = [45, 48];
@@ -31,9 +31,9 @@ export function building_factory() {
 }
 
 class building_parts {
-	constructor(corner: vec2 = [45, 48]) {
+	constructor(corner: vec2 = [41, 42]) {
 
-		const house = collada.load_model('collada/building', 1, (model) => {
+		const house = collada.load_model('collada/watertower', 1, (model) => {
 			model.rotation.set(0, 0, 0);
 
 			//this.group.add(model);
@@ -46,8 +46,18 @@ class building_parts {
 					let cloned = object.clone();
 					cloned.scale.multiplyScalar(0.43);
 
+					let z = 0;
 					//console.log("making wall ", cloned.name, cloned);
-					let height = parseInt(object.name.split(target)[1]);
+					let height = object.name.split(target)[1];
+					if (height.includes("_")) {
+						const split = height.split("_");
+						height = parseInt(split[0]);
+						z = parseInt(split[1]);
+						console.log('Z is', z);
+					}
+					else {
+						height = parseInt(height);
+					}
 					console.log(`${target} height ${height}`);
 
 					let thing = new prefab;
@@ -56,13 +66,14 @@ class building_parts {
 					thing.type = target;
 					thing.bias = bias;
 					thing.height = height;
+					thing.z = z;
 					//
 					cloned.position.set(0, 0, 0);
 					let pos: vec2 = [object.position.x, object.position.y];
 					pos = pts.divide(pos, 39.37008);
 					pos = pts.round(pos);
 					pos = [-pos[1], pos[0]];
-					console.log("prefab pos", pos);
+					//console.log("prefab pos", pos);
 					pos = pts.add(pos, corner);
 					//console.log('original position is', object.position, pos);
 					thing.wpos = pos;
@@ -71,6 +82,7 @@ class building_parts {
 			}
 
 			let walls: prefab[] = [];
+			let waters: prefab[] = [];
 			let floors: prefab[] = [];
 
 			function traverse_floors(object) {
@@ -80,7 +92,11 @@ class building_parts {
 			function traverse_walls(object) {
 				convert(object, "wall", walls, 1.0);
 			}
-			
+
+			function traverse_water(object) {
+				convert(object, "water", waters, 0.5);
+			}
+
 			model.traverse(traverse_floors);
 
 			model.traverse((object) => {
@@ -96,16 +112,17 @@ class building_parts {
 					let door = new objects.door;
 					door.cell = [1, 0];
 					door.wpos = pos;
-					
+
 					lod.add(door);
 
 					console.log('placing door');
-					
-					
+
+
 				}
 			});
 
 			model.traverse(traverse_walls);
+			model.traverse(traverse_water);
 
 		});
 	}
@@ -126,7 +143,16 @@ class prefab extends superobject {
 		this.size = [24, 40];
 	}
 	// render this superobject
+
+	rendered = 0
 	render() {
+
+		this.rendered++;
+
+		// assume after 60 frames we've rendered this prefab with textures
+		if (this.rendered > 60)
+			return;
+
 		const sprite = this.shape as sprite;
 		sprite.material.map = this.target.texture;
 
@@ -138,6 +164,7 @@ class prefab extends superobject {
 
 		this.render();
 
+		/*
 		if (app.key('7')) {
 			this.sun.position.x -= 1;
 		}
@@ -156,9 +183,9 @@ class prefab extends superobject {
 		if (app.key('3')) {
 			this.sun.position.z += 1;
 		}
+		*/
+		//console.log('sun', this.sun.position);
 
-		console.log('sun', this.sun.position);
-		
 	}
 	set_3d() {
 
@@ -199,10 +226,14 @@ class prefab extends superobject {
 			binded: this,
 			tuple: sprites.test100,
 			cell: [0, 0],
-			orderBias: this.bias
+			orderBias: this.bias,
+			masked: true,
+			maskColor: [0.3, 0.3, 0.3]
 		});
 
 		shape.show();
+
+		this.rendered = 0;
 
 		this.set_3d();
 
@@ -219,8 +250,8 @@ class prefab extends superobject {
 		//});
 
 		this.stack();
-		console.log('after stack', this.shape);
-		
+		//console.log('after stack', this.shape);
+
 	}
 }
 

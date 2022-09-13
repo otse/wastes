@@ -276,6 +276,7 @@ namespace lod {
 		sector: sector | null
 		ro = 0
 		z = 0 // z is only used by tiles
+		calcz = 0
 		height = 0
 		heightAdd = 0
 		constructor(

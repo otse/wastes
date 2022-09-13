@@ -338,7 +338,7 @@ namespace win {
 				let next = document.createElement('p');
 				next.innerHTML += '<hr>guns:<br />';
 				if (pawns.you.gun)
-					next.innerHTML += `<img class="gun" src="tex/guns/${pawns.you.gun}.png">`;
+					next.innerHTML += `<img class="gun" src="tex/guns/${pawns.you.gun.name}.png">`;
 
 				this.modal.content.append(next);
 			}

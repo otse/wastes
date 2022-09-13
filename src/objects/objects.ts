@@ -178,7 +178,7 @@ namespace objects {
 		for (let obj of at) {
 			if (obj.is_type(['door']))
 				return false;
-			if (obj.is_type(impassable)) {
+			if (obj.is_type(impassable) && obj.calcz < 20) {
 				return true;
 			}
 		}
@@ -298,7 +298,7 @@ namespace objects {
 				binded: this,
 				tuple: sprites.dporch,
 				cell: this.cell,
-				orderBias: -0.45,
+				orderBias: 0.1,
 				color: color
 			});
 			this.stack();
@@ -362,7 +362,7 @@ namespace objects {
 			let shape = new sprite({
 				binded: this,
 				tuple: sprites.ddecidtreetrunk,
-				orderBias: 0.6,
+				orderBias: 1.0,
 				mask: true,
 				negativeMask: true
 			});
@@ -481,7 +481,7 @@ namespace objects {
 			const tree = this.hints.tree;
 			if (this.shape) {
 				const sprite = this.shape as sprite;
-				this.z = tree.calc + tree.height;
+				this.z = tree.calcz + tree.height;
 				sprite.rup = this.z;
 
 				if (this.hasVines) {

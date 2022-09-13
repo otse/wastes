@@ -132,8 +132,8 @@ export namespace client {
 							obj.netwpos = wpos;
 							obj.netangle = angle;
 							obj.aiming = aiming;
-							obj.dead = dead;
 						}
+						obj.dead = dead;
 						if (inventory) {
 							//console.log('update inventory');
 							obj.inventory = inventory;

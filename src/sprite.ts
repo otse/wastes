@@ -1,4 +1,4 @@
-import { Color, Mesh, BoxGeometry, PlaneGeometry, MeshLambertMaterial, MeshLambertMaterialParameters, Shader, Matrix3, Vector2 } from "three";
+import { Color, Mesh, Vector3, BoxGeometry, PlaneGeometry, MeshLambertMaterial, MeshLambertMaterialParameters, Shader, Matrix3, Vector2 } from "three";
 import aabb2 from "./aabb2";
 
 import lod, { numbers } from "./lod";
@@ -17,7 +17,8 @@ interface SpriteParameters {
 	orderBias?: number
 	mask?: boolean,
 	negativeMask?: boolean
-	masked?: boolean
+	masked?: boolean,
+	maskColor?: vec3
 };
 
 export namespace sprite {
@@ -176,6 +177,8 @@ export class sprite extends lod.shape {
 		if (this.vars.masked) {
 			defines.MASKED = 1;
 		}
+		const c = this.vars.maskColor || [0.15, 0.3, 0.15];
+		const maskColor = new Vector3(c[0], c[1], c[2]);
 		this.material = SpriteMaterial({
 			map: ren.load_texture(`${this.vars.tuple[3]}.png`, 0),
 			transparent: true,
@@ -185,7 +188,8 @@ export class sprite extends lod.shape {
 			depthTest: false,
 		}, {
 			myUvTransform: this.myUvTransform,
-			masked: this.vars.masked
+			masked: this.vars.masked,
+			maskColor: maskColor
 		}, defines);
 		this.mesh = new Mesh(this.geometry, this.material);
 		this.mesh.frustumCulled = false;
@@ -228,6 +232,7 @@ export function SpriteMaterial(parameters: MeshLambertMaterialParameters, unifor
 		shader.uniforms.myUvTransform = { value: uniforms.myUvTransform }
 		if (uniforms.masked) {
 			shader.uniforms.tMask = { value: ren.targetMask.texture }
+			shader.uniforms.maskColor = { value: uniforms.maskColor }
 			console.log('add tmask');
 		}
 		shader.vertexShader = shader.vertexShader.replace(
@@ -240,8 +245,8 @@ export function SpriteMaterial(parameters: MeshLambertMaterialParameters, unifor
 		shader.vertexShader = shader.vertexShader.replace(
 			`#include <worldpos_vertex>`,
 			`#include <worldpos_vertex>
-			vec4 worldPosition = vec4( transformed, 1.0 );
-			worldPosition = modelMatrix * worldPosition;
+			//vec4 worldPosition = vec4( transformed, 1.0 );
+			//worldPosition = modelMatrix * worldPosition;
 
 			myPosition = (projectionMatrix * mvPosition).xy / 2.0 + vec2(0.5, 0.5);
 			`
@@ -260,6 +265,7 @@ export function SpriteMaterial(parameters: MeshLambertMaterialParameters, unifor
 			#include <map_pars_fragment>
 			varying vec2 myPosition;
 			uniform sampler2D tMask;
+			uniform vec3 maskColor;
 			`
 		);
 		shader.fragmentShader = shader.fragmentShader.replace(
@@ -269,7 +275,7 @@ export function SpriteMaterial(parameters: MeshLambertMaterialParameters, unifor
 			#ifdef MASKED
 			vec4 texelColor = texture2D( tMask, myPosition );
 			
-			texelColor.rgb = mix(texelColor.rgb, vec3(0.15, 0.3, 0.15), 0.7);
+			texelColor.rgb = mix(texelColor.rgb, maskColor, 0.7);
 			
 			if (texelColor.a > 0.5)
 			diffuseColor.rgb = texelColor.rgb;

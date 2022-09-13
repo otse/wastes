@@ -1,4 +1,4 @@
-import { default as THREE, OrthographicCamera, PerspectiveCamera, Clock, Scene, WebGLRenderer, Texture, TextureLoader, WebGLRenderTarget, ShaderMaterial, Mesh, PlaneBufferGeometry, Color, NearestFilter, RGBAFormat, Group, Renderer as ren, AmbientLight, DirectionalLight } from 'three';
+import { default as THREE, OrthographicCamera, PlaneGeometry, PerspectiveCamera, Clock, Scene, WebGLRenderer, Texture, TextureLoader, WebGLRenderTarget, ShaderMaterial, Mesh, PlaneBufferGeometry, Color, NearestFilter, RGBAFormat, Group, AmbientLight, DirectionalLight } from 'three';
 
 import app from './app';
 import pts from './pts';
@@ -263,7 +263,7 @@ namespace ren {
 		target.setSize(screenCorrected[0], screenCorrected[1]);
 		targetMask.setSize(screenCorrected[0], screenCorrected[1]);
 
-		plane = new PlaneBufferGeometry(screenCorrected[0], screenCorrected[1]);
+		plane = new PlaneGeometry(screenCorrected[0], screenCorrected[1]);
 
 		if (quadPost)
 			quadPost.geometry = plane;

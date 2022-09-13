@@ -1,4 +1,4 @@
-import { Vector2, Mesh, Shader, Texture, PlaneBufferGeometry, MeshLambertMaterial, MeshLambertMaterialParameters, Matrix3, Matrix4 } from "three";
+import { Vector2, Mesh, Shader, Texture, MeshLambertMaterial, MeshLambertMaterialParameters, Matrix3, Matrix4 } from "three";
 
 import wastes from "./wastes";
 import lod, { numbers } from "./lod";
@@ -177,7 +177,7 @@ export namespace tiles {
 				this.color = wastes.colormap.pixel(this.wpos).arrayRef;
 				this.color = shadows.calc(this.color, this.wpos);
 			}
-			this.myOrderBias = -2.;// + (this.z / 4);// + (this.height / 10);
+			this.myOrderBias = (this.z / 5);// + (this.height / 10);
 			if (dont_show_tiles)
 				return
 			let shape = new sprite({
