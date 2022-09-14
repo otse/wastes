@@ -6,6 +6,7 @@ import ren from "../renderer"
 import sprite, { hovering_sprites } from "../sprite"
 import tiles from "../tiles"
 import wastes from "../wastes"
+import prefab from "./prefabs"
 
 export class superobject extends lod.obj {
 	static focus: superobject
@@ -22,6 +23,7 @@ export class superobject extends lod.obj {
 	cell: vec2 = [0, 0]
 	heightAdd = 0
 	hints?: any
+	prefab?: prefab
 	//calc = 0 // used for tree leaves
 	constructor(counts: numbers.tally) {
 		super(counts);
@@ -38,6 +40,11 @@ export class superobject extends lod.obj {
 			sprite.material.color.set('red');
 			this.paintedRed = true;
 		}
+	}
+	override create() {
+		console.log('super create');
+		this.prefab?.create();
+		
 	}
 	override hide() {
 		console.log('superobject hide');
@@ -59,7 +66,8 @@ export class superobject extends lod.obj {
 			hovering_sprites.unhover(sprite);
 		}
 	}
-	tick() {
+	override tick() {
+		this.prefab?.tick();
 		//this.superobject_hovering_pass();
 		if (this.paintedRed) {
 			this.paintTimer += ren.delta;

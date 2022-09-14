@@ -122,7 +122,7 @@ namespace objects {
 					//factory(objects.grass, pixel, pos);
 				}
 				else if (pixel.is_color(colors.color_wheat)) {
-					factory(objects.wheat, pixel, pos);
+					//factory(objects.wheat, pixel, pos);
 				}
 				else if (pixel.is_color(colors.color_deck_and_roof)) {
 					factory(objects.deck, pixel, pos);
@@ -552,7 +552,7 @@ namespace objects {
 			this.size = [8, 10];
 			//let color =  tiles.get(this.wpos)!.color;
 			//this.cell = [Math.floor(Math.random() * 2), 0];
-			return;
+			//return;
 			let shape = new sprite({
 				binded: this,
 				tuple: sprites.dpanel,
@@ -565,7 +565,7 @@ namespace objects {
 			this.stack();
 		}
 		override tick() {
-			return;
+			//return;
 			let sprite = this.shape as sprite;
 			this.ticker += ren.delta / 60;
 			const cell = sprite.vars.cell!;

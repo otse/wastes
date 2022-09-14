@@ -22,7 +22,8 @@ the code deserves to stay around
 
 export function building_factory() {
 
-	new building_parts();
+	new building_parts('watertower', [41, 42]);
+	//new building_parts('building', [40, 48]);
 
 	/*let prefab = new building;
 	prefab.wpos = [45, 48];
@@ -31,9 +32,9 @@ export function building_factory() {
 }
 
 class building_parts {
-	constructor(corner: vec2 = [41, 42]) {
+	constructor(path, corner: vec2 = [41, 42]) {
 
-		const house = collada.load_model('collada/watertower', 1, (model) => {
+		const house = collada.load_model('collada/'+path, 1, (model) => {
 			model.rotation.set(0, 0, 0);
 
 			//this.group.add(model);
@@ -82,7 +83,7 @@ class building_parts {
 			}
 
 			let walls: prefab[] = [];
-			let waters: prefab[] = [];
+			let roofs: prefab[] = [];
 			let floors: prefab[] = [];
 
 			function traverse_floors(object) {
@@ -93,8 +94,8 @@ class building_parts {
 				convert(object, "wall", walls, 1.0);
 			}
 
-			function traverse_water(object) {
-				convert(object, "water", waters, 0.5);
+			function traverse_roofs(object) {
+				convert(object, "roof", roofs, 1.6);
 			}
 
 			model.traverse(traverse_floors);
@@ -122,7 +123,7 @@ class building_parts {
 			});
 
 			model.traverse(traverse_walls);
-			model.traverse(traverse_water);
+			model.traverse(traverse_roofs);
 
 		});
 	}

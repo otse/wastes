@@ -1484,6 +1484,11 @@ void main() {
                 this.paintedRed = true;
             }
         }
+        create() {
+            var _a;
+            console.log('super create');
+            (_a = this.prefab) === null || _a === void 0 ? void 0 : _a.create();
+        }
         hide() {
             console.log('superobject hide');
             hovering_sprites.unhover(this.shape);
@@ -1505,6 +1510,8 @@ void main() {
             }
         }
         tick() {
+            var _a;
+            (_a = this.prefab) === null || _a === void 0 ? void 0 : _a.tick();
             //this.superobject_hovering_pass();
             if (this.paintedRed) {
                 this.paintTimer += ren$1.delta;
@@ -6189,15 +6196,16 @@ void main() {
     the code deserves to stay around
     */
     function building_factory() {
-        new building_parts();
+        new building_parts('watertower', [41, 42]);
+        //new building_parts('building', [40, 48]);
         /*let prefab = new building;
         prefab.wpos = [45, 48];
         prefab.produce();
         lod.add(prefab);*/
     }
     class building_parts {
-        constructor(corner = [41, 42]) {
-            collada$1.load_model('collada/watertower', 1, (model) => {
+        constructor(path, corner = [41, 42]) {
+            collada$1.load_model('collada/' + path, 1, (model) => {
                 model.rotation.set(0, 0, 0);
                 //this.group.add(model);
                 //this.group.position.set(0, -23, 0);
@@ -6241,7 +6249,7 @@ void main() {
                     }
                 }
                 let walls = [];
-                let waters = [];
+                let roofs = [];
                 let floors = [];
                 function traverse_floors(object) {
                     convert(object, "floor", floors, .4);
@@ -6249,8 +6257,8 @@ void main() {
                 function traverse_walls(object) {
                     convert(object, "wall", walls, 1.0);
                 }
-                function traverse_water(object) {
-                    convert(object, "water", waters, 0.5);
+                function traverse_roofs(object) {
+                    convert(object, "roof", roofs, 1.6);
                 }
                 model.traverse(traverse_floors);
                 model.traverse((object) => {
@@ -6269,7 +6277,7 @@ void main() {
                     }
                 });
                 model.traverse(traverse_walls);
-                model.traverse(traverse_water);
+                model.traverse(traverse_roofs);
             });
         }
     }
@@ -6445,9 +6453,7 @@ void main() {
                     }
                     else if (pixel.is_color(colors$1.color_fence)) ;
                     else if (pixel.is_color(colors$1.color_grass)) ;
-                    else if (pixel.is_color(colors$1.color_wheat)) {
-                        factory(objects.wheat, pixel, pos);
-                    }
+                    else if (pixel.is_color(colors$1.color_wheat)) ;
                     else if (pixel.is_color(colors$1.color_deck_and_roof)) {
                         factory(objects.deck, pixel, pos);
                         factory(objects.roof, pixel, pos);
@@ -6843,10 +6849,32 @@ void main() {
                 this.size = [8, 10];
                 //let color =  tiles.get(this.wpos)!.color;
                 //this.cell = [Math.floor(Math.random() * 2), 0];
-                return;
+                //return;
+                let shape = new sprite({
+                    binded: this,
+                    tuple: sprites$1.dpanel,
+                    cell: [0, 0],
+                    //color: color,
+                    orderBias: .6
+                });
+                shape.rup2 = 15;
+                shape.rleft = 2;
+                this.stack();
             }
             tick() {
-                return;
+                //return;
+                let sprite = this.shape;
+                this.ticker += ren$1.delta / 60;
+                const cell = sprite.vars.cell;
+                if (this.ticker > 0.5) {
+                    if (cell[0] < 5)
+                        cell[0]++;
+                    else
+                        cell[0] = 0;
+                    this.ticker = 0;
+                }
+                //sprite.retransform();
+                sprite.shape_manual_update();
                 //console.log('boo');
             }
         }
@@ -9581,7 +9609,10 @@ void main() {
             crunch += `mrpos: ${pts.to_string(pts.floor(this.mrpos))}<br />`;
             crunch += '<br />';
             crunch += `lod grid size: ${lod$1.ggrid.spread * 2 + 1} / ${lod$1.ggrid.outside * 2 + 1}<br />`;
-            crunch += `mouse tile: ${pts.to_string(((_a = tiles$1.hovering) === null || _a === void 0 ? void 0 : _a.wpos) || [0, 0])}<br />`;
+            if (tiles$1.hovering) {
+                crunch += `mouse tile: ${pts.to_string(((_a = tiles$1.hovering) === null || _a === void 0 ? void 0 : _a.wpos) || [0, 0])}<br />`;
+                crunch += `mouse tile height / z: ${tiles$1.hovering.z}<br />`;
+            }
             crunch += `view center: ${pts.to_string(pts.floor(this.wpos))}<br />`;
             if (pawns$1.you)
                 crunch += `you: ${pts.to_string(pts.round(pawns$1.you.wpos))}<br />`;

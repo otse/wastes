@@ -188,7 +188,10 @@ export class view {
 		crunch += '<br />';
 
 		crunch += `lod grid size: ${lod.ggrid.spread * 2 + 1} / ${lod.ggrid.outside * 2 + 1}<br />`;
-		crunch += `mouse tile: ${pts.to_string(tiles.hovering?.wpos || [0, 0])}<br />`;
+		if (tiles.hovering) {
+			crunch += `mouse tile: ${pts.to_string(tiles.hovering?.wpos || [0, 0])}<br />`;
+			crunch += `mouse tile height / z: ${tiles.hovering.z}<br />`;
+		}
 		crunch += `view center: ${pts.to_string(pts.floor(this.wpos))}<br />`;
 		if (pawns.you)
 			crunch += `you: ${pts.to_string(pts.round(pawns.you.wpos))}<br />`;
