@@ -448,34 +448,16 @@ export namespace chickens {
 			//this.tile?.paint();
 			//this.sector?.swap(this);
 
-			let color = [1, 1, 1, 1] as vec4;
+			let input = [1, 1, 1] as vec3;
 
 			const sprite = this.shape as sprite;
 
 			// We could have been nulled due to a hide, dispose
-
-
 			if (sprite) {
-				const setShadow = () => {
-					color = shadows.calc(color, pts.round(this.wpos));
-					sprite.material.color.setRGB(color[0], color[1], color[2]);
-				}
-				this.superobject_hovering_pass();
-				/*if (sprite.mousedSquare(wastes.gview.mrpos)) {
-					sprite.material.color.set(GLOB.HOVER_COLOR);
-					hovering_sprites.hover(sprite);
-					//win.contextmenu.focus = this;
-				}
-				else if (!sprite.mousedSquare(wastes.gview.mrpos)) {
-					//if (win.contextmenu.focus == this)
-					//	win.contextmenu.focus = undefined;
-					hovering_sprites.unhover(sprite);
-					setShadow();
-				}
-				else*/ if (this.tile && this.tile.hasDeck == false) {
-					setShadow();
-				}
-				else if (!this.tile) {
+				input = this.hovering_pass();
+				
+				if (this.tile && this.tile.hasDeck == false) {
+					this.set_shadow(input);
 				}
 			}
 			else {

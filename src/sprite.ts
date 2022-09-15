@@ -12,7 +12,7 @@ interface SpriteParameters {
 	binded: lod.obj,
 	tuple: sprites.tuple,
 	cell?: vec2,
-	color?: vec4,
+	color?: vec3,
 	opacity?: number
 	orderBias?: number
 	mask?: boolean,
@@ -90,8 +90,11 @@ export class sprite extends lod.shape {
 
 		let calc = this.calc;
 
-		this.aabbScreen = new aabb2([0, 0], size);
-		calc = pts.subtract(calc, pts.divide(size, 2));
+		this.aabbScreen = new aabb2(
+			[0, 0], size);
+		
+		calc = pts.subtract(
+			calc, pts.divide(size, 2));
 
 		//calc = pts.add(calc, [this.rleft, this.rup + this.rup2]);
 		this.aabbScreen.translate(calc);
@@ -120,11 +123,13 @@ export class sprite extends lod.shape {
 
 		if (this.dimetric)
 			// move bottom left corner
-			calc = pts.add(obj.rpos, pts.divide(obj.size, 2));
+			calc = pts.add(
+				obj.rpos, pts.divide(obj.size, 2));
 		//else
 		//	calc = pts.add(obj.rpos, [0, obj.size[1]]);
 
-		calc = pts.add(calc, [this.rleft, this.rup + this.rup2]);
+		calc = pts.add(
+			calc, [this.rleft, this.rup + this.rup2]);
 
 		this.calc = calc;
 

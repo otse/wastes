@@ -367,32 +367,16 @@ export namespace zombies {
 
 			// shade the pawn
 
-			let color = [1, 1, 1, 1] as vec4;
+			let input = [1, 1, 1] as vec3;
 
 			const sprite = this.shape as sprite;
 
 			// We could have been nulled due to a hide, dispose
 			if (sprite) {
-				const setShadow = () => {
-					color = shadows.calc(color, pts.round(this.wpos));
-					sprite.material.color.setRGB(color[0], color[1], color[2]);
-				}
-
-				this.superobject_hovering_pass();
-				/*if (this.type != 'you' && sprite.mousedSquare(wastes.gview.mrpos)) {
-					hovering_sprites.hover(sprite);
-					sprite.material.color.set(GLOB.HOVER_COLOR);
-				}
-				else {
-					hovering_sprites.unhover(sprite);
-					setShadow();
-				}*/
-
+				input = this.hovering_pass();
+				
 				if (this.tile && this.tile.hasDeck == false) {
-					setShadow();
-				}
-				else {
-					sprite.material.color.set('white');
+					this.set_shadow(input);
 				}
 			}
 

@@ -291,8 +291,9 @@ namespace objects {
 			this.size = [24, 17];
 			//if (this.pixel!.array[3] < 240)
 			//	this.cell = [240 - this.pixel!.array[3], 0];
-			let color = [255, 255, 255, 255] as vec4;
-			color = shadows.calc(color, this.wpos);
+			let color = [255, 255, 255] as vec3;
+			color = shadows.mix(
+				color, this.wpos);
 
 			let shape = new sprite({
 				binded: this,
@@ -513,7 +514,7 @@ namespace objects {
 				tuple: sprites.dgrass,
 				cell: this.cell,
 				orderBias: .6,
-				color: color
+				color: color as unknown as vec3
 			});
 			this.stack();
 		}
@@ -606,7 +607,7 @@ namespace objects {
 			if (!sprite)
 				return;
 
-			this.superobject_hovering_pass();
+			this.hovering_pass();
 		}
 		override superobject_setup_context_menu() {
 			console.log('setup context');
@@ -645,7 +646,7 @@ namespace objects {
 		override tick() {
 			const sprite = this.shape as sprite;
 
-			this.superobject_hovering_pass();
+			this.hovering_pass();
 		}
 		override superobject_setup_context_menu() {
 			console.log('setup context');

@@ -1407,15 +1407,16 @@ void main() {
                 return default_shade;
         }
         shadows.get_amount = get_amount;
-        function calc(a, pos) {
+        // shades the color by multplication
+        function mix(a, pos) {
             const n = get_amount(pos);
-            let b = [a[0], a[1], a[2], a[3]];
-            b[0] = a[0] * n;
-            b[1] = a[1] * n;
-            b[2] = a[2] * n;
-            return b;
+            let dupe = [a[0], a[1], a[2]];
+            dupe[0] = a[0] * n;
+            dupe[1] = a[1] * n;
+            dupe[2] = a[2] * n;
+            return dupe;
         }
-        shadows.calc = calc;
+        shadows.mix = mix;
         function start() {
             for (let y = 0; y < colormap$1.mapSpan; y++) {
                 this.data[y] = [];
@@ -1471,6 +1472,11 @@ void main() {
             this.solid = true;
             this.cell = [0, 0];
             this.heightAdd = 0;
+            this.set_shadow = (input) => {
+                const sprite = this.shape;
+                input = shadows$1.mix(input, pts.round(this.wpos));
+                sprite.material.color.fromArray(input); // 0-1 based
+            };
         }
         tiled() {
             this.tile = tiles$1.get(pts.round(this.wpos));
@@ -1484,11 +1490,6 @@ void main() {
                 this.paintedRed = true;
             }
         }
-        create() {
-            var _a;
-            console.log('super create');
-            (_a = this.prefab) === null || _a === void 0 ? void 0 : _a.create();
-        }
         hide() {
             console.log('superobject hide');
             hovering_sprites.unhover(this.shape);
@@ -1496,22 +1497,19 @@ void main() {
         }
         nettick() {
         }
-        superobject_hovering_pass() {
+        hovering_pass() {
             const sprite = this.shape;
-            if (!sprite)
-                return;
+            let color = [1, 1, 1];
             if (sprite.mousedSquare(wastes.gview.mrpos)) {
-                sprite.material.color.set('#c1ffcd');
+                color = [0.8, 0.8, 0.8];
                 hovering_sprites.hover(sprite);
             }
             else {
-                sprite.material.color.set('white');
                 hovering_sprites.unhover(sprite);
             }
+            return color;
         }
         tick() {
-            var _a;
-            (_a = this.prefab) === null || _a === void 0 ? void 0 : _a.tick();
             //this.superobject_hovering_pass();
             if (this.paintedRed) {
                 this.paintTimer += ren$1.delta;
@@ -6301,6 +6299,16 @@ void main() {
         }
         tick() {
             this.render();
+            if (this.type == 'wall') {
+                shadows$1.shade_matrix(this.wpos, [
+                    [0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0],
+                    [0, 0, .8, 0, 0],
+                    [0, 0, 0, .8, 0],
+                    [0, 0, 0, 0, .8]
+                ], true);
+                //console.log('bo');
+            }
             /*
             if (app.key('7')) {
                 this.sun.position.x -= 1;
@@ -6338,9 +6346,9 @@ void main() {
             this.scene.rotation.set(Math.PI / 6, Math.PI / 4, 0);
             this.group.rotation.set(-Math.PI / 2, 0, 0);
             this.scene.position.set(0, 0, 0);
-            let amb = new THREE.AmbientLight('#888888');
+            let amb = new THREE.AmbientLight('#777');
             this.scene.add(amb);
-            this.sun = new THREE.DirectionalLight(0xffffff, 0.25);
+            this.sun = new THREE.DirectionalLight(0xffffff, 0.3);
             const size2 = 10;
             this.sun.position.set(-size2, 0, size2 / 2);
             //sun.add(new AxesHelper(100));
@@ -6599,8 +6607,8 @@ void main() {
                 this.size = [24, 17];
                 //if (this.pixel!.array[3] < 240)
                 //	this.cell = [240 - this.pixel!.array[3], 0];
-                let color = [255, 255, 255, 255];
-                color = shadows$1.calc(color, this.wpos);
+                let color = [255, 255, 255];
+                color = shadows$1.mix(color, this.wpos);
                 new sprite({
                     binded: this,
                     tuple: sprites$1.dporch,
@@ -6901,7 +6909,7 @@ void main() {
                 const sprite = this.shape;
                 if (!sprite)
                     return;
-                this.superobject_hovering_pass();
+                this.hovering_pass();
             }
             superobject_setup_context_menu() {
                 console.log('setup context');
@@ -6939,7 +6947,7 @@ void main() {
             }
             tick() {
                 this.shape;
-                this.superobject_hovering_pass();
+                this.hovering_pass();
             }
             superobject_setup_context_menu() {
                 console.log('setup context');
@@ -8099,30 +8107,14 @@ void main() {
                 this.tiled();
                 //this.tile?.paint();
                 //this.sector?.swap(this);
-                let color = [1, 1, 1, 1];
+                let input = [1, 1, 1];
                 const sprite = this.shape;
                 // We could have been nulled due to a hide, dispose
                 if (sprite) {
-                    const setShadow = () => {
-                        color = shadows$1.calc(color, pts.round(this.wpos));
-                        sprite.material.color.setRGB(color[0], color[1], color[2]);
-                    };
-                    this.superobject_hovering_pass();
-                    /*if (sprite.mousedSquare(wastes.gview.mrpos)) {
-                        sprite.material.color.set(GLOB.HOVER_COLOR);
-                        hovering_sprites.hover(sprite);
-                        //win.contextmenu.focus = this;
+                    input = this.hovering_pass();
+                    if (this.tile && this.tile.hasDeck == false) {
+                        this.set_shadow(input);
                     }
-                    else if (!sprite.mousedSquare(wastes.gview.mrpos)) {
-                        //if (win.contextmenu.focus == this)
-                        //	win.contextmenu.focus = undefined;
-                        hovering_sprites.unhover(sprite);
-                        setShadow();
-                    }
-                    else*/ if (this.tile && this.tile.hasDeck == false) {
-                        setShadow();
-                    }
-                    else if (!this.tile) ;
                 }
                 else {
                     console.warn('no chicken sprite?????');
@@ -8440,28 +8432,13 @@ void main() {
                 //this.tile?.paint();
                 (_a = this.sector) === null || _a === void 0 ? void 0 : _a.swap(this);
                 // shade the pawn
-                let color = [1, 1, 1, 1];
+                let input = [1, 1, 1];
                 const sprite = this.shape;
                 // We could have been nulled due to a hide, dispose
                 if (sprite) {
-                    const setShadow = () => {
-                        color = shadows$1.calc(color, pts.round(this.wpos));
-                        sprite.material.color.setRGB(color[0], color[1], color[2]);
-                    };
-                    this.superobject_hovering_pass();
-                    /*if (this.type != 'you' && sprite.mousedSquare(wastes.gview.mrpos)) {
-                        hovering_sprites.hover(sprite);
-                        sprite.material.color.set(GLOB.HOVER_COLOR);
-                    }
-                    else {
-                        hovering_sprites.unhover(sprite);
-                        setShadow();
-                    }*/
+                    input = this.hovering_pass();
                     if (this.tile && this.tile.hasDeck == false) {
-                        setShadow();
-                    }
-                    else {
-                        sprite.material.color.set('white');
+                        this.set_shadow(input);
                     }
                 }
                 if (this.type == 'you') ;
@@ -9239,31 +9216,14 @@ void main() {
                 this.tiled();
                 this.animateBodyParts();
                 this.render();
-                //this.tile?.paint();
                 (_a = this.sector) === null || _a === void 0 ? void 0 : _a.swap(this);
-                // shade the pawn
-                let color = [1, 1, 1, 1];
+                let input = [1, 1, 1];
+                // after a sector swap we could be deconstructed
                 const sprite = this.shape;
-                // We could have been nulled due to a hide, dispose
                 if (sprite) {
-                    const setShadow = () => {
-                        color = shadows$1.calc(color, pts.round(this.wpos));
-                        sprite.material.color.setRGB(color[0], color[1], color[2]);
-                    };
-                    this.superobject_hovering_pass();
-                    /*if (this.type != 'you' && sprite.mousedSquare(wastes.gview.mrpos)) {
-                        hovering_sprites.hover(sprite);
-                        sprite.material.color.set(GLOB.HOVER_COLOR);
-                    }
-                    else {
-                        hovering_sprites.unhover(sprite);
-                        setShadow();
-                    }*/
+                    input = this.hovering_pass();
                     if (this.tile && this.tile.hasDeck == false) {
-                        setShadow();
-                    }
-                    else {
-                        sprite.material.color.set('white');
+                        this.set_shadow(input);
                     }
                 }
                 if (this.type == 'you') ;
@@ -9401,7 +9361,7 @@ void main() {
             create() {
                 if (this.isLand) {
                     this.color = wastes.colormap.pixel(this.wpos).arrayRef;
-                    this.color = shadows$1.calc(this.color, this.wpos);
+                    this.color = shadows$1.mix(this.color, this.wpos);
                 }
                 this.myOrderBias = (this.z / 5); // + (this.height / 10);
                 let shape = new sprite({

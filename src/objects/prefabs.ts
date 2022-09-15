@@ -12,6 +12,7 @@ import ren from "../renderer";
 import app from "../app";
 import pts from "../pts";
 import wastes from "../wastes";
+import shadows from "../shadows";
 
 /*
 this file is a success attempt at piecing apart a sketchup building
@@ -165,6 +166,17 @@ class prefab extends superobject {
 
 		this.render();
 
+		if (this.type == 'wall') {
+			shadows.shade_matrix(this.wpos, [
+				[0, 0, 0, 0, 0],
+				[0, 0, 0, 0, 0],
+				[0, 0, .8, 0, 0],
+				[0, 0, 0, .8, 0],
+				[0, 0, 0, 0, .8]], true);
+			//console.log('bo');
+			
+		}
+
 		/*
 		if (app.key('7')) {
 			this.sun.position.x -= 1;
@@ -206,10 +218,10 @@ class prefab extends superobject {
 		this.scene.rotation.set(Math.PI / 6, Math.PI / 4, 0);
 		this.group.rotation.set(-Math.PI / 2, 0, 0);
 		this.scene.position.set(0, 0, 0);
-		let amb = new AmbientLight('#888888');
+		let amb = new AmbientLight('#777');
 		this.scene.add(amb);
 
-		this.sun = new DirectionalLight(0xffffff, 0.25);
+		this.sun = new DirectionalLight(0xffffff, 0.3);
 		const size2 = 10;
 		this.sun.position.set(-size2, 0, size2 / 2);
 		//sun.add(new AxesHelper(100));

@@ -373,8 +373,7 @@ export namespace pawns {
 
 				this.groups.handr.add(group);
 			}
-			else
-			{
+			else {
 			}
 		}
 		render() {
@@ -648,37 +647,18 @@ export namespace pawns {
 
 			this.render();
 
-			//this.tile?.paint();
 			this.sector?.swap(this);
 
-			// shade the pawn
+			let input = [1, 1, 1] as vec3;
 
-			let color = [1, 1, 1, 1] as vec4;
-
+			// after a sector swap we could be deconstructed
 			const sprite = this.shape as sprite;
 
-			// We could have been nulled due to a hide, dispose
 			if (sprite) {
-				const setShadow = () => {
-					color = shadows.calc(color, pts.round(this.wpos));
-					sprite.material.color.setRGB(color[0], color[1], color[2]);
-				}
-
-				this.superobject_hovering_pass();
-				/*if (this.type != 'you' && sprite.mousedSquare(wastes.gview.mrpos)) {
-					hovering_sprites.hover(sprite);
-					sprite.material.color.set(GLOB.HOVER_COLOR);
-				}
-				else {
-					hovering_sprites.unhover(sprite);
-					setShadow();
-				}*/
+				input = this.hovering_pass();
 
 				if (this.tile && this.tile.hasDeck == false) {
-					setShadow();
-				}
-				else {
-					sprite.material.color.set('white');
+					this.set_shadow(input);
 				}
 			}
 

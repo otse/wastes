@@ -53,13 +53,14 @@ export namespace shadows {
 			return default_shade;
 	}
 
-	export function calc(a: vec4, pos: vec2): vec4 {
+	// shades the color by multplication
+	export function mix(a: vec3, pos: vec2): vec3 {
 		const n = get_amount(pos);
-		let b = [a[0], a[1], a[2], a[3]] as vec4;
-		b[0] = a[0] * n;
-		b[1] = a[1] * n;
-		b[2] = a[2] * n;
-		return b;
+		let dupe = [a[0], a[1], a[2]] as vec3;
+		dupe[0] = a[0] * n;
+		dupe[1] = a[1] * n;
+		dupe[2] = a[2] * n;
+		return dupe;
 	}
 
 	export function start() {

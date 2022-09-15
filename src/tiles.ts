@@ -175,7 +175,8 @@ export namespace tiles {
 		override create() {
 			if (this.isLand) {
 				this.color = wastes.colormap.pixel(this.wpos).arrayRef;
-				this.color = shadows.calc(this.color, this.wpos);
+				this.color = shadows.mix(
+					this.color as unknown as vec3, this.wpos) as unknown as vec4;
 			}
 			this.myOrderBias = (this.z / 5);// + (this.height / 10);
 			if (dont_show_tiles)
@@ -184,7 +185,7 @@ export namespace tiles {
 				binded: this,
 				tuple: this.tuple,
 				cell: this.cell,
-				color: this.color,
+				color: this.color as unknown as vec3,
 				opacity: this.opacity,
 				orderBias: this.myOrderBias
 			});

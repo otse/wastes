@@ -1,12 +1,14 @@
+import { default as THREE, OrthographicCamera, Color } from "three";
+
 import aabb2 from "../aabb2"
 import colormap from "../colormap"
 import lod, { numbers } from "../lod"
 import pts from "../pts"
 import ren from "../renderer"
+import shadows from "../shadows";
 import sprite, { hovering_sprites } from "../sprite"
 import tiles from "../tiles"
 import wastes from "../wastes"
-import prefab from "./prefabs"
 
 export class superobject extends lod.obj {
 	static focus: superobject
@@ -23,7 +25,6 @@ export class superobject extends lod.obj {
 	cell: vec2 = [0, 0]
 	heightAdd = 0
 	hints?: any
-	prefab?: prefab
 	//calc = 0 // used for tree leaves
 	constructor(counts: numbers.tally) {
 		super(counts);
@@ -41,11 +42,6 @@ export class superobject extends lod.obj {
 			this.paintedRed = true;
 		}
 	}
-	override create() {
-		console.log('super create');
-		this.prefab?.create();
-		
-	}
 	override hide() {
 		console.log('superobject hide');
 		hovering_sprites.unhover(this.shape as sprite);
@@ -53,21 +49,25 @@ export class superobject extends lod.obj {
 	}
 	nettick() {
 	}
-	superobject_hovering_pass() {
+	set_shadow = (input) => {
 		const sprite = this.shape as sprite;
-		if (!sprite)
-			return;
+		input = shadows.mix(
+			input, pts.round(this.wpos));
+		sprite.material.color.fromArray(input); // 0-1 based
+	}
+	hovering_pass() {
+		const sprite = this.shape as sprite;
+		let color = [1, 1, 1] as vec3;
 		if (sprite.mousedSquare(wastes.gview.mrpos)) {
-			sprite.material.color.set('#c1ffcd');
+			color = [0.8, 0.8, 0.8];
 			hovering_sprites.hover(sprite);
 		}
 		else {
-			sprite.material.color.set('white');
 			hovering_sprites.unhover(sprite);
 		}
+		return color;
 	}
-	override tick() {
-		this.prefab?.tick();
+	tick() {
 		//this.superobject_hovering_pass();
 		if (this.paintedRed) {
 			this.paintTimer += ren.delta;
