@@ -26,7 +26,7 @@ export namespace client {
 		return ['', 1, 1];
 	}
 
-	export var interactingWith = ''
+	export var interactingWith = -1
 	export var wantToBuy = ''
 	export var wantToSell = ''
 	export var wantToGrab = ''
@@ -51,13 +51,26 @@ export namespace client {
 			//socket.send("My name is John");
 		};
 
+		type sobj = [random: any, tuple: [id: number, wpos: vec2, type?: string]]
+		type news = sobj[];
+
 		function process_news<type extends superobject>(
-			type: { new(): type }, typed: string, data: any, handle, update) {
-			for (let sobj of data.news) {
-				const { id } = sobj;
-				if (sobj.type != typed)
-					continue;
+			type: { new(): type },
+			typed: string,
+			data: any,
+			handle,
+			update) {
+
+			for (let sobj of data.news as news) {
+				let random = sobj[0];
+				let id = sobj[1][0];
+				let typee = sobj[1][2];
+				let wpos = sobj[1][1];
 				let obj = objsId[id];
+				if (obj)
+					typee = obj.type;
+				if (typee != typed)
+					continue;
 				if (!obj) {
 					// console.log('new sobj', typed, id);
 					obj = objsId[id] = new type;
@@ -97,114 +110,125 @@ export namespace client {
 			if (data.news) {
 				for (let sobj of data.news) {
 					//if (sobj.type == 'tree')
-						//console.log('got a server tree');
+					//console.log('got a server tree');
 				}
 
 				process_news(pawns.pawn, 'pawn', data,
-					(obj: pawns.pawn, sobj) => {
-						const { wpos, angle } = sobj;
+					(obj: pawns.pawn, sobj: sobj) => {
 						// console.log('news pawn');
+						let wpos = sobj[1][1];
+						let random = sobj[0];
 						obj.wpos = wpos;
-						obj.angle = angle;
-						obj.dead = sobj.dead;
-						obj.wielding = sobj.wielding;
-						if (sobj.title)
-							obj.title = sobj.title;
-						if (sobj.examine)
-							obj.examine = sobj.examine;
-						obj.aiming = sobj.aiming;
+						obj.angle = random.angle;
+						obj.dead = random.dead;
+						obj.wielding = random.wielding;
+						if (random.title)
+							obj.title = random.title;
+						if (random.examine)
+							obj.examine = random.examine;
+						obj.aiming = random.aiming;
 						obj.netwpos = wpos;
-						obj.netangle = angle;
-						if (!sobj.outfit)
+						// new should always have angle
+						if (random.angle)
+							obj.netangle = random.angle;
+						if (!random.outfit)
 							console.error('no outfit for new pawn?');
-						if (sobj.outfit) {
-							obj.outfit = sobj.outfit;
+						if (random.outfit) {
+							obj.outfit = random.outfit;
 						}
-						obj.subtype = sobj.subtype;
-						if (sobj.dialogue)
-							obj.dialogue = dialogues[sobj.dialogue];
-						obj.isPlayer = sobj.isPlayer;
-						obj.inventory = sobj.inventory;
+						obj.subtype = random.subtype;
+						if (random.dialogue)
+							obj.dialogue = dialogues[random.dialogue];
+						obj.isPlayer = random.isPlayer;
+						obj.inventory = random.inventory;
 					},
 					(obj, sobj) => {
-						const { wpos, angle, dead, aiming, inventory } = sobj;
+						let wpos = sobj[1][1];
+						let random = sobj[0];
 						if (obj.type != 'you') {
 							obj.netwpos = wpos;
-							obj.netangle = angle;
-							obj.aiming = aiming;
+							obj.netangle = random.angle;
+							obj.aiming = random.aiming;
 						}
-						obj.dead = dead;
-						if (inventory) {
+						obj.dead = random.dead;
+						if (random.inventory) {
 							//console.log('update inventory');
-							obj.inventory = inventory;
+							obj.inventory = random.inventory;
 						}
 					});
 
 				process_news(chickens.chicken, 'chicken', data,
-					(obj, sobj) => {
-						const { wpos, angle, sitting, dead } = sobj;
+					(obj, sobj: sobj) => {
+						let wpos = sobj[1][1];
+						let random = sobj[0];
 						obj.wpos = wpos;
-						obj.angle = angle;
-						obj.sitting = sitting;
-						if (sobj.title)
-							obj.title = sobj.title;
-						if (sobj.examine)
-							obj.examine = sobj.examine;
-						obj.dead = dead;
+						obj.angle = random.angle;
+						obj.sitting = random.sitting;
+						if (random.title)
+							obj.title = random.title;
+						if (random.examine)
+							obj.examine = random.examine;
+						obj.dead = random.dead;
 					},
 					(obj, sobj) => {
-						const { wpos, angle, pecking, sitting, dead } = sobj;
+						let wpos = sobj[1][1];
+						let random = sobj[0];
 						obj.netwpos = wpos;
-						obj.netangle = angle;
-						obj.pecking = pecking;
-						obj.sitting = sitting;
-						obj.dead = dead;
+						obj.netangle = random.angle;
+						obj.pecking = random.pecking;
+						obj.sitting = random.sitting;
+						obj.dead = random.dead;
 						// console.log('updating chicken!');
 					});
 
 				process_news(zombies.zombie, 'zombie', data,
 					(obj, sobj) => {
-						const { wpos, angle, dead } = sobj;
+						let wpos = sobj[1][1];
+						let random = sobj[0];
 						obj.wpos = wpos;
-						obj.angle = angle;
-						obj.dead = dead;
-						if (sobj.title)
-							obj.title = sobj.title;
-						if (sobj.examine)
-							obj.examine = sobj.examine;
+						obj.angle = random.angle;
+						obj.dead = random.dead;
+						if (random.title)
+							obj.title = random.title;
+						if (random.examine)
+							obj.examine = random.examine;
 					},
 					(obj, sobj) => {
-						const { wpos, angle, dead } = sobj;
+						let wpos = sobj[1][1];
+						let random = sobj[0];
 						obj.netwpos = wpos;
-						obj.netangle = angle;
-						obj.dead = dead;
+						obj.netangle = random.angle;
+						obj.dead = random.dead;
 						// console.log('updating chicken!');
 					});
 
 				process_news(objects.crate, 'crate', data,
-					(obj, sobj) => {
-						const { wpos, inventory } = sobj;
+					(obj, sobj: sobj) => {
+						let wpos = sobj[1][1];
+						let random = sobj[0];
 						obj.wpos = wpos;
-						obj.inventory = inventory;
+						obj.inventory = random.inventory;
 						console.error('a new crate!');
 					},
 					(obj, sobj) => {
-						const { inventory } = sobj;
-						if (inventory)
-							obj.inventory = inventory;
+						let wpos = sobj[1][1];
+						let random = sobj[0];
+						if (random.inventory)
+							obj.inventory = random.inventory;
 						// console.log('updating chicken!');
 					});
 
 				process_news(objects.shelves, 'shelves', data,
 					(obj, sobj) => {
-						const { wpos, inventory } = sobj;
+						let wpos = sobj[1][1];
+						let random = sobj[0];
 						obj.wpos = wpos;
-						obj.inventory = inventory;
+						obj.inventory = random.inventory;
 					},
 					(obj, sobj) => {
-						const { inventory } = sobj;
-						if (inventory)
-							obj.inventory = inventory;
+						let random = sobj[0];
+						if (random.inventory)
+							obj.inventory = random.inventory;
 						// console.log('updating chicken!');
 					});
 			}
@@ -247,7 +271,7 @@ export namespace client {
 				pawns.you.shoot = false;
 				if (interactingWith) {
 					json.interactingWith = interactingWith;
-					interactingWith = '';
+					interactingWith = -1;
 				}
 				if (wantToBuy) {
 					json.wantToBuy = wantToBuy;

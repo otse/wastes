@@ -162,11 +162,12 @@ namespace lod {
 				return !!this.objs.splice(i, 1).length;
 			}
 		}
-		swap(obj: obj) {
+		static swap(obj: obj) {
 			// Call me whenever you move
-			let newSector = this.world.at(lod.world.big(pts.round(obj.wpos)));
-			if (obj.sector != newSector) {
-				obj.sector?.remove(obj);
+			let oldSector = obj.sector!;
+			let newSector = oldSector.world.at(lod.world.big(pts.round(obj.wpos)));
+			if (oldSector != newSector) {
+				oldSector.remove(obj);
 				newSector.add(obj);
 				if (!newSector.isActive())
 					obj.hide();
@@ -265,7 +266,7 @@ namespace lod {
 	};
 
 	export class obj extends toggle {
-		id = ''
+		id = -1
 		type = 'an obj'
 		networked = false
 		wpos: vec2 = [0, 0]

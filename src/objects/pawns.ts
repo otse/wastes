@@ -606,7 +606,7 @@ export namespace pawns {
 			let tween = pts.mult(pts.subtract(this.netwpos, this.wpos), ren.delta * 2);
 			this.wpos = pts.add(this.wpos, tween);
 
-			this.sector?.swap(this);
+			lod.sector.swap(this);
 
 			if (this.netangle - this.angle > Math.PI)
 				this.angle += Math.PI * 2;
@@ -647,7 +647,7 @@ export namespace pawns {
 
 			this.render();
 
-			this.sector?.swap(this);
+			lod.sector.swap(this);
 
 			let input = [1, 1, 1] as vec3;
 

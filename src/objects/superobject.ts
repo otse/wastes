@@ -12,7 +12,6 @@ import wastes from "../wastes"
 
 export class superobject extends lod.obj {
 	static focus: superobject
-	id = 'an_objected_0'
 	title = ''
 	examine = ''
 	isSuper = true

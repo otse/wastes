@@ -327,7 +327,7 @@ export namespace zombies {
 			let tween = pts.mult(pts.subtract(this.netwpos, this.wpos), ren.delta * 2);
 			this.wpos = pts.add(this.wpos, tween);
 
-			this.sector?.swap(this);
+			lod.sector.swap(this);
 
 			if (this.netangle - this.angle > Math.PI)
 				this.angle += Math.PI * 2;
@@ -363,7 +363,7 @@ export namespace zombies {
 
 			this.tiled();
 			//this.tile?.paint();
-			this.sector?.swap(this);
+			lod.sector.swap(this);
 
 			// shade the pawn
 

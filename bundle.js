@@ -718,12 +718,12 @@ void main() {
                     return !!this.objs.splice(i, 1).length;
                 }
             }
-            swap(obj) {
-                var _a;
+            static swap(obj) {
                 // Call me whenever you move
-                let newSector = this.world.at(lod.world.big(pts.round(obj.wpos)));
-                if (obj.sector != newSector) {
-                    (_a = obj.sector) === null || _a === void 0 ? void 0 : _a.remove(obj);
+                let oldSector = obj.sector;
+                let newSector = oldSector.world.at(lod.world.big(pts.round(obj.wpos)));
+                if (oldSector != newSector) {
+                    oldSector.remove(obj);
                     newSector.add(obj);
                     if (!newSector.isActive())
                         obj.hide();
@@ -820,7 +820,7 @@ void main() {
             constructor(counts = numbers.objs) {
                 super();
                 this.counts = counts;
-                this.id = '';
+                this.id = -1;
                 this.type = 'an obj';
                 this.networked = false;
                 this.wpos = [0, 0];
@@ -1240,12 +1240,11 @@ void main() {
                 });
             }
             tick() {
-                var _a;
                 this.wpos[0] += this.float[0];
                 this.wpos[1] -= this.float[1];
                 this.ro += this.rate;
                 super.obj_manual_update();
-                (_a = this.sector) === null || _a === void 0 ? void 0 : _a.swap(this);
+                lod$1.sector.swap(this);
             }
         }
         Asteroid.slowness = 12;
@@ -1488,7 +1487,6 @@ void main() {
         //calc = 0 // used for tree leaves
         constructor(counts) {
             super(counts);
-            this.id = 'an_objected_0';
             this.title = '';
             this.examine = '';
             this.isSuper = true;
@@ -8077,7 +8075,6 @@ void main() {
             nettick() {
                 //this.netangle = Math.PI / 4;
                 // Net tick can happen offscreen
-                var _a;
                 //this.wpos = tiles.hovering!.wpos;
                 //this.wpos = wastes.gview.mwpos;
                 if (this.pecking) ;
@@ -8086,7 +8083,7 @@ void main() {
                 // tween netwpos into wpos
                 let tween = pts.mult(pts.subtract(this.netwpos, this.wpos), ren$1.delta * 2);
                 this.wpos = pts.add(this.wpos, tween);
-                (_a = this.sector) === null || _a === void 0 ? void 0 : _a.swap(this);
+                lod$1.sector.swap(this);
                 //console.log('chicken nettick', this.wpos);
                 if (this.netangle - this.angle > Math.PI)
                     this.angle += Math.PI * 2;
@@ -8415,7 +8412,6 @@ void main() {
                 this.render();
             }
             nettick() {
-                var _a;
                 if (this.type == 'you')
                     return;
                 //this.wpos = tiles.hovering!.wpos;
@@ -8424,7 +8420,7 @@ void main() {
                 // tween netwpos into wpos
                 let tween = pts.mult(pts.subtract(this.netwpos, this.wpos), ren$1.delta * 2);
                 this.wpos = pts.add(this.wpos, tween);
-                (_a = this.sector) === null || _a === void 0 ? void 0 : _a.swap(this);
+                lod$1.sector.swap(this);
                 if (this.netangle - this.angle > Math.PI)
                     this.angle += Math.PI * 2;
                 if (this.angle - this.netangle > Math.PI)
@@ -8441,7 +8437,6 @@ void main() {
                 }
             }
             tick() {
-                var _a;
                 if (!this.shape)
                     return;
                 //if (this.type == 'you')
@@ -8450,7 +8445,7 @@ void main() {
                 this.animateBodyParts();
                 this.tiled();
                 //this.tile?.paint();
-                (_a = this.sector) === null || _a === void 0 ? void 0 : _a.swap(this);
+                lod$1.sector.swap(this);
                 // shade the pawn
                 let input = [1, 1, 1];
                 const sprite = this.shape;
@@ -8483,7 +8478,7 @@ void main() {
             return ['', 1, 1];
         }
         client.get_rate = get_rate;
-        client.interactingWith = '';
+        client.interactingWith = -1;
         client.wantToBuy = '';
         client.wantToSell = '';
         client.wantToGrab = '';
@@ -8505,10 +8500,15 @@ void main() {
             };
             function process_news(type, typed, data, handle, update) {
                 for (let sobj of data.news) {
-                    const { id } = sobj;
-                    if (sobj.type != typed)
-                        continue;
+                    sobj[0];
+                    let id = sobj[1][0];
+                    let typee = sobj[1][2];
+                    sobj[1][1];
                     let obj = client.objsId[id];
+                    if (obj)
+                        typee = obj.type;
+                    if (typee != typed)
+                        continue;
                     if (!obj) {
                         // console.log('new sobj', typed, id);
                         obj = client.objsId[id] = new type;
@@ -8548,96 +8548,107 @@ void main() {
                         //console.log('got a server tree');
                     }
                     process_news(pawns$1.pawn, 'pawn', data, (obj, sobj) => {
-                        const { wpos, angle } = sobj;
                         // console.log('news pawn');
+                        let wpos = sobj[1][1];
+                        let random = sobj[0];
                         obj.wpos = wpos;
-                        obj.angle = angle;
-                        obj.dead = sobj.dead;
-                        obj.wielding = sobj.wielding;
-                        if (sobj.title)
-                            obj.title = sobj.title;
-                        if (sobj.examine)
-                            obj.examine = sobj.examine;
-                        obj.aiming = sobj.aiming;
+                        obj.angle = random.angle;
+                        obj.dead = random.dead;
+                        obj.wielding = random.wielding;
+                        if (random.title)
+                            obj.title = random.title;
+                        if (random.examine)
+                            obj.examine = random.examine;
+                        obj.aiming = random.aiming;
                         obj.netwpos = wpos;
-                        obj.netangle = angle;
-                        if (!sobj.outfit)
+                        // new should always have angle
+                        if (random.angle)
+                            obj.netangle = random.angle;
+                        if (!random.outfit)
                             console.error('no outfit for new pawn?');
-                        if (sobj.outfit) {
-                            obj.outfit = sobj.outfit;
+                        if (random.outfit) {
+                            obj.outfit = random.outfit;
                         }
-                        obj.subtype = sobj.subtype;
-                        if (sobj.dialogue)
-                            obj.dialogue = dialogues[sobj.dialogue];
-                        obj.isPlayer = sobj.isPlayer;
-                        obj.inventory = sobj.inventory;
+                        obj.subtype = random.subtype;
+                        if (random.dialogue)
+                            obj.dialogue = dialogues[random.dialogue];
+                        obj.isPlayer = random.isPlayer;
+                        obj.inventory = random.inventory;
                     }, (obj, sobj) => {
-                        const { wpos, angle, dead, aiming, inventory } = sobj;
+                        let wpos = sobj[1][1];
+                        let random = sobj[0];
                         if (obj.type != 'you') {
                             obj.netwpos = wpos;
-                            obj.netangle = angle;
-                            obj.aiming = aiming;
+                            obj.netangle = random.angle;
+                            obj.aiming = random.aiming;
                         }
-                        obj.dead = dead;
-                        if (inventory) {
+                        obj.dead = random.dead;
+                        if (random.inventory) {
                             //console.log('update inventory');
-                            obj.inventory = inventory;
+                            obj.inventory = random.inventory;
                         }
                     });
                     process_news(chickens$1.chicken, 'chicken', data, (obj, sobj) => {
-                        const { wpos, angle, sitting, dead } = sobj;
+                        let wpos = sobj[1][1];
+                        let random = sobj[0];
                         obj.wpos = wpos;
-                        obj.angle = angle;
-                        obj.sitting = sitting;
-                        if (sobj.title)
-                            obj.title = sobj.title;
-                        if (sobj.examine)
-                            obj.examine = sobj.examine;
-                        obj.dead = dead;
+                        obj.angle = random.angle;
+                        obj.sitting = random.sitting;
+                        if (random.title)
+                            obj.title = random.title;
+                        if (random.examine)
+                            obj.examine = random.examine;
+                        obj.dead = random.dead;
                     }, (obj, sobj) => {
-                        const { wpos, angle, pecking, sitting, dead } = sobj;
+                        let wpos = sobj[1][1];
+                        let random = sobj[0];
                         obj.netwpos = wpos;
-                        obj.netangle = angle;
-                        obj.pecking = pecking;
-                        obj.sitting = sitting;
-                        obj.dead = dead;
+                        obj.netangle = random.angle;
+                        obj.pecking = random.pecking;
+                        obj.sitting = random.sitting;
+                        obj.dead = random.dead;
                         // console.log('updating chicken!');
                     });
                     process_news(zombies$1.zombie, 'zombie', data, (obj, sobj) => {
-                        const { wpos, angle, dead } = sobj;
+                        let wpos = sobj[1][1];
+                        let random = sobj[0];
                         obj.wpos = wpos;
-                        obj.angle = angle;
-                        obj.dead = dead;
-                        if (sobj.title)
-                            obj.title = sobj.title;
-                        if (sobj.examine)
-                            obj.examine = sobj.examine;
+                        obj.angle = random.angle;
+                        obj.dead = random.dead;
+                        if (random.title)
+                            obj.title = random.title;
+                        if (random.examine)
+                            obj.examine = random.examine;
                     }, (obj, sobj) => {
-                        const { wpos, angle, dead } = sobj;
+                        let wpos = sobj[1][1];
+                        let random = sobj[0];
                         obj.netwpos = wpos;
-                        obj.netangle = angle;
-                        obj.dead = dead;
+                        obj.netangle = random.angle;
+                        obj.dead = random.dead;
                         // console.log('updating chicken!');
                     });
                     process_news(objects$1.crate, 'crate', data, (obj, sobj) => {
-                        const { wpos, inventory } = sobj;
+                        let wpos = sobj[1][1];
+                        let random = sobj[0];
                         obj.wpos = wpos;
-                        obj.inventory = inventory;
+                        obj.inventory = random.inventory;
                         console.error('a new crate!');
                     }, (obj, sobj) => {
-                        const { inventory } = sobj;
-                        if (inventory)
-                            obj.inventory = inventory;
+                        sobj[1][1];
+                        let random = sobj[0];
+                        if (random.inventory)
+                            obj.inventory = random.inventory;
                         // console.log('updating chicken!');
                     });
                     process_news(objects$1.shelves, 'shelves', data, (obj, sobj) => {
-                        const { wpos, inventory } = sobj;
+                        let wpos = sobj[1][1];
+                        let random = sobj[0];
                         obj.wpos = wpos;
-                        obj.inventory = inventory;
+                        obj.inventory = random.inventory;
                     }, (obj, sobj) => {
-                        const { inventory } = sobj;
-                        if (inventory)
-                            obj.inventory = inventory;
+                        let random = sobj[0];
+                        if (random.inventory)
+                            obj.inventory = random.inventory;
                         // console.log('updating chicken!');
                     });
                 }
@@ -8674,7 +8685,7 @@ void main() {
                     pawns$1.you.shoot = false;
                     if (client.interactingWith) {
                         json.interactingWith = client.interactingWith;
-                        client.interactingWith = '';
+                        client.interactingWith = -1;
                     }
                     if (client.wantToBuy) {
                         json.wantToBuy = client.wantToBuy;
@@ -9199,7 +9210,6 @@ void main() {
                 }
             }
             nettick() {
-                var _a;
                 if (this.type == 'you')
                     return;
                 //this.wpos = tiles.hovering!.wpos;
@@ -9208,7 +9218,7 @@ void main() {
                 // tween netwpos into wpos
                 let tween = pts.mult(pts.subtract(this.netwpos, this.wpos), ren$1.delta * 2);
                 this.wpos = pts.add(this.wpos, tween);
-                (_a = this.sector) === null || _a === void 0 ? void 0 : _a.swap(this);
+                lod$1.sector.swap(this);
                 if (this.netangle - this.angle > Math.PI)
                     this.angle += Math.PI * 2;
                 if (this.angle - this.netangle > Math.PI)
@@ -9225,7 +9235,6 @@ void main() {
                 }
             }
             tick() {
-                var _a;
                 if (!this.shape)
                     return;
                 //if (this.type == 'you')
@@ -9236,7 +9245,7 @@ void main() {
                 this.tiled();
                 this.animateBodyParts();
                 this.render();
-                (_a = this.sector) === null || _a === void 0 ? void 0 : _a.swap(this);
+                lod$1.sector.swap(this);
                 let input = [1, 1, 1];
                 // after a sector swap we could be deconstructed
                 const sprite = this.shape;

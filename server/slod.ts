@@ -188,7 +188,7 @@ namespace slod {
 				// [[ Entry ]]
 				for (const tuple of newSector!.observers)
 					if (!oldSector?.is_observed_by(tuple[0]))
-						tuple[0].reentries.push(obj);
+						tuple[0].overlaps.push(obj);
 
 			}
 		}
@@ -205,7 +205,7 @@ namespace slod {
 				const fully =
 					obj.stamp == 0 ||
 					tuple[1] == slod.stamp ||
-					tuple[0].is_reentry(obj);
+					tuple[0].is_overlap(obj);
 
 				const updated = obj.stamp == slod.stamp;
 
@@ -272,9 +272,9 @@ namespace slod {
 
 	export class sgrid {
 		big: vec2 = [0, 0];
-		removes: string[] = []
+		removes: number[] = []
 		shown: ssector[] = [];
-		reentries: sobj[] = [];
+		overlaps: sobj[] = [];
 		constructor(
 			public world: sworld,
 			public spread: number,
@@ -296,8 +296,8 @@ namespace slod {
 			this.spread--;
 			this.outside--;
 		}
-		is_reentry(target: sobj) {
-			for (let sobj of this.reentries)
+		is_overlap(target: sobj) {
+			for (let sobj of this.overlaps)
 				if (target == sobj)
 					return true;
 			return false;
@@ -342,13 +342,14 @@ namespace slod {
 					sector.gather(this));
 				// packages = packages.concat(sector.gather(this));
 			}
-			this.reentries = [];
+			this.overlaps = [];
 			return packages;
 		}
 	}
 
 	export class sobj extends toggle {
-		id = 'sobj_0'
+		static ids = 0
+		id = 0
 		type = 'an sobj'
 		stamp = 0
 		aabb: aabb2
@@ -360,6 +361,7 @@ namespace slod {
 		constructor(
 			public readonly counts: numbers.tally = numbers.objs) {
 			super();
+			this.id = sobj.ids++;
 			this.counts[1]++;
 			this.needs_update();
 		}
@@ -407,18 +409,17 @@ namespace slod {
 			return types.indexOf(this.type) != -1;
 		}
 		static attach_truthy(upper, property) {
+			// this never worked
 			if (property)
 				upper[property] = property;
 		}
 		gather(fully: boolean) {
-			/*
-			if (observer.fullies.indexOf())
-			*/
-			//if (first/* || stamp == slod.stamp*/)
-			return { id: this.id, type: this.type, wpos: this.wpos };
-			//else
-			//	return { id: this.id, type: this.type };
-
+			type type = [random: any, tuple: [id: number, wpos: vec2, type?: string]];
+			let sent = <type>
+				[{}, [this.id, this.wpos, this.type]];
+			if (!fully)
+				delete sent[1][2];
+			return sent;
 		}
 	}
 }

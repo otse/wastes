@@ -380,7 +380,7 @@ class connection {
 			object.playerId = this.you?.id;
 			object.rates = rates;
 		}
-		
+
 		object.news = this.grid.gather();
 
 		if (this.grid.removes.length)
@@ -431,12 +431,13 @@ class supersobj extends slod.sobj {
 		this.rebound();
 	}
 	override gather(fully: boolean) {
-		let upper = super.gather(fully) as any;
+		let upper = super.gather(fully);
+		let random = upper[0];
 		if (fully) {
 			if (this.title)
-				upper.title = this.title;
+				random.title = this.title;
 			if (this.examine)
-				upper.examine = this.examine;
+				random.examine = this.examine;
 		}
 		return upper;
 	}
@@ -512,12 +513,10 @@ class door extends supersobj {
 }
 
 class container extends supersobj {
-	static id = 0
 	inventory: inventory
 	ticksAgo = 0
 	constructor() {
 		super();
-		this.id = 'container_' + container.id++;
 		this.inventory = new inventory(this);
 	}
 	override tick() {
@@ -529,9 +528,10 @@ class container extends supersobj {
 		}
 	}
 	override gather(fully: boolean) {
-		let upper = super.gather(fully) as any;
+		let upper = super.gather(fully);
+		let random = upper[0];
 		if (fully || this.inventory.stamp == slod.stamp)
-			upper.inventory = this.inventory.collect();
+			random.inventory = this.inventory.collect();
 		return upper;
 	}
 }
@@ -541,7 +541,6 @@ class shelves extends container {
 		super();
 		console.log('shelves', 1);
 		this.type = 'shelves';
-		this.id = 'shelves_' + container.id++;
 		//this.title = 'Shelves';
 		this.inventory.add('stuff', 5);
 		if (Math.random() > .5)
@@ -557,7 +556,6 @@ class crate extends container {
 		super();
 		console.log('crate', 1);
 		this.type = 'crate';
-		this.id = 'crate_' + container.id++;
 		//this.title = 'Crate';
 		this.inventory.add('stuff', 5);
 		if (Math.random() > .5)
@@ -569,11 +567,9 @@ class crate extends container {
 }
 
 class tree extends supersobj {
-	static id = 0
 	constructor() {
 		super();
 		this.type = 'tree';
-		this.id = 'tree_' + tree.id++
 	}
 	/*override create() {
 		this.rebound();
@@ -595,7 +591,6 @@ export function is_solid(pos: vec2) {
 
 // npc can be a chicken or a pawn
 class npc extends supersobj {
-	static id = 0;
 	originalWpos: vec2 = [0, 0]
 	respawns = true
 	respawned = false
@@ -613,7 +608,6 @@ class npc extends supersobj {
 	speed = 1.0
 	constructor() {
 		super();
-		this.id = 'npc_' + npc.id++;
 		this.timer = new timer(0);
 	}
 	override on_hit(by: supersobj) {
@@ -703,17 +697,17 @@ class npc extends supersobj {
 		}
 	}
 	override gather(fully: boolean) {
-		let upper = super.gather(fully) as any;
-		upper.angle = this.angle;
+		let upper = super.gather(fully);
+		let random = upper[0];
+		random.angle = this.angle;
 		if (this.dead)
-			upper.dead = this.dead;
+			random.dead = this.dead;
 		return upper;
 	}
 }
 
 const guns = ['revolver', 'rifle', 'lasermusket']
 class pawn extends npc {
-	static id = 0
 	inventory: inventory
 	outfit: string[] = []
 	subtype = ''
@@ -726,7 +720,6 @@ class pawn extends npc {
 		super();
 		this.type = 'pawn';
 		this.title = 'Pawn';
-		this.id = 'pawn_' + pawn.id++;
 		this.outfit = sample(outfits);
 		this.wielding = sample(guns);
 		this.inventory = new inventory(this);
@@ -763,22 +756,23 @@ class pawn extends npc {
 		super.on_hit(by);
 	}
 	override gather(fully: boolean) {
-		let upper = super.gather(fully) as any;
+		let upper = super.gather(fully);
+		let random = upper[0];
 		if (fully) {
 			console.log('pawn fully');
 			//console.log('outfit');
-			upper.outfit = this.outfit;
-			upper.dialogue = this.dialogue;
-			upper.subtype = this.subtype;
-			upper.wielding = this.wielding;
+			random.outfit = this.outfit;
+			random.dialogue = this.dialogue;
+			random.subtype = this.subtype;
+			random.wielding = this.wielding;
 			if (this.examine)
-				upper.examine = this.examine;
+				random.examine = this.examine;
 		}
 		if (this.aiming)
-			upper.aiming = this.aiming;
+			random.aiming = this.aiming;
 		if (fully || this.inventory.stamp == slod.stamp) {
 			//console.log('inventory needs an update');
-			upper.inventory = this.inventory.collect();
+			random.inventory = this.inventory.collect();
 		}
 		return upper;
 	}
@@ -813,9 +807,10 @@ class player extends pawn {
 		console.log('ply-pawn should be impertinent');
 	}
 	override gather(fully: boolean) {
-		let upper = super.gather(fully) as any;
+		let upper = super.gather(fully);
+		let random = upper[0];
 		if (fully)
-			upper.isPlayer = true;
+			random.isPlayer = true;
 		return upper;
 	}
 	end() {
@@ -828,7 +823,6 @@ class npc_pawn extends player {
 }
 
 class chicken extends npc {
-	static id = 0
 	walkAgain: timer
 	peckChance = 0
 	randomWalker
@@ -839,7 +833,6 @@ class chicken extends npc {
 		this.type = 'chicken';
 		this.title = 'Chicken';
 		this.examine = 'Cluck cluck.';
-		this.id = 'chicken_' + chicken.id++;
 		this.randomWalker = Date.now();
 		this.health = 10;
 		this.speed = 0.75;
@@ -866,12 +859,13 @@ class chicken extends npc {
 		}
 	}
 	override gather(fully: boolean) {
-		let upper = super.gather(fully) as any;
+		let upper = super.gather(fully);
+		let random = upper[0];
 		// slod.sobj.attach_truthy(upper, this.pecking);
 		if (this.pecking)
-			upper.pecking = this.pecking;
+			random.pecking = this.pecking;
 		if (this.sitting)
-			upper.sitting = this.sitting;
+			random.sitting = this.sitting;
 		return upper;
 	}
 	override tick() {
@@ -914,12 +908,10 @@ class chicken extends npc {
 }
 
 class zombie extends npc {
-	static id = 0
 	constructor() {
 		super();
 		this.type = 'zombie';
 		this.title = 'Zombie';
-		this.id = 'zombie_' + zombie.id++;
 		this.wanderWait = 4000;
 	}
 	override tick() {

@@ -392,7 +392,7 @@ export namespace chickens {
 			let tween = pts.mult(pts.subtract(this.netwpos, this.wpos), ren.delta * 2);
 			this.wpos = pts.add(this.wpos, tween);
 
-			this.sector?.swap(this);
+			lod.sector.swap(this);
 
 			//console.log('chicken nettick', this.wpos);
 
