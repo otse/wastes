@@ -51,12 +51,12 @@ export namespace client {
 			//socket.send("My name is John");
 		};
 
-		type sobj = [random: any, tuple: [id: number, wpos: vec2, type?: string]]
+		type sobj = [random: any, tuple: [id: number, wpos: vec2, angle: number, type?: string]]
 		type news = sobj[];
 
 		function process_news<type extends superobject>(
 			type: { new(): type },
-			typed: string,
+			expected: string,
 			data: any,
 			handle,
 			update) {
@@ -64,12 +64,11 @@ export namespace client {
 			for (let sobj of data.news as news) {
 				let random = sobj[0];
 				let id = sobj[1][0];
-				let typee = sobj[1][2];
-				let wpos = sobj[1][1];
+				let typee = sobj[1][3];
 				let obj = objsId[id];
 				if (obj)
 					typee = obj.type;
-				if (typee != typed)
+				if (typee != expected)
 					continue;
 				if (!obj) {
 					// console.log('new sobj', typed, id);
@@ -117,9 +116,11 @@ export namespace client {
 					(obj: pawns.pawn, sobj: sobj) => {
 						// console.log('news pawn');
 						let wpos = sobj[1][1];
+						let angle = sobj[1][2];
 						let random = sobj[0];
 						obj.wpos = wpos;
-						obj.angle = random.angle;
+						obj.angle = angle;
+						obj.netangle = angle;
 						obj.dead = random.dead;
 						obj.wielding = random.wielding;
 						if (random.title)
@@ -129,8 +130,6 @@ export namespace client {
 						obj.aiming = random.aiming;
 						obj.netwpos = wpos;
 						// new should always have angle
-						if (random.angle)
-							obj.netangle = random.angle;
 						if (!random.outfit)
 							console.error('no outfit for new pawn?');
 						if (random.outfit) {
@@ -144,10 +143,11 @@ export namespace client {
 					},
 					(obj, sobj) => {
 						let wpos = sobj[1][1];
+						let angle = sobj[1][2];
 						let random = sobj[0];
 						if (obj.type != 'you') {
 							obj.netwpos = wpos;
-							obj.netangle = random.angle;
+							obj.netangle = angle;
 							obj.aiming = random.aiming;
 						}
 						obj.dead = random.dead;
@@ -160,9 +160,13 @@ export namespace client {
 				process_news(chickens.chicken, 'chicken', data,
 					(obj, sobj: sobj) => {
 						let wpos = sobj[1][1];
+						let angle = sobj[1][2];
 						let random = sobj[0];
 						obj.wpos = wpos;
-						obj.angle = random.angle;
+						obj.netwpos = wpos;
+						obj.angle = angle;
+						obj.netangle = angle;
+						// todo net angle ?
 						obj.sitting = random.sitting;
 						if (random.title)
 							obj.title = random.title;
@@ -172,9 +176,10 @@ export namespace client {
 					},
 					(obj, sobj) => {
 						let wpos = sobj[1][1];
+						let angle = sobj[1][2];
 						let random = sobj[0];
 						obj.netwpos = wpos;
-						obj.netangle = random.angle;
+						obj.netangle = angle;
 						obj.pecking = random.pecking;
 						obj.sitting = random.sitting;
 						obj.dead = random.dead;
@@ -184,9 +189,10 @@ export namespace client {
 				process_news(zombies.zombie, 'zombie', data,
 					(obj, sobj) => {
 						let wpos = sobj[1][1];
+						let angle = sobj[1][2];
 						let random = sobj[0];
 						obj.wpos = wpos;
-						obj.angle = random.angle;
+						obj.angle = angle;
 						obj.dead = random.dead;
 						if (random.title)
 							obj.title = random.title;
@@ -195,9 +201,10 @@ export namespace client {
 					},
 					(obj, sobj) => {
 						let wpos = sobj[1][1];
+						let angle = sobj[1][2];
 						let random = sobj[0];
 						obj.netwpos = wpos;
-						obj.netangle = random.angle;
+						obj.netangle = angle;
 						obj.dead = random.dead;
 						// console.log('updating chicken!');
 					});

@@ -354,6 +354,7 @@ namespace slod {
 		stamp = 0
 		aabb: aabb2
 		wpos: vec2 = [0, 0]
+		angle = 0
 		sector: ssector | null
 		// impertinent sobj stays visible
 		// impertinent = false
@@ -414,11 +415,11 @@ namespace slod {
 				upper[property] = property;
 		}
 		gather(fully: boolean) {
-			type type = [random: any, tuple: [id: number, wpos: vec2, type?: string]];
+			type type = [random: any, tuple: [id: number, wpos: vec2, angle: number, type?: string]];
 			let sent = <type>
-				[{}, [this.id, this.wpos, this.type]];
+				[{}, [this.id, this.wpos, this.angle, this.type]];
 			if (!fully)
-				delete sent[1][2];
+				delete sent[1][3];
 			return sent;
 		}
 	}

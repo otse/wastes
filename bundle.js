@@ -8498,16 +8498,15 @@ void main() {
                 //console.log("Sending to server");
                 //socket.send("My name is John");
             };
-            function process_news(type, typed, data, handle, update) {
+            function process_news(type, expected, data, handle, update) {
                 for (let sobj of data.news) {
                     sobj[0];
                     let id = sobj[1][0];
-                    let typee = sobj[1][2];
-                    sobj[1][1];
+                    let typee = sobj[1][3];
                     let obj = client.objsId[id];
                     if (obj)
                         typee = obj.type;
-                    if (typee != typed)
+                    if (typee != expected)
                         continue;
                     if (!obj) {
                         // console.log('new sobj', typed, id);
@@ -8550,9 +8549,11 @@ void main() {
                     process_news(pawns$1.pawn, 'pawn', data, (obj, sobj) => {
                         // console.log('news pawn');
                         let wpos = sobj[1][1];
+                        let angle = sobj[1][2];
                         let random = sobj[0];
                         obj.wpos = wpos;
-                        obj.angle = random.angle;
+                        obj.angle = angle;
+                        obj.netangle = angle;
                         obj.dead = random.dead;
                         obj.wielding = random.wielding;
                         if (random.title)
@@ -8562,8 +8563,6 @@ void main() {
                         obj.aiming = random.aiming;
                         obj.netwpos = wpos;
                         // new should always have angle
-                        if (random.angle)
-                            obj.netangle = random.angle;
                         if (!random.outfit)
                             console.error('no outfit for new pawn?');
                         if (random.outfit) {
@@ -8576,10 +8575,11 @@ void main() {
                         obj.inventory = random.inventory;
                     }, (obj, sobj) => {
                         let wpos = sobj[1][1];
+                        let angle = sobj[1][2];
                         let random = sobj[0];
                         if (obj.type != 'you') {
                             obj.netwpos = wpos;
-                            obj.netangle = random.angle;
+                            obj.netangle = angle;
                             obj.aiming = random.aiming;
                         }
                         obj.dead = random.dead;
@@ -8590,9 +8590,13 @@ void main() {
                     });
                     process_news(chickens$1.chicken, 'chicken', data, (obj, sobj) => {
                         let wpos = sobj[1][1];
+                        let angle = sobj[1][2];
                         let random = sobj[0];
                         obj.wpos = wpos;
-                        obj.angle = random.angle;
+                        obj.netwpos = wpos;
+                        obj.angle = angle;
+                        obj.netangle = angle;
+                        // todo net angle ?
                         obj.sitting = random.sitting;
                         if (random.title)
                             obj.title = random.title;
@@ -8601,9 +8605,10 @@ void main() {
                         obj.dead = random.dead;
                     }, (obj, sobj) => {
                         let wpos = sobj[1][1];
+                        let angle = sobj[1][2];
                         let random = sobj[0];
                         obj.netwpos = wpos;
-                        obj.netangle = random.angle;
+                        obj.netangle = angle;
                         obj.pecking = random.pecking;
                         obj.sitting = random.sitting;
                         obj.dead = random.dead;
@@ -8611,9 +8616,10 @@ void main() {
                     });
                     process_news(zombies$1.zombie, 'zombie', data, (obj, sobj) => {
                         let wpos = sobj[1][1];
+                        let angle = sobj[1][2];
                         let random = sobj[0];
                         obj.wpos = wpos;
-                        obj.angle = random.angle;
+                        obj.angle = angle;
                         obj.dead = random.dead;
                         if (random.title)
                             obj.title = random.title;
@@ -8621,9 +8627,10 @@ void main() {
                             obj.examine = random.examine;
                     }, (obj, sobj) => {
                         let wpos = sobj[1][1];
+                        let angle = sobj[1][2];
                         let random = sobj[0];
                         obj.netwpos = wpos;
-                        obj.netangle = random.angle;
+                        obj.netangle = angle;
                         obj.dead = random.dead;
                         // console.log('updating chicken!');
                     });

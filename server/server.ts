@@ -599,7 +599,6 @@ class npc extends supersobj {
 	dead = false
 	stayDead = false
 	frozenBy?: slod.sobj
-	angle = 0
 	walkArea: aabb2
 	aimTarget: vec2 = [0, 0]
 	timer: timer
@@ -699,7 +698,7 @@ class npc extends supersobj {
 	override gather(fully: boolean) {
 		let upper = super.gather(fully);
 		let random = upper[0];
-		random.angle = this.angle;
+		//random.angle = this.angle;
 		if (this.dead)
 			random.dead = this.dead;
 		return upper;
