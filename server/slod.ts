@@ -164,9 +164,10 @@ namespace slod {
 			return false;
 		}
 		// Call whenever sobj has moved within tick
-		swap(obj: sobj) {
-			let oldSector = obj.sector;
-			let newSector = this.world.at(slod.sworld.big(pts.round(obj.wpos)));
+		static swap(obj: sobj) {
+			let oldSector = obj.sector!;
+			let newSector = oldSector.world.at(
+				slod.sworld.big(pts.round(obj.wpos)));
 			if (oldSector != newSector) {
 				oldSector?.remove(obj);
 				newSector.add(obj);
@@ -175,18 +176,19 @@ namespace slod {
 					//console.warn('sobj move into hidden ssector');
 				}
 
-				// These two for loops check for [[ overlap ]]
-				// Then either remove, or zero-stamp (to send full object)
+				// Now check for important overlap
 
-				// Check old-to-new-sector [[ overlap ]]
-				for (const tuple of this.observers)
+				// New sector not observed by old sector
+				// [[ Exit ]]
+				for (const tuple of oldSector.observers)
 					if (!newSector.is_observed_by(tuple[0]))
 						tuple[0].removes.push(obj.id);
 
-				// Check new-to-old-sector [[ overlap ]]
+				// Old sector not observed by new sector
+				// [[ Entry ]]
 				for (const tuple of newSector!.observers)
 					if (!oldSector?.is_observed_by(tuple[0]))
-						obj.stamp = 0;
+						tuple[0].reentries.push(obj);
 
 			}
 		}
@@ -199,17 +201,22 @@ namespace slod {
 			const tuple = this.find_observer_tuple(grid)!;
 			let gathers: object[] = [];
 			for (let obj of this.sobjs) {
-				// If we are a new observer, or we have changes
-				const fully = tuple[1] == slod.stamp || obj.stamp == 0;
-				const updated = obj.stamp == slod.stamp;
-				if (fully || updated)
-					gathers.push(obj.gather(fully));
 
-				if (obj.stamp == 0) {
-					// For a multitude of possible reasons, we need to be globally fully send
-					//console.log('this object is newly created, deserves to be fully send', obj.type);
+				const fully =
+					obj.stamp == 0 ||
+					tuple[1] == slod.stamp ||
+					tuple[0].is_reentry(obj);
+
+				const updated = obj.stamp == slod.stamp;
+
+				if (fully || updated)
+					gathers.push(
+						obj.gather(fully));
+
+				if (obj.stamp == 0)
+					// We were sent fully
+					// Mark it for unstamp
 					slod.ssector.newlies.push(obj);
-				}
 			}
 			return gathers;
 		}
@@ -224,12 +231,14 @@ namespace slod {
 			// 	sector.tick();
 		}
 		static unstamp_newlies() {
-			// this fixes the unique moment where a new sobj isnt send fully
-			// since we were already observing the sector.
-			// that's why we fully send all 0-stamps, then cancel it with -1
+			// We were sent fully
+			// Now unstamp it
 			for (let sobj of slod.ssector.newlies)
 				sobj.stamp = -1;
 		}
+		/*static clear_fullies() {
+			this.
+		}*/
 		tick() {
 			hooks.call('ssectorTick', this);
 		}
@@ -265,6 +274,7 @@ namespace slod {
 		big: vec2 = [0, 0];
 		removes: string[] = []
 		shown: ssector[] = [];
+		reentries: sobj[] = [];
 		constructor(
 			public world: sworld,
 			public spread: number,
@@ -285,6 +295,12 @@ namespace slod {
 		shrink() {
 			this.spread--;
 			this.outside--;
+		}
+		is_reentry(target: sobj) {
+			for (let sobj of this.reentries)
+				if (target == sobj)
+					return true;
+			return false;
 		}
 		visible(sector: ssector) {
 			return sector.dist(this) < this.spread;
@@ -322,9 +338,11 @@ namespace slod {
 		gather() {
 			let packages: object[] = [];
 			for (let sector of this.shown) {
-				packages = packages.concat(sector.gather(this));
+				packages = packages.concat(
+					sector.gather(this));
 				// packages = packages.concat(sector.gather(this));
 			}
+			this.reentries = [];
 			return packages;
 		}
 	}
@@ -393,6 +411,9 @@ namespace slod {
 				upper[property] = property;
 		}
 		gather(fully: boolean) {
+			/*
+			if (observer.fullies.indexOf())
+			*/
 			//if (first/* || stamp == slod.stamp*/)
 			return { id: this.id, type: this.type, wpos: this.wpos };
 			//else

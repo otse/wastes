@@ -284,7 +284,7 @@ class connection {
 				this.you.wpos = json.player.wpos;
 				this.you.angle = json.player.angle;
 				this.you.aiming = json.player.aiming;
-				this.you.sector?.swap(this.you);
+				slod.ssector.swap(this.you);
 			}
 		}
 		if (json.player.shoot) {
@@ -380,12 +380,13 @@ class connection {
 			object.playerId = this.you?.id;
 			object.rates = rates;
 		}
-
+		
 		object.news = this.grid.gather();
 
 		if (this.grid.removes.length)
 			object.removes = this.grid.removes;
 		this.grid.removes = [];
+
 		if (this.messages.length)
 			object.messages = this.messages;
 		this.messages = [];
@@ -658,7 +659,7 @@ class npc extends supersobj {
 			//let venture = pts.add(this.wpos, [x, y]);
 			//this.wpos = venture;
 
-			this.sector?.swap(this);
+			slod.ssector.swap(this);
 
 			this.rebound();
 
@@ -726,10 +727,9 @@ class pawn extends npc {
 		this.type = 'pawn';
 		this.title = 'Pawn';
 		this.id = 'pawn_' + pawn.id++;
-		this.outfit = outfits[Math.floor(Math.random() * outfits.length)];
-		this.wielding = sample(guns)
+		this.outfit = sample(outfits);
+		this.wielding = sample(guns);
 		this.inventory = new inventory(this);
-
 	}
 	override respawn(oldNpc: pawn) {
 		console.log('PAWN RESPAWN');

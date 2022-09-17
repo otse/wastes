@@ -44,8 +44,31 @@ namespace app {
 	export function boot(version: string) {
 		salt = version;
 		mobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-		function onmousemove(e) { pos[0] = e.clientX; pos[1] = e.clientY; }
-		function onmousedown(e) { buttons[e.button] = 1; if (e.button == 1) return false }
+		function onmousemove(e) {
+			pos[0] = e.clientX;
+			pos[1] = e.clientY;
+		}
+		function onmousedown(e) {
+			buttons[e.button] = 1;
+			if (e.button == 1)
+				return false
+		}
+		function ontouchstart(e) {
+			buttons[0] = 1;
+			//return false;
+		}
+		function ontouchmove(e) {
+			pos[0] = e.clientX;
+			pos[1] = e.clientY;
+			//return false;
+			//console.log('touch move');
+			e.preventDefault();
+			return false;
+		}
+		function ontouchend(e) {
+			buttons[0] = MOUSE.UP;
+			//return false;
+		}
 		function onmouseup(e) { buttons[e.button] = MOUSE.UP; }
 		function onwheel(e) { wheel = e.deltaY < 0 ? 1 : -1; }
 		function onerror(message) { document.querySelectorAll('.stats')[0].innerHTML = message; }
@@ -54,6 +77,9 @@ namespace app {
 		document.onmousedown = onmousedown;
 		document.onmouseup = onmouseup;
 		document.onwheel = onwheel;
+		document.ontouchstart = ontouchstart;
+		document.ontouchmove = ontouchmove;
+		document.ontouchend = ontouchend;
 		window.onerror = onerror;
 		ren.init();
 		wastes.init();

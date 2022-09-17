@@ -178,7 +178,10 @@ export namespace tiles {
 				this.color = shadows.mix(
 					this.color as unknown as vec3, this.wpos) as unknown as vec4;
 			}
-			this.myOrderBias = (this.z / 5);// + (this.height / 10);
+			// really great z based bias
+			this.myOrderBias = this.z / 6;
+			console.log('my order bias', this.z, this.myOrderBias);
+			
 			if (dont_show_tiles)
 				return
 			let shape = new sprite({

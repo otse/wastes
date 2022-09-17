@@ -250,9 +250,31 @@ var wastes = (function (exports, THREE) {
         function boot(version) {
             app.salt = version;
             app.mobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-            function onmousemove(e) { pos[0] = e.clientX; pos[1] = e.clientY; }
-            function onmousedown(e) { buttons[e.button] = 1; if (e.button == 1)
-                return false; }
+            function onmousemove(e) {
+                pos[0] = e.clientX;
+                pos[1] = e.clientY;
+            }
+            function onmousedown(e) {
+                buttons[e.button] = 1;
+                if (e.button == 1)
+                    return false;
+            }
+            function ontouchstart(e) {
+                buttons[0] = 1;
+                //return false;
+            }
+            function ontouchmove(e) {
+                pos[0] = e.clientX;
+                pos[1] = e.clientY;
+                //return false;
+                //console.log('touch move');
+                e.preventDefault();
+                return false;
+            }
+            function ontouchend(e) {
+                buttons[0] = MOUSE.UP;
+                //return false;
+            }
             function onmouseup(e) { buttons[e.button] = MOUSE.UP; }
             function onwheel(e) { app.wheel = e.deltaY < 0 ? 1 : -1; }
             function onerror(message) { document.querySelectorAll('.stats')[0].innerHTML = message; }
@@ -261,6 +283,9 @@ var wastes = (function (exports, THREE) {
             document.onmousedown = onmousedown;
             document.onmouseup = onmouseup;
             document.onwheel = onwheel;
+            document.ontouchstart = ontouchstart;
+            document.ontouchmove = ontouchmove;
+            document.ontouchend = ontouchend;
             window.onerror = onerror;
             ren$1.init();
             exports.wastes.init();
@@ -479,7 +504,7 @@ void main() {
 		      new is ${pts.to_string(ren.screenCorrected)}`);
             ren.target.setSize(ren.screenCorrected[0], ren.screenCorrected[1]);
             ren.targetMask.setSize(ren.screenCorrected[0], ren.screenCorrected[1]);
-            ren.plane = new THREE.PlaneGeometry(ren.screenCorrected[0], ren.screenCorrected[1]);
+            ren.plane = new THREE.PlaneBufferGeometry(ren.screenCorrected[0], ren.screenCorrected[1]);
             if (ren.quadPost)
                 ren.quadPost.geometry = ren.plane;
             {
@@ -6220,7 +6245,7 @@ void main() {
                             const split = height.split("_");
                             height = parseInt(split[0]);
                             z = parseInt(split[1]);
-                            console.log('Z is', z);
+                            //console.log('Z is', z);
                         }
                         else {
                             height = parseInt(height);
@@ -6371,15 +6396,10 @@ void main() {
             this.rendered = 0;
             this.set_3d();
             shape.material.map = this.target.texture;
-            //const house = collada.load_model('collada/building', 18, (model) => {
-            //model.rotation.set(0, 0, 0);
             this.group.add(this.model);
             this.group.position.set(0, -23, 0);
             //this.group.add(new AxesHelper(100));
-            //console.log('add building to scene');
-            //});
             this.stack();
-            //console.log('after stack', this.shape);
         }
     }
 
@@ -6409,16 +6429,17 @@ void main() {
                     if (pixel.is_color(colors$1.color_acid_barrel)) ;
                     else if (pixel.is_color(colors$1.color_wall_chest)) ;
                     else if (pixel.is_color(colors$1.color_shelves)) ;
-                    else if (pixel.is_color(colors$1.color_panel)) {
-                        factory(objects.panel, pixel, pos);
-                    }
+                    else if (pixel.is_color(colors$1.color_panel)) ;
                 });
                 return false;
             });
             hooks.register('sectorCreate', (sector) => {
                 pts.func(sector.small, (pos) => {
                     let pixel = wastes.roofmap.pixel(pos);
-                    if (pixel.is_color(colors$1.color_false_front)) ;
+                    if (pixel.is_color(colors$1.color_false_front)) {
+                        //factory(objects.roof, pixel, pos);
+                        factory(objects.falsefront, pixel, pos);
+                    }
                 });
                 return false;
             });
@@ -6863,7 +6884,7 @@ void main() {
                     tuple: sprites$1.dpanel,
                     cell: [0, 0],
                     //color: color,
-                    orderBias: .6
+                    orderBias: 0
                 });
                 shape.rup2 = 15;
                 shape.rleft = 2;
@@ -6872,7 +6893,7 @@ void main() {
             tick() {
                 //return;
                 let sprite = this.shape;
-                this.ticker += ren$1.delta / 60;
+                this.ticker += ren$1.delta;
                 const cell = sprite.vars.cell;
                 if (this.ticker > 0.5) {
                     if (cell[0] < 5)
@@ -8154,7 +8175,6 @@ void main() {
             // 4
             `You stalkers think you're survivors.`,
             `The bayou swallows you up.`,
-            `If you don't get shot you'll be maimed.`,
         ]
     ];
 
@@ -9363,7 +9383,9 @@ void main() {
                     this.color = wastes.colormap.pixel(this.wpos).arrayRef;
                     this.color = shadows$1.mix(this.color, this.wpos);
                 }
-                this.myOrderBias = (this.z / 5); // + (this.height / 10);
+                // really great z based bias
+                this.myOrderBias = this.z / 6;
+                console.log('my order bias', this.z, this.myOrderBias);
                 let shape = new sprite({
                     binded: this,
                     tuple: this.tuple,

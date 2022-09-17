@@ -25,7 +25,6 @@ const dialogues: speech[] = [
         // 4
         `You stalkers think you're survivors.`,
         `The bayou swallows you up.`,
-        `If you don't get shot you'll be maimed.`,
     ]
 ]
 

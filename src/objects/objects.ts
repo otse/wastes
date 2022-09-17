@@ -59,7 +59,7 @@ namespace objects {
 					//factory(objects.shelves, pixel, pos);
 				}
 				else if (pixel.is_color(colors.color_panel)) {
-					factory(objects.panel, pixel, pos);
+					//factory(objects.panel, pixel, pos);
 				}
 			})
 			return false;
@@ -70,7 +70,7 @@ namespace objects {
 				let pixel = wastes.roofmap.pixel(pos);
 				if (pixel.is_color(colors.color_false_front)) {
 					//factory(objects.roof, pixel, pos);
-					//factory(objects.falsefront, pixel, pos);
+					factory(objects.falsefront, pixel, pos);
 				}
 			})
 			return false;
@@ -559,7 +559,7 @@ namespace objects {
 				tuple: sprites.dpanel,
 				cell: [0, 0],
 				//color: color,
-				orderBias: .6
+				orderBias: 0
 			});
 			shape.rup2 = 15;
 			shape.rleft = 2;
@@ -568,14 +568,15 @@ namespace objects {
 		override tick() {
 			//return;
 			let sprite = this.shape as sprite;
-			this.ticker += ren.delta / 60;
-			const cell = sprite.vars.cell!;
+			this.ticker += ren.delta;
+			const cell = sprite.vars.cell!;			
 			if (this.ticker > 0.5) {
 				if (cell[0] < 5)
 					cell[0]++;
 				else
 					cell[0] = 0;
 				this.ticker = 0;
+				
 			}
 			//sprite.retransform();
 			sprite.shape_manual_update();

@@ -55,7 +55,7 @@ class building_parts {
 						const split = height.split("_");
 						height = parseInt(split[0]);
 						z = parseInt(split[1]);
-						console.log('Z is', z);
+						//console.log('Z is', z);
 					}
 					else {
 						height = parseInt(height);
@@ -252,19 +252,12 @@ class prefab extends superobject {
 
 		shape.material.map = this.target.texture;
 
-		//const house = collada.load_model('collada/building', 18, (model) => {
-		//model.rotation.set(0, 0, 0);
 
 		this.group.add(this.model);
 		this.group.position.set(0, -23, 0);
 		//this.group.add(new AxesHelper(100));
-		//console.log('add building to scene');
-
-		//});
-
+		
 		this.stack();
-		//console.log('after stack', this.shape);
-
 	}
 }
 
