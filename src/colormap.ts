@@ -69,6 +69,8 @@ namespace colormap {
 		ctx
 		constructor(id: string) {
 			var img = document.getElementById(id) as any;
+			if (!img.complete)
+				console.error('bad', img);
 			this.canvas = document.createElement('canvas')!;
 			this.canvas.width = mapSpan;
 			this.canvas.height = mapSpan;

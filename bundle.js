@@ -1362,6 +1362,8 @@ void main() {
             constructor(id) {
                 this.data = [];
                 var img = document.getElementById(id);
+                if (!img.complete)
+                    console.error('bad', img);
                 this.canvas = document.createElement('canvas');
                 this.canvas.width = colormap_1.mapSpan;
                 this.canvas.height = colormap_1.mapSpan;
@@ -8500,9 +8502,7 @@ void main() {
             };
             function process_news(type, target, data, handle, update) {
                 for (let sobj of data.news) {
-                    sobj[0];
-                    let id = sobj[1][0];
-                    let type2 = sobj[1][3];
+                    let [random, id, , , type2] = sobj;
                     let obj = client.objsId[id];
                     if (obj)
                         type2 = obj.type;
@@ -8552,9 +8552,7 @@ void main() {
                     }
                     process_news(pawns$1.pawn, 'pawn', data, (obj, sobj) => {
                         console.log('news pawn');
-                        let wpos = sobj[1][1];
-                        let angle = sobj[1][2];
-                        let random = sobj[0];
+                        const [random, id, wpos, angle] = sobj;
                         obj.wpos = wpos;
                         obj.angle = angle;
                         obj.netangle = angle;
@@ -8579,9 +8577,7 @@ void main() {
                         obj.inventory = random.inventory;
                     }, (obj, sobj) => {
                         //console.log('update pawn');
-                        let wpos = sobj[1][1];
-                        let angle = sobj[1][2];
-                        let random = sobj[0];
+                        const [random, id, wpos, angle] = sobj;
                         if (obj.type != 'you') {
                             obj.netwpos = wpos;
                             obj.netangle = angle;
@@ -8594,9 +8590,7 @@ void main() {
                         }
                     });
                     process_news(chickens$1.chicken, 'chicken', data, (obj, sobj) => {
-                        let wpos = sobj[1][1];
-                        let angle = sobj[1][2];
-                        let random = sobj[0];
+                        const [random, id, wpos, angle] = sobj;
                         obj.wpos = wpos;
                         obj.netwpos = wpos;
                         obj.angle = angle;
@@ -8609,9 +8603,7 @@ void main() {
                             obj.examine = random.examine;
                         obj.dead = random.dead;
                     }, (obj, sobj) => {
-                        let wpos = sobj[1][1];
-                        let angle = sobj[1][2];
-                        let random = sobj[0];
+                        const [random, id, wpos, angle] = sobj;
                         obj.netwpos = wpos;
                         obj.netangle = angle;
                         obj.pecking = random.pecking;
@@ -8620,9 +8612,7 @@ void main() {
                         // console.log('updating chicken!');
                     });
                     process_news(zombies$1.zombie, 'zombie', data, (obj, sobj) => {
-                        let wpos = sobj[1][1];
-                        let angle = sobj[1][2];
-                        let random = sobj[0];
+                        const [random, id, wpos, angle] = sobj;
                         obj.wpos = wpos;
                         obj.angle = angle;
                         obj.dead = random.dead;
@@ -8631,34 +8621,29 @@ void main() {
                         if (random.examine)
                             obj.examine = random.examine;
                     }, (obj, sobj) => {
-                        let wpos = sobj[1][1];
-                        let angle = sobj[1][2];
-                        let random = sobj[0];
+                        const [random, id, wpos, angle] = sobj;
                         obj.netwpos = wpos;
                         obj.netangle = angle;
                         obj.dead = random.dead;
                         // console.log('updating chicken!');
                     });
                     process_news(objects$1.crate, 'crate', data, (obj, sobj) => {
-                        let wpos = sobj[1][1];
-                        let random = sobj[0];
+                        const [random, id, wpos] = sobj;
                         obj.wpos = wpos;
                         obj.inventory = random.inventory;
                         console.error('a new crate!');
                     }, (obj, sobj) => {
-                        sobj[1][1];
-                        let random = sobj[0];
+                        const [random] = sobj;
                         if (random.inventory)
                             obj.inventory = random.inventory;
                         // console.log('updating chicken!');
                     });
                     process_news(objects$1.shelves, 'shelves', data, (obj, sobj) => {
-                        let wpos = sobj[1][1];
-                        let random = sobj[0];
+                        const [random, id, wpos] = sobj;
                         obj.wpos = wpos;
                         obj.inventory = random.inventory;
                     }, (obj, sobj) => {
-                        let random = sobj[0];
+                        const [random] = sobj;
                         if (random.inventory)
                             obj.inventory = random.inventory;
                         // console.log('updating chicken!');

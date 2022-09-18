@@ -416,11 +416,11 @@ namespace slod {
 		}
 		gather(fully: boolean) {
 			// 
-			type type = [random: any, tuple: [id: number, wpos: vec2, angle: number, type?: string]];
+			type type = [random: any, id: number, wpos: vec2, angle: number, type?: string];
 			let sent = <type>
-				[{}, [this.id, this.wpos, this.angle, this.type]];
+				[{}, this.id, this.wpos, this.angle, this.type];
 			if (!fully)
-				sent[1].pop();
+				sent.pop();
 			return sent;
 		}
 	}

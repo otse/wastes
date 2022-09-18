@@ -33,7 +33,7 @@ namespace objects {
 	export function register() {
 
 		console.log(' objects register ');
-
+		
 		wastes.heightmap = new colormap.colormap('heightmap');
 		wastes.objectmap = new colormap.colormap('objectmap');
 		wastes.buildingmap = new colormap.colormap('buildingmap');

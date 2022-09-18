@@ -184,6 +184,7 @@ export class sprite extends lod.shape {
 		}
 		const c = this.vars.maskColor || [0.15, 0.3, 0.15];
 		const maskColor = new Vector3(c[0], c[1], c[2]);
+		
 		this.material = SpriteMaterial({
 			map: ren.load_texture(`${this.vars.tuple[3]}.png`, 0),
 			transparent: true,

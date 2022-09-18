@@ -51,7 +51,7 @@ export namespace client {
 			//socket.send("My name is John");
 		};
 
-		type sobj = [random: any, tuple: [id: number, wpos: vec2, angle: number, type?: string]]
+		type sobj = [random: any, id: number, wpos: vec2, angle: number, type?: string]
 		type news = sobj[];
 
 		function process_news<type extends superobject>(
@@ -62,9 +62,7 @@ export namespace client {
 			update) {
 
 			for (let sobj of data.news as news) {
-				let random = sobj[0];
-				let id = sobj[1][0];
-				let type2 = sobj[1][3];
+				let [random,id,,,type2] = sobj;
 				let obj = objsId[id];
 				if (obj)
 					type2 = obj.type;
@@ -120,9 +118,7 @@ export namespace client {
 				process_news(pawns.pawn, 'pawn', data,
 					(obj: pawns.pawn, sobj: sobj) => {
 						console.log('news pawn');
-						let wpos = sobj[1][1];
-						let angle = sobj[1][2];
-						let random = sobj[0];
+						const [random, id, wpos, angle] = sobj;
 						obj.wpos = wpos;
 						obj.angle = angle;
 						obj.netangle = angle;
@@ -148,9 +144,8 @@ export namespace client {
 					},
 					(obj, sobj) => {
 						//console.log('update pawn');
-						let wpos = sobj[1][1];
-						let angle = sobj[1][2];
-						let random = sobj[0];
+						const [random, id, wpos, angle] = sobj;
+
 						if (obj.type != 'you') {
 							obj.netwpos = wpos;
 							obj.netangle = angle;
@@ -165,9 +160,7 @@ export namespace client {
 
 				process_news(chickens.chicken, 'chicken', data,
 					(obj, sobj: sobj) => {
-						let wpos = sobj[1][1];
-						let angle = sobj[1][2];
-						let random = sobj[0];
+						const [random, id, wpos, angle] = sobj;
 						obj.wpos = wpos;
 						obj.netwpos = wpos;
 						obj.angle = angle;
@@ -181,9 +174,7 @@ export namespace client {
 						obj.dead = random.dead;
 					},
 					(obj, sobj) => {
-						let wpos = sobj[1][1];
-						let angle = sobj[1][2];
-						let random = sobj[0];
+						const [random, id, wpos, angle] = sobj;
 						obj.netwpos = wpos;
 						obj.netangle = angle;
 						obj.pecking = random.pecking;
@@ -194,9 +185,7 @@ export namespace client {
 
 				process_news(zombies.zombie, 'zombie', data,
 					(obj, sobj) => {
-						let wpos = sobj[1][1];
-						let angle = sobj[1][2];
-						let random = sobj[0];
+						const [random, id, wpos, angle] = sobj;
 						obj.wpos = wpos;
 						obj.angle = angle;
 						obj.dead = random.dead;
@@ -206,9 +195,7 @@ export namespace client {
 							obj.examine = random.examine;
 					},
 					(obj, sobj) => {
-						let wpos = sobj[1][1];
-						let angle = sobj[1][2];
-						let random = sobj[0];
+						const [random, id, wpos, angle] = sobj;
 						obj.netwpos = wpos;
 						obj.netangle = angle;
 						obj.dead = random.dead;
@@ -217,15 +204,13 @@ export namespace client {
 
 				process_news(objects.crate, 'crate', data,
 					(obj, sobj: sobj) => {
-						let wpos = sobj[1][1];
-						let random = sobj[0];
+						const [random, id, wpos] = sobj;
 						obj.wpos = wpos;
 						obj.inventory = random.inventory;
 						console.error('a new crate!');
 					},
 					(obj, sobj) => {
-						let wpos = sobj[1][1];
-						let random = sobj[0];
+						const [random] = sobj;
 						if (random.inventory)
 							obj.inventory = random.inventory;
 						// console.log('updating chicken!');
@@ -233,13 +218,12 @@ export namespace client {
 
 				process_news(objects.shelves, 'shelves', data,
 					(obj, sobj) => {
-						let wpos = sobj[1][1];
-						let random = sobj[0];
+						const [random, id, wpos] = sobj;
 						obj.wpos = wpos;
 						obj.inventory = random.inventory;
 					},
 					(obj, sobj) => {
-						let random = sobj[0];
+						const [random] = sobj;
 						if (random.inventory)
 							obj.inventory = random.inventory;
 						// console.log('updating chicken!');

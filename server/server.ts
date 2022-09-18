@@ -432,7 +432,7 @@ class supersobj extends slod.sobj {
 	}
 	override gather(fully: boolean) {
 		let upper = super.gather(fully);
-		let random = upper[0];
+		let [random] = upper;
 		if (fully) {
 			if (this.title)
 				random.title = this.title;
@@ -529,7 +529,7 @@ class container extends supersobj {
 	}
 	override gather(fully: boolean) {
 		let upper = super.gather(fully);
-		let random = upper[0];
+		let [random] = upper;
 		if (fully || this.inventory.stamp == slod.stamp)
 			random.inventory = this.inventory.collect();
 		return upper;
@@ -697,7 +697,7 @@ class npc extends supersobj {
 	}
 	override gather(fully: boolean) {
 		let upper = super.gather(fully);
-		let random = upper[0];
+		let [random] = upper;
 		//random.angle = this.angle;
 		if (this.dead)
 			random.dead = this.dead;
@@ -756,9 +756,10 @@ class pawn extends npc {
 	}
 	override gather(fully: boolean) {
 		let upper = super.gather(fully);
-		let random = upper[0];
+		let [random] = upper;
+
 		if (fully) {
-			console.log('pawn fully');
+			//console.log('pawn fully');
 			//console.log('outfit');
 			random.outfit = this.outfit;
 			random.dialogue = this.dialogue;
@@ -806,7 +807,8 @@ class player extends pawn {
 	}
 	override gather(fully: boolean) {
 		let upper = super.gather(fully);
-		let random = upper[0];
+		let [random] = upper;
+
 		if (fully)
 			random.isPlayer = true;
 		return upper;
@@ -858,7 +860,8 @@ class chicken extends npc {
 	}
 	override gather(fully: boolean) {
 		let upper = super.gather(fully);
-		let random = upper[0];
+		let [random] = upper;
+
 		// slod.sobj.attach_truthy(upper, this.pecking);
 		if (this.pecking)
 			random.pecking = this.pecking;
