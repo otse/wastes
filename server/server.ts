@@ -792,7 +792,6 @@ class player extends pawn {
 		this.inventory.add('cork', 50);
 
 		console.log('amount of cork:', this.inventory.amount('cork'));
-
 	}
 	override tick() {
 		let bullets = this.inventory.get('bullet');

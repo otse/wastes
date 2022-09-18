@@ -26,12 +26,12 @@ export namespace client {
 		return ['', 1, 1];
 	}
 
-	export var interactingWith = -1
+	export var interactingWith = 0
 	export var wantToBuy = ''
 	export var wantToSell = ''
 	export var wantToGrab = ''
 
-	export var tradeWithId = '';
+	export var tradeWithId = 0;
 
 	export function tick() {
 		for (let id in objsId) {
@@ -56,7 +56,7 @@ export namespace client {
 
 		function process_news<type extends superobject>(
 			type: { new(): type },
-			expected: string,
+			target: string,
 			data: any,
 			handle,
 			update) {
@@ -64,12 +64,17 @@ export namespace client {
 			for (let sobj of data.news as news) {
 				let random = sobj[0];
 				let id = sobj[1][0];
-				let typee = sobj[1][3];
+				let type2 = sobj[1][3];
 				let obj = objsId[id];
 				if (obj)
-					typee = obj.type;
-				if (typee != expected)
+					type2 = obj.type;
+				if (type2 == 'you')
+					type2 = 'pawn';
+				if (type2 != target)
 					continue;
+				//if (expected == 'chicken')
+				//	console.log('chikn', sobj);
+
 				if (!obj) {
 					// console.log('new sobj', typed, id);
 					obj = objsId[id] = new type;
@@ -114,7 +119,7 @@ export namespace client {
 
 				process_news(pawns.pawn, 'pawn', data,
 					(obj: pawns.pawn, sobj: sobj) => {
-						// console.log('news pawn');
+						console.log('news pawn');
 						let wpos = sobj[1][1];
 						let angle = sobj[1][2];
 						let random = sobj[0];
@@ -142,6 +147,7 @@ export namespace client {
 						obj.inventory = random.inventory;
 					},
 					(obj, sobj) => {
+						//console.log('update pawn');
 						let wpos = sobj[1][1];
 						let angle = sobj[1][2];
 						let random = sobj[0];
@@ -152,7 +158,7 @@ export namespace client {
 						}
 						obj.dead = random.dead;
 						if (random.inventory) {
-							//console.log('update inventory');
+							console.log('update inventory');
 							obj.inventory = random.inventory;
 						}
 					});
@@ -278,7 +284,7 @@ export namespace client {
 				pawns.you.shoot = false;
 				if (interactingWith) {
 					json.interactingWith = interactingWith;
-					interactingWith = -1;
+					interactingWith = 0;
 				}
 				if (wantToBuy) {
 					json.wantToBuy = wantToBuy;
@@ -294,7 +300,7 @@ export namespace client {
 				}
 				if (tradeWithId) {
 					json.tradeWithId = tradeWithId;
-					tradeWithId = '';
+					tradeWithId = 0;
 				}
 				const string = JSON.stringify(json);
 				socket.send(string);

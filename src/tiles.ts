@@ -97,7 +97,7 @@ export namespace tiles {
 		// objs: lod.obj[] = []
 		color: vec4
 		opacity = 1
-		myOrderBias = 1
+		superiorBias = 1
 		colorPrev
 		constructor(wpos: vec2) {
 			super(numbers.tiles);
@@ -179,8 +179,8 @@ export namespace tiles {
 					this.color as unknown as vec3, this.wpos) as unknown as vec4;
 			}
 			// really great z based bias
-			this.myOrderBias = this.z / 6;
-			console.log('my order bias', this.z, this.myOrderBias);
+			this.superiorBias = this.z / 6;
+			//console.log('my order bias', this.z, this.myOrderBias);
 			
 			if (dont_show_tiles)
 				return
@@ -190,7 +190,7 @@ export namespace tiles {
 				cell: this.cell,
 				color: this.color as unknown as vec3,
 				opacity: this.opacity,
-				orderBias: this.myOrderBias
+				orderBias: this.superiorBias
 			});
 			// if we have a deck, add it to heightAdd
 			let sector = lod.gworld.at(lod.world.big(this.wpos));

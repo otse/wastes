@@ -8478,11 +8478,11 @@ void main() {
             return ['', 1, 1];
         }
         client.get_rate = get_rate;
-        client.interactingWith = -1;
+        client.interactingWith = 0;
         client.wantToBuy = '';
         client.wantToSell = '';
         client.wantToGrab = '';
-        client.tradeWithId = '';
+        client.tradeWithId = 0;
         function tick() {
             for (let id in client.objsId) {
                 let obj = client.objsId[id];
@@ -8498,16 +8498,20 @@ void main() {
                 //console.log("Sending to server");
                 //socket.send("My name is John");
             };
-            function process_news(type, expected, data, handle, update) {
+            function process_news(type, target, data, handle, update) {
                 for (let sobj of data.news) {
                     sobj[0];
                     let id = sobj[1][0];
-                    let typee = sobj[1][3];
+                    let type2 = sobj[1][3];
                     let obj = client.objsId[id];
                     if (obj)
-                        typee = obj.type;
-                    if (typee != expected)
+                        type2 = obj.type;
+                    if (type2 == 'you')
+                        type2 = 'pawn';
+                    if (type2 != target)
                         continue;
+                    //if (expected == 'chicken')
+                    //	console.log('chikn', sobj);
                     if (!obj) {
                         // console.log('new sobj', typed, id);
                         obj = client.objsId[id] = new type;
@@ -8547,7 +8551,7 @@ void main() {
                         //console.log('got a server tree');
                     }
                     process_news(pawns$1.pawn, 'pawn', data, (obj, sobj) => {
-                        // console.log('news pawn');
+                        console.log('news pawn');
                         let wpos = sobj[1][1];
                         let angle = sobj[1][2];
                         let random = sobj[0];
@@ -8574,6 +8578,7 @@ void main() {
                         obj.isPlayer = random.isPlayer;
                         obj.inventory = random.inventory;
                     }, (obj, sobj) => {
+                        //console.log('update pawn');
                         let wpos = sobj[1][1];
                         let angle = sobj[1][2];
                         let random = sobj[0];
@@ -8584,7 +8589,7 @@ void main() {
                         }
                         obj.dead = random.dead;
                         if (random.inventory) {
-                            //console.log('update inventory');
+                            console.log('update inventory');
                             obj.inventory = random.inventory;
                         }
                     });
@@ -8692,7 +8697,7 @@ void main() {
                     pawns$1.you.shoot = false;
                     if (client.interactingWith) {
                         json.interactingWith = client.interactingWith;
-                        client.interactingWith = -1;
+                        client.interactingWith = 0;
                     }
                     if (client.wantToBuy) {
                         json.wantToBuy = client.wantToBuy;
@@ -8708,7 +8713,7 @@ void main() {
                     }
                     if (client.tradeWithId) {
                         json.tradeWithId = client.tradeWithId;
-                        client.tradeWithId = '';
+                        client.tradeWithId = 0;
                     }
                     const string = JSON.stringify(json);
                     client.socket.send(string);
@@ -9335,7 +9340,7 @@ void main() {
                 this.isLand = false;
                 this.refresh = false;
                 this.opacity = 1;
-                this.myOrderBias = 1;
+                this.superiorBias = 1;
                 this.wpos = wpos;
                 let pixel = wastes.colormap.pixel(this.wpos);
                 if (pixel.is_invalid_pixel()) {
@@ -9400,15 +9405,14 @@ void main() {
                     this.color = shadows$1.mix(this.color, this.wpos);
                 }
                 // really great z based bias
-                this.myOrderBias = this.z / 6;
-                console.log('my order bias', this.z, this.myOrderBias);
+                this.superiorBias = this.z / 6;
                 let shape = new sprite({
                     binded: this,
                     tuple: this.tuple,
                     cell: this.cell,
                     color: this.color,
                     opacity: this.opacity,
-                    orderBias: this.myOrderBias
+                    orderBias: this.superiorBias
                 });
                 // if we have a deck, add it to heightAdd
                 let sector = lod$1.gworld.at(lod$1.world.big(this.wpos));

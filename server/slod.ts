@@ -348,7 +348,7 @@ namespace slod {
 	}
 
 	export class sobj extends toggle {
-		static ids = 0
+		static ids = 1
 		id = 0
 		type = 'an sobj'
 		stamp = 0
@@ -415,11 +415,12 @@ namespace slod {
 				upper[property] = property;
 		}
 		gather(fully: boolean) {
+			// 
 			type type = [random: any, tuple: [id: number, wpos: vec2, angle: number, type?: string]];
 			let sent = <type>
 				[{}, [this.id, this.wpos, this.angle, this.type]];
 			if (!fully)
-				delete sent[1][3];
+				sent[1].pop();
 			return sent;
 		}
 	}
