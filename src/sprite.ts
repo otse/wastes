@@ -52,6 +52,20 @@ export namespace hovering_sprites {
 	}
 };
 
+var planes: { [index: string]: PlaneGeometry } = {}
+
+function get_plane_geometry(size: vec2) {
+	const key = size[0] + ',' + size[1];
+
+	if (planes[key])
+		return planes[key];
+	else {
+		const geometry = new PlaneGeometry(size[0], size[1], 1, 1);
+		planes[key] = geometry;
+		return planes[key];
+	}
+}
+
 export class sprite extends lod.shape {
 	static masks: sprite[] = []
 	writez = true
@@ -92,7 +106,7 @@ export class sprite extends lod.shape {
 
 		this.aabbScreen = new aabb2(
 			[0, 0], size);
-		
+
 		calc = pts.subtract(
 			calc, pts.divide(size, 2));
 
@@ -138,14 +152,18 @@ export class sprite extends lod.shape {
 		if (this.mesh) {
 			this.retransform();
 			this.mesh.position.fromArray([...calc, 0]);
+
 			// Not rounding gives us much better depth
 			let pos = obj.wpos; // pts.round(obj.wpos);
+
 			// Experimental z elevation based bias!
 			let zBasedBias = 0;
 			//zBasedBias = this.vars.binded.z / 3;
+
 			this.mesh.renderOrder = -pos[1] + pos[0] + this.vars.orderBias! + zBasedBias;
 			this.mesh.rotation.z = this.vars.binded.ro;
 			this.mesh.updateMatrix();
+			this.mesh.updateMatrixWorld(false);
 
 			if (this.vars.mask) {
 				this.meshMask.position.fromArray([...calc, 0]);
@@ -169,7 +187,7 @@ export class sprite extends lod.shape {
 
 		this.retransform();
 
-		this.geometry = new PlaneGeometry(this.vars.binded.size[0], this.vars.binded.size[1]);
+		this.geometry = get_plane_geometry(this.vars.binded.size);
 		let color;
 		if (this.vars.binded!.sector!.color) {
 			color = new Color(this.vars.binded.sector!.color);
@@ -184,7 +202,7 @@ export class sprite extends lod.shape {
 		}
 		const c = this.vars.maskColor || [0.15, 0.3, 0.15];
 		const maskColor = new Vector3(c[0], c[1], c[2]);
-		
+
 		this.material = SpriteMaterial({
 			map: ren.load_texture(`${this.vars.tuple[3]}.png`, 0),
 			transparent: true,
@@ -200,13 +218,14 @@ export class sprite extends lod.shape {
 		this.mesh = new Mesh(this.geometry, this.material);
 		this.mesh.frustumCulled = false;
 		this.mesh.matrixAutoUpdate = false;
+		this.mesh.matrixWorldAutoUpdate = false;
 		if (this.vars.mask) {
 			this.meshMask = this.mesh.clone();
 			if (this.vars.negativeMask) {
 				this.meshMask.material = this.material.clone();
 				this.meshMask.material.blending = THREE.CustomBlending;
 				this.meshMask.material.blendEquation = THREE.ReverseSubtractEquation;
-				
+
 			}
 		}
 		// this.vars.binded.sector?.group.add(this.mesh);

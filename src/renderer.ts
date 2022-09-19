@@ -178,17 +178,24 @@ namespace ren {
 
 		clock = new Clock()
 
+		THREE.Object3D.DefaultMatrixAutoUpdate = true;
+
 		groups.axisSwap = new Group;
+		groups.axisSwap.matrixAutoUpdate = false;
+		groups.axisSwap.matrixWorldAutoUpdate = false;
 		groups.tiles = new Group;
-		//groups.menu = new Group
 
 		scene = new Scene();
+		scene.matrixAutoUpdate = false;
+		scene.matrixWorldAutoUpdate = false;
+
 		groups.axisSwap.add(groups.tiles);
 		//groups.axisSwap.scale.set(1, -1, 1);
 		scene.add(groups.axisSwap);
 		scene.background = new Color('#333');
 		
 		scene2 = new Scene();
+		scene2.matrixAutoUpdate = false;
 
 		sceneMask = new Scene();
 		//sceneMask.background = new Color('#fff');
@@ -232,6 +239,7 @@ namespace ren {
 		onWindowResize();
 
 		quadPost = new Mesh(plane, materialPost);
+		quadPost.matrixAutoUpdate = false;
 		//quadPost.position.z = -100;
 
 		scene2.add(quadPost);

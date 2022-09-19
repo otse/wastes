@@ -185,6 +185,7 @@ namespace win {
 			if (!this.traderInventoryElement) {
 				this.traderInventoryElement = document.createElement('div');
 				this.traderInventoryElement.className = 'inventory';
+				this.traderInventoryElement.style.width = '50%';
 				this.traderLayout.append(this.traderInventoryElement);
 			}
 			let pawn = this.tradeWithCur as pawns.pawn;
@@ -227,6 +228,7 @@ namespace win {
 			if (!this.yourInventoryElement) {
 				this.yourInventoryElement = document.createElement('div');
 				this.yourInventoryElement.className = 'inventory';
+				this.yourInventoryElement.style.width = '50%';
 				this.traderLayout.append(this.yourInventoryElement);
 			}
 			let you = pawns.you;

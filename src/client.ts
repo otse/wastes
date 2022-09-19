@@ -62,7 +62,7 @@ export namespace client {
 			update) {
 
 			for (let sobj of data.news as news) {
-				let [random,id,,,type2] = sobj;
+				let [,id,,,type2] = sobj;
 				let obj = objsId[id];
 				if (obj)
 					type2 = obj.type;
@@ -118,7 +118,7 @@ export namespace client {
 				process_news(pawns.pawn, 'pawn', data,
 					(obj: pawns.pawn, sobj: sobj) => {
 						console.log('news pawn');
-						const [random, id, wpos, angle] = sobj;
+						const [random,, wpos, angle] = sobj;
 						obj.wpos = wpos;
 						obj.angle = angle;
 						obj.netangle = angle;
@@ -144,8 +144,7 @@ export namespace client {
 					},
 					(obj, sobj) => {
 						//console.log('update pawn');
-						const [random, id, wpos, angle] = sobj;
-
+						const [random,, wpos, angle] = sobj;
 						if (obj.type != 'you') {
 							obj.netwpos = wpos;
 							obj.netangle = angle;
@@ -160,7 +159,7 @@ export namespace client {
 
 				process_news(chickens.chicken, 'chicken', data,
 					(obj, sobj: sobj) => {
-						const [random, id, wpos, angle] = sobj;
+						const [random,, wpos, angle] = sobj;
 						obj.wpos = wpos;
 						obj.netwpos = wpos;
 						obj.angle = angle;
@@ -174,7 +173,7 @@ export namespace client {
 						obj.dead = random.dead;
 					},
 					(obj, sobj) => {
-						const [random, id, wpos, angle] = sobj;
+						const [random,, wpos, angle] = sobj;
 						obj.netwpos = wpos;
 						obj.netangle = angle;
 						obj.pecking = random.pecking;
@@ -185,7 +184,7 @@ export namespace client {
 
 				process_news(zombies.zombie, 'zombie', data,
 					(obj, sobj) => {
-						const [random, id, wpos, angle] = sobj;
+						const [random,, wpos, angle] = sobj;
 						obj.wpos = wpos;
 						obj.angle = angle;
 						obj.dead = random.dead;
@@ -195,7 +194,7 @@ export namespace client {
 							obj.examine = random.examine;
 					},
 					(obj, sobj) => {
-						const [random, id, wpos, angle] = sobj;
+						const [random,, wpos, angle] = sobj;
 						obj.netwpos = wpos;
 						obj.netangle = angle;
 						obj.dead = random.dead;
@@ -204,7 +203,7 @@ export namespace client {
 
 				process_news(objects.crate, 'crate', data,
 					(obj, sobj: sobj) => {
-						const [random, id, wpos] = sobj;
+						const [random,, wpos] = sobj;
 						obj.wpos = wpos;
 						obj.inventory = random.inventory;
 						console.error('a new crate!');
@@ -218,7 +217,7 @@ export namespace client {
 
 				process_news(objects.shelves, 'shelves', data,
 					(obj, sobj) => {
-						const [random, id, wpos] = sobj;
+						const [random,, wpos] = sobj;
 						obj.wpos = wpos;
 						obj.inventory = random.inventory;
 					},

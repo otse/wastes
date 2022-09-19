@@ -404,7 +404,6 @@ namespace slod {
 			// console.warn(' (lod) obj.delete ');
 		}
 		update() { // implement me
-
 		}
 		is_type(types: string[]) {
 			return types.indexOf(this.type) != -1;
@@ -415,10 +414,17 @@ namespace slod {
 				upper[property] = property;
 		}
 		gather(fully: boolean) {
-			// 
+			// todo swap wpos with angle
 			type type = [random: any, id: number, wpos: vec2, angle: number, type?: string];
 			let sent = <type>
-				[{}, this.id, this.wpos, this.angle, this.type];
+				[{},
+				this.id,
+				this.wpos,
+				this.angle,
+				this.type];
+			// example:
+			// [{inventory: []}, 12, [24, 48], 0, 'crate']
+			// we dont need type unless fully
 			if (!fully)
 				sent.pop();
 			return sent;

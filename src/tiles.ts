@@ -209,7 +209,7 @@ export namespace tiles {
 			const sprite = this.shape as sprite;
 			if (!sprite?.mesh)
 				return;
-			const last = tile.lastHover
+			const last = tile.lastHover;
 			if (last && last != this && last.sector!.isActive()) {
 				last.hide();
 				last.show();
@@ -230,9 +230,9 @@ export namespace tiles {
 				this.hide();
 				this.show();
 			}
-			if (pawns.you && pts.equals(this.wpos, pts.round(pawns.you.wpos))) {
+			//if (pawns.you && pts.equals(this.wpos, pts.round(pawns.you.wpos))) {
 				//this.paint();
-			}
+			//}
 		}
 	}
 

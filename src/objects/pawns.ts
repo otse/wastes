@@ -98,10 +98,12 @@ export namespace pawns {
 				this.camera = ren.make_orthographic_camera(size[0], size[1]);
 
 				this.scene = new Scene()
+				this.scene.matrixAutoUpdate = false;
 				//this.scene.background = new Color('gray');
 				this.scene.rotation.set(Math.PI / 6, Math.PI / 4, 0);
 				this.scene.position.set(0, 0, 0);
 				this.scene.scale.set(scale, scale, scale);
+				this.scene.updateMatrix();
 
 				let amb = new AmbientLight('white');
 				this.scene.add(amb);
@@ -270,8 +272,10 @@ export namespace pawns {
 			});*/
 
 			this.meshes.water = new Mesh(planeWater, materialWater);
+			this.meshes.water.matrixAutoUpdate = false;
 			this.meshes.water.rotation.x = -Math.PI / 2;
 			this.meshes.water.position.y = -bodyHeight * 1.25;
+			this.meshes.water.updateMatrix();
 			this.meshes.water.visible = false;
 
 			this.meshes.head = new Mesh(boxHead, materialHead);
@@ -283,7 +287,7 @@ export namespace pawns {
 
 			this.meshes.legl = new Mesh(boxLegs, materialLegs);
 			this.meshes.legr = new Mesh(boxLegs, materialLegs);
-
+			
 			/*this.meshes.gungrip = new Mesh(boxGunGrip, materialGunGrip);
 			this.meshes.gunbarrel = new Mesh(boxGunBarrel, materialGunBarrel);*/
 

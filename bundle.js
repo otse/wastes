@@ -438,15 +438,20 @@ void main() {
         function init() {
             console.log('renderer init');
             ren.clock = new THREE.Clock();
+            THREE__default["default"].Object3D.DefaultMatrixAutoUpdate = true;
             groups.axisSwap = new THREE.Group;
+            groups.axisSwap.matrixAutoUpdate = false;
+            groups.axisSwap.matrixWorldAutoUpdate = false;
             groups.tiles = new THREE.Group;
-            //groups.menu = new Group
             ren.scene = new THREE.Scene();
+            ren.scene.matrixAutoUpdate = false;
+            ren.scene.matrixWorldAutoUpdate = false;
             groups.axisSwap.add(groups.tiles);
             //groups.axisSwap.scale.set(1, -1, 1);
             ren.scene.add(groups.axisSwap);
             ren.scene.background = new THREE.Color('#333');
             ren.scene2 = new THREE.Scene();
+            ren.scene2.matrixAutoUpdate = false;
             ren.sceneMask = new THREE.Scene();
             //sceneMask.background = new Color('#fff');
             ren.sceneMask.add(new THREE.AmbientLight(0xffffff, 1));
@@ -479,6 +484,7 @@ void main() {
             });
             onWindowResize();
             ren.quadPost = new THREE.Mesh(ren.plane, ren.materialPost);
+            ren.quadPost.matrixAutoUpdate = false;
             //quadPost.position.z = -100;
             ren.scene2.add(ren.quadPost);
             window.ren = ren;
@@ -1005,6 +1011,17 @@ void main() {
         }
         hovering_sprites.sort_closest_to_mouse = sort_closest_to_mouse;
     })(hovering_sprites || (hovering_sprites = {}));
+    var planes = {};
+    function get_plane_geometry(size) {
+        const key = size[0] + ',' + size[1];
+        if (planes[key])
+            return planes[key];
+        else {
+            const geometry = new THREE.PlaneGeometry(size[0], size[1], 1, 1);
+            planes[key] = geometry;
+            return planes[key];
+        }
+    }
     class sprite extends lod$1.shape {
         constructor(vars) {
             super(vars.binded, numbers.sprites);
@@ -1076,6 +1093,7 @@ void main() {
                 this.mesh.renderOrder = -pos[1] + pos[0] + this.vars.orderBias + zBasedBias;
                 this.mesh.rotation.z = this.vars.binded.ro;
                 this.mesh.updateMatrix();
+                this.mesh.updateMatrixWorld(false);
                 if (this.vars.mask) {
                     this.meshMask.position.fromArray([...calc, 0]);
                     this.meshMask.renderOrder = -pos[1] + pos[0] + this.vars.orderBias;
@@ -1090,7 +1108,7 @@ void main() {
             //console.log('create');
             this.vars.binded;
             this.retransform();
-            this.geometry = new THREE.PlaneGeometry(this.vars.binded.size[0], this.vars.binded.size[1]);
+            this.geometry = get_plane_geometry(this.vars.binded.size);
             let color;
             if (this.vars.binded.sector.color) {
                 color = new THREE.Color(this.vars.binded.sector.color);
@@ -1120,6 +1138,7 @@ void main() {
             this.mesh = new THREE.Mesh(this.geometry, this.material);
             this.mesh.frustumCulled = false;
             this.mesh.matrixAutoUpdate = false;
+            this.mesh.matrixWorldAutoUpdate = false;
             if (this.vars.mask) {
                 this.meshMask = this.mesh.clone();
                 if (this.vars.negativeMask) {
@@ -1457,6 +1476,189 @@ void main() {
         shadows.tick = tick;
     })(shadows || (shadows = {}));
     var shadows$1 = shadows;
+
+    var tiles;
+    (function (tiles) {
+        tiles.started = false;
+        var arrays = [];
+        tiles.hovering = undefined;
+        function get(pos) {
+            if (arrays[pos[1]])
+                return arrays[pos[1]][pos[0]];
+        }
+        tiles.get = get;
+        function register() {
+            console.log(' tiles register ');
+            // this runs before the objects hooks
+            hooks.register('sectorCreate', (sector) => {
+                pts.func(sector.small, (pos) => {
+                    let x = pos[0];
+                    let y = pos[1];
+                    if (arrays[y] == undefined)
+                        arrays[y] = [];
+                    let pixel = wastes.colormap.pixel([x, y]);
+                    if (pixel.arrayRef[3] == 0)
+                        return;
+                    let tile = new tiles.tile([x, y]);
+                    arrays[y][x] = tile;
+                    lod$1.add(tile);
+                });
+                return false;
+            });
+        }
+        tiles.register = register;
+        function start() {
+            tiles.started = true;
+            console.log(' tiles start ');
+            //lod.gworld.at(lod.world.big(wastes.gview.wpos));
+        }
+        tiles.start = start;
+        function tick() {
+            if (!tiles.started)
+                return;
+            for (let i = 100; i >= 0; i--) {
+                // The great pretention grid
+                let pos = lod$1.unproject(pts.add(wastes.gview.mrpos, [0, -i]));
+                pos = pts.floor(pos);
+                const tile = get(pos);
+                if (tile && tile.z + tile.height + tile.heightAdd == i) {
+                    if (tile.sector.isActive()) {
+                        tile.hover();
+                        tiles.hovering = tile;
+                        break;
+                    }
+                }
+            }
+        }
+        tiles.tick = tick;
+        const color_shallow_water = [40, 120, 130, 255];
+        const color_deep_water = [20, 100, 110, 255];
+        class tile extends lod$1.obj {
+            constructor(wpos) {
+                super(numbers.tiles);
+                this.hasDeck = false;
+                this.isLand = false;
+                this.refresh = false;
+                this.opacity = 1;
+                this.superiorBias = 1;
+                this.wpos = wpos;
+                let pixel = wastes.colormap.pixel(this.wpos);
+                if (pixel.is_invalid_pixel()) {
+                    // We are fog of war
+                    console.log('invalid pixel');
+                    this.type = 'land';
+                    this.size = [24, 30];
+                    this.tuple = sprites$1.dgraveltiles;
+                    this.color = [60, 60, 60, 255];
+                    this.height = 6;
+                    this.cell = [1, 0];
+                }
+                else if (pixel.is_shallow_water()) {
+                    // We are a shallow water
+                    this.type = 'shallow water';
+                    this.size = [24, 12];
+                    this.tuple = sprites$1.dwater;
+                    //this.height = -5;
+                    this.opacity = .5;
+                    this.color = color_shallow_water;
+                }
+                else if (pixel.is_black()) {
+                    // We are a deep water
+                    this.type = 'deep water';
+                    this.size = [24, 12];
+                    this.tuple = sprites$1.dwater;
+                    this.opacity = .5;
+                    this.color = color_deep_water;
+                }
+                else if (!pixel.is_black()) {
+                    // We're a land tile
+                    this.isLand = true;
+                    this.type = 'land';
+                    this.size = [24, 30];
+                    this.tuple = sprites$1.dgraveltiles;
+                    this.height = 6;
+                    this.cell = [1, 0];
+                    const divisor = 3;
+                    let height = wastes.heightmap.pixel(this.wpos);
+                    this.z += Math.floor(height.arrayRef[0] / divisor);
+                    this.z -= 3; // so we dip the water
+                    //this.z += Math.random() * 24;
+                }
+            }
+            get_stack() {
+                var _a;
+                (_a = this.sector) === null || _a === void 0 ? void 0 : _a.objs;
+            }
+            /*stack(obj: lod.obj) {
+                let i = this.objs.indexOf(obj);
+                if (i == -1)
+                    this.objs.push(obj);
+            }
+            unstack(obj: lod.obj) {
+                let i = this.objs.indexOf(obj);
+                if (i > -1)
+                    return this.objs.splice(i, 1).length;
+            }*/
+            create() {
+                if (this.isLand) {
+                    this.color = wastes.colormap.pixel(this.wpos).arrayRef;
+                    this.color = shadows$1.mix(this.color, this.wpos);
+                }
+                // really great z based bias
+                this.superiorBias = this.z / 6;
+                let shape = new sprite({
+                    binded: this,
+                    tuple: this.tuple,
+                    cell: this.cell,
+                    color: this.color,
+                    opacity: this.opacity,
+                    orderBias: this.superiorBias
+                });
+                // if we have a deck, add it to heightAdd
+                let sector = lod$1.gworld.at(lod$1.world.big(this.wpos));
+                let at = sector.stacked(this.wpos);
+                for (let obj of at) {
+                    if (obj.type == 'deck' || obj.type == 'porch')
+                        this.heightAdd = obj.height;
+                }
+                shape.rup = this.z;
+            }
+            //update() {}
+            delete() {
+            }
+            hover() {
+                const sprite = this.shape;
+                if (!(sprite === null || sprite === void 0 ? void 0 : sprite.mesh))
+                    return;
+                const last = tile.lastHover;
+                if (last && last != this && last.sector.isActive()) {
+                    last.hide();
+                    last.show();
+                }
+                sprite.mesh.material.color.set('#768383');
+                tile.lastHover = this;
+            }
+            paint() {
+                const sprite = this.shape;
+                if (!sprite || !sprite.mesh)
+                    return;
+                sprite.mesh.material.color.set('red');
+            }
+            tick() {
+                this.shape;
+                if (this.refresh) {
+                    this.refresh = false;
+                    this.hide();
+                    this.show();
+                }
+                //if (pawns.you && pts.equals(this.wpos, pts.round(pawns.you.wpos))) {
+                //this.paint();
+                //}
+            }
+        }
+        tiles.tile = tile;
+    })(tiles || (tiles = {}));
+    var tiles$1 = tiles;
 
     var colors;
     (function (colors) {
@@ -7285,6 +7487,7 @@ void main() {
                 if (!this.traderInventoryElement) {
                     this.traderInventoryElement = document.createElement('div');
                     this.traderInventoryElement.className = 'inventory';
+                    this.traderInventoryElement.style.width = '50%';
                     this.traderLayout.append(this.traderInventoryElement);
                 }
                 let pawn = this.tradeWithCur;
@@ -7319,6 +7522,7 @@ void main() {
                 if (!this.yourInventoryElement) {
                     this.yourInventoryElement = document.createElement('div');
                     this.yourInventoryElement.className = 'inventory';
+                    this.yourInventoryElement.style.width = '50%';
                     this.traderLayout.append(this.yourInventoryElement);
                 }
                 let you = pawns$1.you;
@@ -8502,7 +8706,7 @@ void main() {
             };
             function process_news(type, target, data, handle, update) {
                 for (let sobj of data.news) {
-                    let [random, id, , , type2] = sobj;
+                    let [, id, , , type2] = sobj;
                     let obj = client.objsId[id];
                     if (obj)
                         type2 = obj.type;
@@ -8552,7 +8756,7 @@ void main() {
                     }
                     process_news(pawns$1.pawn, 'pawn', data, (obj, sobj) => {
                         console.log('news pawn');
-                        const [random, id, wpos, angle] = sobj;
+                        const [random, , wpos, angle] = sobj;
                         obj.wpos = wpos;
                         obj.angle = angle;
                         obj.netangle = angle;
@@ -8577,7 +8781,7 @@ void main() {
                         obj.inventory = random.inventory;
                     }, (obj, sobj) => {
                         //console.log('update pawn');
-                        const [random, id, wpos, angle] = sobj;
+                        const [random, , wpos, angle] = sobj;
                         if (obj.type != 'you') {
                             obj.netwpos = wpos;
                             obj.netangle = angle;
@@ -8590,7 +8794,7 @@ void main() {
                         }
                     });
                     process_news(chickens$1.chicken, 'chicken', data, (obj, sobj) => {
-                        const [random, id, wpos, angle] = sobj;
+                        const [random, , wpos, angle] = sobj;
                         obj.wpos = wpos;
                         obj.netwpos = wpos;
                         obj.angle = angle;
@@ -8603,7 +8807,7 @@ void main() {
                             obj.examine = random.examine;
                         obj.dead = random.dead;
                     }, (obj, sobj) => {
-                        const [random, id, wpos, angle] = sobj;
+                        const [random, , wpos, angle] = sobj;
                         obj.netwpos = wpos;
                         obj.netangle = angle;
                         obj.pecking = random.pecking;
@@ -8612,7 +8816,7 @@ void main() {
                         // console.log('updating chicken!');
                     });
                     process_news(zombies$1.zombie, 'zombie', data, (obj, sobj) => {
-                        const [random, id, wpos, angle] = sobj;
+                        const [random, , wpos, angle] = sobj;
                         obj.wpos = wpos;
                         obj.angle = angle;
                         obj.dead = random.dead;
@@ -8621,14 +8825,14 @@ void main() {
                         if (random.examine)
                             obj.examine = random.examine;
                     }, (obj, sobj) => {
-                        const [random, id, wpos, angle] = sobj;
+                        const [random, , wpos, angle] = sobj;
                         obj.netwpos = wpos;
                         obj.netangle = angle;
                         obj.dead = random.dead;
                         // console.log('updating chicken!');
                     });
                     process_news(objects$1.crate, 'crate', data, (obj, sobj) => {
-                        const [random, id, wpos] = sobj;
+                        const [random, , wpos] = sobj;
                         obj.wpos = wpos;
                         obj.inventory = random.inventory;
                         console.error('a new crate!');
@@ -8639,7 +8843,7 @@ void main() {
                         // console.log('updating chicken!');
                     });
                     process_news(objects$1.shelves, 'shelves', data, (obj, sobj) => {
-                        const [random, id, wpos] = sobj;
+                        const [random, , wpos] = sobj;
                         obj.wpos = wpos;
                         obj.inventory = random.inventory;
                     }, (obj, sobj) => {
@@ -8809,10 +9013,12 @@ void main() {
                     this.target = ren$1.make_render_target(size[0], size[1]);
                     this.camera = ren$1.make_orthographic_camera(size[0], size[1]);
                     this.scene = new THREE.Scene();
+                    this.scene.matrixAutoUpdate = false;
                     //this.scene.background = new Color('gray');
                     this.scene.rotation.set(Math.PI / 6, Math.PI / 4, 0);
                     this.scene.position.set(0, 0, 0);
                     this.scene.scale.set(scale, scale, scale);
+                    this.scene.updateMatrix();
                     let amb = new THREE.AmbientLight('white');
                     this.scene.add(amb);
                     let sun = new THREE.DirectionalLight(0xffffff, 0.5);
@@ -8950,8 +9156,10 @@ void main() {
                     color: '#768383'
                 });*/
                 this.meshes.water = new THREE.Mesh(planeWater, materialWater);
+                this.meshes.water.matrixAutoUpdate = false;
                 this.meshes.water.rotation.x = -Math.PI / 2;
                 this.meshes.water.position.y = -bodyHeight * 1.25;
+                this.meshes.water.updateMatrix();
                 this.meshes.water.visible = false;
                 this.meshes.head = new THREE.Mesh(boxHead, materialHead);
                 this.meshes.gasMask = new THREE.Mesh(boxGasMask, materialGasMask);
@@ -9261,187 +9469,6 @@ void main() {
         pawns.pawn = pawn;
     })(pawns || (pawns = {}));
     var pawns$1 = pawns;
-
-    var tiles;
-    (function (tiles) {
-        tiles.started = false;
-        var arrays = [];
-        tiles.hovering = undefined;
-        function get(pos) {
-            if (arrays[pos[1]])
-                return arrays[pos[1]][pos[0]];
-        }
-        tiles.get = get;
-        function register() {
-            console.log(' tiles register ');
-            // this runs before the objects hooks
-            hooks.register('sectorCreate', (sector) => {
-                pts.func(sector.small, (pos) => {
-                    let x = pos[0];
-                    let y = pos[1];
-                    if (arrays[y] == undefined)
-                        arrays[y] = [];
-                    let pixel = wastes.colormap.pixel([x, y]);
-                    if (pixel.arrayRef[3] == 0)
-                        return;
-                    let tile = new tiles.tile([x, y]);
-                    arrays[y][x] = tile;
-                    lod$1.add(tile);
-                });
-                return false;
-            });
-        }
-        tiles.register = register;
-        function start() {
-            tiles.started = true;
-            console.log(' tiles start ');
-            //lod.gworld.at(lod.world.big(wastes.gview.wpos));
-        }
-        tiles.start = start;
-        function tick() {
-            if (!tiles.started)
-                return;
-            for (let i = 100; i >= 0; i--) {
-                // The great pretention grid
-                let pos = lod$1.unproject(pts.add(wastes.gview.mrpos, [0, -i]));
-                pos = pts.floor(pos);
-                const tile = get(pos);
-                if (tile && tile.z + tile.height + tile.heightAdd == i) {
-                    if (tile.sector.isActive()) {
-                        tile.hover();
-                        tiles.hovering = tile;
-                        break;
-                    }
-                }
-            }
-        }
-        tiles.tick = tick;
-        const color_shallow_water = [40, 120, 130, 255];
-        const color_deep_water = [20, 100, 110, 255];
-        class tile extends lod$1.obj {
-            constructor(wpos) {
-                super(numbers.tiles);
-                this.hasDeck = false;
-                this.isLand = false;
-                this.refresh = false;
-                this.opacity = 1;
-                this.superiorBias = 1;
-                this.wpos = wpos;
-                let pixel = wastes.colormap.pixel(this.wpos);
-                if (pixel.is_invalid_pixel()) {
-                    // We are fog of war
-                    console.log('invalid pixel');
-                    this.type = 'land';
-                    this.size = [24, 30];
-                    this.tuple = sprites$1.dgraveltiles;
-                    this.color = [60, 60, 60, 255];
-                    this.height = 6;
-                    this.cell = [1, 0];
-                }
-                else if (pixel.is_shallow_water()) {
-                    // We are a shallow water
-                    this.type = 'shallow water';
-                    this.size = [24, 12];
-                    this.tuple = sprites$1.dwater;
-                    //this.height = -5;
-                    this.opacity = .5;
-                    this.color = color_shallow_water;
-                }
-                else if (pixel.is_black()) {
-                    // We are a deep water
-                    this.type = 'deep water';
-                    this.size = [24, 12];
-                    this.tuple = sprites$1.dwater;
-                    this.opacity = .5;
-                    this.color = color_deep_water;
-                }
-                else if (!pixel.is_black()) {
-                    // We're a land tile
-                    this.isLand = true;
-                    this.type = 'land';
-                    this.size = [24, 30];
-                    this.tuple = sprites$1.dgraveltiles;
-                    this.height = 6;
-                    this.cell = [1, 0];
-                    const divisor = 3;
-                    let height = wastes.heightmap.pixel(this.wpos);
-                    this.z += Math.floor(height.arrayRef[0] / divisor);
-                    this.z -= 3; // so we dip the water
-                    //this.z += Math.random() * 24;
-                }
-            }
-            get_stack() {
-                var _a;
-                (_a = this.sector) === null || _a === void 0 ? void 0 : _a.objs;
-            }
-            /*stack(obj: lod.obj) {
-                let i = this.objs.indexOf(obj);
-                if (i == -1)
-                    this.objs.push(obj);
-            }
-            unstack(obj: lod.obj) {
-                let i = this.objs.indexOf(obj);
-                if (i > -1)
-                    return this.objs.splice(i, 1).length;
-            }*/
-            create() {
-                if (this.isLand) {
-                    this.color = wastes.colormap.pixel(this.wpos).arrayRef;
-                    this.color = shadows$1.mix(this.color, this.wpos);
-                }
-                // really great z based bias
-                this.superiorBias = this.z / 6;
-                let shape = new sprite({
-                    binded: this,
-                    tuple: this.tuple,
-                    cell: this.cell,
-                    color: this.color,
-                    opacity: this.opacity,
-                    orderBias: this.superiorBias
-                });
-                // if we have a deck, add it to heightAdd
-                let sector = lod$1.gworld.at(lod$1.world.big(this.wpos));
-                let at = sector.stacked(this.wpos);
-                for (let obj of at) {
-                    if (obj.type == 'deck' || obj.type == 'porch')
-                        this.heightAdd = obj.height;
-                }
-                shape.rup = this.z;
-            }
-            //update() {}
-            delete() {
-            }
-            hover() {
-                const sprite = this.shape;
-                if (!(sprite === null || sprite === void 0 ? void 0 : sprite.mesh))
-                    return;
-                const last = tile.lastHover;
-                if (last && last != this && last.sector.isActive()) {
-                    last.hide();
-                    last.show();
-                }
-                sprite.mesh.material.color.set('#768383');
-                tile.lastHover = this;
-            }
-            paint() {
-                const sprite = this.shape;
-                if (!sprite || !sprite.mesh)
-                    return;
-                sprite.mesh.material.color.set('red');
-            }
-            tick() {
-                this.shape;
-                if (this.refresh) {
-                    this.refresh = false;
-                    this.hide();
-                    this.show();
-                }
-                if (pawns$1.you && pts.equals(this.wpos, pts.round(pawns$1.you.wpos))) ;
-            }
-        }
-        tiles.tile = tile;
-    })(tiles || (tiles = {}));
-    var tiles$1 = tiles;
 
     // the view manages what it sees
     class view {
