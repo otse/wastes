@@ -440,14 +440,13 @@ void main() {
             ren.clock = new THREE.Clock();
             THREE__default["default"].Object3D.DefaultMatrixAutoUpdate = true;
             groups.axisSwap = new THREE.Group;
+            groups.axisSwap.frustumCulled = false;
             groups.axisSwap.matrixAutoUpdate = false;
             groups.axisSwap.matrixWorldAutoUpdate = false;
-            groups.tiles = new THREE.Group;
             ren.scene = new THREE.Scene();
+            ren.scene.frustumCulled = false;
             ren.scene.matrixAutoUpdate = false;
             ren.scene.matrixWorldAutoUpdate = false;
-            groups.axisSwap.add(groups.tiles);
-            //groups.axisSwap.scale.set(1, -1, 1);
             ren.scene.add(groups.axisSwap);
             ren.scene.background = new THREE.Color('#333');
             ren.scene2 = new THREE.Scene();

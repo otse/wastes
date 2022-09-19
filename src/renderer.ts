@@ -86,7 +86,6 @@ namespace ren {
 
 	export namespace groups {
 		export var axisSwap: Group
-		export var tiles: Group
 	}
 	export var scene: Scene
 	export var scene2: Scene
@@ -181,16 +180,15 @@ namespace ren {
 		THREE.Object3D.DefaultMatrixAutoUpdate = true;
 
 		groups.axisSwap = new Group;
+		groups.axisSwap.frustumCulled = false;
 		groups.axisSwap.matrixAutoUpdate = false;
 		groups.axisSwap.matrixWorldAutoUpdate = false;
-		groups.tiles = new Group;
 
 		scene = new Scene();
+		scene.frustumCulled = false;
 		scene.matrixAutoUpdate = false;
 		scene.matrixWorldAutoUpdate = false;
 
-		groups.axisSwap.add(groups.tiles);
-		//groups.axisSwap.scale.set(1, -1, 1);
 		scene.add(groups.axisSwap);
 		scene.background = new Color('#333');
 		
