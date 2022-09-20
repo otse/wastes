@@ -5,8 +5,3 @@ modeler/collada
 tex/stock/
 collada/AutoSave_model.skp
 *.skb
-server/dist/server/server.js
-server/dist/server/slod.js
-server/dist/src/aabb2.js
-server/dist/src/hooks.js
-server/dist/src/pts.js
