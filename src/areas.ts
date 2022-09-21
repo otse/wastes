@@ -23,7 +23,7 @@ namespace areas {
 	export function start() {
 		started = true;
 
-		areas.push({ name: "Trashy Vendor", bound: new aabb2([35, 46], [42, 52]) });
+		areas.push({ name: "Trashy Vendor", bound: new aabb2([35.5, 46.5], [42.5, 52.5]) });
 
 	}
 
@@ -39,7 +39,6 @@ namespace areas {
 			if (currentArea && currentArea.bound.test(here) == aabb2.TEST.Outside) {
 				currentArea = undefined;
 				console.log('outside');
-				
 			}
 		}
 		else {
@@ -47,7 +46,11 @@ namespace areas {
 				if (area.bound.test(here) == aabb2.TEST.Inside) {
 					console.log('inside');
 					currentArea = area;
-					win.areatag.call(true, area);
+					win.areatag.tag = area;
+					win.areatag.call_step();
+				}
+				else if (win.areatag.tagCur == area) {
+					win.areatag.tagCur = undefined;
 				}
 			}
 		}

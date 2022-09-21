@@ -7947,19 +7947,24 @@ void main() {
         container.stamp = 0;
         win_1.container = container;
         class areatag {
-            static call(open, area, refresh = false) {
-                if (open) {
-                    console.log('boo');
-                    let element = document.createElement('div');
-                    element.className = 'area';
-                    element.innerHTML = ` ${(area === null || area === void 0 ? void 0 : area.name) || ''} `;
-                    win.append(element);
+            static call() {
+                var _a;
+                if (this.tag && this.tag != this.tagCur) {
+                    if (this.element) {
+                        this.element.remove();
+                    }
+                    this.tagCur = this.tag;
+                    this.element = document.createElement('div');
+                    this.element.className = 'area';
+                    this.element.innerHTML = ` ${((_a = this.tagCur) === null || _a === void 0 ? void 0 : _a.name) || ''} `;
+                    const element = this.element;
+                    win.append(this.element);
                     setTimeout(() => {
                         element.classList.add('fade');
                         setTimeout(() => {
                             element.remove();
                         }, 3000);
-                    }, 1000);
+                    }, 2000);
                 }
             }
         }
@@ -9990,7 +9995,7 @@ void main() {
         areas_1.started = false;
         function start() {
             areas_1.started = true;
-            areas.push({ name: "Trashy Vendor", bound: new aabb2([35, 46], [42, 52]) });
+            areas.push({ name: "Trashy Vendor", bound: new aabb2([35.5, 46.5], [42.5, 52.5]) });
         }
         areas_1.start = start;
         function tick() {
@@ -10009,7 +10014,11 @@ void main() {
                     if (area.bound.test(here) == aabb2.TEST.Inside) {
                         console.log('inside');
                         currentArea = area;
-                        win$1.areatag.call(true, area);
+                        win$1.areatag.tag = area;
+                        win$1.areatag.call();
+                    }
+                    else if (win$1.areatag.tagCur == area) {
+                        win$1.areatag.tagCur = undefined;
                     }
                 }
             }

@@ -705,21 +705,28 @@ namespace win {
 	}
 
 	export class areatag {
-		static call(open: boolean, area?: areas.area, refresh = false) {
-			if (open) {
-				console.log('boo');
-
-				let element = document.createElement('div');
-				element.className = 'area';
-				element.innerHTML = ` ${area?.name || ''} `;
-				win.append(element);
+		static element
+		static tag?: areas.area
+		static tagCur?: areas.area
+		static call_step() {
+			if (this.tag != this.tagCur) {
+				if (this.element)
+					this.element.remove();
+				this.tagCur = this.tag;
+				this.element = document.createElement('div');
+				this.element.className = 'area';
+				this.element.innerHTML = ` ${this.tagCur?.name || ''} `;
+				win.append(this.element);
+				// remove the current element after 2s
+				const element = this.element;
 				setTimeout(() => {
 					element.classList.add('fade');
 					setTimeout(() => {
 						element.remove();
-					}, 3000)
-				}, 1000)
+					}, 2000)
+				}, 2000)
 			}
+
 		}
 	}
 

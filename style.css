@@ -147,7 +147,7 @@ option.disabled:hover {}
 	font-size: 2em;
 	right: 20%;
 	bottom: 20%;
-	transition: opacity 1s ease-in-out 2s;
+	transition: opacity 2s ease-in-out 0s;
 	opacity: 1;
 }
 
