@@ -1,6 +1,7 @@
 import { wastes } from "./wastes"
 
 import ren from "./renderer"
+//import win from "./win"
 
 namespace app {
 	export enum KEY {
@@ -53,19 +54,27 @@ namespace app {
 			if (e.button == 1)
 				return false
 		}
+		//function message(text) {
+		//	document.querySelectorAll('.stats')[0].innerHTML = text;
+		//}
 		function ontouchstart(e) {
+			//message("ontouchstart");
+			pos[0] = e.pageX;
+			pos[1] = e.pageY;
 			buttons[0] = 1;
 			//return false;
 		}
 		function ontouchmove(e) {
-			pos[0] = e.clientX;
-			pos[1] = e.clientY;
+			//message("ontouchmove");
+			pos[0] = e.pageX;
+			pos[1] = e.pageY;
 			//return false;
 			//console.log('touch move');
 			e.preventDefault();
 			return false;
 		}
 		function ontouchend(e) {
+			//message("ontouchend");
 			buttons[0] = MOUSE.UP;
 			//return false;
 		}
@@ -73,13 +82,17 @@ namespace app {
 		function onwheel(e) { wheel = e.deltaY < 0 ? 1 : -1; }
 		function onerror(message) { document.querySelectorAll('.stats')[0].innerHTML = message; }
 		document.onkeydown = document.onkeyup = onkeys;
-		document.onmousemove = onmousemove;
-		document.onmousedown = onmousedown;
-		document.onmouseup = onmouseup;
-		document.onwheel = onwheel;
-		document.ontouchstart = ontouchstart;
-		document.ontouchmove = ontouchmove;
-		document.ontouchend = ontouchend;
+		if (!mobile) {
+			document.onmousemove = onmousemove;
+			document.onmousedown = onmousedown;
+			document.onmouseup = onmouseup;
+			document.onwheel = onwheel;
+		}
+		else {
+			document.ontouchstart = ontouchstart;
+			document.ontouchmove = ontouchmove;
+			document.ontouchend = ontouchend;
+		}
 		window.onerror = onerror;
 		ren.init();
 		wastes.init();

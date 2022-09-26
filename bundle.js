@@ -202,6 +202,7 @@ var wastes = (function (exports, THREE) {
     }
     aabb2.TEST = TEST;
 
+    //import win from "./win"
     var app;
     (function (app) {
         let KEY;
@@ -259,19 +260,27 @@ var wastes = (function (exports, THREE) {
                 if (e.button == 1)
                     return false;
             }
+            //function message(text) {
+            //	document.querySelectorAll('.stats')[0].innerHTML = text;
+            //}
             function ontouchstart(e) {
+                //message("ontouchstart");
+                pos[0] = e.pageX;
+                pos[1] = e.pageY;
                 buttons[0] = 1;
                 //return false;
             }
             function ontouchmove(e) {
-                pos[0] = e.clientX;
-                pos[1] = e.clientY;
+                //message("ontouchmove");
+                pos[0] = e.pageX;
+                pos[1] = e.pageY;
                 //return false;
                 //console.log('touch move');
                 e.preventDefault();
                 return false;
             }
             function ontouchend(e) {
+                //message("ontouchend");
                 buttons[0] = MOUSE.UP;
                 //return false;
             }
@@ -279,13 +288,17 @@ var wastes = (function (exports, THREE) {
             function onwheel(e) { app.wheel = e.deltaY < 0 ? 1 : -1; }
             function onerror(message) { document.querySelectorAll('.stats')[0].innerHTML = message; }
             document.onkeydown = document.onkeyup = onkeys;
-            document.onmousemove = onmousemove;
-            document.onmousedown = onmousedown;
-            document.onmouseup = onmouseup;
-            document.onwheel = onwheel;
-            document.ontouchstart = ontouchstart;
-            document.ontouchmove = ontouchmove;
-            document.ontouchend = ontouchend;
+            if (!app.mobile) {
+                document.onmousemove = onmousemove;
+                document.onmousedown = onmousedown;
+                document.onmouseup = onmouseup;
+                document.onwheel = onwheel;
+            }
+            else {
+                document.ontouchstart = ontouchstart;
+                document.ontouchmove = ontouchmove;
+                document.ontouchend = ontouchend;
+            }
             window.onerror = onerror;
             ren$1.init();
             exports.wastes.init();
@@ -7947,23 +7960,23 @@ void main() {
         container.stamp = 0;
         win_1.container = container;
         class areatag {
-            static call() {
+            static call_step() {
                 var _a;
-                if (this.tag && this.tag != this.tagCur) {
-                    if (this.element) {
+                if (this.tag != this.tagCur) {
+                    if (this.element)
                         this.element.remove();
-                    }
                     this.tagCur = this.tag;
                     this.element = document.createElement('div');
                     this.element.className = 'area';
                     this.element.innerHTML = ` ${((_a = this.tagCur) === null || _a === void 0 ? void 0 : _a.name) || ''} `;
-                    const element = this.element;
                     win.append(this.element);
+                    // remove the current element after 2s
+                    const element = this.element;
                     setTimeout(() => {
                         element.classList.add('fade');
                         setTimeout(() => {
                             element.remove();
-                        }, 3000);
+                        }, 2000);
                     }, 2000);
                 }
             }
@@ -9607,7 +9620,9 @@ void main() {
         stats() {
             var _a;
             if (app$1.mobile)
-                this.show = false;
+                return;
+            //if (app.mobile)
+            //	this.show = false;
             if (app$1.key('h') == 1)
                 this.show = !this.show;
             let crunch = ``;
@@ -10015,7 +10030,7 @@ void main() {
                         console.log('inside');
                         currentArea = area;
                         win$1.areatag.tag = area;
-                        win$1.areatag.call();
+                        win$1.areatag.call_step();
                     }
                     else if (win$1.areatag.tagCur == area) {
                         win$1.areatag.tagCur = undefined;

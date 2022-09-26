@@ -162,7 +162,9 @@ export class view {
 	show = true
 	stats() {
 		if (app.mobile)
-			this.show = false;
+			return;
+		//if (app.mobile)
+		//	this.show = false;
 
 		if (app.key('h') == 1)
 			this.show = !this.show;
