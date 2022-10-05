@@ -1,6 +1,6 @@
 #win {
-	-webkit-user-select: none;
-	z-index: 1;
+	--webkit-user-select: none;
+	z-index: 100;
 	display: block;
 	position: absolute;
 	font-family: 'Caveat', 'Shadows Into Light', 'Poppins', sans-serif;
@@ -106,7 +106,7 @@
 option.disabled:hover {}
 
 .modal.contextmenu .option:not(.disabled):hover {
-	background: #d4d4d4;
+	background: green;
 }
 
 .modal :first-child::before {

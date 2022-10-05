@@ -1,6 +1,8 @@
 import { wastes } from "./wastes"
 
 import ren from "./renderer"
+import pts from "./pts";
+import GLOB from "./glob";
 //import win from "./win"
 
 namespace app {
@@ -54,44 +56,60 @@ namespace app {
 			if (e.button == 1)
 				return false
 		}
-		//function message(text) {
-		//	document.querySelectorAll('.stats')[0].innerHTML = text;
-		//}
+		function message(text) {
+			document.querySelectorAll('.stats')[0].innerHTML = text;
+		}
+		let touchStart: vec2 = [0, 0];
 		function ontouchstart(e) {
 			//message("ontouchstart");
+			touchStart = [e.pageX, e.pageY];
 			pos[0] = e.pageX;
 			pos[1] = e.pageY;
-			buttons[0] = 1;
+			GLOB.win_propagate_events(e);
+			buttons[2] = MOUSE.UP;
+			//buttons[2] = MOUSE.DOWN; // rclick
 			//return false;
 		}
 		function ontouchmove(e) {
 			//message("ontouchmove");
 			pos[0] = e.pageX;
 			pos[1] = e.pageY;
+			buttons[0] = 1;
 			//return false;
 			//console.log('touch move');
+			GLOB.win_propagate_events(e);
 			e.preventDefault();
 			return false;
 		}
 		function ontouchend(e) {
 			//message("ontouchend");
+			const touchEnd: vec2 = [e.pageX, e.pageY];
 			buttons[0] = MOUSE.UP;
+			buttons[2] = MOUSE.UP;
+
+			if (pts.equals(touchEnd, touchStart) /*&& buttons[2] != MOUSE.STILL*/) {
+				buttons[2] = MOUSE.DOWN;
+			}/*
+			else if (!pts.equals(touchEnd, touchStart)) {
+				buttons[2] = MOUSE.UP;
+			}
+			//message("ontouchend");*/
 			//return false;
 		}
 		function onmouseup(e) { buttons[e.button] = MOUSE.UP; }
 		function onwheel(e) { wheel = e.deltaY < 0 ? 1 : -1; }
 		function onerror(message) { document.querySelectorAll('.stats')[0].innerHTML = message; }
-		document.onkeydown = document.onkeyup = onkeys;
-		if (!mobile) {
+		if (mobile) {
+			document.ontouchstart = ontouchstart;
+			document.ontouchmove = ontouchmove;
+			document.ontouchend = ontouchend;
+		}
+		else {
+			document.onkeydown = document.onkeyup = onkeys;
 			document.onmousemove = onmousemove;
 			document.onmousedown = onmousedown;
 			document.onmouseup = onmouseup;
 			document.onwheel = onwheel;
-		}
-		else {
-			document.ontouchstart = ontouchstart;
-			document.ontouchmove = ontouchmove;
-			document.ontouchend = ontouchend;
 		}
 		window.onerror = onerror;
 		ren.init();

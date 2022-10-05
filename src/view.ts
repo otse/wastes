@@ -54,6 +54,7 @@ export class view {
 		this.set_camera();
 		this.stats();
 		lod.gworld.update(this.wpos);
+		this.hooks();
 		const zoom = wastes.gview.zoom;
 		// ren.renderer.domElement.style.transform = `scale(${1/zoom},${1/zoom})`;
 		ren.camera.scale.set(zoom, zoom, zoom);
@@ -119,13 +120,18 @@ export class view {
 		this.mwpos = lod.unproject(this.mrpos);
 		//this.mwpos = pts.add(this.mwpos, [.5, -.5])
 		// now..
-		if (app.button(0) == 1) {
+	}
+	hooks() {
+		if (app.button(0) == app.MOUSE.DOWN) {
 			hooks.call('viewLClick', this);
 		}
-		if (app.button(1) == 1) {
+		if (app.button(1) == app.MOUSE.DOWN) {
 			hooks.call('viewMClick', this);
 		}
-		if (app.button(2) == 1) {
+		if (app.button(2) == app.MOUSE.DOWN) {
+			const mouse = app.mouse();
+			//document.querySelectorAll('.stats')[0].innerHTML = 'view r click ' + mouse[0] + " " + mouse[1];
+
 			hooks.call('viewRClick', this);
 		}
 	}

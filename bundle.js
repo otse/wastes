@@ -202,6 +202,9 @@ var wastes = (function (exports, THREE) {
     }
     aabb2.TEST = TEST;
 
+    // allows you to venture far from inclusion hell by letting you assign arbitrary values
+    var GLOB = {};
+
     //import win from "./win"
     var app;
     (function (app) {
@@ -260,44 +263,56 @@ var wastes = (function (exports, THREE) {
                 if (e.button == 1)
                     return false;
             }
-            //function message(text) {
-            //	document.querySelectorAll('.stats')[0].innerHTML = text;
-            //}
+            let touchStart = [0, 0];
             function ontouchstart(e) {
                 //message("ontouchstart");
+                touchStart = [e.pageX, e.pageY];
                 pos[0] = e.pageX;
                 pos[1] = e.pageY;
-                buttons[0] = 1;
+                GLOB.win_propagate_events(e);
+                buttons[2] = MOUSE.UP;
+                //buttons[2] = MOUSE.DOWN; // rclick
                 //return false;
             }
             function ontouchmove(e) {
                 //message("ontouchmove");
                 pos[0] = e.pageX;
                 pos[1] = e.pageY;
+                buttons[0] = 1;
                 //return false;
                 //console.log('touch move');
+                GLOB.win_propagate_events(e);
                 e.preventDefault();
                 return false;
             }
             function ontouchend(e) {
                 //message("ontouchend");
+                const touchEnd = [e.pageX, e.pageY];
                 buttons[0] = MOUSE.UP;
+                buttons[2] = MOUSE.UP;
+                if (pts.equals(touchEnd, touchStart) /*&& buttons[2] != MOUSE.STILL*/) {
+                    buttons[2] = MOUSE.DOWN;
+                } /*
+                else if (!pts.equals(touchEnd, touchStart)) {
+                    buttons[2] = MOUSE.UP;
+                }
+                //message("ontouchend");*/
                 //return false;
             }
             function onmouseup(e) { buttons[e.button] = MOUSE.UP; }
             function onwheel(e) { app.wheel = e.deltaY < 0 ? 1 : -1; }
             function onerror(message) { document.querySelectorAll('.stats')[0].innerHTML = message; }
-            document.onkeydown = document.onkeyup = onkeys;
-            if (!app.mobile) {
+            if (app.mobile) {
+                document.ontouchstart = ontouchstart;
+                document.ontouchmove = ontouchmove;
+                document.ontouchend = ontouchend;
+            }
+            else {
+                document.onkeydown = document.onkeyup = onkeys;
                 document.onmousemove = onmousemove;
                 document.onmousedown = onmousedown;
                 document.onmouseup = onmouseup;
                 document.onwheel = onwheel;
-            }
-            else {
-                document.ontouchstart = ontouchstart;
-                document.ontouchmove = ontouchmove;
-                document.ontouchend = ontouchend;
             }
             window.onerror = onerror;
             ren$1.init();
@@ -1740,7 +1755,7 @@ void main() {
             const sprite = this.shape;
             let color = [1, 1, 1];
             if (sprite.mousedSquare(wastes.gview.mrpos)) {
-                color = [0.8, 0.8, 0.8];
+                color = [0.7, 1.0, 0.7];
                 hovering_sprites.hover(sprite);
             }
             else {
@@ -7372,10 +7387,10 @@ void main() {
     (function (win_1) {
         var win;
         var toggle_character = false;
-        win_1.genericHovering = false;
         win_1.started = false;
         function start() {
             win_1.started = true;
+            GLOB.hovering = 0;
             win = document.getElementById('win');
             contextmenu.init();
             container.init();
@@ -7402,22 +7417,63 @@ void main() {
             message.tick();
             descriptor.tick();
             trader.tick();
+            GLOB.win_propagate_events = (event) => {
+                var _a, _b, _c, _d, _e, _f;
+                (_a = character.modal) === null || _a === void 0 ? void 0 : _a.checker(event);
+                (_b = container.modal) === null || _b === void 0 ? void 0 : _b.checker(event);
+                (_c = trader.modal) === null || _c === void 0 ? void 0 : _c.checker(event);
+                (_d = dialogue.modal) === null || _d === void 0 ? void 0 : _d.checker(event);
+                (_e = contextmenu.modal) === null || _e === void 0 ? void 0 : _e.checker(event);
+                (_f = descriptor.modal) === null || _f === void 0 ? void 0 : _f.checker(event);
+            };
         }
         win_1.tick = tick;
+        function is_hovering() {
+            var _a, _b, _c, _d, _e, _f;
+            return ((_a = character.modal) === null || _a === void 0 ? void 0 : _a.hovering) ||
+                ((_b = container.modal) === null || _b === void 0 ? void 0 : _b.hovering) ||
+                ((_c = trader.modal) === null || _c === void 0 ? void 0 : _c.hovering) ||
+                ((_d = dialogue.modal) === null || _d === void 0 ? void 0 : _d.hovering) ||
+                ((_e = contextmenu.modal) === null || _e === void 0 ? void 0 : _e.hovering) ||
+                ((_f = descriptor.modal) === null || _f === void 0 ? void 0 : _f.hovering);
+        }
+        win_1.is_hovering = is_hovering;
         class modal {
             constructor(title) {
+                this.polyfill = [];
                 this.element = document.createElement('div');
                 this.element.className = 'modal';
-                this.element.onmouseover = () => { this.hovering = true; win_1.genericHovering = true; };
-                this.element.onmouseleave = () => { this.hovering = false; win_1.genericHovering = false; };
-                //this.element.append('inventory')
+                if (app$1.mobile) {
+                    this.checker = (event) => {
+                        this.hovering = true;
+                        var touch = event;
+                        document.querySelectorAll('.stats')[0].innerHTML = touch.pageX + ' ' + touch.pageY;
+                        let hovering = false;
+                        for (let element of this.polyfill) {
+                            if (element == document.elementFromPoint(touch.pageX, touch.pageY)) {
+                                hovering = true;
+                                this.hovering = true;
+                                break;
+                            }
+                        }
+                        if (hovering == false)
+                            this.hovering = false;
+                    };
+                    this.element.ontouchcancel = () => { this.hovering = false; document.querySelectorAll('.stats')[0].innerHTML = 'modal touch cancel'; };
+                }
+                else {
+                    this.element.onmouseover = () => { this.hovering = true; document.querySelectorAll('.stats')[0].innerHTML = 'mouse over'; };
+                    this.element.onmouseleave = () => { this.hovering = false; document.querySelectorAll('.stats')[0].innerHTML = 'mouse leave'; };
+                }
                 if (title) {
                     this.title = document.createElement('div');
                     this.title.innerHTML = title;
                     this.title.className = 'title';
+                    this.polyfill.push(this.title);
                     this.element.append(this.title);
                 }
                 this.content = document.createElement('div');
+                this.polyfill.push(this.content);
                 this.content.className = 'content';
                 this.content.innerHTML = 'content';
                 this.element.append(this.content);
@@ -7435,7 +7491,7 @@ void main() {
             deletor() {
                 this.element.remove();
                 if (this.hovering)
-                    win_1.genericHovering = false;
+                    GLOB.hovering--;
             }
             float(anchor, add = [0, 0]) {
                 //let pos = this.anchor.rtospos([-1.5, 2.5]);
@@ -7458,7 +7514,7 @@ void main() {
             }
             static init() {
                 hooks.register('viewRClick', (view) => {
-                    // We right click outside
+                    // We right click outsideis
                     if (trader.modal && !trader.modal.hovering) {
                         trader.end();
                     }
@@ -7485,8 +7541,6 @@ void main() {
                     this.traderLayout = document.createElement('div');
                     this.traderLayout.className = 'trader layout';
                     this.modal.content.append(this.traderLayout);
-                    this.modal.content.onmouseover = () => { win_1.genericHovering = true; };
-                    this.modal.content.onmouseleave = () => { win_1.genericHovering = false; };
                     this.tradeWithCur = this.tradeWith;
                     this.render_trader_inventory(true);
                     //let next = document.createElement('span');
@@ -7496,8 +7550,10 @@ void main() {
                 }
             }
             static render_trader_inventory(force) {
+                var _a, _b, _c;
                 if (!this.traderInventoryElement) {
                     this.traderInventoryElement = document.createElement('div');
+                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.polyfill.push(this.traderInventoryElement);
                     this.traderInventoryElement.className = 'inventory';
                     this.traderInventoryElement.style.width = '50%';
                     this.traderLayout.append(this.traderInventoryElement);
@@ -7511,6 +7567,7 @@ void main() {
                         if (tuple[0] == 'money')
                             continue;
                         let button = document.createElement('div');
+                        (_b = this.modal) === null || _b === void 0 ? void 0 : _b.polyfill.push(button);
                         //button.innerHTML = `<img width="20" height="20" src="tex/items/${tuple[0]}.png">`;
                         button.innerHTML += tuple[0];
                         button.className = 'item';
@@ -7525,14 +7582,17 @@ void main() {
                         const rate = client.get_rate(tuple[0]);
                         let buy = rate[1];
                         extra.innerHTML = `&nbsp; - ${buy}ct`;
+                        (_c = this.modal) === null || _c === void 0 ? void 0 : _c.polyfill.push(extra);
                         this.traderInventoryElement.append(button);
                         this.traderStamp = inventory.stamp;
                     }
                 }
             }
             static render_your_inventory(force) {
+                var _a, _b, _c;
                 if (!this.yourInventoryElement) {
                     this.yourInventoryElement = document.createElement('div');
+                    (_a = this.modal) === null || _a === void 0 ? void 0 : _a.polyfill.push(this.yourInventoryElement);
                     this.yourInventoryElement.className = 'inventory';
                     this.yourInventoryElement.style.width = '50%';
                     this.traderLayout.append(this.yourInventoryElement);
@@ -7545,6 +7605,7 @@ void main() {
                         if (tuple[0] == 'money')
                             continue;
                         let button = document.createElement('div');
+                        (_b = this.modal) === null || _b === void 0 ? void 0 : _b.polyfill.push(button);
                         //button.innerHTML = `<img width="20" height="20" src="tex/items/${tuple[0]}.png">`;
                         button.innerHTML += tuple[0];
                         button.className = 'item';
@@ -7555,6 +7616,7 @@ void main() {
                             client.wantToSell = tuple[0];
                         };
                         let extra = document.createElement('span');
+                        (_c = this.modal) === null || _c === void 0 ? void 0 : _c.polyfill.push(extra);
                         button.append(extra);
                         const rate = client.get_rate(tuple[0]);
                         let sell = rate[2];
@@ -7681,14 +7743,12 @@ void main() {
             static end_close_others() {
                 trader.end();
                 dialogue.end();
-                win_1.genericHovering = false;
             }
             static end() {
                 var _a;
                 (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
                 this.modal = undefined;
                 this.focusCur = undefined;
-                win_1.genericHovering = false;
             }
             static init() {
                 hooks.register('viewMClick', (view) => {
@@ -7706,8 +7766,13 @@ void main() {
                     hovering_sprites.sort_closest_to_mouse();
                     if (hovering_sprites.sprites.length)
                         this.focus = hovering_sprites.sprites[0].vars.binded;
+                    // We are hovering an existing modal and clicking it
+                    if (this.focusCur && this.modal && this.modal.hovering) {
+                        document.querySelectorAll('.stats')[0].innerHTML = 'hovering contextmenu';
+                        return false;
+                    }
                     // We have a focus, but no window! This is the easiest scenario.
-                    if (this.focus && !this.modal) {
+                    else if (this.focus && !this.modal) {
                         this.focus.superobject_setup_context_menu();
                         this.focusCur = this.focus;
                         this.call_once();
@@ -7746,22 +7811,22 @@ void main() {
                 this.modal.element.classList.add('contextmenu');
                 for (let option of this.options.options) {
                     let button = document.createElement('div');
+                    this.modal.polyfill.push(button);
                     button.innerHTML = option[0] + "&nbsp;";
                     //if (tuple[1] > 1) {
                     //	button.innerHTML += ` <span>×${tuple[1]}</span>`
                     //}
                     button.className = 'option';
-                    button.onclick = (e) => {
+                    const lambda = (e) => {
                         var _a;
                         if (option[1]()) {
                             (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
                             this.modal = undefined;
-                            win_1.genericHovering = false;
                             option[2]();
                         }
                     };
-                    button.onmouseover = () => { win_1.genericHovering = true; };
-                    button.onmouseleave = () => { win_1.genericHovering = false; };
+                    button.onclick = lambda;
+                    //button.ontouchend = lambda;
                     this.modal.content.append(button);
                     this.buttons.push([button, option]);
                 }
@@ -7846,7 +7911,6 @@ void main() {
                 (_a = this.modal) === null || _a === void 0 ? void 0 : _a.deletor();
                 this.modal = undefined;
                 this.talkingToCur = undefined;
-                win_1.genericHovering = false;
             }
             static change() {
                 this.modal.content.innerHTML = ''; // reset
@@ -7867,7 +7931,6 @@ void main() {
                     button.onclick = (e) => {
                         console.log('woo');
                         this.where++;
-                        win_1.genericHovering = false;
                         this.change();
                         //button.remove();
                     };
@@ -7902,10 +7965,12 @@ void main() {
                 this.inventoryElement = undefined;
             }
             static update_inventory_view(force) {
+                var _a;
                 if (!this.modal)
                     return;
                 if (!this.inventoryElement) {
                     this.inventoryElement = document.createElement('div');
+                    this.modal.polyfill.push(this.inventoryElement);
                     this.inventoryElement.className = 'inventory';
                     this.modal.content.append(this.inventoryElement);
                 }
@@ -7916,6 +7981,7 @@ void main() {
                     this.inventoryElement.innerHTML = ``;
                     for (let tuple of inventory.tuples) {
                         let item = document.createElement('div');
+                        (_a = this.modal) === null || _a === void 0 ? void 0 : _a.polyfill.push(item);
                         item.innerHTML = tuple[0];
                         if (tuple[1] > 1) {
                             item.innerHTML += ` <span>×${tuple[1]}</span>`;
@@ -9286,7 +9352,7 @@ void main() {
                     }
                 }
                 // We snap to aim onto tiles
-                if (this.type == 'you' && app$1.key('shift') && !win$1.genericHovering) {
+                if (this.type == 'you' && app$1.key('shift') && !win$1.is_hovering()) {
                     let pos = ((_a = tiles$1.hovering) === null || _a === void 0 ? void 0 : _a.wpos) || [0, 0];
                     pos = pts.subtract(pos, pawns.you.wpos);
                     const dist = pts.distsimple(pos, wastes.gview.mwpos);
@@ -9295,7 +9361,7 @@ void main() {
                         y = -pos[1];
                     }
                 }
-                else if (this.type == 'you' && (!x && !y) && app$1.button(0) >= 1 && !win$1.genericHovering) {
+                else if (this.type == 'you' && (!x && !y) && app$1.button(0) >= 1 && !win$1.is_hovering()) {
                     let mouse = wastes.gview.mwpos;
                     let pos = this.wpos;
                     pos = pts.add(pos, pts.divide([1, 1], 2));
@@ -9529,6 +9595,7 @@ void main() {
             this.set_camera();
             this.stats();
             lod$1.gworld.update(this.wpos);
+            this.hooks();
             const zoom = wastes.gview.zoom;
             // ren.renderer.domElement.style.transform = `scale(${1/zoom},${1/zoom})`;
             ren$1.camera.scale.set(zoom, zoom, zoom);
@@ -9579,13 +9646,17 @@ void main() {
             this.mwpos = lod$1.unproject(this.mrpos);
             //this.mwpos = pts.add(this.mwpos, [.5, -.5])
             // now..
-            if (app$1.button(0) == 1) {
+        }
+        hooks() {
+            if (app$1.button(0) == app$1.MOUSE.DOWN) {
                 hooks.call('viewLClick', this);
             }
-            if (app$1.button(1) == 1) {
+            if (app$1.button(1) == app$1.MOUSE.DOWN) {
                 hooks.call('viewMClick', this);
             }
-            if (app$1.button(2) == 1) {
+            if (app$1.button(2) == app$1.MOUSE.DOWN) {
+                app$1.mouse();
+                //document.querySelectorAll('.stats')[0].innerHTML = 'view r click ' + mouse[0] + " " + mouse[1];
                 hooks.call('viewRClick', this);
             }
         }
@@ -10163,6 +10234,7 @@ void main() {
                 return;
             started = true;
             console.log(' wastes starting ');
+            GLOB.HOVER_COLOR = '#95ca90';
             starts();
         }
         function init() {

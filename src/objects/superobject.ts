@@ -58,7 +58,7 @@ export class superobject extends lod.obj {
 		const sprite = this.shape as sprite;
 		let color = [1, 1, 1] as vec3;
 		if (sprite.mousedSquare(wastes.gview.mrpos)) {
-			color = [0.8, 0.8, 0.8];
+			color = [0.7, 1.0, 0.7];
 			hovering_sprites.hover(sprite);
 		}
 		else {

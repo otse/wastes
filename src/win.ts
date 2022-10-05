@@ -12,6 +12,7 @@ import hooks from "./hooks";
 import { client } from "./client";
 import { hovering_sprites } from "./sprite";
 import { superobject } from "./objects/superobject";
+import GLOB from "./glob";
 
 namespace win {
 
@@ -19,12 +20,14 @@ namespace win {
 
 	var toggle_character = false;
 
-	export var genericHovering = false;
-
 	export var started = false;
+
+	export var checks
 
 	export function start() {
 		started = true;
+
+		GLOB.hovering = 0;
 
 		win = document.getElementById('win') as HTMLElement;
 
@@ -61,6 +64,24 @@ namespace win {
 		message.tick();
 		descriptor.tick();
 		trader.tick();
+
+		GLOB.win_propagate_events = (event) => {
+			character.modal?.checker(event);
+			container.modal?.checker(event);
+			trader.modal?.checker(event);
+			dialogue.modal?.checker(event);
+			contextmenu.modal?.checker(event);
+			descriptor.modal?.checker(event);
+		}
+	}
+
+	export function is_hovering() {
+		return character.modal?.hovering ||
+			container.modal?.hovering ||
+			trader.modal?.hovering ||
+			dialogue.modal?.hovering ||
+			contextmenu.modal?.hovering ||
+			descriptor.modal?.hovering;
 	}
 
 	class modal {
@@ -68,21 +89,43 @@ namespace win {
 		title
 		content
 		hovering
+		checker
+		polyfill: any[] = []
 		constructor(title?: string) {
 			this.element = document.createElement('div') as HTMLElement
 			this.element.className = 'modal';
 
-			this.element.onmouseover = () => { this.hovering = true; genericHovering = true; }
-			this.element.onmouseleave = () => { this.hovering = false; genericHovering = false; }
-			//this.element.append('inventory')
-
+			if (app.mobile) {
+				this.checker = (event) => {
+					this.hovering = true;
+					var touch = event;
+					document.querySelectorAll('.stats')[0].innerHTML = touch.pageX + ' ' + touch.pageY;
+					let hovering = false;
+					for (let element of this.polyfill) {
+						if (element == document.elementFromPoint(touch.pageX, touch.pageY)) {
+							hovering = true;
+							this.hovering = true;
+							break;
+						}
+					}
+					if (hovering == false)
+						this.hovering = false;
+				}
+				this.element.ontouchcancel = () => { this.hovering = false; document.querySelectorAll('.stats')[0].innerHTML = 'modal touch cancel' }
+			}
+			else {
+				this.element.onmouseover = () => { this.hovering = true; document.querySelectorAll('.stats')[0].innerHTML = 'mouse over' }
+				this.element.onmouseleave = () => { this.hovering = false; document.querySelectorAll('.stats')[0].innerHTML = 'mouse leave' }
+			}
 			if (title) {
 				this.title = document.createElement('div');
 				this.title.innerHTML = title;
 				this.title.className = 'title';
+				this.polyfill.push(this.title);
 				this.element.append(this.title);
 			}
 			this.content = document.createElement('div');
+			this.polyfill.push(this.content);
 			this.content.className = 'content';
 			this.content.innerHTML = 'content';
 			this.element.append(this.content);
@@ -102,7 +145,7 @@ namespace win {
 		deletor() {
 			this.element.remove();
 			if (this.hovering)
-				genericHovering = false;
+				GLOB.hovering--;
 		}
 		float(anchor: lod.obj, add: vec2 = [0, 0]) {
 
@@ -137,7 +180,7 @@ namespace win {
 		}
 		static init() {
 			hooks.register('viewRClick', (view) => {
-				// We right click outside
+				// We right click outsideis
 				if (trader.modal && !trader.modal.hovering) {
 					trader.end();
 				}
@@ -166,9 +209,6 @@ namespace win {
 				this.traderLayout.className = 'trader layout';
 				this.modal.content.append(this.traderLayout);
 
-				this.modal.content.onmouseover = () => { genericHovering = true; }
-				this.modal.content.onmouseleave = () => { genericHovering = false; }
-
 				this.tradeWithCur = this.tradeWith;
 				this.render_trader_inventory(true);
 
@@ -184,6 +224,7 @@ namespace win {
 		static render_trader_inventory(force) {
 			if (!this.traderInventoryElement) {
 				this.traderInventoryElement = document.createElement('div');
+				this.modal?.polyfill.push(this.traderInventoryElement);
 				this.traderInventoryElement.className = 'inventory';
 				this.traderInventoryElement.style.width = '50%';
 				this.traderLayout.append(this.traderInventoryElement);
@@ -201,6 +242,7 @@ namespace win {
 					if (tuple[0] == 'money')
 						continue;
 					let button = document.createElement('div');
+					this.modal?.polyfill.push(button);
 					//button.innerHTML = `<img width="20" height="20" src="tex/items/${tuple[0]}.png">`;
 					button.innerHTML += tuple[0];
 					button.className = 'item';
@@ -217,6 +259,7 @@ namespace win {
 					const rate = client.get_rate(tuple[0]);
 					let buy = rate[1];
 					extra.innerHTML = `&nbsp; - ${buy}ct`;
+					this.modal?.polyfill.push(extra);
 
 					this.traderInventoryElement.append(button);
 
@@ -227,6 +270,7 @@ namespace win {
 		static render_your_inventory(force) {
 			if (!this.yourInventoryElement) {
 				this.yourInventoryElement = document.createElement('div');
+				this.modal?.polyfill.push(this.yourInventoryElement);
 				this.yourInventoryElement.className = 'inventory';
 				this.yourInventoryElement.style.width = '50%';
 				this.traderLayout.append(this.yourInventoryElement);
@@ -242,6 +286,7 @@ namespace win {
 					if (tuple[0] == 'money')
 						continue;
 					let button = document.createElement('div');
+					this.modal?.polyfill.push(button);
 					//button.innerHTML = `<img width="20" height="20" src="tex/items/${tuple[0]}.png">`;
 					button.innerHTML += tuple[0];
 					button.className = 'item';
@@ -253,6 +298,7 @@ namespace win {
 					}
 
 					let extra = document.createElement('span');
+					this.modal?.polyfill.push(extra);
 					button.append(extra);
 
 					const rate = client.get_rate(tuple[0]);
@@ -398,13 +444,11 @@ namespace win {
 		static end_close_others() {
 			trader.end();
 			dialogue.end();
-			genericHovering = false;
 		}
 		static end() {
 			this.modal?.deletor();
 			this.modal = undefined;
 			this.focusCur = undefined;
-			genericHovering = false;
 		}
 		static init() {
 			hooks.register('viewMClick', (view) => {
@@ -425,8 +469,14 @@ namespace win {
 				if (hovering_sprites.sprites.length)
 					this.focus = hovering_sprites.sprites[0].vars.binded as superobject;
 
+				// We are hovering an existing modal and clicking it
+				if (this.focusCur && this.modal && this.modal.hovering) {
+					document.querySelectorAll('.stats')[0].innerHTML = 'hovering contextmenu';
+
+					return false;
+				}
 				// We have a focus, but no window! This is the easiest scenario.
-				if (this.focus && !this.modal) {
+				else if (this.focus && !this.modal) {
 					this.focus.superobject_setup_context_menu();
 					this.focusCur = this.focus;
 					this.call_once();
@@ -446,6 +496,8 @@ namespace win {
 					this.focusCur = this.focus;
 					this.call_once();
 				}
+
+
 				//else {
 				//	this.modal?.deletor();
 				//	this.focusCur = undefined;
@@ -467,21 +519,21 @@ namespace win {
 
 			for (let option of this.options.options) {
 				let button = document.createElement('div');
+				this.modal.polyfill.push(button);
 				button.innerHTML = option[0] + "&nbsp;"
 				//if (tuple[1] > 1) {
 				//	button.innerHTML += ` <span>×${tuple[1]}</span>`
 				//}
 				button.className = 'option';
-				button.onclick = (e) => {
+				const lambda = (e) => {
 					if (option[1]()) {
 						this.modal?.deletor();
 						this.modal = undefined;
-						genericHovering = false;
 						option[2]();
 					}
 				};
-				button.onmouseover = () => { genericHovering = true; }
-				button.onmouseleave = () => { genericHovering = false; }
+				button.onclick = lambda;
+				//button.ontouchend = lambda;
 				this.modal.content.append(button);
 				this.buttons.push([button, option]);
 			}
@@ -571,7 +623,6 @@ namespace win {
 			this.modal?.deletor();
 			this.modal = undefined;
 			this.talkingToCur = undefined;
-			genericHovering = false;
 		}
 		static change() {
 			const which = 1;
@@ -598,7 +649,6 @@ namespace win {
 				button.onclick = (e) => {
 					console.log('woo');
 					this.where++;
-					genericHovering = false;
 					this.change();
 					//button.remove();
 				};
@@ -642,6 +692,7 @@ namespace win {
 
 			if (!this.inventoryElement) {
 				this.inventoryElement = document.createElement('div');
+				this.modal.polyfill.push(this.inventoryElement);
 				this.inventoryElement.className = 'inventory';
 				this.modal.content.append(this.inventoryElement);
 			}
@@ -656,6 +707,8 @@ namespace win {
 
 				for (let tuple of inventory.tuples) {
 					let item = document.createElement('div');
+					this.modal?.polyfill.push(item);
+
 					item.innerHTML = tuple[0];
 					if (tuple[1] > 1) {
 						item.innerHTML += ` <span>×${tuple[1]}</span>`;
