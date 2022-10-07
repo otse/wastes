@@ -252,6 +252,10 @@ var wastes = (function (exports, THREE) {
             return [...pos];
         }
         app.mouse = mouse;
+        function message(text) {
+            document.querySelectorAll('.stats')[0].innerHTML = text;
+        }
+        app.message = message;
         function boot(version) {
             app.salt = version;
             app.mobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -10201,6 +10205,7 @@ void main() {
         }
         wastes.critical = critical;
         function starts() {
+            app$1.message('swipe to move');
             lod$1.register();
             if (window.location.href.indexOf("#testingchamber") != -1) {
                 wastes.gview = view.make();
@@ -10231,12 +10236,6 @@ void main() {
                 chickens$1.start();
                 wastes.gview.center = new lod$1.obj();
                 wastes.gview.center.wpos = [44, 52];
-                /*
-                    [`I'm on duty.`, 1],
-                    [`I protect the civilized area here. It may not look that civil at first glance.`, 2],
-                    [`But undernearth the filth theres beauty to behold.`, 3],
-                    [`Just don't misbehave.`, -1]
-                */
             }
         }
         function start() {

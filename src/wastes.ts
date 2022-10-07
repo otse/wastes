@@ -20,6 +20,7 @@ import chickens from "./objects/chickens";
 import fences from "./objects/fences";
 import glob from "./glob";
 import guns from "./objects/guns";
+import app from "./app";
 
 export { win, pawns, objects, fences }; // fixes creepy rollup error
 
@@ -92,6 +93,7 @@ export namespace wastes {
 	}
 
 	function starts() {
+		app.message('swipe to move');
 		lod.register();
 		if (window.location.href.indexOf("#testingchamber") != -1) {
 			gview = view.make();
@@ -125,13 +127,6 @@ export namespace wastes {
 
 			gview.center = new lod.obj();
 			gview.center.wpos = [44, 52];
-
-			/*
-				[`I'm on duty.`, 1],
-				[`I protect the civilized area here. It may not look that civil at first glance.`, 2],
-				[`But undernearth the filth theres beauty to behold.`, 3],
-				[`Just don't misbehave.`, -1]
-			*/
 		}
 	}
 

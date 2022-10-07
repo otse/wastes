@@ -44,6 +44,9 @@ namespace app {
 	export function mouse(): vec2 {
 		return [...pos];
 	}
+	export function message(text) {
+		document.querySelectorAll('.stats')[0].innerHTML = text;
+	}
 	export function boot(version: string) {
 		salt = version;
 		mobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -56,9 +59,7 @@ namespace app {
 			if (e.button == 1)
 				return false
 		}
-		function message(text) {
-			document.querySelectorAll('.stats')[0].innerHTML = text;
-		}
+		
 		let touchStart: vec2 = [0, 0];
 		function ontouchstart(e) {
 			//message("ontouchstart");
