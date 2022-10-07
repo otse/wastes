@@ -3,7 +3,7 @@ import aabb2 from "../aabb2";
 
 import app from "../app";
 import collada from "../collada";
-import GLOB from "../glob";
+import glob from "../glob";
 import lod, { numbers } from "../lod";
 
 import objects from "./objects";

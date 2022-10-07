@@ -2,7 +2,7 @@ import { wastes } from "./wastes"
 
 import ren from "./renderer"
 import pts from "./pts";
-import GLOB from "./glob";
+import glob from "./glob";
 //import win from "./win"
 
 namespace app {
@@ -65,7 +65,8 @@ namespace app {
 			touchStart = [e.pageX, e.pageY];
 			pos[0] = e.pageX;
 			pos[1] = e.pageY;
-			GLOB.win_propagate_events(e);
+			if (app.mobile)
+				glob.win_propagate_events(e);
 			buttons[2] = MOUSE.UP;
 			//buttons[2] = MOUSE.DOWN; // rclick
 			//return false;
@@ -77,7 +78,8 @@ namespace app {
 			buttons[0] = 1;
 			//return false;
 			//console.log('touch move');
-			GLOB.win_propagate_events(e);
+			if (app.mobile)
+				glob.win_propagate_events(e);
 			e.preventDefault();
 			return false;
 		}

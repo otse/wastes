@@ -5,7 +5,7 @@ import app from "../app";
 import { client } from "../client";
 import collada from "../collada";
 import dialogues from "../dialogue";
-import GLOB from "../glob";
+import glob from "../glob";
 import lod, { numbers } from "../lod";
 
 import objects from "./objects";

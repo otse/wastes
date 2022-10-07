@@ -12,7 +12,7 @@ import hooks from "./hooks";
 import { client } from "./client";
 import { hovering_sprites } from "./sprite";
 import { superobject } from "./objects/superobject";
-import GLOB from "./glob";
+import glob from "./glob";
 
 namespace win {
 
@@ -27,7 +27,7 @@ namespace win {
 	export function start() {
 		started = true;
 
-		GLOB.hovering = 0;
+		glob.hovering = 0;
 
 		win = document.getElementById('win') as HTMLElement;
 
@@ -35,6 +35,8 @@ namespace win {
 		container.init();
 		trader.init();
 		dialogue.init();
+
+		glob.is_hovering = is_hovering;
 
 		setTimeout(() => {
 			//message.message("Welcome", 1000);
@@ -65,7 +67,7 @@ namespace win {
 		descriptor.tick();
 		trader.tick();
 
-		GLOB.win_propagate_events = (event) => {
+		glob.win_propagate_events = (event) => {
 			character.modal?.checker(event);
 			container.modal?.checker(event);
 			trader.modal?.checker(event);
@@ -89,29 +91,23 @@ namespace win {
 		title
 		content
 		hovering
-		checker
 		polyfill: any[] = []
+		checker(event) {
+			var touch = event;
+			let hovering = false;
+			for (let element of this.polyfill) {
+				if (element == document.elementFromPoint(touch.pageX, touch.pageY)) {
+					hovering = true;
+					break;
+				}
+			}
+			this.hovering = hovering;
+		}
 		constructor(title?: string) {
 			this.element = document.createElement('div') as HTMLElement
 			this.element.className = 'modal';
 
 			if (app.mobile) {
-				this.checker = (event) => {
-					this.hovering = true;
-					var touch = event;
-					document.querySelectorAll('.stats')[0].innerHTML = touch.pageX + ' ' + touch.pageY;
-					let hovering = false;
-					for (let element of this.polyfill) {
-						if (element == document.elementFromPoint(touch.pageX, touch.pageY)) {
-							hovering = true;
-							this.hovering = true;
-							break;
-						}
-					}
-					if (hovering == false)
-						this.hovering = false;
-				}
-				this.element.ontouchcancel = () => { this.hovering = false; document.querySelectorAll('.stats')[0].innerHTML = 'modal touch cancel' }
 			}
 			else {
 				this.element.onmouseover = () => { this.hovering = true; document.querySelectorAll('.stats')[0].innerHTML = 'mouse over' }
@@ -145,7 +141,7 @@ namespace win {
 		deletor() {
 			this.element.remove();
 			if (this.hovering)
-				GLOB.hovering--;
+				glob.hovering--;
 		}
 		float(anchor: lod.obj, add: vec2 = [0, 0]) {
 
@@ -469,10 +465,8 @@ namespace win {
 				if (hovering_sprites.sprites.length)
 					this.focus = hovering_sprites.sprites[0].vars.binded as superobject;
 
-				// We are hovering an existing modal and clicking it
+				// We are hovering an existing modal and right-clicking it (added for mobile)
 				if (this.focusCur && this.modal && this.modal.hovering) {
-					document.querySelectorAll('.stats')[0].innerHTML = 'hovering contextmenu';
-
 					return false;
 				}
 				// We have a focus, but no window! This is the easiest scenario.
@@ -630,10 +624,14 @@ namespace win {
 			this.modal!.content.innerHTML = ''; // reset
 
 			let pawnImage = document.createElement('div');
+			this.modal?.polyfill.push(pawnImage);
+
 			pawnImage.className = 'pawnimage';
 			this.modal!.content.append(pawnImage);
 
 			let textArea = document.createElement('div');
+			this.modal?.polyfill.push(textArea);
+
 			if (this.talkingToCur!.dialogue[this.where])
 				textArea.innerHTML = this.talkingToCur!.dialogue[this.where] + "&nbsp;";
 			this.modal!.content.append(textArea);
@@ -642,6 +640,8 @@ namespace win {
 			const next = this.talkingToCur!.dialogue[this.where + 1];
 			if (next) {
 				let button = document.createElement('div');
+				this.modal?.polyfill.push(button);
+
 				button.innerHTML = '>>'
 				button.className = 'button';
 				textArea.append(button);

@@ -203,7 +203,7 @@ var wastes = (function (exports, THREE) {
     aabb2.TEST = TEST;
 
     // allows you to venture far from inclusion hell by letting you assign arbitrary values
-    var GLOB = {};
+    var glob = {};
 
     //import win from "./win"
     var app;
@@ -269,7 +269,8 @@ var wastes = (function (exports, THREE) {
                 touchStart = [e.pageX, e.pageY];
                 pos[0] = e.pageX;
                 pos[1] = e.pageY;
-                GLOB.win_propagate_events(e);
+                if (app.mobile)
+                    glob.win_propagate_events(e);
                 buttons[2] = MOUSE.UP;
                 //buttons[2] = MOUSE.DOWN; // rclick
                 //return false;
@@ -281,7 +282,8 @@ var wastes = (function (exports, THREE) {
                 buttons[0] = 1;
                 //return false;
                 //console.log('touch move');
-                GLOB.win_propagate_events(e);
+                if (app.mobile)
+                    glob.win_propagate_events(e);
                 e.preventDefault();
                 return false;
             }
@@ -7390,12 +7392,13 @@ void main() {
         win_1.started = false;
         function start() {
             win_1.started = true;
-            GLOB.hovering = 0;
+            glob.hovering = 0;
             win = document.getElementById('win');
             contextmenu.init();
             container.init();
             trader.init();
             dialogue.init();
+            glob.is_hovering = is_hovering;
             setTimeout(() => {
                 //message.message("Welcome", 1000);
             }, 1000);
@@ -7417,7 +7420,7 @@ void main() {
             message.tick();
             descriptor.tick();
             trader.tick();
-            GLOB.win_propagate_events = (event) => {
+            glob.win_propagate_events = (event) => {
                 var _a, _b, _c, _d, _e, _f;
                 (_a = character.modal) === null || _a === void 0 ? void 0 : _a.checker(event);
                 (_b = container.modal) === null || _b === void 0 ? void 0 : _b.checker(event);
@@ -7443,24 +7446,7 @@ void main() {
                 this.polyfill = [];
                 this.element = document.createElement('div');
                 this.element.className = 'modal';
-                if (app$1.mobile) {
-                    this.checker = (event) => {
-                        this.hovering = true;
-                        var touch = event;
-                        document.querySelectorAll('.stats')[0].innerHTML = touch.pageX + ' ' + touch.pageY;
-                        let hovering = false;
-                        for (let element of this.polyfill) {
-                            if (element == document.elementFromPoint(touch.pageX, touch.pageY)) {
-                                hovering = true;
-                                this.hovering = true;
-                                break;
-                            }
-                        }
-                        if (hovering == false)
-                            this.hovering = false;
-                    };
-                    this.element.ontouchcancel = () => { this.hovering = false; document.querySelectorAll('.stats')[0].innerHTML = 'modal touch cancel'; };
-                }
+                if (app$1.mobile) ;
                 else {
                     this.element.onmouseover = () => { this.hovering = true; document.querySelectorAll('.stats')[0].innerHTML = 'mouse over'; };
                     this.element.onmouseleave = () => { this.hovering = false; document.querySelectorAll('.stats')[0].innerHTML = 'mouse leave'; };
@@ -7479,6 +7465,17 @@ void main() {
                 this.element.append(this.content);
                 win.append(this.element);
             }
+            checker(event) {
+                var touch = event;
+                let hovering = false;
+                for (let element of this.polyfill) {
+                    if (element == document.elementFromPoint(touch.pageX, touch.pageY)) {
+                        hovering = true;
+                        break;
+                    }
+                }
+                this.hovering = hovering;
+            }
             update(title) {
                 if (title)
                     this.title.innerHTML = title;
@@ -7491,7 +7488,7 @@ void main() {
             deletor() {
                 this.element.remove();
                 if (this.hovering)
-                    GLOB.hovering--;
+                    glob.hovering--;
             }
             float(anchor, add = [0, 0]) {
                 //let pos = this.anchor.rtospos([-1.5, 2.5]);
@@ -7766,9 +7763,8 @@ void main() {
                     hovering_sprites.sort_closest_to_mouse();
                     if (hovering_sprites.sprites.length)
                         this.focus = hovering_sprites.sprites[0].vars.binded;
-                    // We are hovering an existing modal and clicking it
+                    // We are hovering an existing modal and right-clicking it (added for mobile)
                     if (this.focusCur && this.modal && this.modal.hovering) {
-                        document.querySelectorAll('.stats')[0].innerHTML = 'hovering contextmenu';
                         return false;
                     }
                     // We have a focus, but no window! This is the easiest scenario.
@@ -7913,11 +7909,14 @@ void main() {
                 this.talkingToCur = undefined;
             }
             static change() {
+                var _a, _b, _c;
                 this.modal.content.innerHTML = ''; // reset
                 let pawnImage = document.createElement('div');
+                (_a = this.modal) === null || _a === void 0 ? void 0 : _a.polyfill.push(pawnImage);
                 pawnImage.className = 'pawnimage';
                 this.modal.content.append(pawnImage);
                 let textArea = document.createElement('div');
+                (_b = this.modal) === null || _b === void 0 ? void 0 : _b.polyfill.push(textArea);
                 if (this.talkingToCur.dialogue[this.where])
                     textArea.innerHTML = this.talkingToCur.dialogue[this.where] + "&nbsp;";
                 this.modal.content.append(textArea);
@@ -7925,6 +7924,7 @@ void main() {
                 const next = this.talkingToCur.dialogue[this.where + 1];
                 if (next) {
                     let button = document.createElement('div');
+                    (_c = this.modal) === null || _c === void 0 ? void 0 : _c.polyfill.push(button);
                     button.innerHTML = '>>';
                     button.className = 'button';
                     textArea.append(button);
@@ -9351,6 +9351,14 @@ void main() {
                         speed *= 5;
                     }
                 }
+                if (this.type == 'you') {
+                    if (app$1.button(0) == 1 && win$1.is_hovering()) {
+                        glob.freeze = true;
+                    }
+                    else if (app$1.button(0) <= 0) {
+                        glob.freeze = false;
+                    }
+                }
                 // We snap to aim onto tiles
                 if (this.type == 'you' && app$1.key('shift') && !win$1.is_hovering()) {
                     let pos = ((_a = tiles$1.hovering) === null || _a === void 0 ? void 0 : _a.wpos) || [0, 0];
@@ -9361,7 +9369,7 @@ void main() {
                         y = -pos[1];
                     }
                 }
-                else if (this.type == 'you' && (!x && !y) && app$1.button(0) >= 1 && !win$1.is_hovering()) {
+                else if (this.type == 'you' && (!x && !y) && app$1.button(0) >= 1 && !glob.freeze) {
                     let mouse = wastes.gview.mwpos;
                     let pos = this.wpos;
                     pos = pts.add(pos, pts.divide([1, 1], 2));
@@ -10234,7 +10242,7 @@ void main() {
                 return;
             started = true;
             console.log(' wastes starting ');
-            GLOB.HOVER_COLOR = '#95ca90';
+            glob.HOVER_COLOR = '#95ca90';
             starts();
         }
         function init() {

@@ -18,7 +18,7 @@ import aabb2 from "./aabb2";
 import client from "./client";
 import chickens from "./objects/chickens";
 import fences from "./objects/fences";
-import GLOB from "./glob";
+import glob from "./glob";
 import guns from "./objects/guns";
 
 export { win, pawns, objects, fences }; // fixes creepy rollup error
@@ -141,7 +141,7 @@ export namespace wastes {
 		started = true;
 		console.log(' wastes starting ');
 
-		GLOB.HOVER_COLOR = '#95ca90';
+		glob.HOVER_COLOR = '#95ca90';
 		starts();
 	}
 

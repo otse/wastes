@@ -5,7 +5,7 @@ import app from "../app";
 import { client } from "../client";
 import collada from "../collada";
 import dialogues from "../dialogue";
-import GLOB from "../glob";
+import glob from "../glob";
 import lod, { numbers } from "../lod";
 
 import objects from "./objects";
@@ -287,7 +287,7 @@ export namespace pawns {
 
 			this.meshes.legl = new Mesh(boxLegs, materialLegs);
 			this.meshes.legr = new Mesh(boxLegs, materialLegs);
-			
+
 			/*this.meshes.gungrip = new Mesh(boxGunGrip, materialGunGrip);
 			this.meshes.gunbarrel = new Mesh(boxGunBarrel, materialGunBarrel);*/
 
@@ -416,6 +416,14 @@ export namespace pawns {
 
 			const wposBasedAiming = true;
 
+			if (this.type == 'you') {
+				if (app.button(0) == 1 && win.is_hovering()) {
+					glob.freeze = true;
+				}
+				else if (app.button(0) <= 0) {
+					glob.freeze = false;
+				}
+			}
 
 			// We snap to aim onto tiles
 			if (this.type == 'you' && app.key('shift') && !win.is_hovering()) {
@@ -428,7 +436,7 @@ export namespace pawns {
 					y = -pos[1];
 				}
 			}
-			else if (this.type == 'you' && (!x && !y) && app.button(0) >= 1 && !win.is_hovering()) {
+			else if (this.type == 'you' && (!x && !y) && app.button(0) >= 1 && !glob.freeze) {
 				// Deduce x and y from click moving
 				wasd = false;
 				let mouse = wastes.gview.mwpos;
