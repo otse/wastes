@@ -203,6 +203,7 @@ var wastes = (function (exports, THREE) {
     aabb2.TEST = TEST;
 
     // allows you to venture far from inclusion hell by letting you assign arbitrary values
+    // also useful since rollup.js doesnt like circular inclusions and will very often break things
     var glob = {};
 
     //import win from "./win"
@@ -279,7 +280,8 @@ var wastes = (function (exports, THREE) {
                 //message("ontouchmove");
                 pos[0] = e.pageX;
                 pos[1] = e.pageY;
-                buttons[0] = 1;
+                if (!buttons[0])
+                    buttons[0] = KEY.PRESS;
                 //return false;
                 //console.log('touch move');
                 if (app.mobile)

@@ -75,7 +75,8 @@ namespace app {
 			//message("ontouchmove");
 			pos[0] = e.pageX;
 			pos[1] = e.pageY;
-			buttons[0] = 1;
+			if (!buttons[0])
+				buttons[0] = KEY.PRESS;
 			//return false;
 			//console.log('touch move');
 			if (app.mobile)
