@@ -113,7 +113,7 @@ export class sprite extends lod.shape {
 		//calc = pts.add(calc, [this.rleft, this.rup + this.rup2]);
 		this.aabbScreen.translate(calc);
 	}
-	mousedSquare(mouse: Vec2) {
+	mousing(mouse: Vec2) {
 		if (this.aabbScreen?.test(new aabb2(mouse, mouse)))
 			return true;
 	}
@@ -172,8 +172,9 @@ export class sprite extends lod.shape {
 			}
 			if (show_wire_frames) {
 				this.wireframe.position.fromArray([...calc, 0]);
-				this.wireframe.renderOrder = this.mesh.renderOrder + 10;
+				this.wireframe.renderOrder = this.mesh.renderOrder + 20;
 				this.wireframe.updateMatrix();
+				this.wireframe.updateMatrixWorld(false);
 			}
 		}
 	}
@@ -239,6 +240,8 @@ export class sprite extends lod.shape {
 			this.wireframe.frustumCulled = false;
 			this.wireframe.matrixAutoUpdate = false;
 			ren.groups.axisSwap.add(this.wireframe);
+			console.log('add wireframe');
+			
 		}
 
 		this.shape_manual_update();

@@ -156,7 +156,6 @@ export namespace wastes {
 			reasonable_waiter()
 			return
 		}
-		gview?.tick();
 		tests.tick();
 		testing_chamber.tick();
 		modeler.tick();
@@ -165,6 +164,7 @@ export namespace wastes {
 		collada.tick();
 		client.tick();
 		objects.tick();
+		gview?.tick();
 		rooms.tick();
 		areas.tick();
 		win.tick();

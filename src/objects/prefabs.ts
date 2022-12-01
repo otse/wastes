@@ -111,7 +111,7 @@ class building_parts {
 					pos = [-pos[1], pos[0]];
 					pos = pts.add(pos, corner);
 
-					let door = new objects.door;
+					let door = new objects.door;[]
 					door.cell = [1, 0];
 					door.wpos = pos;
 
@@ -251,7 +251,6 @@ class prefab extends superobject {
 		this.set_3d();
 
 		shape.material.map = this.target.texture;
-
 
 		this.group.add(this.model);
 		this.group.position.set(0, -23, 0);

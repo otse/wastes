@@ -663,6 +663,7 @@ void main() {
     var lod;
     (function (lod) {
         lod.SectorSpan = 3;
+        lod.stamp = 0; // used only by server slod
         function register() {
             // hooks.create('sectorCreate')
             // hooks.create('sectorShow')
@@ -696,8 +697,8 @@ void main() {
             }
             update(wpos) {
                 lod.ggrid.big = lod.world.big(wpos);
+                lod.ggrid.ons();
                 lod.ggrid.offs();
-                lod.ggrid.crawl();
             }
             lookup(big) {
                 if (this.arrays[big[1]] == undefined)
@@ -822,7 +823,7 @@ void main() {
             visible(sector) {
                 return sector.dist() < this.spread;
             }
-            crawl() {
+            ons() {
                 // spread = -2; < 2
                 for (let y = -this.spread; y < this.spread + 1; y++) {
                     for (let x = -this.spread; x < this.spread + 1; x++) {
@@ -833,11 +834,14 @@ void main() {
                         if (!sector.isActive()) {
                             this.shown.push(sector);
                             sector.show();
+                            for (let obj of sector.objs)
+                                obj.tick();
                         }
                     }
                 }
             }
             offs() {
+                // Hide sectors
                 this.visibleObjs = [];
                 let i = this.shown.length;
                 while (i--) {
@@ -852,8 +856,11 @@ void main() {
                         this.visibleObjs = this.visibleObjs.concat(sector.objs);
                     }
                 }
-                for (let obj of this.visibleObjs)
-                    obj.tick();
+            }
+            ticks() {
+                for (let sector of this.shown)
+                    for (let obj of sector.objs)
+                        obj.tick();
             }
         }
         lod.grid = grid;
@@ -904,16 +911,21 @@ void main() {
                 return pts.clone(this.rpos);
             }
             tick() {
+                // implement me
             }
             create() {
+                // implement me
+                // typically used to create a sprite
                 console.warn(' (lod) obj.create ');
             }
             // delete is never used
             delete() {
+                // implement me
                 // console.warn(' (lod) obj.delete ');
             }
             obj_manual_update() {
                 var _a;
+                // implement me
                 this.wtorpos();
                 (_a = this.shape) === null || _a === void 0 ? void 0 : _a.shape_manual_update();
             }
@@ -1088,7 +1100,7 @@ void main() {
             //calc = pts.add(calc, [this.rleft, this.rup + this.rup2]);
             this.aabbScreen.translate(calc);
         }
-        mousedSquare(mouse) {
+        mousing(mouse) {
             var _a;
             if ((_a = this.aabbScreen) === null || _a === void 0 ? void 0 : _a.test(new aabb2(mouse, mouse)))
                 return true;
@@ -1322,7 +1334,7 @@ void main() {
             }
             tick() {
                 let shape = this.shape;
-                if (shape.mousedSquare(wastes.gview.mrpos))
+                if (shape.mousing(wastes.gview.mrpos))
                     shape.mesh.material.color.set('green');
                 else
                     shape.material.color.set('white');
@@ -1553,7 +1565,8 @@ void main() {
                 return;
             for (let i = 100; i >= 0; i--) {
                 // The great pretention grid
-                let pos = lod$1.unproject(pts.add(wastes.gview.mrpos, [0, -i]));
+                let mrpos = pts.add(wastes.gview.mrpos, lod$1.project([.5, -.5]));
+                let pos = lod$1.unproject(pts.add(mrpos, [0, -i]));
                 pos = pts.floor(pos);
                 const tile = get(pos);
                 if (tile && tile.z + tile.height + tile.heightAdd == i) {
@@ -1762,7 +1775,7 @@ void main() {
         hovering_pass() {
             const sprite = this.shape;
             let color = [1, 1, 1];
-            if (sprite.mousedSquare(wastes.gview.mrpos)) {
+            if (sprite.mousing(wastes.gview.mrpos)) {
                 color = [0.7, 1.0, 0.7];
                 hovering_sprites.hover(sprite);
             }
@@ -8123,12 +8136,13 @@ void main() {
                     binded: this,
                     tuple: sprites$1.test100,
                     //opacity: 0.5,
-                    orderBias: 1.0,
+                    orderBias: 2.5,
                     mask: true
                 });
-                shape.dimetric = false;
-                shape.rleft = this.size[0] / 2;
-                shape.rup2 = this.size[1] / 2;
+                //shape.dimetric = false;
+                shape.subsize = [15, 20];
+                shape.rleft = -this.size[0] / 4;
+                //shape.rup2 = -this.size[1] / 2;
                 shape.show();
                 if (!this.created) {
                     this.created = true;
@@ -8298,7 +8312,7 @@ void main() {
                 this.meshes.legr.position.set(0, -legsHeight / 2, 0);
                 this.groups.footl.position.set(0, -legsHeight, feetLength / 2);
                 this.groups.footr.position.set(0, -legsHeight, feetLength / 2);
-                this.groups.ground.position.set(0, -bodyHeight * 3, 0);
+                this.groups.ground.position.set(0, -bodyHeight * 4, 0);
                 //mesh.rotation.set(Math.PI / 2, 0, 0);
                 this.scene.add(this.groups.basis);
             }
@@ -8368,6 +8382,8 @@ void main() {
                 this.render();
             }
             nettick() {
+                //this.wpos = wastes.gview.mwpos;
+                //return;
                 //this.netangle = Math.PI / 4;
                 // Net tick can happen offscreen
                 //this.wpos = tiles.hovering!.wpos;
@@ -8432,7 +8448,7 @@ void main() {
                 else {
                     console.warn('no chicken sprite?????');
                 }
-                this.stack(['pawn', 'you', 'chicken', 'leaves', 'wall', 'door', 'roof', 'falsefront', 'panel']);
+                this.stack(['pawn', 'you', 'chicken', 'tree', 'leaves', 'wall', 'door', 'roof', 'falsefront', 'panel']);
                 //sprite.roffset = [.5, .5];
                 //this.tile!.paint();
                 super.obj_manual_update();
@@ -9089,7 +9105,7 @@ void main() {
                     orderBias: 1.0,
                     mask: true
                 });
-                shape.subsize = [20, 40];
+                shape.subsize = [20, 30];
                 shape.rleft = -this.size[0] / 4;
                 shape.show();
                 if (!this.created) {
@@ -9365,20 +9381,23 @@ void main() {
                         glob.freeze = false;
                     }
                 }
-                // We snap to aim onto tiles
+                // Snap aim to tiles
                 if (this.type == 'you' && app$1.key('shift') && !win$1.is_hovering()) {
                     let pos = ((_a = tiles$1.hovering) === null || _a === void 0 ? void 0 : _a.wpos) || [0, 0];
                     pos = pts.subtract(pos, pawns.you.wpos);
-                    const dist = pts.distsimple(pos, wastes.gview.mwpos);
-                    if (dist > 0.5) {
-                        x = pos[0];
-                        y = -pos[1];
-                    }
+                    //const dist = pts.distsimple(pos, wastes.gview.mwpos);
+                    // Why do we check the distance between our global view?
+                    //if (dist > 0.5) {
+                    x = pos[0];
+                    y = -pos[1];
+                    //}
                 }
+                // The important click move
                 else if (this.type == 'you' && (!x && !y) && app$1.button(0) >= 1 && !glob.freeze) {
                     let mouse = wastes.gview.mwpos;
+                    mouse = pts.add(mouse, [.5, -.5]);
                     let pos = this.wpos;
-                    pos = pts.add(pos, pts.divide([1, 1], 2));
+                    pos = pts.add(pos, [.5, .5]);
                     mouse = pts.subtract(mouse, pos);
                     mouse[1] = -mouse[1];
                     const dist = pts.distsimple(pos, wastes.gview.mwpos);
@@ -9525,7 +9544,7 @@ void main() {
                     this.angle += Math.PI * 2;
                 if (this.angle - this.netangle > Math.PI)
                     this.angle -= Math.PI * 2;
-                let tweenAngle = (this.netangle - this.angle) * 0.1;
+                let tweenAngle = (this.netangle - this.angle) * ren$1.delta * 3;
                 this.angle += tweenAngle;
                 const movement = pts.together(pts.abs(tween));
                 if (movement > 0.005) {
@@ -9590,6 +9609,7 @@ void main() {
         chart(big) {
         }
         tick() {
+            lod$1.ggrid.ticks();
             this.move();
             this.mouse();
             //if (!this.follow)
@@ -9656,7 +9676,8 @@ void main() {
             mouse[1] = -mouse[1];
             this.mrpos = pts.add(mouse, this.rpos);
             //this.mrpos2 = pts.subtract(this.mrpos, [0, 3]); // why minus 3 ?
-            this.mrpos = pts.add(this.mrpos, lod$1.project([.5, -.5])); // correction
+            // todo correction was broken
+            //this.mrpos = pts.add(this.mrpos, lod.project([.5, -.5])); // correction
             this.mwpos = lod$1.unproject(this.mrpos);
             //this.mwpos = pts.add(this.mwpos, [.5, -.5])
             // now..
@@ -10261,7 +10282,6 @@ void main() {
                 reasonable_waiter();
                 return;
             }
-            wastes.gview === null || wastes.gview === void 0 ? void 0 : wastes.gview.tick();
             tests$1.tick();
             testing_chamber$1.tick();
             modeler$1.tick();
@@ -10270,6 +10290,7 @@ void main() {
             collada$1.tick();
             client$1.tick();
             objects$1.tick();
+            wastes.gview === null || wastes.gview === void 0 ? void 0 : wastes.gview.tick();
             rooms$1.tick();
             areas$1.tick();
             win$1.tick();

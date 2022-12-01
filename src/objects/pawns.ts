@@ -79,7 +79,7 @@ export namespace pawns {
 				orderBias: 1.0,
 				mask: true
 			});
-			shape.subsize = [20, 40];
+			shape.subsize = [20, 30];
 			shape.rleft = -this.size[0] / 4;
 			shape.show();
 
@@ -425,23 +425,27 @@ export namespace pawns {
 				}
 			}
 
-			// We snap to aim onto tiles
+			// Snap aim to tiles
 			if (this.type == 'you' && app.key('shift') && !win.is_hovering()) {
 				wasd = false;
 				let pos = tiles.hovering?.wpos || [0, 0];
 				pos = pts.subtract(pos, pawns.you.wpos);
-				const dist = pts.distsimple(pos, wastes.gview.mwpos);
-				if (dist > 0.5) {
-					x = pos[0];
-					y = -pos[1];
-				}
+				//const dist = pts.distsimple(pos, wastes.gview.mwpos);
+				// Why do we check the distance between our global view?
+				//if (dist > 0.5) {
+				x = pos[0];
+				y = -pos[1];
+				//}
 			}
+			// The important click move
 			else if (this.type == 'you' && (!x && !y) && app.button(0) >= 1 && !glob.freeze) {
 				// Deduce x and y from click moving
 				wasd = false;
 				let mouse = wastes.gview.mwpos;
+				mouse = pts.add(mouse, [.5, -.5]);
+
 				let pos = this.wpos;
-				pos = pts.add(pos, pts.divide([1, 1], 2));
+				pos = pts.add(pos, [.5, .5]);
 				mouse = pts.subtract(mouse, pos);
 				mouse[1] = -mouse[1];
 
@@ -625,7 +629,7 @@ export namespace pawns {
 			if (this.angle - this.netangle > Math.PI)
 				this.angle -= Math.PI * 2;
 
-			let tweenAngle = (this.netangle - this.angle) * 0.1;
+			let tweenAngle = (this.netangle - this.angle) * ren.delta * 3;
 
 			this.angle += tweenAngle;
 

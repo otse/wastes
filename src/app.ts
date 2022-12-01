@@ -135,8 +135,13 @@ namespace app {
 			else if (buttons[b] == MOUSE.UP)
 				buttons[b] = MOUSE.OFF;
 	}
+	var skip = 0;
 	export function loop(timestamp) {
 		requestAnimationFrame(loop);
+		skip++;
+		//if (skip<10)
+		//	return;
+		skip = 0;
 		ren.update();
 		wastes.tick();
 		ren.render();

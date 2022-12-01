@@ -101,7 +101,7 @@ namespace testing_chamber {
 		}
 		tick() {
 			let shape = this.shape as sprite;
-			if (shape.mousedSquare(wastes.gview.mrpos))
+			if (shape.mousing(wastes.gview.mrpos))
 				shape.mesh.material.color.set('green');
 			else
 				shape.material.color.set('white');

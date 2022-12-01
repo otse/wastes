@@ -70,7 +70,9 @@ export namespace tiles {
 
 		for (let i = 100; i >= 0; i--) {
 			// The great pretention grid
-			let pos = lod.unproject(pts.add(wastes.gview.mrpos, [0, -i]));
+			let mrpos = pts.add(wastes.gview.mrpos, lod.project([.5, -.5]));
+
+			let pos = lod.unproject(pts.add(mrpos, [0, -i]));
 			pos = pts.floor(pos);
 			const tile = get(pos);
 			if (tile && tile.z + tile.height + tile.heightAdd == i) {
@@ -183,7 +185,7 @@ export namespace tiles {
 			//console.log('my order bias', this.z, this.myOrderBias);
 			
 			if (dont_show_tiles)
-				return
+				return;
 			let shape = new sprite({
 				binded: this,
 				tuple: this.tuple,

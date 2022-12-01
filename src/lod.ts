@@ -58,6 +58,8 @@ namespace lod {
 
 	export var SectorSpan = 3;
 
+	export var stamp = 0; // used only by server slod
+
 	export function register() {
 		// hooks.create('sectorCreate')
 		// hooks.create('sectorShow')
@@ -91,8 +93,8 @@ namespace lod {
 		}
 		update(wpos: vec2) {
 			ggrid.big = lod.world.big(wpos);
+			ggrid.ons();
 			ggrid.offs();
-			ggrid.crawl();
 		}
 		lookup(big: vec2): sector | undefined {
 			if (this.arrays[big[1]] == undefined)
@@ -226,7 +228,7 @@ namespace lod {
 		visible(sector: sector) {
 			return sector.dist() < this.spread;
 		}
-		crawl() {
+		ons() {
 			// spread = -2; < 2
 			for (let y = -this.spread; y < this.spread + 1; y++) {
 				for (let x = -this.spread; x < this.spread + 1; x++) {
@@ -237,11 +239,14 @@ namespace lod {
 					if (!sector.isActive()) {
 						this.shown.push(sector);
 						sector.show();
+						for (let obj of sector.objs)
+							obj.tick();
 					}
 				}
 			}
 		}
 		offs() {
+			// Hide sectors
 			this.visibleObjs = [];
 			let i = this.shown.length;
 			while (i--) {
@@ -256,8 +261,11 @@ namespace lod {
 					this.visibleObjs = this.visibleObjs.concat(sector.objs);
 				}
 			}
-			for (let obj of this.visibleObjs)
-				obj.tick();
+		}
+		ticks() {
+			for (let sector of this.shown)
+				for (let obj of sector.objs)
+					obj.tick();
 		}
 	}
 
@@ -312,16 +320,21 @@ namespace lod {
 			this.wtorpos();
 			return pts.clone(this.rpos);
 		}
-		tick() { // implement me
+		tick() {
+			// implement me
 		}
-		create() { // implement me
+		create() {
+			// implement me
+			// typically used to create a sprite
 			console.warn(' (lod) obj.create ');
 		}
 		// delete is never used
-		delete() { // implement me
+		delete() {
+			// implement me
 			// console.warn(' (lod) obj.delete ');
 		}
-		obj_manual_update() { // implement me
+		obj_manual_update() {
+			// implement me
 			this.wtorpos();
 			this.shape?.shape_manual_update();
 		}

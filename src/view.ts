@@ -35,6 +35,8 @@ export class view {
 		this.rpos = lod.project(this.wpos);
 	}
 	tick() {
+		lod.ggrid.ticks();
+
 		this.move();
 		this.mouse();
 		//if (!this.follow)
@@ -53,7 +55,9 @@ export class view {
 		this.rpos = pts.add(this.rpos, [0, this.raise / 2]);
 		this.set_camera();
 		this.stats();
+		
 		lod.gworld.update(this.wpos);
+
 		this.hooks();
 		const zoom = wastes.gview.zoom;
 		// ren.renderer.domElement.style.transform = `scale(${1/zoom},${1/zoom})`;
@@ -116,7 +120,9 @@ export class view {
 
 		//this.mrpos2 = pts.subtract(this.mrpos, [0, 3]); // why minus 3 ?
 
-		this.mrpos = pts.add(this.mrpos, lod.project([.5, -.5])); // correction
+		// todo correction was broken
+		//this.mrpos = pts.add(this.mrpos, lod.project([.5, -.5])); // correction
+
 		this.mwpos = lod.unproject(this.mrpos);
 		//this.mwpos = pts.add(this.mwpos, [.5, -.5])
 		// now..

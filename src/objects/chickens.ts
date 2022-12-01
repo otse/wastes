@@ -58,12 +58,13 @@ export namespace chickens {
 				binded: this,
 				tuple: sprites.test100,
 				//opacity: 0.5,
-				orderBias: 1.0,
+				orderBias: 2.5,
 				mask: true
 			});
-			shape.dimetric = false;
-			shape.rleft = this.size[0] / 2;
-			shape.rup2 = this.size[1] / 2;
+			//shape.dimetric = false;
+			shape.subsize = [15, 20];
+			shape.rleft = -this.size[0] / 4;
+			//shape.rup2 = -this.size[1] / 2;
 
 			shape.show();
 
@@ -285,7 +286,7 @@ export namespace chickens {
 			this.groups.footl.position.set(0, -legsHeight, feetLength / 2);
 			this.groups.footr.position.set(0, -legsHeight, feetLength / 2);
 
-			this.groups.ground.position.set(0, -bodyHeight * 3, 0);
+			this.groups.ground.position.set(0, -bodyHeight * 4, 0);
 			//mesh.rotation.set(Math.PI / 2, 0, 0);
 
 			this.scene.add(this.groups.basis);
@@ -374,6 +375,9 @@ export namespace chickens {
 		randomWalker = 0
 
 		nettick() {
+
+			//this.wpos = wastes.gview.mwpos;
+			//return;
 
 			//this.netangle = Math.PI / 4;
 			// Net tick can happen offscreen
@@ -464,7 +468,7 @@ export namespace chickens {
 				console.warn('no chicken sprite?????');
 			}
 
-			this.stack(['pawn', 'you', 'chicken', 'leaves', 'wall', 'door', 'roof', 'falsefront', 'panel']);
+			this.stack(['pawn', 'you', 'chicken', 'tree', 'leaves', 'wall', 'door', 'roof', 'falsefront', 'panel']);
 			//sprite.roffset = [.5, .5];
 			//this.tile!.paint();
 			super.obj_manual_update();

@@ -876,8 +876,8 @@ class chicken extends npc {
 			return;
 
 		if (pts.together(this.aimTarget) == 0) {
-			if (!this.pecking && !this.sitting && this.walkAgain?.elapsed(5000)) {
-				if (Math.random() > .25) {
+			if (!this.pecking && !this.sitting && this.walkAgain?.elapsed(3000)) {
+				if (Math.random() > .20) {
 					this.pecking = true;
 				}
 				else {
@@ -893,7 +893,7 @@ class chicken extends npc {
 			this.needs_update();
 			this.walkAgain = new timer(0);
 		}
-		else if (this.sitting && this.walkAgain?.elapsed(6000)) {
+		else if (this.sitting && this.walkAgain?.elapsed(4000)) {
 			this.sitting = false;
 			this.needs_update();
 			this.walkAgain = new timer(0);
