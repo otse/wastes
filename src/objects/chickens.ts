@@ -63,8 +63,8 @@ export namespace chickens {
 			});
 			//shape.dimetric = false;
 			shape.subsize = [15, 20];
-			shape.rleft = -this.size[0] / 4;
-			//shape.rup2 = -this.size[1] / 2;
+			shape.rup2 = 1;
+			//shape.rleft = -this.size[0] / 2;
 
 			shape.show();
 
@@ -375,7 +375,9 @@ export namespace chickens {
 		randomWalker = 0
 
 		nettick() {
-
+			
+			//this.wpos = [43, 51];
+			//return;
 			//this.wpos = wastes.gview.mwpos;
 			//return;
 

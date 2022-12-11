@@ -1004,10 +1004,11 @@ void main() {
         sprites.dcrate = [[24, 40], [24, 40], 0, 'tex/8bit/dcrate'];
         sprites.dshelves = [[20, 31], [20, 31], 0, 'tex/8bit/dshelves'];
         sprites.ddoor = [[192, 40], [24, 40], 0, 'tex/8bit/ddoor'];
+        sprites.dsquarebarrel = [[24, 26], [24, 26], 0, 'tex/8bit/dsquarebarrel'];
         sprites.dwoodywalls = [[264, 40], [24, 40], 0, 'tex/8bit/dwoodywalls'];
         sprites.dplywoodwalls = [[264, 40], [24, 40], 0, 'tex/8bit/dcommonwalls'];
         sprites.dovergrownwalls = [[264, 40], [24, 40], 0, 'tex/8bit/dovergrownwalls'];
-        sprites.dderingerwalls = [[264, 40], [24, 40], 0, 'tex/8bit/dderingerwalls'];
+        sprites.dderingerwalls = [[264, 40], [24, 40], 0, 'tex/8bit/dcommonwalls'];
         sprites.dmedievalwalls = [[264, 40], [24, 40], 0, 'tex/8bit/dmedievalwalls'];
         sprites.dscrappywalls = [[264, 40], [24, 40], 0, 'tex/dscrappywalls'];
         //export const dscrappywalls2: tuple = [[216, 40], [24, 40], 0, 'tex/dscrappywalls2']
@@ -1433,7 +1434,7 @@ void main() {
                 this.canvas = document.createElement('canvas');
                 this.canvas.width = colormap_1.mapSpan;
                 this.canvas.height = colormap_1.mapSpan;
-                this.ctx = this.canvas.getContext('2d');
+                this.ctx = this.canvas.getContext("2d", { willReadFrequently: true });
                 //this.ctx.scale(1, 1);
                 this.ctx.drawImage(img, 0, 0, img.width, img.height);
                 this.process();
@@ -1563,7 +1564,7 @@ void main() {
         function tick() {
             if (!tiles.started)
                 return;
-            for (let i = 100; i >= 0; i--) {
+            for (let i = 20; i >= 0; i--) {
                 // The great pretention grid
                 let mrpos = pts.add(wastes.gview.mrpos, lod$1.project([.5, -.5]));
                 let pos = lod$1.unproject(pts.add(mrpos, [0, -i]));
@@ -1620,6 +1621,7 @@ void main() {
                 }
                 else if (!pixel.is_black()) {
                     // We're a land tile
+                    console.log('common land tile');
                     this.isLand = true;
                     this.type = 'land';
                     this.size = [24, 30];
@@ -1728,7 +1730,7 @@ void main() {
         colors.color_porch = [110, 120, 120];
         colors.color_rails = [110, 100, 120];
         colors.color_false_front = [255, 255, 255];
-        colors.color_acid_barrel = [61, 118, 48];
+        colors.color_square_barrel = [70, 150, 70];
         colors.color_wall_chest = [130, 100, 50];
         colors.color_shelves = [130, 80, 50];
         colors.color_panel = [78, 98, 98];
@@ -6470,7 +6472,10 @@ void main() {
     */
     function building_factory() {
         new building_parts('watertower', [41, 42]);
-        //new building_parts('building', [40, 48]);
+        //new building_parts('building', [50, 46]);
+        new building_parts('brickwall', [43, 50]);
+        //new building_parts('squarebarrel', [43, 50]);
+        //new building_parts('barrel', [41, 51]);
         /*let prefab = new building;
         prefab.wpos = [45, 48];
         prefab.produce();
@@ -6623,7 +6628,7 @@ void main() {
             this.scene.position.set(0, 0, 0);
             let amb = new THREE.AmbientLight('#777');
             this.scene.add(amb);
-            this.sun = new THREE.DirectionalLight(0xffffff, 0.3);
+            this.sun = new THREE.DirectionalLight(0xffffff, 0.25);
             const size2 = 10;
             this.sun.position.set(-size2, 0, size2 / 2);
             //sun.add(new AxesHelper(100));
@@ -6676,7 +6681,10 @@ void main() {
             hooks.register('sectorCreate', (sector) => {
                 pts.func(sector.small, (pos) => {
                     let pixel = wastes.objectmap.pixel(pos);
-                    if (pixel.is_color(colors$1.color_acid_barrel)) ;
+                    if (pixel.is_color(colors$1.color_square_barrel)) {
+                        factory(objects.squarebarrel, pixel, pos);
+                    }
+                    else if (pixel.is_color(colors$1.color_wall_chest)) ;
                     else if (pixel.is_color(colors$1.color_wall_chest)) ;
                     else if (pixel.is_color(colors$1.color_shelves)) ;
                     else if (pixel.is_color(colors$1.color_panel)) ;
@@ -6794,7 +6802,7 @@ void main() {
             constructor() {
                 super(numbers.walls);
                 this.type = 'wall';
-                this.height = 24;
+                this.height = 23;
             }
             create() {
                 var _a, _b, _c, _d, _e, _f;
@@ -6936,6 +6944,28 @@ void main() {
         }
         deadtree.timer = 0;
         objects.deadtree = deadtree;
+        class squarebarrel extends superobject {
+            constructor() {
+                super(numbers.floors);
+                this.type = 'tree';
+                this.height = 12;
+                console.log('woo!');
+            }
+            create() {
+                this.tiled();
+                this.size = [24, 26];
+                let color = [255, 255, 255];
+                color = shadows$1.mix(color, this.wpos);
+                new sprite({
+                    binded: this,
+                    tuple: sprites$1.dsquarebarrel,
+                    orderBias: 1.0,
+                    color: color
+                });
+                this.stack();
+            }
+        }
+        objects.squarebarrel = squarebarrel;
         class decidtree extends superobject {
             constructor() {
                 super(numbers.trees);
@@ -7259,9 +7289,9 @@ void main() {
                 let shape = new sprite({
                     binded: this,
                     tuple: sprites$1.droof,
-                    orderBias: 1.6,
+                    orderBias: 1.0,
                 });
-                shape.rup = 29;
+                shape.rup = 26 + 3;
                 if (!this.shaded) {
                     this.shaded = true;
                     const shadow = .7;
@@ -7316,24 +7346,6 @@ void main() {
             }
         }
         objects.falsefront = falsefront;
-        class acidbarrel extends superobject {
-            constructor() {
-                super(numbers.objs);
-                this.type = 'acidbarrel';
-                this.height = 4;
-            }
-            create() {
-                this.tiled();
-                this.size = [24, 35];
-                new sprite({
-                    binded: this,
-                    tuple: sprites$1.dacidbarrel,
-                    orderBias: .4,
-                });
-                this.stack();
-            }
-        }
-        objects.acidbarrel = acidbarrel;
         class door extends superobject {
             constructor() {
                 super(numbers.walls);
@@ -8141,8 +8153,8 @@ void main() {
                 });
                 //shape.dimetric = false;
                 shape.subsize = [15, 20];
-                shape.rleft = -this.size[0] / 4;
-                //shape.rup2 = -this.size[1] / 2;
+                shape.rup2 = 1;
+                //shape.rleft = -this.size[0] / 2;
                 shape.show();
                 if (!this.created) {
                     this.created = true;
@@ -8382,6 +8394,8 @@ void main() {
                 this.render();
             }
             nettick() {
+                //this.wpos = [43, 51];
+                //return;
                 //this.wpos = wastes.gview.mwpos;
                 //return;
                 //this.netangle = Math.PI / 4;
@@ -9187,7 +9201,7 @@ void main() {
                 const headSize = 5.5;
                 const gasMaskSize = 2.5;
                 const legsSize = 4;
-                const legsHeight = 12.5;
+                const legsHeight = 12;
                 const armsSize = 3;
                 const armsHeight = 12;
                 const armsAngle = .0;
@@ -9240,6 +9254,12 @@ void main() {
                 let materialLegs = new THREE.MeshLambertMaterial({
                     color: this.outfit[3]
                 });
+                let planeShade = new THREE.PlaneGeometry(20, 20);
+                let materialShade = new THREE.MeshLambertMaterial({
+                    map: ren$1.load_texture('tex/pawn/shade.png', 0),
+                    transparent: true,
+                    opacity: 0.15
+                });
                 // https://www.andersriggelsen.dk/glblendfunc.php
                 let planeWater = new THREE.PlaneGeometry(wastes.size * 2, wastes.size * 2);
                 let materialWater = new THREE.MeshLambertMaterial({
@@ -9263,7 +9283,7 @@ void main() {
                 this.meshes.water = new THREE.Mesh(planeWater, materialWater);
                 this.meshes.water.matrixAutoUpdate = false;
                 this.meshes.water.rotation.x = -Math.PI / 2;
-                this.meshes.water.position.y = -bodyHeight * 1.25;
+                this.meshes.water.position.y = -bodyHeight * 1.2;
                 this.meshes.water.updateMatrix();
                 this.meshes.water.visible = false;
                 this.meshes.head = new THREE.Mesh(boxHead, materialHead);
@@ -9273,6 +9293,9 @@ void main() {
                 this.meshes.armr = new THREE.Mesh(boxArms, materialArms);
                 this.meshes.legl = new THREE.Mesh(boxLegs, materialLegs);
                 this.meshes.legr = new THREE.Mesh(boxLegs, materialLegs);
+                this.meshes.shade = new THREE.Mesh(planeShade, materialShade);
+                this.meshes.shade.position.set(0, -bodyHeight / 2 - legsHeight, 0);
+                this.meshes.shade.rotation.set(-Math.PI / 2, 0, 0);
                 /*this.meshes.gungrip = new Mesh(boxGunGrip, materialGunGrip);
                 this.meshes.gunbarrel = new Mesh(boxGunBarrel, materialGunBarrel);*/
                 this.groups.head = new THREE.Group;
@@ -9308,12 +9331,13 @@ void main() {
                 this.groups.ground.add(this.groups.body);
                 this.groups.basis.add(this.groups.ground);
                 this.groups.basis.add(this.meshes.water);
+                this.groups.basis.add(this.meshes.shade);
                 //this.groups.handr.add(new AxesHelper(10));
                 this.groups.handr.position.set(0, -armsHeight, 0);
                 this.groups.head.position.set(0, bodyHeight / 2 + headSize / 2, 0);
                 this.groups.gasMask.position.set(0, -headSize / 2, headSize / 1.5);
                 this.groups.gasMask.rotation.set(-Math.PI / 4, 0, 0);
-                this.groups.body.position.set(0, bodyHeight, 0);
+                this.groups.body.position.set(0, 0, 0);
                 //this.meshes.armr.position.set(0, armsSize / 2, 0);
                 this.groups.armr.position.set(-bodyWidth / 2 - armsSize / 2, bodyHeight / 2 - armsSize / 2, 0);
                 this.groups.armr.rotation.set(0, 0, -armsAngle);
@@ -9328,7 +9352,7 @@ void main() {
                 this.meshes.legl.position.set(0, -legsHeight / 2, 0);
                 this.groups.legr.position.set(legsSize / 2, -bodyHeight / 2, 0);
                 this.meshes.legr.position.set(0, -legsHeight / 2, 0);
-                this.groups.ground.position.set(0, -bodyHeight * 1.0, 0);
+                this.groups.ground.position.set(0, bodyHeight + legsHeight, 0);
                 //mesh.rotation.set(Math.PI / 2, 0, 0);
                 this.scene.add(this.groups.basis);
                 this.re_wield();
@@ -9461,7 +9485,7 @@ void main() {
                         this.groups.handr.rotation.x = -Math.PI / 2;
                     }
                     this.groups.ground.position.x = 0;
-                    this.groups.ground.position.y = -10; //+ swoop1 * swoop2 * rise * this.walkSmoother;
+                    this.groups.ground.position.y = 0; //+ swoop1 * swoop2 * rise * this.walkSmoother;
                     this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
                     if (this.type == 'you') {
                         if (app$1.key('shift')) {
@@ -9503,13 +9527,13 @@ void main() {
                             //this.groups.ground.rotation.y -= 0.5;
                         }
                     }
-                    const sprite = this.shape;
+                    this.shape;
                     if (((_a = this.tile) === null || _a === void 0 ? void 0 : _a.type) == 'shallow water') {
-                        sprite.vars.orderBias = 0.25;
+                        //sprite.vars.orderBias = 0.25
                         this.meshes.water.visible = true;
                     }
                     else {
-                        sprite.vars.orderBias = 1.0;
+                        //sprite.vars.orderBias = 1.0;
                         this.meshes.water.visible = false;
                     }
                 }
@@ -9531,6 +9555,8 @@ void main() {
                 }
             }
             nettick() {
+                //this.wpos = [43, 51];
+                //return;
                 if (this.type == 'you')
                     return;
                 //this.wpos = tiles.hovering!.wpos;
@@ -9751,6 +9777,9 @@ void main() {
             if (tiles$1.hovering) {
                 crunch += `mouse tile: ${pts.to_string(((_a = tiles$1.hovering) === null || _a === void 0 ? void 0 : _a.wpos) || [0, 0])}<br />`;
                 crunch += `mouse tile height / z: ${tiles$1.hovering.z}<br />`;
+            }
+            if (pawns$1.you) {
+                crunch += `player: ${pts.to_string_fixed(pawns$1.you.wpos)}<br />`;
             }
             crunch += `view center: ${pts.to_string(pts.floor(this.wpos))}<br />`;
             if (pawns$1.you)

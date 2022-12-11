@@ -68,7 +68,7 @@ export namespace tiles {
 		if (!started)
 			return;
 
-		for (let i = 100; i >= 0; i--) {
+		for (let i = 20; i >= 0; i--) {
 			// The great pretention grid
 			let mrpos = pts.add(wastes.gview.mrpos, lod.project([.5, -.5]));
 
@@ -114,7 +114,7 @@ export namespace tiles {
 				this.type = 'land';
 				this.size = [24, 30];
 				this.tuple = sprites.dgraveltiles;
-				this.color = [60, 60, 60, 255]
+				this.color = [60, 60, 60, 255];
 				this.height = 6;
 				this.cell = [1, 0];
 			}
@@ -137,6 +137,8 @@ export namespace tiles {
 			}
 			else if (!pixel.is_black()) {
 				// We're a land tile
+				console.log('common land tile');
+				
 				this.isLand = true;
 				this.type = 'land';
 				this.size = [24, 30];
@@ -144,9 +146,9 @@ export namespace tiles {
 				this.height = 6;
 				this.cell = [1, 0];
 
-				const useRoughMap = false;
+				const use_rough_map = false;
 
-				if (useRoughMap) {
+				if (use_rough_map) {
 					let biome = wastes.roughmap.pixel(this.wpos);
 					if (biome.arrayRef[0] > 70) {
 						this.tuple = sprites.dswamptiles;

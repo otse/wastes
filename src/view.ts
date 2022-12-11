@@ -206,6 +206,10 @@ export class view {
 			crunch += `mouse tile: ${pts.to_string(tiles.hovering?.wpos || [0, 0])}<br />`;
 			crunch += `mouse tile height / z: ${tiles.hovering.z}<br />`;
 		}
+
+		if (pawns.you) {
+			crunch += `player: ${pts.to_string_fixed(pawns.you.wpos)}<br />`;
+		}
 		crunch += `view center: ${pts.to_string(pts.floor(this.wpos))}<br />`;
 		if (pawns.you)
 			crunch += `you: ${pts.to_string(pts.round(pawns.you.wpos))}<br />`;

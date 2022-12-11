@@ -20,7 +20,7 @@ var colors;
     colors.color_porch = [110, 120, 120];
     colors.color_rails = [110, 100, 120];
     colors.color_false_front = [255, 255, 255];
-    colors.color_acid_barrel = [61, 118, 48];
+    colors.color_square_barrel = [70, 150, 70];
     colors.color_wall_chest = [130, 100, 50];
     colors.color_shelves = [130, 80, 50];
     colors.color_panel = [78, 98, 98];

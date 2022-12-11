@@ -98,7 +98,7 @@ function start2() {
     hooks_1.default.register('sectorCreate', (sector) => {
         pts_1.default.func(sector.small, (pos) => {
             let pixel = objectmap.pixel(pos);
-            if (pixel.is_color(colors_1.default.color_acid_barrel)) {
+            if (pixel.is_color(colors_1.default.color_square_barrel)) {
                 // factory(objects.acidbarrel, pixel, pos);
             }
             else if (pixel.is_color(colors_1.default.color_wall_chest)) {
@@ -127,16 +127,16 @@ function start2() {
     vendor.inventory.add('junk', -1);
     vendor.inventory.add('bullet', -1);
     slod_1.default.add(vendor);
-    //for (let i = 0; i < 0; i++) {
-    let guard = new pawn;
-    guard.wpos = [45, 56];
-    //peacekeeper.outfit = []
-    guard.dialogue = 3;
-    guard.title = 'Guard';
-    guard.subtype = 'guard';
-    guard.walkArea = new aabb2_1.default([43, 51], [46, 58]);
-    slod_1.default.add(guard);
-    //}
+    for (let i = 0; i < 1; i++) {
+        let guard = new pawn;
+        guard.wpos = [45, 56];
+        //peacekeeper.outfit = []
+        guard.dialogue = 3;
+        guard.title = 'Guard';
+        guard.subtype = 'guard';
+        guard.walkArea = new aabb2_1.default([43, 51], [46, 58]);
+        slod_1.default.add(guard);
+    }
     let zomb = new zombie;
     zomb.wpos = [34, 50];
     zomb.dead = true;
@@ -158,14 +158,14 @@ function start2() {
     talker.subtype = 'civilian';
     talker.walkArea = new aabb2_1.default([43.5, 61.5], [45.5, 59.5]);
     slod_1.default.add(talker);
-    for (let i = 0; i < 1; i++) {
-        let shadowChicken = new chicken;
-        shadowChicken.wpos = [42, 53];
-        shadowChicken.respawns = true;
-        shadowChicken.examine = 'This chicken likes the shadow.';
-        shadowChicken.walkArea = new aabb2_1.default([41, 54], [43, 51]);
-        slod_1.default.add(shadowChicken);
-    }
+    //for (let i = 0; i < 10; i++) {
+    let shadowChicken = new chicken;
+    shadowChicken.wpos = [42, 53];
+    shadowChicken.respawns = true;
+    shadowChicken.examine = 'This chicken likes the shadow.';
+    shadowChicken.walkArea = new aabb2_1.default([41, 54], [43, 51]);
+    slod_1.default.add(shadowChicken);
+    //}
 }
 const tick_rate = 333;
 var delta = tick_rate / 1000;

@@ -181,8 +181,7 @@ export namespace pawns {
 			const headSize = 5.5;
 			const gasMaskSize = 2.5;
 			const legsSize = 4;
-			const legsHeight = 12.5;
-			const legsUp = 2.5;
+			const legsHeight = 12;
 			const armsSize = 3;
 			const armsHeight = 12;
 			const armsAngle = .0;
@@ -249,6 +248,13 @@ export namespace pawns {
 				color: this.outfit[3]
 			});
 
+			let planeShade = new PlaneGeometry(20, 20);
+			let materialShade = new MeshLambertMaterial({
+				map: ren.load_texture('tex/pawn/shade.png', 0),
+				transparent: true,
+				opacity: 0.15
+			});
+
 			// https://www.andersriggelsen.dk/glblendfunc.php
 			let planeWater = new PlaneGeometry(wastes.size * 2, wastes.size * 2);
 			let materialWater = new MeshLambertMaterial({
@@ -274,7 +280,7 @@ export namespace pawns {
 			this.meshes.water = new Mesh(planeWater, materialWater);
 			this.meshes.water.matrixAutoUpdate = false;
 			this.meshes.water.rotation.x = -Math.PI / 2;
-			this.meshes.water.position.y = -bodyHeight * 1.25;
+			this.meshes.water.position.y = -bodyHeight * 1.2;
 			this.meshes.water.updateMatrix();
 			this.meshes.water.visible = false;
 
@@ -287,6 +293,11 @@ export namespace pawns {
 
 			this.meshes.legl = new Mesh(boxLegs, materialLegs);
 			this.meshes.legr = new Mesh(boxLegs, materialLegs);
+
+			this.meshes.shade = new Mesh(planeShade, materialShade);
+			this.meshes.shade.position.set(0, -bodyHeight / 2 - legsHeight, 0);
+			this.meshes.shade.rotation.set(-Math.PI / 2, 0, 0);
+
 
 			/*this.meshes.gungrip = new Mesh(boxGunGrip, materialGunGrip);
 			this.meshes.gunbarrel = new Mesh(boxGunBarrel, materialGunBarrel);*/
@@ -331,6 +342,7 @@ export namespace pawns {
 
 			this.groups.basis.add(this.groups.ground);
 			this.groups.basis.add(this.meshes.water);
+			this.groups.basis.add(this.meshes.shade);
 
 			//this.groups.handr.add(new AxesHelper(10));
 			this.groups.handr.position.set(0, -armsHeight, 0)
@@ -338,7 +350,7 @@ export namespace pawns {
 			this.groups.head.position.set(0, bodyHeight / 2 + headSize / 2, 0);
 			this.groups.gasMask.position.set(0, -headSize / 2, headSize / 1.5);
 			this.groups.gasMask.rotation.set(-Math.PI / 4, 0, 0);
-			this.groups.body.position.set(0, bodyHeight, 0);
+			this.groups.body.position.set(0, 0, 0);
 
 			//this.meshes.armr.position.set(0, armsSize / 2, 0);
 			this.groups.armr.position.set(-bodyWidth / 2 - armsSize / 2, bodyHeight / 2 - armsSize / 2, 0);
@@ -359,7 +371,7 @@ export namespace pawns {
 			this.groups.legr.position.set(legsSize / 2, -bodyHeight / 2, 0);
 			this.meshes.legr.position.set(0, -legsHeight / 2, 0);
 
-			this.groups.ground.position.set(0, -bodyHeight * 1.0, 0);
+			this.groups.ground.position.set(0, bodyHeight + legsHeight, 0);
 			//mesh.rotation.set(Math.PI / 2, 0, 0);
 
 			this.scene.add(this.groups.basis);
@@ -523,7 +535,7 @@ export namespace pawns {
 				else {
 				}
 				this.groups.ground.position.x = 0;
-				this.groups.ground.position.y = -10;//+ swoop1 * swoop2 * rise * this.walkSmoother;
+				this.groups.ground.position.y = 0;//+ swoop1 * swoop2 * rise * this.walkSmoother;
 				this.groups.ground.rotation.y = -this.angle + Math.PI / 2;
 
 				if (this.type == 'you') {
@@ -576,11 +588,11 @@ export namespace pawns {
 
 				const sprite = this.shape as sprite;
 				if (this.tile?.type == 'shallow water') {
-					sprite.vars.orderBias = 0.25
+					//sprite.vars.orderBias = 0.25
 					this.meshes.water.visible = true;
 				}
 				else {
-					sprite.vars.orderBias = 1.0;
+					//sprite.vars.orderBias = 1.0;
 					this.meshes.water.visible = false;
 				}
 			}
@@ -609,6 +621,9 @@ export namespace pawns {
 		walkSmoother = 0
 		randomWalker = 0
 		nettick() {
+
+			//this.wpos = [43, 51];
+			//return;
 
 			if (this.type == 'you')
 				return;

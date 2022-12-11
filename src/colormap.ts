@@ -74,7 +74,7 @@ namespace colormap {
 			this.canvas = document.createElement('canvas')!;
 			this.canvas.width = mapSpan;
 			this.canvas.height = mapSpan;
-			this.ctx = this.canvas.getContext('2d')!;
+			this.ctx = this.canvas.getContext("2d", { willReadFrequently: true })
 			//this.ctx.scale(1, 1);
 			this.ctx.drawImage(img, 0, 0, img.width, img.height);
 			this.process();

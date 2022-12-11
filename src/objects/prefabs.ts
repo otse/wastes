@@ -24,7 +24,10 @@ the code deserves to stay around
 export function building_factory() {
 
 	new building_parts('watertower', [41, 42]);
-	//new building_parts('building', [40, 48]);
+	//new building_parts('building', [50, 46]);
+	new building_parts('brickwall', [43, 50]);
+	//new building_parts('squarebarrel', [43, 50]);
+	//new building_parts('barrel', [41, 51]);
 
 	/*let prefab = new building;
 	prefab.wpos = [45, 48];
@@ -221,7 +224,7 @@ class prefab extends superobject {
 		let amb = new AmbientLight('#777');
 		this.scene.add(amb);
 
-		this.sun = new DirectionalLight(0xffffff, 0.3);
+		this.sun = new DirectionalLight(0xffffff, 0.25);
 		const size2 = 10;
 		this.sun.position.set(-size2, 0, size2 / 2);
 		//sun.add(new AxesHelper(100));

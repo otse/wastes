@@ -47,8 +47,11 @@ namespace objects {
 		hooks.register('sectorCreate', (sector: lod.sector) => {
 			pts.func(sector.small, (pos) => {
 				let pixel = wastes.objectmap.pixel(pos);
-				if (pixel.is_color(colors.color_acid_barrel)) {
-					// factory(objects.acidbarrel, pixel, pos);
+				if (pixel.is_color(colors.color_square_barrel)) {
+					factory(objects.squarebarrel, pixel, pos);
+				}
+				else if (pixel.is_color(colors.color_wall_chest)) {
+					//factory(objects.crate, pixel, pos);
 				}
 				else if (pixel.is_color(colors.color_wall_chest)) {
 					//factory(objects.crate, pixel, pos);
@@ -191,7 +194,7 @@ namespace objects {
 		constructor() {
 			super(numbers.walls);
 			this.type = 'wall';
-			this.height = 24;
+			this.height = 23;
 		}
 		override create() {
 			this.tiled();
@@ -344,6 +347,29 @@ namespace objects {
 				binded: this,
 				tuple: sprites.ddeadtreetrunk,
 				orderBias: 0.6,
+			});
+			this.stack();
+		}
+	}
+	export class squarebarrel extends superobject {
+		constructor() {
+			super(numbers.floors);
+			this.type = 'tree'
+			this.height = 12;
+			console.log('woo!');
+			
+		}
+		override create() {
+			this.tiled();
+			this.size = [24, 26];
+			let color = [255, 255, 255] as vec3;
+			color = shadows.mix(
+				color, this.wpos);
+			let shape = new sprite({
+				binded: this,
+				tuple: sprites.dsquarebarrel,
+				orderBias: 1.0,
+				color: color
 			});
 			this.stack();
 		}
@@ -688,9 +714,9 @@ namespace objects {
 			let shape = new sprite({
 				binded: this,
 				tuple: sprites.droof,
-				orderBias: 1.6,
+				orderBias: 1.0,
 			});
-			shape.rup = 29;
+			shape.rup = 26 + 3;
 			if (!this.shaded) {
 				this.shaded = true;
 				const shadow = .7;
@@ -742,24 +768,6 @@ namespace objects {
 				sprite.mesh.visible = true;
 		}
 	}
-	export class acidbarrel extends superobject {
-		constructor() {
-			super(numbers.objs);
-			this.type = 'acidbarrel'
-			this.height = 4;
-		}
-		override create() {
-			this.tiled();
-			this.size = [24, 35];
-			let shape = new sprite({
-				binded: this,
-				tuple: sprites.dacidbarrel,
-				orderBias: .4,
-			});
-			this.stack();
-		}
-	}
-
 	export class door extends superobject {
 		static order = .7;
 		open = false

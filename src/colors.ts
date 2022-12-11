@@ -21,7 +21,7 @@ namespace colors {
 
     export const color_false_front: vec3 = [255, 255, 255];
 
-    export const color_acid_barrel: vec3 = [61, 118, 48];
+    export const color_square_barrel: vec3 = [70, 150, 70];
     export const color_wall_chest: vec3 = [130, 100, 50];
     export const color_shelves: vec3 = [130, 80, 50];
     export const color_panel: vec3 = [78, 98, 98];
