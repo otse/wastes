@@ -146,18 +146,13 @@ var wastes = (function (exports, THREE) {
             if (b) {
                 this.extend(b);
             }
-            this.velocity = [0, 0];
         }
         static dupe(bb) {
             return new aabb2(bb.min, bb.max);
         }
-        recalculate_size() {
-            this.size = this.diagonal();
-        }
         extend(v) {
             this.min = pts.min(this.min, v);
             this.max = pts.max(this.max, v);
-            this.recalculate_size();
         }
         diagonal() {
             return pts.subtract(this.max, this.min);
@@ -183,87 +178,6 @@ var wastes = (function (exports, THREE) {
             let max = [Math.min(this.max[0], b.max[0]), Math.min(this.max[1], b.max[1])];
             const overlap = new aabb2(min, max);
             return overlap;
-        }
-        sweptAABB(movingRect, stationaryRect) {
-            var closeX, farX, closeY, farY, normalX, normalY;
-            if (movingRect.velocity[0] > 0) {
-                closeX = stationaryRect.min[0] - (movingRect.min[0] + movingRect.size[0]);
-                farX = (stationaryRect.min[0] + stationaryRect.size[0]) - movingRect.min[0];
-            }
-            else {
-                closeX = (stationaryRect.min[0] + stationaryRect.size[0]) - movingRect.min[0];
-                farX = stationaryRect.min[0] - (movingRect.min[0] + movingRect.size[0]);
-            }
-            if (movingRect.velocity[1] > 0) {
-                closeY = stationaryRect.min[1] - (movingRect.min[1] + movingRect.size[1]);
-                farY = (stationaryRect.min[1] + stationaryRect.size[1]) - movingRect.min[1];
-            }
-            else {
-                closeY = (stationaryRect.min[1] + stationaryRect.size[1]) - movingRect.min[1];
-                farY = stationaryRect.min[1] - (movingRect.min[1] + movingRect.size[1]);
-            }
-            // find time of collision and time of leaving for each axis (if statement is to prevent divide by zero)
-            var xEntry, yEntry;
-            var xExit, yExit;
-            if (movingRect.velocity[0] === 0) {
-                xEntry = -Infinity;
-                xExit = Infinity;
-            }
-            else {
-                xEntry = closeX / movingRect.velocity[0];
-                xExit = farX / movingRect.velocity[0];
-            }
-            if (movingRect.velocity[1] === 0) {
-                yEntry = -Infinity;
-                yExit = Infinity;
-            }
-            else {
-                yEntry = closeY / movingRect.velocity[1];
-                yExit = farY / movingRect.velocity[1];
-            }
-            // find the earliest/latest times of collision
-            var entryTime = Math.max(xEntry, yEntry);
-            var exitTime = Math.min(xExit, yExit);
-            // if there was no collision
-            if (entryTime > exitTime || xEntry < 0 && yEntry < 0 || xEntry > 1 || yEntry > 1) {
-                normalX = 0;
-                normalY = 0;
-                entryTime = 1;
-                return {
-                    collisionTime: entryTime,
-                    normalX: normalX,
-                    normalY: normalY
-                };
-            }
-            else { // if there was a collision
-                // calculate normal of collided surface
-                if (xEntry > yEntry) {
-                    if (closeX < 0) {
-                        normalX = 1;
-                        normalY = 0;
-                    }
-                    else {
-                        normalX = -1;
-                        normalY = 0;
-                    }
-                }
-                else {
-                    if (closeY < 0) {
-                        normalX = 0;
-                        normalY = 1;
-                    }
-                    else {
-                        normalX = 0;
-                        normalY = -1;
-                    }
-                }
-                // return the time of collision
-                return {
-                    collisionTime: entryTime,
-                    normalX: normalX,
-                    normalY: normalY
-                };
-            }
         }
         random_point() {
             const width = this.max[0] - this.min[0];
@@ -9210,7 +9124,7 @@ void main() {
                     tuple: sprites$1.test100,
                     cell: this.cell,
                     //opacity: .5,
-                    orderBias: 1.0,
+                    orderBias: 1.2,
                     mask: true
                 });
                 shape.subsize = [20, 30];
@@ -9248,40 +9162,16 @@ void main() {
                         sprite.meshMask.material.map = this.target.texture;
                 }
             }
-            try_move_to_old(pos) {
-                let venture = pts.add(this.wpos, pos);
-                if (!objects$1.is_solid(venture))
-                    ;
-            }
             try_move_to(to) {
-                const impassable = ['wall', 'crate', 'shelves', 'tree', 'fence', 'deep water'];
-                //this.tileBound.
-                let venture = pts.add(this.wpos, to);
-                //this.wpos = venture;
-                pts.round(venture);
-                for (let obj of lod$1.ggrid.visibleObjs) {
-                    //console.log('boo');
-                    const cast = obj;
-                    if (cast == this)
-                        continue;
-                    if (cast.isSuper && cast.tileBound) {
-                        if (!cast.is_type(impassable))
-                            continue;
-                        if (!this.tileBound)
-                            continue;
-                        this.tileBound.velocity = to;
-                        const hit = this.tileBound.sweptAABB(this.tileBound, cast.tileBound);
-                        if (hit.collisionTime !== 1) {
-                            //to = pts.mult(this.tileBound.velocity, hit.collisionTime);
-                            var remainingTime = 1 - hit.collisionTime;
-                            var dot = (this.tileBound.velocity[0] * hit.normalY + this.tileBound.velocity[1] * hit.normalX) * remainingTime;
-                            this.tileBound.velocity[0] = (dot * hit.normalY);
-                            this.tileBound.velocity[1] = (dot * hit.normalX);
-                        }
-                        to = this.tileBound.velocity;
-                    }
-                }
-                this.wpos = pts.add(this.wpos, to);
+                let x = [to[0], 0];
+                let y = [0, to[1]];
+                let venture = pts.add(this.wpos, x);
+                if (objects$1.is_solid(venture))
+                    x[0] = 0;
+                venture = pts.add(this.wpos, y);
+                if (objects$1.is_solid(venture))
+                    y[1] = 0;
+                this.wpos = pts.add(this.wpos, [x[0], y[1]]);
             }
             obj_manual_update() {
                 this.tiled();

@@ -76,7 +76,7 @@ export namespace pawns {
 				tuple: wasterSprite ? sprites.pchris : sprites.test100,
 				cell: this.cell,
 				//opacity: .5,
-				orderBias: 1.0,
+				orderBias: 1.2,
 				mask: true
 			});
 			shape.subsize = [20, 30];
@@ -125,52 +125,16 @@ export namespace pawns {
 			}
 
 		}
-		try_move_to_old(pos: vec2) {
-			let venture = pts.add(this.wpos, pos);
-			if (!objects.is_solid(venture))
-				0;
-		}
 		try_move_to(to: vec2) {
-			const impassable = ['wall', 'crate', 'shelves', 'tree', 'fence', 'deep water'];
-
-			//this.tileBound.
-			let venture = pts.add(this.wpos, to);
-
-			//this.wpos = venture;
-			let round = pts.round(venture);
-			//let sector = lod.gworld.at(lod.world.big(round));
-			//let at = sector.stacked(round);
-			let collided = false;
-			for (let obj of lod.ggrid.visibleObjs) {
-				//console.log('boo');
-
-				const cast = obj as superobject;
-				if (cast == this)
-					continue;
-				if (cast.isSuper && cast.tileBound) {
-					if (!cast.is_type(impassable))
-						continue;
-					if (!this.tileBound)
-						continue;
-					
-					this.tileBound.velocity = to;
-
-					const hit = this.tileBound.sweptAABB(this.tileBound, cast.tileBound);
-
-					if (hit.collisionTime !== 1) {
-						//to = pts.mult(this.tileBound.velocity, hit.collisionTime);
-
-						var remainingTime = 1 - hit.collisionTime;
-						var dot = (this.tileBound.velocity[0] * hit.normalY + this.tileBound.velocity[1] * hit.normalX) * remainingTime;
-						this.tileBound.velocity[0] = (dot * hit.normalY);
-						this.tileBound.velocity[1] = (dot * hit.normalX);
-					}
-
-					to = this.tileBound.velocity;
-					
-				}
-			}
-			this.wpos = pts.add(this.wpos, to);
+			let x = [to[0], 0] as vec2;
+			let y = [0, to[1]] as vec2;
+			let venture = pts.add(this.wpos, x);
+			if (objects.is_solid(venture))
+				x[0] = 0;
+			venture = pts.add(this.wpos, y);
+			if (objects.is_solid(venture))
+				y[1] = 0;
+			this.wpos = pts.add(this.wpos, [x[0], y[1]]);
 		}
 		override obj_manual_update() {
 			this.tiled();
