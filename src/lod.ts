@@ -287,7 +287,7 @@ namespace lod {
 		z = 0 // z is only used by tiles
 		calcz = 0
 		height = 0
-		heightAdd = 0
+		bound: aabb2
 		constructor(
 			public readonly counts: numbers.tally = numbers.objs) {
 			super();

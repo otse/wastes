@@ -22,7 +22,6 @@ export class superobject extends lod.obj {
 	tile?: tiles.tile
 	tileBound?: aabb2
 	cell: vec2 = [0, 0]
-	heightAdd = 0
 	hints?: any
 	//calc = 0 // used for tree leaves
 	constructor(counts: numbers.tally) {
@@ -100,7 +99,7 @@ export class superobject extends lod.obj {
 		this.calcz = calc;
 		const sprite = this.shape as sprite;
 		if (sprite)
-			sprite.rup = calc + this.heightAdd;
+			sprite.rup = calc;
 	}
 	superobject_setup_context_menu() { // override me
 	}

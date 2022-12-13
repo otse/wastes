@@ -72,9 +72,9 @@ export namespace tiles {
 			// The great pretention grid
 			let mrpos = pts.add(wastes.gview.mrpos, lod.project([.5, -.5]));
 
-			let pos = lod.unproject(pts.add(mrpos, [0, -i]));
-			pos = pts.floor(pos);
-			const tile = get(pos);
+			let wpos = lod.unproject(pts.add(mrpos, [0, -i]));
+			wpos = pts.floor(wpos);
+			const tile = get(wpos);
 			if (tile && tile.z + tile.height + tile.heightAdd == i) {
 				if (tile.sector!.isActive()) {
 					tile.hover();
@@ -101,6 +101,7 @@ export namespace tiles {
 		opacity = 1
 		superiorBias = 1
 		colorPrev
+		heightAdd = 0
 		constructor(wpos: vec2) {
 			super(numbers.tiles);
 

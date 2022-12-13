@@ -189,7 +189,6 @@ namespace objects {
 	}
 
 
-
 	export class wall extends superobject {
 		constructor() {
 			super(numbers.walls);

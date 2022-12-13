@@ -18,6 +18,7 @@ float saturation = 2.0;
 
 uniform int compression;
 
+// 24 is best
 // 32 is nice
 // 48 is mild
 float factor = 24.0;

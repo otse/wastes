@@ -132,6 +132,8 @@ var wastes = (function (exports, THREE) {
         ;
     }
 
+    // https://www.khanacademy.org/computer-programming/swept-aabb-test/4966664161263616
+    // https://jsfiddle.net/Hatchet/ccjrg9b0/
     var TEST;
     (function (TEST) {
         TEST[TEST["Outside"] = 0] = "Outside";
@@ -144,13 +146,18 @@ var wastes = (function (exports, THREE) {
             if (b) {
                 this.extend(b);
             }
+            this.velocity = [0, 0];
         }
         static dupe(bb) {
             return new aabb2(bb.min, bb.max);
         }
+        recalculate_size() {
+            this.size = this.diagonal();
+        }
         extend(v) {
             this.min = pts.min(this.min, v);
             this.max = pts.max(this.max, v);
+            this.recalculate_size();
         }
         diagonal() {
             return pts.subtract(this.max, this.min);
@@ -170,6 +177,93 @@ var wastes = (function (exports, THREE) {
                 this.min[1] <= b.min[1] && this.max[1] >= b.max[1])
                 return 1;
             return 2;
+        }
+        overlap(b) {
+            let min = [Math.max(this.min[0], b.min[0]), Math.max(this.min[1], b.min[1])];
+            let max = [Math.min(this.max[0], b.max[0]), Math.min(this.max[1], b.max[1])];
+            const overlap = new aabb2(min, max);
+            return overlap;
+        }
+        sweptAABB(movingRect, stationaryRect) {
+            var closeX, farX, closeY, farY, normalX, normalY;
+            if (movingRect.velocity[0] > 0) {
+                closeX = stationaryRect.min[0] - (movingRect.min[0] + movingRect.size[0]);
+                farX = (stationaryRect.min[0] + stationaryRect.size[0]) - movingRect.min[0];
+            }
+            else {
+                closeX = (stationaryRect.min[0] + stationaryRect.size[0]) - movingRect.min[0];
+                farX = stationaryRect.min[0] - (movingRect.min[0] + movingRect.size[0]);
+            }
+            if (movingRect.velocity[1] > 0) {
+                closeY = stationaryRect.min[1] - (movingRect.min[1] + movingRect.size[1]);
+                farY = (stationaryRect.min[1] + stationaryRect.size[1]) - movingRect.min[1];
+            }
+            else {
+                closeY = (stationaryRect.min[1] + stationaryRect.size[1]) - movingRect.min[1];
+                farY = stationaryRect.min[1] - (movingRect.min[1] + movingRect.size[1]);
+            }
+            // find time of collision and time of leaving for each axis (if statement is to prevent divide by zero)
+            var xEntry, yEntry;
+            var xExit, yExit;
+            if (movingRect.velocity[0] === 0) {
+                xEntry = -Infinity;
+                xExit = Infinity;
+            }
+            else {
+                xEntry = closeX / movingRect.velocity[0];
+                xExit = farX / movingRect.velocity[0];
+            }
+            if (movingRect.velocity[1] === 0) {
+                yEntry = -Infinity;
+                yExit = Infinity;
+            }
+            else {
+                yEntry = closeY / movingRect.velocity[1];
+                yExit = farY / movingRect.velocity[1];
+            }
+            // find the earliest/latest times of collision
+            var entryTime = Math.max(xEntry, yEntry);
+            var exitTime = Math.min(xExit, yExit);
+            // if there was no collision
+            if (entryTime > exitTime || xEntry < 0 && yEntry < 0 || xEntry > 1 || yEntry > 1) {
+                normalX = 0;
+                normalY = 0;
+                entryTime = 1;
+                return {
+                    collisionTime: entryTime,
+                    normalX: normalX,
+                    normalY: normalY
+                };
+            }
+            else { // if there was a collision
+                // calculate normal of collided surface
+                if (xEntry > yEntry) {
+                    if (closeX < 0) {
+                        normalX = 1;
+                        normalY = 0;
+                    }
+                    else {
+                        normalX = -1;
+                        normalY = 0;
+                    }
+                }
+                else {
+                    if (closeY < 0) {
+                        normalX = 0;
+                        normalY = 1;
+                    }
+                    else {
+                        normalX = 0;
+                        normalY = -1;
+                    }
+                }
+                // return the time of collision
+                return {
+                    collisionTime: entryTime,
+                    normalX: normalX,
+                    normalY: normalY
+                };
+            }
         }
         random_point() {
             const width = this.max[0] - this.min[0];
@@ -367,6 +461,7 @@ float saturation = 2.0;
 
 uniform int compression;
 
+// 24 is best
 // 32 is nice
 // 48 is mild
 float factor = 24.0;
@@ -878,7 +973,6 @@ void main() {
                 this.z = 0; // z is only used by tiles
                 this.calcz = 0;
                 this.height = 0;
-                this.heightAdd = 0;
                 this.counts[1]++;
             }
             finalize() {
@@ -1008,7 +1102,7 @@ void main() {
         sprites.dwoodywalls = [[264, 40], [24, 40], 0, 'tex/8bit/dwoodywalls'];
         sprites.dplywoodwalls = [[264, 40], [24, 40], 0, 'tex/8bit/dcommonwalls'];
         sprites.dovergrownwalls = [[264, 40], [24, 40], 0, 'tex/8bit/dovergrownwalls'];
-        sprites.dderingerwalls = [[264, 40], [24, 40], 0, 'tex/8bit/dcommonwalls'];
+        sprites.dderingerwalls = [[264, 40], [24, 40], 0, 'tex/8bit/dderingerwalls'];
         sprites.dmedievalwalls = [[264, 40], [24, 40], 0, 'tex/8bit/dmedievalwalls'];
         sprites.dscrappywalls = [[264, 40], [24, 40], 0, 'tex/dscrappywalls'];
         //export const dscrappywalls2: tuple = [[216, 40], [24, 40], 0, 'tex/dscrappywalls2']
@@ -1567,9 +1661,9 @@ void main() {
             for (let i = 20; i >= 0; i--) {
                 // The great pretention grid
                 let mrpos = pts.add(wastes.gview.mrpos, lod$1.project([.5, -.5]));
-                let pos = lod$1.unproject(pts.add(mrpos, [0, -i]));
-                pos = pts.floor(pos);
-                const tile = get(pos);
+                let wpos = lod$1.unproject(pts.add(mrpos, [0, -i]));
+                wpos = pts.floor(wpos);
+                const tile = get(wpos);
                 if (tile && tile.z + tile.height + tile.heightAdd == i) {
                     if (tile.sector.isActive()) {
                         tile.hover();
@@ -1590,6 +1684,7 @@ void main() {
                 this.refresh = false;
                 this.opacity = 1;
                 this.superiorBias = 1;
+                this.heightAdd = 0;
                 this.wpos = wpos;
                 let pixel = wastes.colormap.pixel(this.wpos);
                 if (pixel.is_invalid_pixel()) {
@@ -1748,7 +1843,6 @@ void main() {
             this.paintedRed = false;
             this.solid = true;
             this.cell = [0, 0];
-            this.heightAdd = 0;
             this.set_shadow = (input) => {
                 const sprite = this.shape;
                 input = shadows$1.mix(input, pts.round(this.wpos));
@@ -1820,7 +1914,7 @@ void main() {
             this.calcz = calc;
             const sprite = this.shape;
             if (sprite)
-                sprite.rup = calc + this.heightAdd;
+                sprite.rup = calc;
         }
         superobject_setup_context_menu() {
         }
@@ -6473,7 +6567,7 @@ void main() {
     function building_factory() {
         new building_parts('watertower', [41, 42]);
         //new building_parts('building', [50, 46]);
-        new building_parts('brickwall', [43, 50]);
+        //new building_parts('brickwall', [43, 50]);
         //new building_parts('squarebarrel', [43, 50]);
         //new building_parts('barrel', [41, 51]);
         /*let prefab = new building;
@@ -9154,10 +9248,40 @@ void main() {
                         sprite.meshMask.material.map = this.target.texture;
                 }
             }
-            try_move_to(pos) {
+            try_move_to_old(pos) {
                 let venture = pts.add(this.wpos, pos);
                 if (!objects$1.is_solid(venture))
-                    this.wpos = venture;
+                    ;
+            }
+            try_move_to(to) {
+                const impassable = ['wall', 'crate', 'shelves', 'tree', 'fence', 'deep water'];
+                //this.tileBound.
+                let venture = pts.add(this.wpos, to);
+                //this.wpos = venture;
+                pts.round(venture);
+                for (let obj of lod$1.ggrid.visibleObjs) {
+                    //console.log('boo');
+                    const cast = obj;
+                    if (cast == this)
+                        continue;
+                    if (cast.isSuper && cast.tileBound) {
+                        if (!cast.is_type(impassable))
+                            continue;
+                        if (!this.tileBound)
+                            continue;
+                        this.tileBound.velocity = to;
+                        const hit = this.tileBound.sweptAABB(this.tileBound, cast.tileBound);
+                        if (hit.collisionTime !== 1) {
+                            //to = pts.mult(this.tileBound.velocity, hit.collisionTime);
+                            var remainingTime = 1 - hit.collisionTime;
+                            var dot = (this.tileBound.velocity[0] * hit.normalY + this.tileBound.velocity[1] * hit.normalX) * remainingTime;
+                            this.tileBound.velocity[0] = (dot * hit.normalY);
+                            this.tileBound.velocity[1] = (dot * hit.normalX);
+                        }
+                        to = this.tileBound.velocity;
+                    }
+                }
+                this.wpos = pts.add(this.wpos, to);
             }
             obj_manual_update() {
                 this.tiled();
@@ -9453,8 +9577,6 @@ void main() {
                         wastes.FOLLOW_CAMERA = !wastes.FOLLOW_CAMERA;
                     }
                     if (wastes.FOLLOW_CAMERA) {
-                        this.wtorpos();
-                        this.obj_manual_update();
                         wastes.gview.follow = this;
                     }
                     else {
