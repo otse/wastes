@@ -277,6 +277,7 @@ namespace lod {
 		id = -1
 		type = 'an obj'
 		networked = false
+		solid = false
 		wpos: vec2 = [0, 0]
 		rpos: vec2 = [0, 0]
 		size: vec2 = [100, 100]
@@ -288,6 +289,7 @@ namespace lod {
 		calcz = 0
 		height = 0
 		bound: aabb2
+		expand = .5
 		constructor(
 			public readonly counts: numbers.tally = numbers.objs) {
 			super();
@@ -312,6 +314,10 @@ namespace lod {
 			//this.delete();
 			this.shape?.hide();
 			// console.log(' obj.hide ');
+		}
+		rebound() {
+			this.bound = new aabb2([-this.expand, -this.expand], [this.expand, this.expand]);
+			this.bound.translate(this.wpos);
 		}
 		wtorpos() {
 			this.rpos = lod.project(this.wpos);

@@ -880,6 +880,7 @@ void main() {
                 this.id = -1;
                 this.type = 'an obj';
                 this.networked = false;
+                this.solid = false;
                 this.wpos = [0, 0];
                 this.rpos = [0, 0];
                 this.size = [100, 100];
@@ -887,6 +888,7 @@ void main() {
                 this.z = 0; // z is only used by tiles
                 this.calcz = 0;
                 this.height = 0;
+                this.expand = .5;
                 this.counts[1]++;
             }
             finalize() {
@@ -910,6 +912,10 @@ void main() {
                 //this.delete();
                 (_a = this.shape) === null || _a === void 0 ? void 0 : _a.hide();
                 // console.log(' obj.hide ');
+            }
+            rebound() {
+                this.bound = new aabb2([-this.expand, -this.expand], [this.expand, this.expand]);
+                this.bound.translate(this.wpos);
             }
             wtorpos() {
                 this.rpos = lod.project(this.wpos);
@@ -1627,6 +1633,8 @@ void main() {
                     this.tuple = sprites$1.dwater;
                     this.opacity = .5;
                     this.color = color_deep_water;
+                    this.solid = true;
+                    this.rebound();
                 }
                 else if (!pixel.is_black()) {
                     // We're a land tile
@@ -1753,21 +1761,18 @@ void main() {
             this.title = '';
             this.examine = '';
             this.isSuper = true;
-            this.solid = false;
             this.paintTimer = 0;
             this.paintedRed = false;
             this.cell = [0, 0];
-            this.expand = .5;
             this.set_shadow = (input) => {
                 const sprite = this.shape;
                 input = shadows$1.mix(input, pts.round(this.wpos));
                 sprite.material.color.fromArray(input); // 0-1 based
             };
         }
-        tiled() {
+        rebound() {
             this.tile = tiles$1.get(pts.round(this.wpos));
-            this.tileBound = new aabb2([-this.expand, -this.expand], [this.expand, this.expand]);
-            this.tileBound.translate(this.wpos);
+            super.rebound();
         }
         onhit() {
             const sprite = this.shape;
@@ -6826,7 +6831,7 @@ void main() {
             }
             create() {
                 var _a, _b, _c, _d, _e, _f;
-                this.tiled();
+                this.rebound();
                 this.size = [24, 40];
                 this.cell = [255 - this.pixel.arrayRef[3], 0];
                 let tuple = sprites$1.dscrappywalls;
@@ -6864,7 +6869,7 @@ void main() {
             }
             onhit() { }
             create() {
-                this.tiled();
+                this.rebound();
                 this.tile.hasDeck = true;
                 //this.tile!.z -= 24;
                 this.size = [24, 17];
@@ -6901,7 +6906,7 @@ void main() {
             }
             onhit() { }
             create() {
-                this.tiled();
+                this.rebound();
                 //this.tile!.z -= 24;
                 this.size = [24, 17];
                 //if (this.pixel!.array[3] < 240)
@@ -6927,7 +6932,7 @@ void main() {
                 this.height = 3;
             }
             create() {
-                this.tiled();
+                this.rebound();
                 //this.tile!.z -= 24;
                 this.size = [24, 17];
                 //if (this.pixel!.array[3] < 240)
@@ -6953,7 +6958,7 @@ void main() {
                 this.solid = true;
             }
             create() {
-                this.tiled();
+                this.rebound();
                 this.size = [24, 50];
                 new sprite({
                     binded: this,
@@ -6971,10 +6976,11 @@ void main() {
                 this.type = 'tree';
                 this.height = 12;
                 this.solid = true;
+                this.expand = .4;
                 console.log('woo!');
             }
             create() {
-                this.tiled();
+                this.rebound();
                 this.size = [24, 26];
                 let color = [255, 255, 255];
                 color = shadows$1.mix(color, this.wpos);
@@ -6997,7 +7003,7 @@ void main() {
                 this.solid = true;
             }
             create() {
-                this.tiled();
+                this.rebound();
                 this.size = [24, 50];
                 //if (this.pixel!.array[3] < 240)
                 //	this.cell = [240 - this.pixel!.array[3], 0];
@@ -7045,7 +7051,7 @@ void main() {
                     this.hasVines = false; // true;
                 if (pixel.arrayRef[3] == 253)
                     return;
-                this.tiled();
+                this.rebound();
                 let tuple = sprites$1.dtreeleaves;
                 if (this.hasVines) {
                     this.size = [24, 64];
@@ -7126,7 +7132,7 @@ void main() {
                 this.solid = false;
             }
             create() {
-                this.tiled();
+                this.rebound();
                 this.size = [24, 30];
                 let color = tiles$1.get(this.wpos).color;
                 color = [
@@ -7154,7 +7160,7 @@ void main() {
                 this.height = 4;
             }
             create() {
-                this.tiled();
+                this.rebound();
                 this.size = [24, 30];
                 //let color =  tiles.get(this.wpos)!.color;
                 //this.cell = [Math.floor(Math.random() * 2), 0];
@@ -7177,7 +7183,7 @@ void main() {
                 this.height = 10;
             }
             create() {
-                this.tiled();
+                this.rebound();
                 this.size = [8, 10];
                 //let color =  tiles.get(this.wpos)!.color;
                 //this.cell = [Math.floor(Math.random() * 2), 0];
@@ -7219,7 +7225,7 @@ void main() {
                 this.height = 17;
             }
             create() {
-                this.tiled();
+                this.rebound();
                 this.size = [24, 40];
                 new sprite({
                     binded: this,
@@ -7255,7 +7261,7 @@ void main() {
                 this.height = 25;
             }
             create() {
-                this.tiled();
+                this.rebound();
                 this.size = [20, 31];
                 //this.cell = [255 - this.pixel!.array[3], 0];
                 //return
@@ -7307,7 +7313,7 @@ void main() {
             onhit() { }
             create() {
                 //return;
-                this.tiled();
+                this.rebound();
                 this.size = [24, 17];
                 let shape = new sprite({
                     binded: this,
@@ -7346,7 +7352,7 @@ void main() {
                 this.height = 5;
             }
             create() {
-                this.tiled();
+                this.rebound();
                 this.cell = [255 - this.pixel.arrayRef[3], 0];
                 this.size = [24, 40];
                 new sprite({
@@ -7377,7 +7383,7 @@ void main() {
                 this.height = 23;
             }
             create() {
-                this.tiled();
+                this.rebound();
                 this.size = [24, 40];
                 if (this.pixel)
                     this.cell = [255 - this.pixel.arrayRef[3], 0];
@@ -8164,7 +8170,7 @@ void main() {
                 this.height = 24;
             }
             create() {
-                this.tiled();
+                this.rebound();
                 this.size = pts.divide([25, 30], 1);
                 //this.subsize = [25, 40];
                 let shape = new sprite({
@@ -8210,7 +8216,7 @@ void main() {
                     this.wpos = venture;
             }
             obj_manual_update() {
-                this.tiled();
+                this.rebound();
                 //this.stack();
                 super.obj_manual_update();
             }
@@ -8470,7 +8476,7 @@ void main() {
                 //this.wpos = wastes.gview.mwpos;
                 this.make();
                 this.animateBodyParts();
-                this.tiled();
+                this.rebound();
                 //this.tile?.paint();
                 //this.sector?.swap(this);
                 let input = [1, 1, 1];
@@ -8547,7 +8553,7 @@ void main() {
                 //this.inventory.add('money');
             }
             create() {
-                this.tiled();
+                this.rebound();
                 this.size = pts.divide([50, 40], 1);
                 let shape = new sprite({
                     binded: this,
@@ -8592,7 +8598,7 @@ void main() {
                     this.wpos = venture;
             }
             obj_manual_update() {
-                this.tiled();
+                this.rebound();
                 //this.stack();
                 super.obj_manual_update();
             }
@@ -8791,7 +8797,7 @@ void main() {
                 //	this.wpos = tiles.hovering!.wpos;
                 this.make();
                 this.animateBodyParts();
-                this.tiled();
+                this.rebound();
                 //this.tile?.paint();
                 lod$1.sector.swap(this);
                 // shade the pawn
@@ -9132,7 +9138,7 @@ void main() {
                 //this.inventory.add('money');
             }
             create() {
-                this.tiled();
+                this.rebound();
                 {
                     this.size = pts.divide([50, 40], 1);
                 }
@@ -9191,21 +9197,20 @@ void main() {
                 this.wpos = pts.add(this.wpos, to);
             }
             try_move_as_square(to) {
-                if (!this.tileBound)
+                if (!this.bound)
                     return;
-                let dupex = aabb2.dupe(this.tileBound);
+                let dupex = aabb2.dupe(this.bound);
                 dupex.translate([to[0], 0]);
-                let dupey = aabb2.dupe(this.tileBound);
+                let dupey = aabb2.dupe(this.bound);
                 dupey.translate([0, to[1]]);
                 let collision = false;
                 for (let obj of lod$1.ggrid.visibleObjs) {
                     if (this == obj)
                         continue;
-                    const cast = obj;
-                    if (cast.isSuper && cast.solid && cast.tileBound) {
+                    if (obj.solid) {
                         //const test = dupe.test(cast.tileBound);
-                        const testx = dupex.test(cast.tileBound);
-                        const testy = dupey.test(cast.tileBound);
+                        const testx = dupex.test(obj.bound);
+                        const testy = dupey.test(obj.bound);
                         //if (test > 0) {
                         //	collision = true;
                         //}
@@ -9223,10 +9228,10 @@ void main() {
                 if (collision)
                     to = pts.mult(to, friction);
                 this.wpos = pts.add(this.wpos, to);
-                this.tiled();
+                this.rebound();
             }
             obj_manual_update() {
-                this.tiled();
+                this.rebound();
                 //this.stack();
                 super.obj_manual_update();
             }
@@ -9559,8 +9564,8 @@ void main() {
                                 this.shoot = true;
                                 for (let obj of lod$1.ggrid.visibleObjs) {
                                     const cast = obj;
-                                    if (cast.isSuper && cast.tileBound) {
-                                        const test = cast.tileBound.ray({
+                                    if (cast.isSuper && cast.bound) {
+                                        const test = cast.bound.ray({
                                             dir: [Math.sin(this.angle), Math.cos(this.angle)],
                                             org: this.wpos
                                         });
@@ -9653,7 +9658,7 @@ void main() {
                 this.make();
                 if (!this.dead)
                     this.move();
-                this.tiled();
+                this.rebound();
                 this.animateBodyParts();
                 this.render();
                 lod$1.sector.swap(this);
@@ -10250,7 +10255,7 @@ void main() {
                 this.height = 24;
             }
             create() {
-                this.tiled();
+                this.rebound();
                 this.size = [24, 30];
                 return;
             }

@@ -15,7 +15,7 @@ export namespace fences {
 			this.height = 24;
 		}
 		override create() {
-			this.tiled();
+			this.rebound();
 			this.size = [24, 30];
 			return;
 			this.cell = [255 - this.pixel!.arrayRef[3], 0];

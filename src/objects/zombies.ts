@@ -47,7 +47,7 @@ export namespace zombies {
 		}
 		override create() {
 
-			this.tiled();
+			this.rebound();
 
 			this.size = pts.divide([50, 40], 1);
 
@@ -107,7 +107,7 @@ export namespace zombies {
 
 		}
 		override obj_manual_update() {
-			this.tiled();
+			this.rebound();
 			//this.stack();
 			super.obj_manual_update();
 		}
@@ -361,7 +361,7 @@ export namespace zombies {
 
 			this.animateBodyParts();
 
-			this.tiled();
+			this.rebound();
 			//this.tile?.paint();
 			lod.sector.swap(this);
 

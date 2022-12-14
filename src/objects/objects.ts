@@ -211,7 +211,7 @@ namespace objects {
 			this.solid = true;
 		}
 		override create() {
-			this.tiled();
+			this.rebound();
 			this.size = [24, 40];
 			this.cell = [255 - this.pixel!.arrayRef[3], 0];
 			let tuple = sprites.dscrappywalls;
@@ -266,7 +266,7 @@ namespace objects {
 		override onhit() { }
 
 		override create() {
-			this.tiled();
+			this.rebound();
 			this.tile!.hasDeck = true;
 			//this.tile!.z -= 24;
 			this.size = [24, 17];
@@ -303,7 +303,7 @@ namespace objects {
 		override onhit() { }
 
 		override create() {
-			this.tiled();
+			this.rebound();
 			//this.tile!.z -= 24;
 			this.size = [24, 17];
 			//if (this.pixel!.array[3] < 240)
@@ -331,7 +331,7 @@ namespace objects {
 			this.height = 3;
 		}
 		override create() {
-			this.tiled();
+			this.rebound();
 			//this.tile!.z -= 24;
 			this.size = [24, 17];
 			//if (this.pixel!.array[3] < 240)
@@ -356,7 +356,7 @@ namespace objects {
 			this.solid = true;
 		}
 		override create() {
-			this.tiled();
+			this.rebound();
 			this.size = [24, 50];
 			let shape = new sprite({
 				binded: this,
@@ -372,11 +372,12 @@ namespace objects {
 			this.type = 'tree'
 			this.height = 12;
 			this.solid = true;
+			this.expand = .4;
 			console.log('woo!');
 
 		}
 		override create() {
-			this.tiled();
+			this.rebound();
 			this.size = [24, 26];
 			let color = [255, 255, 255] as vec3;
 			color = shadows.mix(
@@ -399,7 +400,7 @@ namespace objects {
 			this.solid = true;
 		}
 		override create() {
-			this.tiled();
+			this.rebound();
 			this.size = [24, 50];
 			//if (this.pixel!.array[3] < 240)
 			//	this.cell = [240 - this.pixel!.array[3], 0];
@@ -456,7 +457,7 @@ namespace objects {
 			if (pixel.arrayRef[3] == 253)
 				return;
 
-			this.tiled();
+			this.rebound();
 
 			let tuple = sprites.dtreeleaves;
 
@@ -542,7 +543,7 @@ namespace objects {
 			this.solid = false;
 		}
 		override create() {
-			this.tiled();
+			this.rebound();
 			this.size = [24, 30];
 			let color = tiles.get(this.wpos)!.color;
 			color = [
@@ -569,7 +570,7 @@ namespace objects {
 			this.height = 4;
 		}
 		override create() {
-			this.tiled();
+			this.rebound();
 			this.size = [24, 30];
 			//let color =  tiles.get(this.wpos)!.color;
 			//this.cell = [Math.floor(Math.random() * 2), 0];
@@ -592,7 +593,7 @@ namespace objects {
 			this.height = 10;
 		}
 		override create() {
-			this.tiled();
+			this.rebound();
 			this.size = [8, 10];
 			//let color =  tiles.get(this.wpos)!.color;
 			//this.cell = [Math.floor(Math.random() * 2), 0];
@@ -635,7 +636,7 @@ namespace objects {
 			this.height = 17;
 		}
 		override create() {
-			this.tiled();
+			this.rebound();
 			this.size = [24, 40];
 			let shape = new sprite({
 				binded: this,
@@ -673,7 +674,7 @@ namespace objects {
 			this.height = 25;
 		}
 		override create() {
-			this.tiled();
+			this.rebound();
 			this.size = [20, 31];
 			//this.cell = [255 - this.pixel!.array[3], 0];
 			//return
@@ -726,7 +727,7 @@ namespace objects {
 		override onhit() { }
 		override create() {
 			//return;
-			this.tiled();
+			this.rebound();
 			this.size = [24, 17];
 			let shape = new sprite({
 				binded: this,
@@ -763,7 +764,7 @@ namespace objects {
 			this.height = 5;
 		}
 		override create() {
-			this.tiled();
+			this.rebound();
 			this.cell = [255 - this.pixel!.arrayRef[3], 0];
 			this.size = [24, 40];
 			let shape = new sprite({
@@ -795,7 +796,7 @@ namespace objects {
 			this.height = 23;
 		}
 		override create() {
-			this.tiled();
+			this.rebound();
 			this.size = [24, 40];
 			if (this.pixel)
 				this.cell = [255 - this.pixel!.arrayRef[3], 0];

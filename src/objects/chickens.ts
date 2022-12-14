@@ -49,7 +49,7 @@ export namespace chickens {
 		}
 		override create() {
 
-			this.tiled();
+			this.rebound();
 
 			this.size = pts.divide([25, 30], 1);
 			//this.subsize = [25, 40];
@@ -110,7 +110,7 @@ export namespace chickens {
 
 		}
 		override obj_manual_update() {
-			this.tiled();
+			this.rebound();
 			//this.stack();
 			super.obj_manual_update();
 		}
@@ -450,7 +450,7 @@ export namespace chickens {
 
 			this.make();
 			this.animateBodyParts();
-			this.tiled();
+			this.rebound();
 			//this.tile?.paint();
 			//this.sector?.swap(this);
 

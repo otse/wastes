@@ -65,7 +65,7 @@ export namespace pawns {
 		}
 		override create() {
 
-			this.tiled();
+			this.rebound();
 
 			if (wasterSprite)
 				this.size = pts.divide([90, 180], 5);
@@ -125,7 +125,6 @@ export namespace pawns {
 				if (sprite.vars.mask)
 					sprite.meshMask.material.map = this.target.texture;
 			}
-
 		}
 		try_move_as_point(to: vec2) {
 			const friction = 0.66;
@@ -139,21 +138,20 @@ export namespace pawns {
 			this.wpos = pts.add(this.wpos, to);
 		}
 		try_move_as_square(to: vec2) {
-			if (!this.tileBound)
+			if (!this.bound)
 				return;
-			let dupex = aabb2.dupe(this.tileBound);
+			let dupex = aabb2.dupe(this.bound);
 			dupex.translate([to[0], 0]);
-			let dupey = aabb2.dupe(this.tileBound);
+			let dupey = aabb2.dupe(this.bound);
 			dupey.translate([0, to[1]]);
 			let collision = false;
 			for (let obj of lod.ggrid.visibleObjs) {
 				if (this == obj)
 					continue;
-				const cast = obj as superobject;
-				if (cast.isSuper && cast.solid && cast.tileBound) {
+				if (obj.solid) {
 					//const test = dupe.test(cast.tileBound);
-					const testx = dupex.test(cast.tileBound);
-					const testy = dupey.test(cast.tileBound);
+					const testx = dupex.test(obj.bound);
+					const testy = dupey.test(obj.bound);
 					//if (test > 0) {
 					//	collision = true;
 					//}
@@ -171,10 +169,10 @@ export namespace pawns {
 			if (collision)
 				to = pts.mult(to, friction);
 			this.wpos = pts.add(this.wpos, to);
-			this.tiled();
+			this.rebound();
 		}
 		override obj_manual_update() {
-			this.tiled();
+			this.rebound();
 			//this.stack();
 			super.obj_manual_update();
 		}
@@ -589,8 +587,8 @@ export namespace pawns {
 
 							for (let obj of lod.ggrid.visibleObjs) {
 								const cast = obj as superobject;
-								if (cast.isSuper && cast.tileBound) {
-									const test = cast.tileBound.ray(
+								if (cast.isSuper && cast.bound) {
+									const test = cast.bound.ray(
 										{
 											dir: [Math.sin(this.angle), Math.cos(this.angle)],
 											org: this.wpos
@@ -712,7 +710,7 @@ export namespace pawns {
 			if (!this.dead)
 				this.move();
 
-			this.tiled();
+			this.rebound();
 
 			this.animateBodyParts();
 

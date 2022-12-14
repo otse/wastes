@@ -135,6 +135,8 @@ export namespace tiles {
 				this.tuple = sprites.dwater;
 				this.opacity = .5;
 				this.color = color_deep_water;
+				this.solid = true;
+				this.rebound();
 			}
 			else if (!pixel.is_black()) {
 				// We're a land tile
