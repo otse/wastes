@@ -9163,14 +9163,19 @@ void main() {
                 }
             }
             try_move_to(to) {
+                const friction = 0.66;
                 let x = [to[0], 0];
                 let y = [0, to[1]];
-                let venture = pts.add(this.wpos, x);
-                if (objects$1.is_solid(venture))
+                let both = pts.add(this.wpos, to);
+                let both_solid = objects$1.is_solid(both);
+                if (objects$1.is_solid(pts.add(this.wpos, x)))
                     x[0] = 0;
-                venture = pts.add(this.wpos, y);
-                if (objects$1.is_solid(venture))
+                else if (both_solid)
+                    x[0] *= friction;
+                if (objects$1.is_solid(pts.add(this.wpos, y)))
                     y[1] = 0;
+                else if (both_solid)
+                    y[1] *= friction;
                 this.wpos = pts.add(this.wpos, [x[0], y[1]]);
             }
             obj_manual_update() {
