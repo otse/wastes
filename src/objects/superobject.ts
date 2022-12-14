@@ -15,13 +15,14 @@ export class superobject extends lod.obj {
 	title = ''
 	examine = ''
 	isSuper = true
+	solid = false
 	paintTimer = 0
 	paintedRed = false
-	solid = true
 	pixel?: colormap.pixel
 	tile?: tiles.tile
 	tileBound?: aabb2
 	cell: vec2 = [0, 0]
+	expand = .5
 	hints?: any
 	//calc = 0 // used for tree leaves
 	constructor(counts: numbers.tally) {
@@ -30,7 +31,9 @@ export class superobject extends lod.obj {
 	}
 	tiled() {
 		this.tile = tiles.get(pts.round(this.wpos));
-		this.tileBound = new aabb2([-.5, -.5], [.5, .5]);
+		this.tileBound = new aabb2(
+			[-this.expand, -this.expand],
+			[this.expand, this.expand]);
 		this.tileBound.translate(this.wpos);
 	}
 	onhit() {
@@ -94,7 +97,7 @@ export class superobject extends lod.obj {
 				continue;
 			if (obj == this)
 				break;
-				calc += obj.z + obj.height;
+			calc += obj.z + obj.height;
 		}
 		this.calcz = calc;
 		const sprite = this.shape as sprite;

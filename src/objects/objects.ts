@@ -208,6 +208,7 @@ namespace objects {
 			super(numbers.walls);
 			this.type = 'wall';
 			this.height = 23;
+			this.solid = true;
 		}
 		override create() {
 			this.tiled();
@@ -352,6 +353,7 @@ namespace objects {
 			super(numbers.floors);
 			this.type = 'tree'
 			this.height = 24;
+			this.solid = true;
 		}
 		override create() {
 			this.tiled();
@@ -369,6 +371,7 @@ namespace objects {
 			super(numbers.floors);
 			this.type = 'tree'
 			this.height = 12;
+			this.solid = true;
 			console.log('woo!');
 
 		}
@@ -393,6 +396,7 @@ namespace objects {
 			super(numbers.trees);
 			this.type = 'tree'
 			this.height = 24;
+			this.solid = true;
 		}
 		override create() {
 			this.tiled();

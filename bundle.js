@@ -1753,10 +1753,11 @@ void main() {
             this.title = '';
             this.examine = '';
             this.isSuper = true;
+            this.solid = false;
             this.paintTimer = 0;
             this.paintedRed = false;
-            this.solid = true;
             this.cell = [0, 0];
+            this.expand = .5;
             this.set_shadow = (input) => {
                 const sprite = this.shape;
                 input = shadows$1.mix(input, pts.round(this.wpos));
@@ -1765,7 +1766,7 @@ void main() {
         }
         tiled() {
             this.tile = tiles$1.get(pts.round(this.wpos));
-            this.tileBound = new aabb2([-.5, -.5], [.5, .5]);
+            this.tileBound = new aabb2([-this.expand, -this.expand], [this.expand, this.expand]);
             this.tileBound.translate(this.wpos);
         }
         onhit() {
@@ -6821,6 +6822,7 @@ void main() {
                 super(numbers.walls);
                 this.type = 'wall';
                 this.height = 23;
+                this.solid = true;
             }
             create() {
                 var _a, _b, _c, _d, _e, _f;
@@ -6948,6 +6950,7 @@ void main() {
                 super(numbers.floors);
                 this.type = 'tree';
                 this.height = 24;
+                this.solid = true;
             }
             create() {
                 this.tiled();
@@ -6967,6 +6970,7 @@ void main() {
                 super(numbers.floors);
                 this.type = 'tree';
                 this.height = 12;
+                this.solid = true;
                 console.log('woo!');
             }
             create() {
@@ -6990,6 +6994,7 @@ void main() {
                 this.flowered = false;
                 this.type = 'tree';
                 this.height = 24;
+                this.solid = true;
             }
             create() {
                 this.tiled();
@@ -9121,6 +9126,8 @@ void main() {
                 this.type = 'pawn';
                 this.title = 'pawn';
                 this.height = 24;
+                this.solid = false;
+                this.expand = .25;
                 //this.inventory = new objects.container;
                 //this.inventory.add('money');
             }
@@ -9184,31 +9191,39 @@ void main() {
                 this.wpos = pts.add(this.wpos, to);
             }
             try_move_as_square(to) {
-                pts.add(this.wpos, to);
                 if (!this.tileBound)
                     return;
                 let dupex = aabb2.dupe(this.tileBound);
                 dupex.translate([to[0], 0]);
                 let dupey = aabb2.dupe(this.tileBound);
                 dupey.translate([0, to[1]]);
+                let collision = false;
                 for (let obj of lod$1.ggrid.visibleObjs) {
                     if (this == obj)
                         continue;
                     const cast = obj;
-                    if (cast.isSuper && cast.tileBound) {
+                    if (cast.isSuper && cast.solid && cast.tileBound) {
+                        //const test = dupe.test(cast.tileBound);
                         const testx = dupex.test(cast.tileBound);
                         const testy = dupey.test(cast.tileBound);
-                        if (testx > 0)
+                        //if (test > 0) {
+                        //	collision = true;
+                        //}
+                        if (testx > 0) {
+                            collision = true;
                             to[0] = 0;
-                        if (testy > 0)
+                        }
+                        if (testy > 0) {
+                            collision = true;
                             to[1] = 0;
-                        //collision = true;
+                        }
                     }
                 }
-                {
-                    this.wpos = pts.add(this.wpos, to);
-                    this.tiled();
-                }
+                const friction = 0.66;
+                if (collision)
+                    to = pts.mult(to, friction);
+                this.wpos = pts.add(this.wpos, to);
+                this.tiled();
             }
             obj_manual_update() {
                 this.tiled();

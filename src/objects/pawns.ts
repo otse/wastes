@@ -58,6 +58,8 @@ export namespace pawns {
 			this.type = 'pawn';
 			this.title = 'pawn';
 			this.height = 24;
+			this.solid = false;
+			this.expand = .25;
 			//this.inventory = new objects.container;
 			//this.inventory.add('money');
 		}
@@ -137,33 +139,39 @@ export namespace pawns {
 			this.wpos = pts.add(this.wpos, to);
 		}
 		try_move_as_square(to: vec2) {
-			let both = pts.add(this.wpos, to);
 			if (!this.tileBound)
 				return;
-			let collision = false;
 			let dupex = aabb2.dupe(this.tileBound);
 			dupex.translate([to[0], 0]);
 			let dupey = aabb2.dupe(this.tileBound);
 			dupey.translate([0, to[1]]);
+			let collision = false;
 			for (let obj of lod.ggrid.visibleObjs) {
 				if (this == obj)
 					continue;
 				const cast = obj as superobject;
-				if (cast.isSuper && cast.tileBound) {
+				if (cast.isSuper && cast.solid && cast.tileBound) {
+					//const test = dupe.test(cast.tileBound);
 					const testx = dupex.test(cast.tileBound);
 					const testy = dupey.test(cast.tileBound);
-					if (testx > 0)
+					//if (test > 0) {
+					//	collision = true;
+					//}
+					if (testx > 0) {
+						collision = true;
 						to[0] = 0;
-					if (testy > 0)
+					}
+					if (testy > 0) {
+						collision = true;
 						to[1] = 0;
-						//collision = true;
+					}
 				}
 			}
-			if (!collision) {
-				this.wpos = pts.add(this.wpos, to);
-				this.tiled();
-			}
-
+			const friction = 0.66;
+			if (collision)
+				to = pts.mult(to, friction);
+			this.wpos = pts.add(this.wpos, to);
+			this.tiled();
 		}
 		override obj_manual_update() {
 			this.tiled();
