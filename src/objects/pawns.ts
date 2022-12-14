@@ -125,24 +125,45 @@ export namespace pawns {
 			}
 
 		}
-		try_move_to(to: vec2) {
+		try_move_as_point(to: vec2) {
 			const friction = 0.66;
-			let x = [to[0], 0] as vec2;
-			let y = [0, to[1]] as vec2;
 			let both = pts.add(this.wpos, to);
-			let both_solid = objects.is_solid(both);
-			if (objects.is_solid(
-				pts.add(this.wpos, x)))
-				x[0] = 0;
-			else if (both_solid)
-				x[0] *= friction;
-			if (objects.is_solid(
-				pts.add(this.wpos, y)))
-				y[1] = 0;
-			else if (both_solid)
-				y[1] *= friction;
+			if (objects.is_solid(pts.add(this.wpos, [to[0], 0])))
+				to[0] = 0;
+			if (objects.is_solid(pts.add(this.wpos, [0, to[1]])))
+				to[1] = 0;
+			if (objects.is_solid(both))
+				to = pts.mult(to, friction);
+			this.wpos = pts.add(this.wpos, to);
+		}
+		try_move_as_square(to: vec2) {
+			let both = pts.add(this.wpos, to);
+			if (!this.tileBound)
+				return;
+			let collision = false;
+			let dupex = aabb2.dupe(this.tileBound);
+			dupex.translate([to[0], 0]);
+			let dupey = aabb2.dupe(this.tileBound);
+			dupey.translate([0, to[1]]);
+			for (let obj of lod.ggrid.visibleObjs) {
+				if (this == obj)
+					continue;
+				const cast = obj as superobject;
+				if (cast.isSuper && cast.tileBound) {
+					const testx = dupex.test(cast.tileBound);
+					const testy = dupey.test(cast.tileBound);
+					if (testx > 0)
+						to[0] = 0;
+					if (testy > 0)
+						to[1] = 0;
+						//collision = true;
+				}
+			}
+			if (!collision) {
+				this.wpos = pts.add(this.wpos, to);
+				this.tiled();
+			}
 
-			this.wpos = pts.add(this.wpos, [x[0], y[1]]);
 		}
 		override obj_manual_update() {
 			this.tiled();
@@ -491,7 +512,7 @@ export namespace pawns {
 				y = speed * Math.cos(angle);
 				if (!app.key('shift')) {
 					this.walkSmoother += ren.delta * 5;
-					this.try_move_to([x, y]);
+					this.try_move_as_square([x, y]);
 				}
 				else {
 					this.walkSmoother -= ren.delta * 5;

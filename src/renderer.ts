@@ -114,7 +114,7 @@ namespace ren {
 
 		delta = clock.getDelta();
 
-		if (delta > 2)
+		if (delta > 1)
 			delta = 0.016;
 
 		//delta *= 60.0;

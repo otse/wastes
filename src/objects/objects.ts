@@ -30,10 +30,24 @@ namespace objects {
 		return obj;
 	}
 
+	export function init() {
+
+
+
+	}
+
 	export function register() {
 
 		console.log(' objects register ');
-		
+
+		for (let id of ['heightmap', 'objectmap', 'buildingmap', 'treemap', 'colormap', 'roughmap', 'roofmap']) {
+			var img = document.getElementById(id) as any;
+			if (!img.complete) {
+				wastes.resourced(id.toUpperCase());
+				console.error('bad', img);
+			}
+		}
+
 		wastes.heightmap = new colormap.colormap('heightmap');
 		wastes.objectmap = new colormap.colormap('objectmap');
 		wastes.buildingmap = new colormap.colormap('buildingmap');
@@ -356,7 +370,7 @@ namespace objects {
 			this.type = 'tree'
 			this.height = 12;
 			console.log('woo!');
-			
+
 		}
 		override create() {
 			this.tiled();
@@ -594,14 +608,14 @@ namespace objects {
 			//return;
 			let sprite = this.shape as sprite;
 			this.ticker += ren.delta;
-			const cell = sprite.vars.cell!;			
+			const cell = sprite.vars.cell!;
 			if (this.ticker > 0.5) {
 				if (cell[0] < 5)
 					cell[0]++;
 				else
 					cell[0] = 0;
 				this.ticker = 0;
-				
+
 			}
 			//sprite.retransform();
 			sprite.shape_manual_update();

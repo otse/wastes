@@ -12,7 +12,6 @@
 
 	<script src="https://threejs.org/build/three.min.js"></script>
 
-	<script src="js/astarr.js"></script>
 	<script src="bundle.js"></script>
 
 	<title>wastes</title>
@@ -24,8 +23,9 @@
 	</style>
 
 	<script>
-		document.addEventListener('DOMContentLoaded', function (event) {
-			App.boot('ug');
+		// DOMContentLoaded
+		window.addEventListener("load", (event) => {
+			App.boot('xe');
 			//the event occurred
 		})
 	</script>
@@ -119,8 +119,6 @@
 </head>
 
 <body oncontextmenu="return false;">
-	<img src="collada/building/siding.jpg" />
-
 	<img id="heightmap" src="heightmap.png" />
 	<img id="colormap" src="colormap.png" />
 	<img id="roughmap" src="roughmap.png" />
