@@ -67,7 +67,9 @@ export class superobject extends lod.obj {
 			this.paintTimer += ren.delta;
 			if (this.paintTimer > 1) {
 				const sprite = this.shape as sprite;
-				sprite.material.color.set('white');
+				this.set_shadow([1, 1, 1]);
+				
+				//sprite.material.color.set('white');
 				this.paintedRed = false;
 				this.paintTimer = 0;
 			}

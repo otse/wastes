@@ -103,6 +103,9 @@ namespace objects {
 				else if (pixel.is_color(colors.color_deadtree)) {
 					factory(objects.deadtree, pixel, pos);
 				}
+				else if (pixel.is_color(colors.color_grass)) {
+					// factory(objects.grass, pixel, pos);
+				}
 			})
 			return false;
 		});
@@ -134,9 +137,6 @@ namespace objects {
 				}
 				else if (pixel.is_color(colors.color_fence)) {
 					//factory(fences.fence, pixel, pos);
-				}
-				else if (pixel.is_color(colors.color_grass)) {
-					//factory(objects.grass, pixel, pos);
 				}
 				else if (pixel.is_color(colors.color_wheat)) {
 					//factory(objects.wheat, pixel, pos);
@@ -557,7 +557,7 @@ namespace objects {
 				binded: this,
 				tuple: sprites.dgrass,
 				cell: this.cell,
-				orderBias: .6,
+				orderBias: 0.5,
 				color: color as unknown as vec3
 			});
 			this.stack();

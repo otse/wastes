@@ -140,6 +140,8 @@ export namespace pawns {
 		try_move_as_square(to: vec2) {
 			if (!this.bound)
 				return;
+			let both = aabb2.dupe(this.bound);
+			both.translate(to);
 			let dupex = aabb2.dupe(this.bound);
 			dupex.translate([to[0], 0]);
 			let dupey = aabb2.dupe(this.bound);
@@ -149,12 +151,15 @@ export namespace pawns {
 				if (this == obj)
 					continue;
 				if (obj.solid) {
-					//const test = dupe.test(cast.tileBound);
+					const test = both.test(obj.bound);
 					const testx = dupex.test(obj.bound);
 					const testy = dupey.test(obj.bound);
-					//if (test > 0) {
-					//	collision = true;
-					//}
+					if (test > 0 && testx == 0 && testy == 0)
+					{
+						// we are hugging a corner,
+						// prevent splitting into it
+						//to = [0, 0];
+					}
 					if (testx > 0) {
 						collision = true;
 						to[0] = 0;
@@ -640,14 +645,15 @@ export namespace pawns {
 				this.groups.legr.rotation.x = 0.1;
 				this.groups.arml.rotation.x = 0.1;
 				this.groups.armr.rotation.x = -0.1;
-				this.groups.ground.position.y = -12;
-				this.groups.ground.position.x = -12;
+				this.groups.ground.position.y = -10;
+				this.groups.ground.position.x = -0;
 
 				this.groups.ground.rotation.x = Math.PI / 2;
 				this.groups.ground.rotation.y = 0;
 				this.groups.ground.rotation.z = -Math.PI / 2;
 				this.groups.handr.rotation.x = 0;
 				this.groups.handr.rotation.z = 0;
+				this.meshes.shade.visible = false;
 
 				const sprite = this.shape as sprite;
 				sprite.vars.orderBias = 1.05;
@@ -735,7 +741,7 @@ export namespace pawns {
 				//this.wpos = tiles.hovering!.wpos;
 			}
 
-			this.stack(['pawn', 'you', 'zombie', 'tree', 'chicken', 'shelves', 'leaves', 'wall', 'door', 'roof', 'falsefront', 'panel']);
+			this.stack(['pawn', 'you', 'zombie', 'tree', 'chicken', 'shelves', 'grass', 'leaves', 'wall', 'door', 'roof', 'falsefront', 'panel']);
 			super.obj_manual_update();
 		}
 		//tick() {

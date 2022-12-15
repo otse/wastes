@@ -5,8 +5,5 @@ modeler/collada
 tex/stock/
 collada/AutoSave_model.skp
 *.skb
-collada/barrel/material_1.jpg
-collada/brickwall/material_1.jpg
-collada/squarebarrel/material_1.jpg
 designs/AutoSave_brickwall.skp
 designs/AutoSave_watertower.skp

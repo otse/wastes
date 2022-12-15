@@ -1805,8 +1805,9 @@ void main() {
             if (this.paintedRed) {
                 this.paintTimer += ren$1.delta;
                 if (this.paintTimer > 1) {
-                    const sprite = this.shape;
-                    sprite.material.color.set('white');
+                    this.shape;
+                    this.set_shadow([1, 1, 1]);
+                    //sprite.material.color.set('white');
                     this.paintedRed = false;
                     this.paintTimer = 0;
                 }
@@ -6523,6 +6524,7 @@ void main() {
                         let thing = new prefab;
                         array.push(thing);
                         thing.model = cloned;
+                        thing.solid = true;
                         thing.type = target;
                         thing.bias = bias;
                         thing.height = height;
@@ -6537,6 +6539,7 @@ void main() {
                         pos = pts.add(pos, corner);
                         //console.log('original position is', object.position, pos);
                         thing.wpos = pos;
+                        thing.rebound();
                         lod$1.add(thing);
                     }
                 }
@@ -6734,6 +6737,7 @@ void main() {
                     else if (pixel.is_color(colors$1.color_deadtree)) {
                         factory(objects.deadtree, pixel, pos);
                     }
+                    else if (pixel.is_color(colors$1.color_grass)) ;
                 });
                 return false;
             });
@@ -6763,7 +6767,6 @@ void main() {
                         //factory(objects.roof, pixel, pos);
                     }
                     else if (pixel.is_color(colors$1.color_fence)) ;
-                    else if (pixel.is_color(colors$1.color_grass)) ;
                     else if (pixel.is_color(colors$1.color_wheat)) ;
                     else if (pixel.is_color(colors$1.color_deck_and_roof)) {
                         factory(objects.deck, pixel, pos);
@@ -7146,7 +7149,7 @@ void main() {
                     binded: this,
                     tuple: sprites$1.dgrass,
                     cell: this.cell,
-                    orderBias: .6,
+                    orderBias: 0.5,
                     color: color
                 });
                 this.stack();
@@ -9199,6 +9202,8 @@ void main() {
             try_move_as_square(to) {
                 if (!this.bound)
                     return;
+                let both = aabb2.dupe(this.bound);
+                both.translate(to);
                 let dupex = aabb2.dupe(this.bound);
                 dupex.translate([to[0], 0]);
                 let dupey = aabb2.dupe(this.bound);
@@ -9208,12 +9213,9 @@ void main() {
                     if (this == obj)
                         continue;
                     if (obj.solid) {
-                        //const test = dupe.test(cast.tileBound);
+                        both.test(obj.bound);
                         const testx = dupex.test(obj.bound);
                         const testy = dupey.test(obj.bound);
-                        //if (test > 0) {
-                        //	collision = true;
-                        //}
                         if (testx > 0) {
                             collision = true;
                             to[0] = 0;
@@ -9612,13 +9614,14 @@ void main() {
                     this.groups.legr.rotation.x = 0.1;
                     this.groups.arml.rotation.x = 0.1;
                     this.groups.armr.rotation.x = -0.1;
-                    this.groups.ground.position.y = -12;
-                    this.groups.ground.position.x = -12;
+                    this.groups.ground.position.y = -10;
+                    this.groups.ground.position.x = -0;
                     this.groups.ground.rotation.x = Math.PI / 2;
                     this.groups.ground.rotation.y = 0;
                     this.groups.ground.rotation.z = -Math.PI / 2;
                     this.groups.handr.rotation.x = 0;
                     this.groups.handr.rotation.z = 0;
+                    this.meshes.shade.visible = false;
                     const sprite = this.shape;
                     sprite.vars.orderBias = 1.05;
                 }
@@ -9672,7 +9675,7 @@ void main() {
                     }
                 }
                 if (this.type == 'you') ;
-                this.stack(['pawn', 'you', 'zombie', 'tree', 'chicken', 'shelves', 'leaves', 'wall', 'door', 'roof', 'falsefront', 'panel']);
+                this.stack(['pawn', 'you', 'zombie', 'tree', 'chicken', 'shelves', 'grass', 'leaves', 'wall', 'door', 'roof', 'falsefront', 'panel']);
                 super.obj_manual_update();
             }
         }

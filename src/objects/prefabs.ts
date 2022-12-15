@@ -68,6 +68,7 @@ class building_parts {
 					let thing = new prefab;
 					array.push(thing);
 					thing.model = cloned;
+					thing.solid = true;
 					thing.type = target;
 					thing.bias = bias;
 					thing.height = height;
@@ -82,6 +83,7 @@ class building_parts {
 					pos = pts.add(pos, corner);
 					//console.log('original position is', object.position, pos);
 					thing.wpos = pos;
+					thing.rebound();
 					lod.add(thing);
 				}
 			}
