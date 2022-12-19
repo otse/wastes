@@ -4,6 +4,7 @@ import aabb2 from "./aabb2";
 import lod, { numbers } from "./lod";
 import pts from "./pts";
 import ren, { THREE } from "./renderer";
+import shadows from "./shadows";
 import sprites from "./sprites";
 import tiles from "./tiles";
 import wastes from "./wastes";
@@ -75,6 +76,7 @@ export class sprite extends lod.shape {
 	rup = 0
 	rup2 = 0
 	rleft = 0
+	shadowAmount = 1.0
 	calc: vec2 = [0, 0]
 	mesh: Mesh
 	meshMask: Mesh
@@ -87,6 +89,8 @@ export class sprite extends lod.shape {
 		public readonly vars: SpriteParameters
 	) {
 		super(vars.binded, numbers.sprites);
+		if (!this.vars.color)
+			this.vars.color = [255, 255, 255];
 		if (!this.vars.cell)
 			this.vars.cell = [0, 0];
 		if (!this.vars.orderBias)
@@ -137,13 +141,26 @@ export class sprite extends lod.shape {
 
 		if (this.dimetric)
 			// move bottom left corner
-			calc = pts.add(
-				obj.rpos, pts.divide(obj.size, 2));
+			calc = pts.add(obj.rpos, pts.divide(obj.size, 2));
 		//else
 		//	calc = pts.add(obj.rpos, [0, obj.size[1]]);
 
-		calc = pts.add(
-			calc, [this.rleft, this.rup + this.rup2]);
+		calc = pts.add(calc, [this.rleft, this.rup + this.rup2]);
+
+		let color = this.vars.color!;
+
+		if (this.vars.binded.sector!.color) {
+			let hex = this.vars.binded.sector!.color;
+			this.material.color.setStyle(hex);
+			this.material.color.toArray(color);
+			//color = [color[0] * 255, color[1] * 255, color[2] * 255];
+		}
+		else {
+			color = shadows.mult(color, this.shadowAmount);
+
+			this.material.color.fromArray(
+				[color[0] / 255, color[1] / 255, color[2] / 255]);
+		}
 
 		this.calc = calc;
 
@@ -189,6 +206,7 @@ export class sprite extends lod.shape {
 		this.retransform();
 
 		this.geometry = get_plane_geometry(this.vars.binded.size);
+		/*
 		let color;
 		if (this.vars.binded!.sector!.color) {
 			color = new Color(this.vars.binded.sector!.color);
@@ -197,6 +215,8 @@ export class sprite extends lod.shape {
 			const c = this.vars.color || [255, 255, 255, 255];
 			color = new Color(`rgb(${Math.round(c[0])},${Math.round(c[1])},${Math.round(c[2])})`);
 		}
+		*/
+
 		let defines = {} as any;
 		if (this.vars.masked) {
 			defines.MASKED = 1;
@@ -207,7 +227,7 @@ export class sprite extends lod.shape {
 		this.material = SpriteMaterial({
 			map: ren.load_texture(`${this.vars.tuple[3]}.png`, 0),
 			transparent: true,
-			color: color,
+			color: 'white',
 			opacity: this.vars.opacity,
 			depthWrite: false,
 			depthTest: false,
@@ -241,7 +261,7 @@ export class sprite extends lod.shape {
 			this.wireframe.matrixAutoUpdate = false;
 			ren.groups.axisSwap.add(this.wireframe);
 			console.log('add wireframe');
-			
+
 		}
 
 		this.shape_manual_update();

@@ -86,8 +86,8 @@ export namespace tiles {
 
 	}
 
-	const color_shallow_water: vec4 = [40, 120, 130, 255];
-	const color_deep_water: vec4 = [20, 100, 110, 255];
+	const color_shallow_water: vec3 = [40, 120, 130];
+	const color_deep_water: vec3 = [20, 100, 110];
 
 	export class tile extends lod.obj {
 		hasDeck = false
@@ -97,7 +97,7 @@ export namespace tiles {
 		tuple: sprites.tuple
 		cell: vec2
 		// objs: lod.obj[] = []
-		color: vec4
+		color: vec3
 		opacity = 1
 		superiorBias = 1
 		colorPrev
@@ -115,7 +115,7 @@ export namespace tiles {
 				this.type = 'land';
 				this.size = [24, 30];
 				this.tuple = sprites.dgraveltiles;
-				this.color = [60, 60, 60, 255];
+				this.color = [60, 60, 60];
 				this.height = 6;
 				this.cell = [1, 0];
 			}
@@ -181,9 +181,9 @@ export namespace tiles {
 		}*/
 		override create() {
 			if (this.isLand) {
-				this.color = wastes.colormap.pixel(this.wpos).arrayRef;
-				this.color = shadows.mix(
-					this.color as unknown as vec3, this.wpos) as unknown as vec4;
+				this.color = wastes.colormap.pixel(this.wpos).arrayRef as unknown as vec3;
+				//this.color = shadows.mult_pos(
+				//	this.color as unknown as vec3, this.wpos) as unknown as vec4;
 			}
 			// really great z based bias
 			this.superiorBias = this.z / 6;
@@ -195,10 +195,11 @@ export namespace tiles {
 				binded: this,
 				tuple: this.tuple,
 				cell: this.cell,
-				color: this.color as unknown as vec3,
+				color: this.color,
 				opacity: this.opacity,
 				orderBias: this.superiorBias
 			});
+			shape.shadowAmount = shadows.get_amount(this.wpos);
 			// if we have a deck, add it to heightAdd
 			let sector = lod.gworld.at(lod.world.big(this.wpos));
 			let at = sector.stacked(this.wpos);
@@ -221,14 +222,14 @@ export namespace tiles {
 				last.hide();
 				last.show();
 			}
-			sprite.mesh.material.color.set('#768383');
+			//sprite.mesh.material.color.set('#768383');
 			tile.lastHover = this;
 		}
 		paint() {
 			const sprite = this.shape as sprite;
 			if (!sprite || !sprite.mesh)
 				return;
-			sprite.mesh.material.color.set('red');
+			//sprite.mesh.material.color.set('red');
 		}
 		tick() {
 			const sprite = this.shape as sprite;
@@ -237,6 +238,7 @@ export namespace tiles {
 				this.hide();
 				this.show();
 			}
+			sprite.shape_manual_update();
 			//if (pawns.you && pts.equals(this.wpos, pts.round(pawns.you.wpos))) {
 				//this.paint();
 			//}

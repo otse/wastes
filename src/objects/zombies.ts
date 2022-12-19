@@ -367,18 +367,9 @@ export namespace zombies {
 
 			// shade the pawn
 
-			let input = [1, 1, 1] as vec3;
-
 			const sprite = this.shape as sprite;
 
-			// We could have been nulled due to a hide, dispose
-			if (sprite) {
-				input = this.hovering_pass();
-				
-				if (this.tile && this.tile.hasDeck == false) {
-					this.set_shadow(input);
-				}
-			}
+			this.hovering_pass();
 
 			if (this.type == 'you') {
 				//this.wpos = tiles.hovering!.wpos;

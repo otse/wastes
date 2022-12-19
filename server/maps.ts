@@ -45,7 +45,7 @@ namespace maps {
 				return new spixel(this, pos, vec);
 			return new spixel(this, pos, [255, 0, 255, 0]);
 		}
-		read() {
+		async read() {
 			const { name, pixels } = this;
 			return new Promise((resolve, reject) => {
 				fs.createReadStream(`../${name}.png`)

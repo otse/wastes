@@ -156,8 +156,7 @@ export namespace pawns {
 					const test = both.test(obj.bound);
 					const testx = dupex.test(obj.bound);
 					const testy = dupey.test(obj.bound);
-					if (test > 0 && testx == 0 && testy == 0)
-					{
+					if (test > 0 && testx == 0 && testy == 0) {
 						// we are hugging a corner,
 						// prevent splitting into it
 						//to = [0, 0];
@@ -225,7 +224,8 @@ export namespace pawns {
 				return;
 			this.made = true;
 
-			const headSize = 5.5;
+			const headSize = 6;
+			const helmetSize = headSize + .5;
 			const gasMaskSize = 2.5;
 			const legsSize = 4;
 			const legsHeight = 12;
@@ -257,6 +257,7 @@ export namespace pawns {
 
 				for (let i in transforms) {
 					materials.push(SpriteMaterial({
+						transparent: true,
 						map: ren.load_texture(path, 0),
 					}, {
 						myUvTransform: transforms[i]
@@ -266,8 +267,14 @@ export namespace pawns {
 				return materials;
 			}
 
-			let materialsBody = transforme(bodyThick, bodyWidth, bodyHeight, `tex/pawn/body.png`)
-			let materialsArms = transforme(armsSize, armsSize, armsHeight, `tex/pawn/arms.png`)
+			let materialsHelmet = transforme(8, 8, 5, `tex/pawn/helmet.png`);
+			let materialsBody = transforme(bodyThick, bodyWidth, bodyHeight, `tex/pawn/body.png`);
+			let materialsArms = transforme(armsSize, armsSize, armsHeight, `tex/pawn/arms.png`);
+
+			let boxHelmet = new BoxGeometry(helmetSize, 5, helmetSize, 1, 1, 1);
+			let materialHelmet = new MeshLambertMaterial({
+				color: '#383936'
+			});
 
 			let boxHead = new BoxGeometry(headSize, headSize, headSize, 1, 1, 1);
 			let materialHead = new MeshLambertMaterial({
@@ -335,6 +342,7 @@ export namespace pawns {
 			this.meshes.water.updateMatrix();
 			this.meshes.water.visible = false;
 
+			this.meshes.helmet = new Mesh(boxHelmet, materialsHelmet);
 			this.meshes.head = new Mesh(boxHead, materialHead);
 			this.meshes.gasMask = new Mesh(boxGasMask, materialGasMask);
 			this.meshes.body = new Mesh(boxBody, materialsBody);
@@ -387,6 +395,8 @@ export namespace pawns {
 			/*this.groups.gungrip.add(this.groups.gunbarrel);
 			this.groups.armr.add(this.groups.gungrip);*/
 
+			this.groups.head.add(this.meshes.helmet);
+
 			this.groups.body.add(this.groups.head);
 			this.groups.body.add(this.groups.arml);
 			this.groups.body.add(this.groups.armr);
@@ -399,6 +409,8 @@ export namespace pawns {
 			this.groups.basis.add(this.meshes.shade);
 
 			//this.groups.handr.add(new AxesHelper(10));
+			this.meshes.helmet.position.set(0, 2, 0);
+
 			this.groups.handr.position.set(0, -armsHeight, 0)
 
 			this.groups.head.position.set(0, bodyHeight / 2 + headSize / 2, 0);
@@ -735,15 +747,16 @@ export namespace pawns {
 
 			let input = [1, 1, 1] as vec3;
 
-			// after a sector swap we could be deconstructed
+			// after a sector swap we could be destroyed
 			const sprite = this.shape as sprite;
-
 			if (sprite) {
-				input = this.hovering_pass();
-
-				if (this.tile && this.tile.hasDeck == false) {
-					this.set_shadow(input);
+				if (this.tile && this.tile.hasDeck) {
+					sprite.shadowAmount = 1.0;
 				}
+				else {
+					sprite.shadowAmount = shadows.get_amount(pts.round(this.wpos));
+				}
+				this.hovering_pass();
 			}
 
 			if (this.type == 'you') {

@@ -453,22 +453,12 @@ export namespace chickens {
 			this.rebound();
 			//this.tile?.paint();
 			//this.sector?.swap(this);
-
-			let input = [1, 1, 1] as vec3;
-
+			
 			const sprite = this.shape as sprite;
 
-			// We could have been nulled due to a hide, dispose
-			if (sprite) {
-				input = this.hovering_pass();
-				
-				if (this.tile && this.tile.hasDeck == false) {
-					this.set_shadow(input);
-				}
-			}
-			else {
-				console.warn('no chicken sprite?????');
-			}
+			sprite.shadowAmount = shadows.get_amount(pts.round(this.wpos));
+
+			this.hovering_pass();
 
 			this.stack(['pawn', 'you', 'chicken', 'tree', 'leaves', 'wall', 'door', 'roof', 'falsefront', 'panel']);
 			//sprite.roffset = [.5, .5];

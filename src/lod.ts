@@ -51,6 +51,8 @@ namespace lod {
 
 	const chunk_coloration = false;
 
+	const fog_of_war = false;
+
 	const grid_crawl_makes_sectors = true;
 
 	export var gworld: world;
@@ -117,8 +119,8 @@ namespace lod {
 	}
 
 	export class sector extends toggle {
-		color?;
 		group: Group;
+		color?;
 		readonly small: aabb2;
 		readonly objs: obj[] = [];
 		constructor(
@@ -201,6 +203,9 @@ namespace lod {
 		dist() {
 			return pts.distsimple(this.big, lod.ggrid.big);
 		}
+		grayscale() {
+			this.color = 'gray';
+		}
 	}
 
 	export class grid {
@@ -259,6 +264,16 @@ namespace lod {
 				else {
 					sector.tick();
 					this.visibleObjs = this.visibleObjs.concat(sector.objs);
+				}
+
+				if (fog_of_war) {
+					if (sector.dist() == this.outside) {
+						//console.log('brim-chunk');
+						sector.color = '#555555';
+					}
+					else {
+						sector.color = '#ffffff';
+					}
 				}
 			}
 		}

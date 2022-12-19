@@ -308,19 +308,15 @@ namespace objects {
 			this.size = [24, 17];
 			//if (this.pixel!.array[3] < 240)
 			//	this.cell = [240 - this.pixel!.array[3], 0];
-			let color = [255, 255, 255] as vec3;
-			color = shadows.mix(
-				color, this.wpos);
-
 			let shape = new sprite({
 				binded: this,
 				tuple: sprites.dporch,
 				cell: this.cell,
-				orderBias: 0.1,
-				color: color
+				orderBias: 0.1
 			});
-			this.stack();
+			shape.shadowAmount = shadows.get_amount(pts.round(this.wpos));
 
+			this.stack();
 		}
 	}
 	export class rails extends superobject {
@@ -379,15 +375,12 @@ namespace objects {
 		override create() {
 			this.rebound();
 			this.size = [24, 26];
-			let color = [255, 255, 255] as vec3;
-			color = shadows.mix(
-				color, this.wpos);
 			let shape = new sprite({
 				binded: this,
 				tuple: sprites.dsquarebarrel,
-				orderBias: 1.0,
-				color: color
+				orderBias: 1.0
 			});
+			shape.shadowAmount = shadows.get_amount(pts.round(this.wpos));
 			this.stack();
 		}
 	}
@@ -483,7 +476,7 @@ namespace objects {
 			//this.try_create_vines();
 			//if (this.pixel!.array[3] < 240)
 			//	this.cell = [240 - this.pixel!.array[3], 0];
-			let color = this.hints.color || [255, 255, 255, 255];
+			let color = this.hints.color || [1, 1, 1];
 
 			let color2 = wastes.colormap.pixel(this.wpos);
 
@@ -549,9 +542,8 @@ namespace objects {
 			color = [
 				Math.floor(color[0] * 1.5),
 				Math.floor(color[1] * 1.5),
-				Math.floor(color[2] * 2.0),
-				color[3],
-			]
+				Math.floor(color[2] * 2.0)
+			];
 			this.cell = [255 - this.pixel!.arrayRef[3], 0];
 			let shape = new sprite({
 				binded: this,

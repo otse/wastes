@@ -52,15 +52,19 @@ export namespace shadows {
 		else
 			return default_shade;
 	}
-
+	
 	// shades the color by multplication
-	export function mix(a: vec3, pos: vec2): vec3 {
-		const n = get_amount(pos);
-		let dupe = [a[0], a[1], a[2]] as vec3;
-		dupe[0] = a[0] * n;
-		dupe[1] = a[1] * n;
-		dupe[2] = a[2] * n;
-		return dupe;
+	export function mult_pos(a: vec3, pos: vec2) {
+		const amount = get_amount(pos);
+		return mult(a, amount);
+	}
+
+	export function mult(a: vec3, amount: number = 1.0): vec3 {
+		let b = [...a] as vec3;
+		b[0] *= amount;
+		b[1] *= amount;
+		b[2] *= amount;
+		return b;
 	}
 
 	export function start() {

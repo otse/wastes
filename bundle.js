@@ -806,6 +806,9 @@ void main() {
             dist() {
                 return pts.distsimple(this.big, lod.ggrid.big);
             }
+            grayscale() {
+                this.color = 'gray';
+            }
         }
         lod.sector = sector;
         class grid {
@@ -986,412 +989,6 @@ void main() {
     })(lod || (lod = {}));
     var lod$1 = lod;
 
-    var sprites;
-    (function (sprites) {
-        function start() {
-        }
-        sprites.start = start;
-        sprites.test100 = [[100, 100], [100, 100], 0, 'tex/test100'];
-        sprites.asteroid = [[512, 512], [512, 512], 0, 'tex/pngwing.com'];
-        sprites.dfence = [[72, 30], [24, 30], 0, 'tex/dfence'];
-        sprites.shrubs = [[24, 15], [24, 15], 0, 'tex/shrubs'];
-        sprites.dtile = [[24, 12], [24, 12], 0, 'tex/dtile'];
-        sprites.dwater = [[24, 12], [24, 12], 0, 'tex/8bit/dwater'];
-        sprites.dtile4 = [[24, 17], [24, 17], 0, 'tex/dtileup4'];
-        sprites.dgrass = [[96, 30], [24, 31], 0, 'tex/dgrass'];
-        sprites.dwheat = [[96, 30], [24, 31], 0, 'tex/dwheat'];
-        sprites.dpanel = [[48, 10], [8, 10], 0, 'tex/dpanel'];
-        sprites.dswamptiles = [[96, 30], [24, 30], 0, 'tex/dswamptiles'];
-        sprites.dtilesand = [[24, 17], [24, 17], 0, 'tex/dtilesand'];
-        sprites.dgraveltiles = [[96, 30], [24, 30], 0, 'tex/8bit/dgraveltiles'];
-        sprites.ddeadtreetrunk = [[24, 50], [24, 50], 0, 'tex/8bit/dtreetrunkdead'];
-        sprites.ddecidtreetrunk = [[24, 50], [24, 50], 0, 'tex/8bit/dtreetrunk'];
-        sprites.dtreeleaves = [[24, 31], [24, 31], 0, 'tex/8bit/dtreeleaves'];
-        sprites.dvines = [[24, 31], [24, 31], 0, 'tex/8bit/dvines'];
-        sprites.dvines2 = [[24, 31], [24, 31], 0, 'tex/8bit/dvines2'];
-        sprites.dvines3 = [[24, 31], [24, 31], 0, 'tex/8bit/dvines3'];
-        //export const dwall: tuple = [[96, 40], [24, 40], 0, 'tex/dwalls']
-        sprites.dporch = [[72, 17], [24, 17], 0, 'tex/8bit/dporch'];
-        sprites.drails = [[72, 17], [24, 17], 0, 'tex/8bit/drails'];
-        sprites.ddeck = [[72, 17], [24, 17], 0, 'tex/8bit/ddeck'];
-        sprites.droof = [[72, 17], [24, 17], 0, 'tex/8bit/droof'];
-        sprites.dcrate = [[24, 40], [24, 40], 0, 'tex/8bit/dcrate'];
-        sprites.dshelves = [[20, 31], [20, 31], 0, 'tex/8bit/dshelves'];
-        sprites.ddoor = [[192, 40], [24, 40], 0, 'tex/8bit/ddoor'];
-        sprites.dsquarebarrel = [[24, 26], [24, 26], 0, 'tex/8bit/dsquarebarrel'];
-        sprites.dwoodywalls = [[264, 40], [24, 40], 0, 'tex/8bit/dwoodywalls'];
-        sprites.dplywoodwalls = [[264, 40], [24, 40], 0, 'tex/8bit/dcommonwalls'];
-        sprites.dovergrownwalls = [[264, 40], [24, 40], 0, 'tex/8bit/dovergrownwalls'];
-        sprites.dderingerwalls = [[264, 40], [24, 40], 0, 'tex/8bit/dderingerwalls'];
-        sprites.dmedievalwalls = [[264, 40], [24, 40], 0, 'tex/8bit/dmedievalwalls'];
-        sprites.dscrappywalls = [[264, 40], [24, 40], 0, 'tex/dscrappywalls'];
-        //export const dscrappywalls2: tuple = [[216, 40], [24, 40], 0, 'tex/dscrappywalls2']
-        sprites.druddywalls = [[288, 40], [24, 40], 0, 'tex/druddywalls'];
-        sprites.dacidbarrel = [[24, 35], [24, 35], 0, 'tex/dacidbarrel'];
-        sprites.dfalsefronts = [[192, 40], [24, 40], 0, 'tex/8bit/dfalsefronts'];
-        sprites.dtree1 = [[121, 147], [121, 147], 0, 'tex/dtree1b'];
-        sprites.pchris = [[90, 180], [90, 180], 0, 'tex/pawn/pwaster_quintuple'];
-        sprites.pchris_lowres = [[19, 41], [19, 41], 0, 'tex/pawn/pwaster'];
-        function get_uv_transform(cell, tuple) {
-            let divide = pts.divides(tuple[1], tuple[0]);
-            let offset = pts.mults(divide, cell);
-            let repeat = divide;
-            let center = [0, 1];
-            let mat = new THREE.Matrix3;
-            mat.setUvTransform(offset[0], offset[1], repeat[0], repeat[1], 0, center[0], center[1]);
-            return mat;
-        }
-        sprites.get_uv_transform = get_uv_transform;
-    })(sprites || (sprites = {}));
-    var sprites$1 = sprites;
-
-    // hovering sprites was made for contextmenu to get a more accurate sprite
-    var hovering_sprites;
-    (function (hovering_sprites) {
-        hovering_sprites.sprites = [];
-        function hover(sprite) {
-            let i = hovering_sprites.sprites.indexOf(sprite);
-            if (i == -1)
-                hovering_sprites.sprites.push(sprite);
-        }
-        hovering_sprites.hover = hover;
-        function unhover(sprite) {
-            let i = hovering_sprites.sprites.indexOf(sprite);
-            if (i != -1)
-                hovering_sprites.sprites.splice(i, 1);
-        }
-        hovering_sprites.unhover = unhover;
-        function sort_closest_to_mouse() {
-            hovering_sprites.sprites.sort((a, b) => {
-                const dist_a = pts.distsimple(wastes.gview.mrpos, a.aabbScreen.center());
-                const dist_b = pts.distsimple(wastes.gview.mrpos, b.aabbScreen.center());
-                if (dist_a < dist_b)
-                    return -1;
-                else
-                    return 1;
-            });
-        }
-        hovering_sprites.sort_closest_to_mouse = sort_closest_to_mouse;
-    })(hovering_sprites || (hovering_sprites = {}));
-    var planes = {};
-    function get_plane_geometry(size) {
-        const key = size[0] + ',' + size[1];
-        if (planes[key])
-            return planes[key];
-        else {
-            const geometry = new THREE.PlaneGeometry(size[0], size[1], 1, 1);
-            planes[key] = geometry;
-            return planes[key];
-        }
-    }
-    class sprite extends lod$1.shape {
-        constructor(vars) {
-            super(vars.binded, numbers.sprites);
-            this.vars = vars;
-            this.writez = true;
-            this.dimetric = true;
-            this.subsize = [0, 0];
-            this.rup = 0;
-            this.rup2 = 0;
-            this.rleft = 0;
-            this.calc = [0, 0];
-            this.roffset = [0, 0];
-            if (!this.vars.cell)
-                this.vars.cell = [0, 0];
-            if (!this.vars.orderBias)
-                this.vars.orderBias = 0;
-            if (!this.vars.opacity)
-                this.vars.opacity = 1;
-            this.myUvTransform = new THREE.Matrix3;
-            this.myUvTransform.setUvTransform(0, 0, 1, 1, 0, 0, 1);
-        }
-        bound() {
-            let size = this.vars.binded.size;
-            if (pts.together(this.subsize))
-                size = this.subsize;
-            let calc = this.calc;
-            this.aabbScreen = new aabb2([0, 0], size);
-            calc = pts.subtract(calc, pts.divide(size, 2));
-            //calc = pts.add(calc, [this.rleft, this.rup + this.rup2]);
-            this.aabbScreen.translate(calc);
-        }
-        mousing(mouse) {
-            var _a;
-            if ((_a = this.aabbScreen) === null || _a === void 0 ? void 0 : _a.test(new aabb2(mouse, mouse)))
-                return true;
-        }
-        dispose() {
-            var _a, _b, _c, _d;
-            if (!this.mesh)
-                return;
-            hovering_sprites.unhover(this);
-            (_a = this.geometry) === null || _a === void 0 ? void 0 : _a.dispose();
-            (_b = this.material) === null || _b === void 0 ? void 0 : _b.dispose();
-            (_c = this.mesh.parent) === null || _c === void 0 ? void 0 : _c.remove(this.mesh);
-            if (this.vars.mask)
-                (_d = this.meshMask.parent) === null || _d === void 0 ? void 0 : _d.remove(this.meshMask);
-        }
-        shape_manual_update() {
-            if (!this.mesh)
-                return;
-            const obj = this.vars.binded;
-            let calc = obj.rpos;
-            if (this.dimetric)
-                // move bottom left corner
-                calc = pts.add(obj.rpos, pts.divide(obj.size, 2));
-            //else
-            //	calc = pts.add(obj.rpos, [0, obj.size[1]]);
-            calc = pts.add(calc, [this.rleft, this.rup + this.rup2]);
-            this.calc = calc;
-            this.bound();
-            if (this.mesh) {
-                this.retransform();
-                this.mesh.position.fromArray([...calc, 0]);
-                // Not rounding gives us much better depth
-                let pos = obj.wpos; // pts.round(obj.wpos);
-                // Experimental z elevation based bias!
-                let zBasedBias = 0;
-                //zBasedBias = this.vars.binded.z / 3;
-                this.mesh.renderOrder = -pos[1] + pos[0] + this.vars.orderBias + zBasedBias;
-                this.mesh.rotation.z = this.vars.binded.ro;
-                this.mesh.updateMatrix();
-                this.mesh.updateMatrixWorld(false);
-                if (this.vars.mask) {
-                    this.meshMask.position.fromArray([...calc, 0]);
-                    this.meshMask.renderOrder = -pos[1] + pos[0] + this.vars.orderBias;
-                    this.meshMask.updateMatrix();
-                }
-            }
-        }
-        retransform() {
-            this.myUvTransform.copy(sprites$1.get_uv_transform(this.vars.cell, this.vars.tuple));
-        }
-        create() {
-            //console.log('create');
-            this.vars.binded;
-            this.retransform();
-            this.geometry = get_plane_geometry(this.vars.binded.size);
-            let color;
-            if (this.vars.binded.sector.color) {
-                color = new THREE.Color(this.vars.binded.sector.color);
-            }
-            else {
-                const c = this.vars.color || [255, 255, 255, 255];
-                color = new THREE.Color(`rgb(${Math.round(c[0])},${Math.round(c[1])},${Math.round(c[2])})`);
-            }
-            let defines = {};
-            if (this.vars.masked) {
-                defines.MASKED = 1;
-            }
-            const c = this.vars.maskColor || [0.15, 0.3, 0.15];
-            const maskColor = new THREE.Vector3(c[0], c[1], c[2]);
-            this.material = SpriteMaterial({
-                map: ren$1.load_texture(`${this.vars.tuple[3]}.png`, 0),
-                transparent: true,
-                color: color,
-                opacity: this.vars.opacity,
-                depthWrite: false,
-                depthTest: false,
-            }, {
-                myUvTransform: this.myUvTransform,
-                masked: this.vars.masked,
-                maskColor: maskColor
-            }, defines);
-            this.mesh = new THREE.Mesh(this.geometry, this.material);
-            this.mesh.frustumCulled = false;
-            this.mesh.matrixAutoUpdate = false;
-            this.mesh.matrixWorldAutoUpdate = false;
-            if (this.vars.mask) {
-                this.meshMask = this.mesh.clone();
-                if (this.vars.negativeMask) {
-                    this.meshMask.material = this.material.clone();
-                    this.meshMask.material.blending = THREE__default["default"].CustomBlending;
-                    this.meshMask.material.blendEquation = THREE__default["default"].ReverseSubtractEquation;
-                }
-            }
-            // this.vars.binded.sector?.group.add(this.mesh);
-            ren$1.groups.axisSwap.add(this.mesh);
-            if (this.vars.mask)
-                ren$1.sceneMask.add(this.meshMask);
-            this.shape_manual_update();
-        }
-    }
-    sprite.masks = [];
-    function SpriteMaterial(parameters, uniforms, defines = {}) {
-        let material = new THREE.MeshLambertMaterial(parameters);
-        material.customProgramCacheKey = function () {
-            return 'spritemat';
-        };
-        material.name = "spritemat";
-        material.defines = defines;
-        material.onBeforeCompile = function (shader) {
-            shader.uniforms.myUvTransform = { value: uniforms.myUvTransform };
-            if (uniforms.masked) {
-                shader.uniforms.tMask = { value: ren$1.targetMask.texture };
-                shader.uniforms.maskColor = { value: uniforms.maskColor };
-                console.log('add tmask');
-            }
-            shader.vertexShader = shader.vertexShader.replace(`#include <common>`, `#include <common>
-			varying vec2 myPosition;
-			uniform mat3 myUvTransform;
-			`);
-            shader.vertexShader = shader.vertexShader.replace(`#include <worldpos_vertex>`, `#include <worldpos_vertex>
-			//vec4 worldPosition = vec4( transformed, 1.0 );
-			//worldPosition = modelMatrix * worldPosition;
-
-			myPosition = (projectionMatrix * mvPosition).xy / 2.0 + vec2(0.5, 0.5);
-			`);
-            shader.vertexShader = shader.vertexShader.replace(`#include <uv_vertex>`, `
-			#ifdef USE_UV
-			vUv = ( myUvTransform * vec3( uv, 1 ) ).xy;
-			#endif
-			`);
-            shader.fragmentShader = shader.fragmentShader.replace(`#include <map_pars_fragment>`, `
-			#include <map_pars_fragment>
-			varying vec2 myPosition;
-			uniform sampler2D tMask;
-			uniform vec3 maskColor;
-			`);
-            shader.fragmentShader = shader.fragmentShader.replace(`#include <map_fragment>`, `
-			#include <map_fragment>
-			#ifdef MASKED
-			vec4 texelColor = texture2D( tMask, myPosition );
-			
-			texelColor.rgb = mix(texelColor.rgb, maskColor, 0.7);
-			
-			if (texelColor.a > 0.5)
-			diffuseColor.rgb = texelColor.rgb;
-			#endif
-			`);
-        };
-        return material;
-    }
-
-    var testing_chamber;
-    (function (testing_chamber) {
-        testing_chamber.started = false;
-        function start() {
-            console.log(' start testing chamber ');
-            console.log('placing squares on game area that should take up 1:1 pixels on screen...');
-            console.log('...regardless of your os or browsers dpi setting');
-            document.title = 'testing chamber';
-            wastes.gview.zoom = 1;
-            wastes.gview.wpos = [0, 0];
-            wastes.gview.rpos = lod$1.unproject([0, 0]);
-            hooks.register('sectorShow', (x) => {
-                console.log('(testing chamber) show sector');
-                return false;
-            });
-            hooks.register('viewRClick', (view) => {
-                console.log(' asteorid! ');
-                let ping = new Asteroid;
-                ping.wpos = pts.add(wastes.gview.mwpos, [-1, -1]);
-                lod$1.add(ping);
-                return false;
-            });
-            lod$1.SectorSpan = 4;
-            lod$1.ggrid = new lod$1.grid(1, 1);
-            lod$1.project = function (unit) { return pts.mult(unit, 100); };
-            lod$1.unproject = function (pixel) { return pts.divide(pixel, 100); };
-            for (let y = 0; y < 20; y++) {
-                for (let x = 0; x < 20; x++) {
-                    let square = Square.make();
-                    square.wpos = [x, y];
-                    lod$1.add(square);
-                }
-            }
-            testing_chamber.started = true;
-        }
-        testing_chamber.start = start;
-        function tick() {
-        }
-        testing_chamber.tick = tick;
-        class Asteroid extends lod$1.obj {
-            constructor() {
-                super(undefined);
-                this.size = [100, 100];
-                this.float = pts.make((Math.random() - 0.5) / Asteroid.slowness, (Math.random() - 0.5) / Asteroid.slowness);
-                this.rate = (Math.random() - 0.5) / (Asteroid.slowness * 6);
-            }
-            create() {
-                this.size = [200, 200];
-                new sprite({
-                    binded: this,
-                    tuple: sprites$1.asteroid
-                });
-            }
-            tick() {
-                this.wpos[0] += this.float[0];
-                this.wpos[1] -= this.float[1];
-                this.ro += this.rate;
-                super.obj_manual_update();
-                lod$1.sector.swap(this);
-            }
-        }
-        Asteroid.slowness = 12;
-        testing_chamber.Asteroid = Asteroid;
-        class Square extends lod$1.obj {
-            static make() {
-                return new Square;
-            }
-            constructor() {
-                super(undefined);
-                console.log('square');
-            }
-            create() {
-                console.log('create');
-                this.size = [100, 100];
-                let shape = new sprite({
-                    binded: this,
-                    tuple: sprites$1.test100
-                });
-                shape.dimetric = false;
-            }
-            tick() {
-                let shape = this.shape;
-                if (shape.mousing(wastes.gview.mrpos))
-                    shape.mesh.material.color.set('green');
-                else
-                    shape.material.color.set('white');
-            }
-        }
-        testing_chamber.Square = Square;
-    })(testing_chamber || (testing_chamber = {}));
-    var testing_chamber$1 = testing_chamber;
-
-    var tests;
-    (function (tests) {
-        function start() {
-            mouserock.start();
-        }
-        tests.start = start;
-        function tick() {
-            mouserock.tick();
-        }
-        tests.tick = tick;
-        class mouserock {
-            static start() {
-                {
-                    this.obj = new lod$1.obj();
-                    this.obj.shape = new sprite({ binded: this.obj, tuple: sprites$1.asteroid });
-                    //this.obj.show();
-                    //let daisy = this.obj.shape as sprite;
-                    //ren.scene.add(daisy.mesh);
-                }
-            }
-            static tick() {
-                var _a;
-                if (this.obj) {
-                    this.obj.rpos = wastes.gview.mrpos;
-                    (_a = this.obj.shape) === null || _a === void 0 ? void 0 : _a.shape_manual_update();
-                    this.obj.shape;
-                }
-            }
-        }
-        tests.mouserock = mouserock;
-    })(tests || (tests = {}));
-    var tests$1 = tests;
-
     var colormap;
     (function (colormap_1) {
         colormap_1.mapSpan = 100;
@@ -1476,68 +1073,64 @@ void main() {
     })(colormap || (colormap = {}));
     var colormap$1 = colormap;
 
-    var shadows;
-    (function (shadows) {
-        // takes care of shadows cast by tree-leaves and walls
-        const default_shade = 1.0;
-        shadows.data = [];
-        function shade(pos, amount, set = false) {
-            if (!set)
-                shadows.data[pos[1]][pos[0]] -= amount;
-            else if (set && amount)
-                shadows.data[pos[1]][pos[0]] = amount;
-            if (shadows.data[pos[1]][pos[0]] < 0)
-                shadows.data[pos[1]][pos[0]] = 0;
-            const tile = tiles$1.get(pos);
-            if (tile)
-                tile.refresh = true;
-        }
-        shadows.shade = shade;
-        function shade_matrix(pos, matrix, set = false) {
-            for (let y = 0; y < matrix.length; y++) {
-                for (let x = 0; x < matrix[y].length; x++) {
-                    let negx = -Math.floor(matrix[y].length / 2) + x;
-                    let negy = -Math.floor(matrix[y].length / 2) + y;
-                    //console.log([negx, negy]);
-                    let pos2 = pts.add(pos, [negx, negy]);
-                    shade(pos2, matrix[y][x], set);
-                    //shade
-                }
-            }
-            tiles$1.get(pos).refresh = true;
-        }
-        shadows.shade_matrix = shade_matrix;
-        function get_amount(pos) {
-            if (shadows.data[pos[1]])
-                return shadows.data[pos[1]][pos[0]] || 0;
-            else
-                return default_shade;
-        }
-        shadows.get_amount = get_amount;
-        // shades the color by multplication
-        function mix(a, pos) {
-            const n = get_amount(pos);
-            let dupe = [a[0], a[1], a[2]];
-            dupe[0] = a[0] * n;
-            dupe[1] = a[1] * n;
-            dupe[2] = a[2] * n;
-            return dupe;
-        }
-        shadows.mix = mix;
+    var sprites;
+    (function (sprites) {
         function start() {
-            for (let y = 0; y < colormap$1.mapSpan; y++) {
-                this.data[y] = [];
-                for (let x = 0; x < colormap$1.mapSpan; x++) {
-                    this.data[y][x] = default_shade;
-                }
-            }
         }
-        shadows.start = start;
-        function tick() {
+        sprites.start = start;
+        sprites.test100 = [[100, 100], [100, 100], 0, 'tex/test100'];
+        sprites.asteroid = [[512, 512], [512, 512], 0, 'tex/pngwing.com'];
+        sprites.dfence = [[72, 30], [24, 30], 0, 'tex/dfence'];
+        sprites.shrubs = [[24, 15], [24, 15], 0, 'tex/shrubs'];
+        sprites.dtile = [[24, 12], [24, 12], 0, 'tex/dtile'];
+        sprites.dwater = [[24, 12], [24, 12], 0, 'tex/8bit/dwater'];
+        sprites.dtile4 = [[24, 17], [24, 17], 0, 'tex/dtileup4'];
+        sprites.dgrass = [[96, 30], [24, 31], 0, 'tex/dgrass'];
+        sprites.dwheat = [[96, 30], [24, 31], 0, 'tex/dwheat'];
+        sprites.dpanel = [[48, 10], [8, 10], 0, 'tex/dpanel'];
+        sprites.dswamptiles = [[96, 30], [24, 30], 0, 'tex/dswamptiles'];
+        sprites.dtilesand = [[24, 17], [24, 17], 0, 'tex/dtilesand'];
+        sprites.dgraveltiles = [[96, 30], [24, 30], 0, 'tex/8bit/dgraveltiles'];
+        sprites.ddeadtreetrunk = [[24, 50], [24, 50], 0, 'tex/8bit/dtreetrunkdead'];
+        sprites.ddecidtreetrunk = [[24, 50], [24, 50], 0, 'tex/8bit/dtreetrunk'];
+        sprites.dtreeleaves = [[24, 31], [24, 31], 0, 'tex/8bit/dtreeleaves'];
+        sprites.dvines = [[24, 31], [24, 31], 0, 'tex/8bit/dvines'];
+        sprites.dvines2 = [[24, 31], [24, 31], 0, 'tex/8bit/dvines2'];
+        sprites.dvines3 = [[24, 31], [24, 31], 0, 'tex/8bit/dvines3'];
+        //export const dwall: tuple = [[96, 40], [24, 40], 0, 'tex/dwalls']
+        sprites.dporch = [[72, 17], [24, 17], 0, 'tex/8bit/dporch'];
+        sprites.drails = [[72, 17], [24, 17], 0, 'tex/8bit/drails'];
+        sprites.ddeck = [[72, 17], [24, 17], 0, 'tex/8bit/ddeck'];
+        sprites.droof = [[72, 17], [24, 17], 0, 'tex/8bit/droof'];
+        sprites.dcrate = [[24, 40], [24, 40], 0, 'tex/8bit/dcrate'];
+        sprites.dshelves = [[20, 31], [20, 31], 0, 'tex/8bit/dshelves'];
+        sprites.ddoor = [[192, 40], [24, 40], 0, 'tex/8bit/ddoor'];
+        sprites.dsquarebarrel = [[24, 26], [24, 26], 0, 'tex/8bit/dsquarebarrel'];
+        sprites.dwoodywalls = [[264, 40], [24, 40], 0, 'tex/8bit/dwoodywalls'];
+        sprites.dplywoodwalls = [[264, 40], [24, 40], 0, 'tex/8bit/dcommonwalls'];
+        sprites.dovergrownwalls = [[264, 40], [24, 40], 0, 'tex/8bit/dovergrownwalls'];
+        sprites.dderingerwalls = [[264, 40], [24, 40], 0, 'tex/8bit/dderingerwalls'];
+        sprites.dmedievalwalls = [[264, 40], [24, 40], 0, 'tex/8bit/dmedievalwalls'];
+        sprites.dscrappywalls = [[264, 40], [24, 40], 0, 'tex/dscrappywalls'];
+        //export const dscrappywalls2: tuple = [[216, 40], [24, 40], 0, 'tex/dscrappywalls2']
+        sprites.druddywalls = [[288, 40], [24, 40], 0, 'tex/druddywalls'];
+        sprites.dacidbarrel = [[24, 35], [24, 35], 0, 'tex/dacidbarrel'];
+        sprites.dfalsefronts = [[192, 40], [24, 40], 0, 'tex/8bit/dfalsefronts'];
+        sprites.dtree1 = [[121, 147], [121, 147], 0, 'tex/dtree1b'];
+        sprites.pchris = [[90, 180], [90, 180], 0, 'tex/pawn/pwaster_quintuple'];
+        sprites.pchris_lowres = [[19, 41], [19, 41], 0, 'tex/pawn/pwaster'];
+        function get_uv_transform(cell, tuple) {
+            let divide = pts.divides(tuple[1], tuple[0]);
+            let offset = pts.mults(divide, cell);
+            let repeat = divide;
+            let center = [0, 1];
+            let mat = new THREE.Matrix3;
+            mat.setUvTransform(offset[0], offset[1], repeat[0], repeat[1], 0, center[0], center[1]);
+            return mat;
         }
-        shadows.tick = tick;
-    })(shadows || (shadows = {}));
-    var shadows$1 = shadows;
+        sprites.get_uv_transform = get_uv_transform;
+    })(sprites || (sprites = {}));
+    var sprites$1 = sprites;
 
     var tiles;
     (function (tiles) {
@@ -1594,8 +1187,8 @@ void main() {
             }
         }
         tiles.tick = tick;
-        const color_shallow_water = [40, 120, 130, 255];
-        const color_deep_water = [20, 100, 110, 255];
+        const color_shallow_water = [40, 120, 130];
+        const color_deep_water = [20, 100, 110];
         class tile extends lod$1.obj {
             constructor(wpos) {
                 super(numbers.tiles);
@@ -1613,7 +1206,7 @@ void main() {
                     this.type = 'land';
                     this.size = [24, 30];
                     this.tuple = sprites$1.dgraveltiles;
-                    this.color = [60, 60, 60, 255];
+                    this.color = [60, 60, 60];
                     this.height = 6;
                     this.cell = [1, 0];
                 }
@@ -1669,11 +1262,12 @@ void main() {
             create() {
                 if (this.isLand) {
                     this.color = wastes.colormap.pixel(this.wpos).arrayRef;
-                    this.color = shadows$1.mix(this.color, this.wpos);
+                    //this.color = shadows.mult_pos(
+                    //	this.color as unknown as vec3, this.wpos) as unknown as vec4;
                 }
                 // really great z based bias
                 this.superiorBias = this.z / 6;
-                let shape = new sprite({
+                let shape = new sprite$1({
                     binded: this,
                     tuple: this.tuple,
                     cell: this.cell,
@@ -1681,6 +1275,7 @@ void main() {
                     opacity: this.opacity,
                     orderBias: this.superiorBias
                 });
+                shape.shadowAmount = shadows$1.get_amount(this.wpos);
                 // if we have a deck, add it to heightAdd
                 let sector = lod$1.gworld.at(lod$1.world.big(this.wpos));
                 let at = sector.stacked(this.wpos);
@@ -1702,22 +1297,23 @@ void main() {
                     last.hide();
                     last.show();
                 }
-                sprite.mesh.material.color.set('#768383');
+                //sprite.mesh.material.color.set('#768383');
                 tile.lastHover = this;
             }
             paint() {
                 const sprite = this.shape;
                 if (!sprite || !sprite.mesh)
                     return;
-                sprite.mesh.material.color.set('red');
+                //sprite.mesh.material.color.set('red');
             }
             tick() {
-                this.shape;
+                const sprite = this.shape;
                 if (this.refresh) {
                     this.refresh = false;
                     this.hide();
                     this.show();
                 }
+                sprite.shape_manual_update();
                 //if (pawns.you && pts.equals(this.wpos, pts.round(pawns.you.wpos))) {
                 //this.paint();
                 //}
@@ -1726,6 +1322,437 @@ void main() {
         tiles.tile = tile;
     })(tiles || (tiles = {}));
     var tiles$1 = tiles;
+
+    var shadows;
+    (function (shadows) {
+        // takes care of shadows cast by tree-leaves and walls
+        const default_shade = 1.0;
+        shadows.data = [];
+        function shade(pos, amount, set = false) {
+            if (!set)
+                shadows.data[pos[1]][pos[0]] -= amount;
+            else if (set && amount)
+                shadows.data[pos[1]][pos[0]] = amount;
+            if (shadows.data[pos[1]][pos[0]] < 0)
+                shadows.data[pos[1]][pos[0]] = 0;
+            const tile = tiles$1.get(pos);
+            if (tile)
+                tile.refresh = true;
+        }
+        shadows.shade = shade;
+        function shade_matrix(pos, matrix, set = false) {
+            for (let y = 0; y < matrix.length; y++) {
+                for (let x = 0; x < matrix[y].length; x++) {
+                    let negx = -Math.floor(matrix[y].length / 2) + x;
+                    let negy = -Math.floor(matrix[y].length / 2) + y;
+                    //console.log([negx, negy]);
+                    let pos2 = pts.add(pos, [negx, negy]);
+                    shade(pos2, matrix[y][x], set);
+                    //shade
+                }
+            }
+            tiles$1.get(pos).refresh = true;
+        }
+        shadows.shade_matrix = shade_matrix;
+        function get_amount(pos) {
+            if (shadows.data[pos[1]])
+                return shadows.data[pos[1]][pos[0]] || 0;
+            else
+                return default_shade;
+        }
+        shadows.get_amount = get_amount;
+        // shades the color by multplication
+        function mult_pos(a, pos) {
+            const amount = get_amount(pos);
+            return mult(a, amount);
+        }
+        shadows.mult_pos = mult_pos;
+        function mult(a, amount = 1.0) {
+            let b = [...a];
+            b[0] *= amount;
+            b[1] *= amount;
+            b[2] *= amount;
+            return b;
+        }
+        shadows.mult = mult;
+        function start() {
+            for (let y = 0; y < colormap$1.mapSpan; y++) {
+                this.data[y] = [];
+                for (let x = 0; x < colormap$1.mapSpan; x++) {
+                    this.data[y][x] = default_shade;
+                }
+            }
+        }
+        shadows.start = start;
+        function tick() {
+        }
+        shadows.tick = tick;
+    })(shadows || (shadows = {}));
+    var shadows$1 = shadows;
+
+    // hovering sprites was made for contextmenu to get a more accurate sprite
+    var hovering_sprites;
+    (function (hovering_sprites) {
+        hovering_sprites.sprites = [];
+        function hover(sprite) {
+            let i = hovering_sprites.sprites.indexOf(sprite);
+            if (i == -1)
+                hovering_sprites.sprites.push(sprite);
+        }
+        hovering_sprites.hover = hover;
+        function unhover(sprite) {
+            let i = hovering_sprites.sprites.indexOf(sprite);
+            if (i != -1)
+                hovering_sprites.sprites.splice(i, 1);
+        }
+        hovering_sprites.unhover = unhover;
+        function sort_closest_to_mouse() {
+            hovering_sprites.sprites.sort((a, b) => {
+                const dist_a = pts.distsimple(wastes.gview.mrpos, a.aabbScreen.center());
+                const dist_b = pts.distsimple(wastes.gview.mrpos, b.aabbScreen.center());
+                if (dist_a < dist_b)
+                    return -1;
+                else
+                    return 1;
+            });
+        }
+        hovering_sprites.sort_closest_to_mouse = sort_closest_to_mouse;
+    })(hovering_sprites || (hovering_sprites = {}));
+    var planes = {};
+    function get_plane_geometry(size) {
+        const key = size[0] + ',' + size[1];
+        if (planes[key])
+            return planes[key];
+        else {
+            const geometry = new THREE.PlaneGeometry(size[0], size[1], 1, 1);
+            planes[key] = geometry;
+            return planes[key];
+        }
+    }
+    class sprite extends lod$1.shape {
+        constructor(vars) {
+            super(vars.binded, numbers.sprites);
+            this.vars = vars;
+            this.writez = true;
+            this.dimetric = true;
+            this.subsize = [0, 0];
+            this.rup = 0;
+            this.rup2 = 0;
+            this.rleft = 0;
+            this.shadowAmount = 1.0;
+            this.calc = [0, 0];
+            this.roffset = [0, 0];
+            if (!this.vars.color)
+                this.vars.color = [255, 255, 255];
+            if (!this.vars.cell)
+                this.vars.cell = [0, 0];
+            if (!this.vars.orderBias)
+                this.vars.orderBias = 0;
+            if (!this.vars.opacity)
+                this.vars.opacity = 1;
+            this.myUvTransform = new THREE.Matrix3;
+            this.myUvTransform.setUvTransform(0, 0, 1, 1, 0, 0, 1);
+        }
+        bound() {
+            let size = this.vars.binded.size;
+            if (pts.together(this.subsize))
+                size = this.subsize;
+            let calc = this.calc;
+            this.aabbScreen = new aabb2([0, 0], size);
+            calc = pts.subtract(calc, pts.divide(size, 2));
+            //calc = pts.add(calc, [this.rleft, this.rup + this.rup2]);
+            this.aabbScreen.translate(calc);
+        }
+        mousing(mouse) {
+            var _a;
+            if ((_a = this.aabbScreen) === null || _a === void 0 ? void 0 : _a.test(new aabb2(mouse, mouse)))
+                return true;
+        }
+        dispose() {
+            var _a, _b, _c, _d;
+            if (!this.mesh)
+                return;
+            hovering_sprites.unhover(this);
+            (_a = this.geometry) === null || _a === void 0 ? void 0 : _a.dispose();
+            (_b = this.material) === null || _b === void 0 ? void 0 : _b.dispose();
+            (_c = this.mesh.parent) === null || _c === void 0 ? void 0 : _c.remove(this.mesh);
+            if (this.vars.mask)
+                (_d = this.meshMask.parent) === null || _d === void 0 ? void 0 : _d.remove(this.meshMask);
+        }
+        shape_manual_update() {
+            if (!this.mesh)
+                return;
+            const obj = this.vars.binded;
+            let calc = obj.rpos;
+            if (this.dimetric)
+                // move bottom left corner
+                calc = pts.add(obj.rpos, pts.divide(obj.size, 2));
+            //else
+            //	calc = pts.add(obj.rpos, [0, obj.size[1]]);
+            calc = pts.add(calc, [this.rleft, this.rup + this.rup2]);
+            let color = this.vars.color;
+            if (this.vars.binded.sector.color) {
+                let hex = this.vars.binded.sector.color;
+                this.material.color.setStyle(hex);
+                this.material.color.toArray(color);
+                //color = [color[0] * 255, color[1] * 255, color[2] * 255];
+            }
+            else {
+                color = shadows$1.mult(color, this.shadowAmount);
+                this.material.color.fromArray([color[0] / 255, color[1] / 255, color[2] / 255]);
+            }
+            this.calc = calc;
+            this.bound();
+            if (this.mesh) {
+                this.retransform();
+                this.mesh.position.fromArray([...calc, 0]);
+                // Not rounding gives us much better depth
+                let pos = obj.wpos; // pts.round(obj.wpos);
+                // Experimental z elevation based bias!
+                let zBasedBias = 0;
+                //zBasedBias = this.vars.binded.z / 3;
+                this.mesh.renderOrder = -pos[1] + pos[0] + this.vars.orderBias + zBasedBias;
+                this.mesh.rotation.z = this.vars.binded.ro;
+                this.mesh.updateMatrix();
+                this.mesh.updateMatrixWorld(false);
+                if (this.vars.mask) {
+                    this.meshMask.position.fromArray([...calc, 0]);
+                    this.meshMask.renderOrder = -pos[1] + pos[0] + this.vars.orderBias;
+                    this.meshMask.updateMatrix();
+                }
+            }
+        }
+        retransform() {
+            this.myUvTransform.copy(sprites$1.get_uv_transform(this.vars.cell, this.vars.tuple));
+        }
+        create() {
+            //console.log('create');
+            this.vars.binded;
+            this.retransform();
+            this.geometry = get_plane_geometry(this.vars.binded.size);
+            /*
+            let color;
+            if (this.vars.binded!.sector!.color) {
+                color = new Color(this.vars.binded.sector!.color);
+            }
+            else {
+                const c = this.vars.color || [255, 255, 255, 255];
+                color = new Color(`rgb(${Math.round(c[0])},${Math.round(c[1])},${Math.round(c[2])})`);
+            }
+            */
+            let defines = {};
+            if (this.vars.masked) {
+                defines.MASKED = 1;
+            }
+            const c = this.vars.maskColor || [0.15, 0.3, 0.15];
+            const maskColor = new THREE.Vector3(c[0], c[1], c[2]);
+            this.material = SpriteMaterial({
+                map: ren$1.load_texture(`${this.vars.tuple[3]}.png`, 0),
+                transparent: true,
+                color: 'white',
+                opacity: this.vars.opacity,
+                depthWrite: false,
+                depthTest: false,
+            }, {
+                myUvTransform: this.myUvTransform,
+                masked: this.vars.masked,
+                maskColor: maskColor
+            }, defines);
+            this.mesh = new THREE.Mesh(this.geometry, this.material);
+            this.mesh.frustumCulled = false;
+            this.mesh.matrixAutoUpdate = false;
+            this.mesh.matrixWorldAutoUpdate = false;
+            if (this.vars.mask) {
+                this.meshMask = this.mesh.clone();
+                if (this.vars.negativeMask) {
+                    this.meshMask.material = this.material.clone();
+                    this.meshMask.material.blending = THREE__default["default"].CustomBlending;
+                    this.meshMask.material.blendEquation = THREE__default["default"].ReverseSubtractEquation;
+                }
+            }
+            // this.vars.binded.sector?.group.add(this.mesh);
+            ren$1.groups.axisSwap.add(this.mesh);
+            if (this.vars.mask)
+                ren$1.sceneMask.add(this.meshMask);
+            this.shape_manual_update();
+        }
+    }
+    sprite.masks = [];
+    function SpriteMaterial(parameters, uniforms, defines = {}) {
+        let material = new THREE.MeshLambertMaterial(parameters);
+        material.customProgramCacheKey = function () {
+            return 'spritemat';
+        };
+        material.name = "spritemat";
+        material.defines = defines;
+        material.onBeforeCompile = function (shader) {
+            shader.uniforms.myUvTransform = { value: uniforms.myUvTransform };
+            if (uniforms.masked) {
+                shader.uniforms.tMask = { value: ren$1.targetMask.texture };
+                shader.uniforms.maskColor = { value: uniforms.maskColor };
+                console.log('add tmask');
+            }
+            shader.vertexShader = shader.vertexShader.replace(`#include <common>`, `#include <common>
+			varying vec2 myPosition;
+			uniform mat3 myUvTransform;
+			`);
+            shader.vertexShader = shader.vertexShader.replace(`#include <worldpos_vertex>`, `#include <worldpos_vertex>
+			//vec4 worldPosition = vec4( transformed, 1.0 );
+			//worldPosition = modelMatrix * worldPosition;
+
+			myPosition = (projectionMatrix * mvPosition).xy / 2.0 + vec2(0.5, 0.5);
+			`);
+            shader.vertexShader = shader.vertexShader.replace(`#include <uv_vertex>`, `
+			#ifdef USE_UV
+			vUv = ( myUvTransform * vec3( uv, 1 ) ).xy;
+			#endif
+			`);
+            shader.fragmentShader = shader.fragmentShader.replace(`#include <map_pars_fragment>`, `
+			#include <map_pars_fragment>
+			varying vec2 myPosition;
+			uniform sampler2D tMask;
+			uniform vec3 maskColor;
+			`);
+            shader.fragmentShader = shader.fragmentShader.replace(`#include <map_fragment>`, `
+			#include <map_fragment>
+			#ifdef MASKED
+			vec4 texelColor = texture2D( tMask, myPosition );
+			
+			texelColor.rgb = mix(texelColor.rgb, maskColor, 0.7);
+			
+			if (texelColor.a > 0.5)
+			diffuseColor.rgb = texelColor.rgb;
+			#endif
+			`);
+        };
+        return material;
+    }
+    var sprite$1 = sprite;
+
+    var testing_chamber;
+    (function (testing_chamber) {
+        testing_chamber.started = false;
+        function start() {
+            console.log(' start testing chamber ');
+            console.log('placing squares on game area that should take up 1:1 pixels on screen...');
+            console.log('...regardless of your os or browsers dpi setting');
+            document.title = 'testing chamber';
+            wastes.gview.zoom = 1;
+            wastes.gview.wpos = [0, 0];
+            wastes.gview.rpos = lod$1.unproject([0, 0]);
+            hooks.register('sectorShow', (x) => {
+                console.log('(testing chamber) show sector');
+                return false;
+            });
+            hooks.register('viewRClick', (view) => {
+                console.log(' asteorid! ');
+                let ping = new Asteroid;
+                ping.wpos = pts.add(wastes.gview.mwpos, [-1, -1]);
+                lod$1.add(ping);
+                return false;
+            });
+            lod$1.SectorSpan = 4;
+            lod$1.ggrid = new lod$1.grid(1, 1);
+            lod$1.project = function (unit) { return pts.mult(unit, 100); };
+            lod$1.unproject = function (pixel) { return pts.divide(pixel, 100); };
+            for (let y = 0; y < 20; y++) {
+                for (let x = 0; x < 20; x++) {
+                    let square = Square.make();
+                    square.wpos = [x, y];
+                    lod$1.add(square);
+                }
+            }
+            testing_chamber.started = true;
+        }
+        testing_chamber.start = start;
+        function tick() {
+        }
+        testing_chamber.tick = tick;
+        class Asteroid extends lod$1.obj {
+            constructor() {
+                super(undefined);
+                this.size = [100, 100];
+                this.float = pts.make((Math.random() - 0.5) / Asteroid.slowness, (Math.random() - 0.5) / Asteroid.slowness);
+                this.rate = (Math.random() - 0.5) / (Asteroid.slowness * 6);
+            }
+            create() {
+                this.size = [200, 200];
+                new sprite$1({
+                    binded: this,
+                    tuple: sprites$1.asteroid
+                });
+            }
+            tick() {
+                this.wpos[0] += this.float[0];
+                this.wpos[1] -= this.float[1];
+                this.ro += this.rate;
+                super.obj_manual_update();
+                lod$1.sector.swap(this);
+            }
+        }
+        Asteroid.slowness = 12;
+        testing_chamber.Asteroid = Asteroid;
+        class Square extends lod$1.obj {
+            static make() {
+                return new Square;
+            }
+            constructor() {
+                super(undefined);
+                console.log('square');
+            }
+            create() {
+                console.log('create');
+                this.size = [100, 100];
+                let shape = new sprite$1({
+                    binded: this,
+                    tuple: sprites$1.test100
+                });
+                shape.dimetric = false;
+            }
+            tick() {
+                let shape = this.shape;
+                if (shape.mousing(wastes.gview.mrpos))
+                    shape.mesh.material.color.set('green');
+                else
+                    shape.material.color.set('white');
+            }
+        }
+        testing_chamber.Square = Square;
+    })(testing_chamber || (testing_chamber = {}));
+    var testing_chamber$1 = testing_chamber;
+
+    var tests;
+    (function (tests) {
+        function start() {
+            mouserock.start();
+        }
+        tests.start = start;
+        function tick() {
+            mouserock.tick();
+        }
+        tests.tick = tick;
+        class mouserock {
+            static start() {
+                {
+                    this.obj = new lod$1.obj();
+                    this.obj.shape = new sprite$1({ binded: this.obj, tuple: sprites$1.asteroid });
+                    //this.obj.show();
+                    //let daisy = this.obj.shape as sprite;
+                    //ren.scene.add(daisy.mesh);
+                }
+            }
+            static tick() {
+                var _a;
+                if (this.obj) {
+                    this.obj.rpos = wastes.gview.mrpos;
+                    (_a = this.obj.shape) === null || _a === void 0 ? void 0 : _a.shape_manual_update();
+                    this.obj.shape;
+                }
+            }
+        }
+        tests.mouserock = mouserock;
+    })(tests || (tests = {}));
+    var tests$1 = tests;
 
     var colors;
     (function (colors) {
@@ -1764,10 +1791,9 @@ void main() {
             this.paintTimer = 0;
             this.paintedRed = false;
             this.cell = [0, 0];
-            this.set_shadow = (input) => {
+            this.set_shadow_amount = (input) => {
                 const sprite = this.shape;
-                input = shadows$1.mix(input, pts.round(this.wpos));
-                sprite.material.color.fromArray(input); // 0-1 based
+                sprite.shadowAmount = shadows$1.get_amount(pts.round(this.wpos));
             };
         }
         rebound() {
@@ -1790,15 +1816,12 @@ void main() {
         }
         hovering_pass() {
             const sprite = this.shape;
-            let color = [1, 1, 1];
             if (sprite.mousing(wastes.gview.mrpos)) {
-                color = [0.7, 1.0, 0.7];
                 hovering_sprites.hover(sprite);
             }
             else {
                 hovering_sprites.unhover(sprite);
             }
-            return color;
         }
         tick() {
             //this.superobject_hovering_pass();
@@ -1806,12 +1829,11 @@ void main() {
                 this.paintTimer += ren$1.delta;
                 if (this.paintTimer > 1) {
                     this.shape;
-                    this.set_shadow([1, 1, 1]);
-                    //sprite.material.color.set('white');
                     this.paintedRed = false;
                     this.paintTimer = 0;
                 }
             }
+            this.obj_manual_update();
         }
         //update(): void {
         //	this.tiled();
@@ -6656,7 +6678,7 @@ void main() {
         create() {
             //console.log('builing create');
             //this.size = [24, 40];
-            let shape = new sprite({
+            let shape = new sprite$1({
                 binded: this,
                 tuple: sprites$1.test100,
                 cell: [0, 0],
@@ -6851,7 +6873,7 @@ void main() {
                 else if (((_f = this.hints) === null || _f === void 0 ? void 0 : _f.type) == 'ruddy')
                     tuple = sprites$1.druddywalls;
                 else ;
-                new sprite({
+                new sprite$1({
                     binded: this,
                     tuple: tuple,
                     cell: this.cell,
@@ -6878,7 +6900,7 @@ void main() {
                 this.size = [24, 17];
                 //if (this.pixel!.array[3] < 240)
                 //	this.cell = [240 - this.pixel!.array[3], 0];
-                new sprite({
+                new sprite$1({
                     binded: this,
                     tuple: sprites$1.ddeck,
                     cell: this.cell,
@@ -6914,15 +6936,13 @@ void main() {
                 this.size = [24, 17];
                 //if (this.pixel!.array[3] < 240)
                 //	this.cell = [240 - this.pixel!.array[3], 0];
-                let color = [255, 255, 255];
-                color = shadows$1.mix(color, this.wpos);
-                new sprite({
+                let shape = new sprite$1({
                     binded: this,
                     tuple: sprites$1.dporch,
                     cell: this.cell,
-                    orderBias: 0.1,
-                    color: color
+                    orderBias: 0.1
                 });
+                shape.shadowAmount = shadows$1.get_amount(pts.round(this.wpos));
                 this.stack();
             }
         }
@@ -6940,7 +6960,7 @@ void main() {
                 this.size = [24, 17];
                 //if (this.pixel!.array[3] < 240)
                 //	this.cell = [240 - this.pixel!.array[3], 0];
-                new sprite({
+                new sprite$1({
                     binded: this,
                     tuple: sprites$1.drails,
                     cell: this.cell,
@@ -6963,7 +6983,7 @@ void main() {
             create() {
                 this.rebound();
                 this.size = [24, 50];
-                new sprite({
+                new sprite$1({
                     binded: this,
                     tuple: sprites$1.ddeadtreetrunk,
                     orderBias: 0.6,
@@ -6985,14 +7005,12 @@ void main() {
             create() {
                 this.rebound();
                 this.size = [24, 26];
-                let color = [255, 255, 255];
-                color = shadows$1.mix(color, this.wpos);
-                new sprite({
+                let shape = new sprite$1({
                     binded: this,
                     tuple: sprites$1.dsquarebarrel,
-                    orderBias: 1.0,
-                    color: color
+                    orderBias: 1.0
                 });
+                shape.shadowAmount = shadows$1.get_amount(pts.round(this.wpos));
                 this.stack();
             }
         }
@@ -7010,7 +7028,7 @@ void main() {
                 this.size = [24, 50];
                 //if (this.pixel!.array[3] < 240)
                 //	this.cell = [240 - this.pixel!.array[3], 0];
-                new sprite({
+                new sprite$1({
                     binded: this,
                     tuple: sprites$1.ddecidtreetrunk,
                     orderBias: 1.0,
@@ -7078,7 +7096,7 @@ void main() {
                 //this.try_create_vines();
                 //if (this.pixel!.array[3] < 240)
                 //	this.cell = [240 - this.pixel!.array[3], 0];
-                let color = this.hints.color || [255, 255, 255, 255];
+                let color = this.hints.color || [1, 1, 1];
                 let color2 = wastes.colormap.pixel(this.wpos);
                 if (!(255 - color2.arrayRef[3])) {
                     if (this.hints.color) {
@@ -7089,7 +7107,7 @@ void main() {
                             color[3],
                         ];
                     }
-                    let shape = new sprite({
+                    let shape = new sprite$1({
                         binded: this,
                         tuple: tuple,
                         orderBias: 0.7,
@@ -7141,11 +7159,10 @@ void main() {
                 color = [
                     Math.floor(color[0] * 1.5),
                     Math.floor(color[1] * 1.5),
-                    Math.floor(color[2] * 2.0),
-                    color[3],
+                    Math.floor(color[2] * 2.0)
                 ];
                 this.cell = [255 - this.pixel.arrayRef[3], 0];
-                new sprite({
+                new sprite$1({
                     binded: this,
                     tuple: sprites$1.dgrass,
                     cell: this.cell,
@@ -7167,7 +7184,7 @@ void main() {
                 this.size = [24, 30];
                 //let color =  tiles.get(this.wpos)!.color;
                 //this.cell = [Math.floor(Math.random() * 2), 0];
-                new sprite({
+                new sprite$1({
                     binded: this,
                     tuple: sprites$1.dwheat,
                     cell: this.cell,
@@ -7191,7 +7208,7 @@ void main() {
                 //let color =  tiles.get(this.wpos)!.color;
                 //this.cell = [Math.floor(Math.random() * 2), 0];
                 //return;
-                let shape = new sprite({
+                let shape = new sprite$1({
                     binded: this,
                     tuple: sprites$1.dpanel,
                     cell: [0, 0],
@@ -7230,7 +7247,7 @@ void main() {
             create() {
                 this.rebound();
                 this.size = [24, 40];
-                new sprite({
+                new sprite$1({
                     binded: this,
                     tuple: sprites$1.dcrate,
                     cell: this.cell,
@@ -7268,7 +7285,7 @@ void main() {
                 this.size = [20, 31];
                 //this.cell = [255 - this.pixel!.array[3], 0];
                 //return
-                new sprite({
+                new sprite$1({
                     binded: this,
                     tuple: sprites$1.dshelves,
                     //cell: this.cell,
@@ -7318,7 +7335,7 @@ void main() {
                 //return;
                 this.rebound();
                 this.size = [24, 17];
-                let shape = new sprite({
+                let shape = new sprite$1({
                     binded: this,
                     tuple: sprites$1.droof,
                     orderBias: 1.0,
@@ -7358,7 +7375,7 @@ void main() {
                 this.rebound();
                 this.cell = [255 - this.pixel.arrayRef[3], 0];
                 this.size = [24, 40];
-                new sprite({
+                new sprite$1({
                     binded: this,
                     tuple: sprites$1.dfalsefronts,
                     cell: this.cell,
@@ -7390,7 +7407,7 @@ void main() {
                 this.size = [24, 40];
                 if (this.pixel)
                     this.cell = [255 - this.pixel.arrayRef[3], 0];
-                new sprite({
+                new sprite$1({
                     binded: this,
                     tuple: sprites$1.ddoor,
                     cell: this.cell,
@@ -7437,7 +7454,7 @@ void main() {
             }
             create() {
                 this.size = [24, 15];
-                new sprite({
+                new sprite$1({
                     binded: this,
                     tuple: sprites$1.shrubs,
                     orderBias: .5
@@ -8176,7 +8193,7 @@ void main() {
                 this.rebound();
                 this.size = pts.divide([25, 30], 1);
                 //this.subsize = [25, 40];
-                let shape = new sprite({
+                let shape = new sprite$1({
                     binded: this,
                     tuple: sprites$1.test100,
                     //opacity: 0.5,
@@ -8482,18 +8499,9 @@ void main() {
                 this.rebound();
                 //this.tile?.paint();
                 //this.sector?.swap(this);
-                let input = [1, 1, 1];
                 const sprite = this.shape;
-                // We could have been nulled due to a hide, dispose
-                if (sprite) {
-                    input = this.hovering_pass();
-                    if (this.tile && this.tile.hasDeck == false) {
-                        this.set_shadow(input);
-                    }
-                }
-                else {
-                    console.warn('no chicken sprite?????');
-                }
+                sprite.shadowAmount = shadows$1.get_amount(pts.round(this.wpos));
+                this.hovering_pass();
                 this.stack(['pawn', 'you', 'chicken', 'tree', 'leaves', 'wall', 'door', 'roof', 'falsefront', 'panel']);
                 //sprite.roffset = [.5, .5];
                 //this.tile!.paint();
@@ -8558,7 +8566,7 @@ void main() {
             create() {
                 this.rebound();
                 this.size = pts.divide([50, 40], 1);
-                let shape = new sprite({
+                let shape = new sprite$1({
                     binded: this,
                     tuple: sprites$1.test100,
                     cell: this.cell,
@@ -8804,15 +8812,8 @@ void main() {
                 //this.tile?.paint();
                 lod$1.sector.swap(this);
                 // shade the pawn
-                let input = [1, 1, 1];
-                const sprite = this.shape;
-                // We could have been nulled due to a hide, dispose
-                if (sprite) {
-                    input = this.hovering_pass();
-                    if (this.tile && this.tile.hasDeck == false) {
-                        this.set_shadow(input);
-                    }
-                }
+                this.shape;
+                this.hovering_pass();
                 if (this.type == 'you') ;
                 this.stack(['pawn', 'zombie', 'you', 'tree', 'chicken', 'shelves', 'leaves', 'wall', 'door', 'roof', 'falsefront', 'panel']);
                 super.obj_manual_update();
@@ -9146,7 +9147,7 @@ void main() {
                 {
                     this.size = pts.divide([50, 40], 1);
                 }
-                let shape = new sprite({
+                let shape = new sprite$1({
                     binded: this,
                     tuple: sprites$1.test100,
                     cell: this.cell,
@@ -9272,7 +9273,8 @@ void main() {
                 if (this.made)
                     return;
                 this.made = true;
-                const headSize = 5.5;
+                const headSize = 6;
+                const helmetSize = headSize + .5;
                 const gasMaskSize = 2.5;
                 const legsSize = 4;
                 const legsHeight = 12;
@@ -9298,6 +9300,7 @@ void main() {
                     width / sizes[0], 0, width / sizes[0], 1, 0, 0, 1));
                     for (let i in transforms) {
                         materials.push(SpriteMaterial({
+                            transparent: true,
                             map: ren$1.load_texture(path, 0),
                         }, {
                             myUvTransform: transforms[i]
@@ -9305,8 +9308,13 @@ void main() {
                     }
                     return materials;
                 };
+                let materialsHelmet = transforme(8, 8, 5, `tex/pawn/helmet.png`);
                 let materialsBody = transforme(bodyThick, bodyWidth, bodyHeight, `tex/pawn/body.png`);
                 transforme(armsSize, armsSize, armsHeight, `tex/pawn/arms.png`);
+                let boxHelmet = new THREE.BoxGeometry(helmetSize, 5, helmetSize, 1, 1, 1);
+                new THREE.MeshLambertMaterial({
+                    color: '#383936'
+                });
                 let boxHead = new THREE.BoxGeometry(headSize, headSize, headSize, 1, 1, 1);
                 let materialHead = new THREE.MeshLambertMaterial({
                     color: this.outfit[0]
@@ -9363,6 +9371,7 @@ void main() {
                 this.meshes.water.position.y = -bodyHeight * 1.2;
                 this.meshes.water.updateMatrix();
                 this.meshes.water.visible = false;
+                this.meshes.helmet = new THREE.Mesh(boxHelmet, materialsHelmet);
                 this.meshes.head = new THREE.Mesh(boxHead, materialHead);
                 this.meshes.gasMask = new THREE.Mesh(boxGasMask, materialGasMask);
                 this.meshes.body = new THREE.Mesh(boxBody, materialsBody);
@@ -9403,6 +9412,7 @@ void main() {
                 this.groups.gunbarrel.add(this.meshes.gunbarrel);*/
                 /*this.groups.gungrip.add(this.groups.gunbarrel);
                 this.groups.armr.add(this.groups.gungrip);*/
+                this.groups.head.add(this.meshes.helmet);
                 this.groups.body.add(this.groups.head);
                 this.groups.body.add(this.groups.arml);
                 this.groups.body.add(this.groups.armr);
@@ -9413,6 +9423,7 @@ void main() {
                 this.groups.basis.add(this.meshes.water);
                 this.groups.basis.add(this.meshes.shade);
                 //this.groups.handr.add(new AxesHelper(10));
+                this.meshes.helmet.position.set(0, 2, 0);
                 this.groups.handr.position.set(0, -armsHeight, 0);
                 this.groups.head.position.set(0, bodyHeight / 2 + headSize / 2, 0);
                 this.groups.gasMask.position.set(0, -headSize / 2, headSize / 1.5);
@@ -9672,14 +9683,16 @@ void main() {
                 this.animateBodyParts();
                 this.render();
                 lod$1.sector.swap(this);
-                let input = [1, 1, 1];
-                // after a sector swap we could be deconstructed
+                // after a sector swap we could be destroyed
                 const sprite = this.shape;
                 if (sprite) {
-                    input = this.hovering_pass();
-                    if (this.tile && this.tile.hasDeck == false) {
-                        this.set_shadow(input);
+                    if (this.tile && this.tile.hasDeck) {
+                        sprite.shadowAmount = 1.0;
                     }
+                    else {
+                        sprite.shadowAmount = shadows$1.get_amount(pts.round(this.wpos));
+                    }
+                    this.hovering_pass();
                 }
                 if (this.type == 'you') ;
                 this.stack(['pawn', 'you', 'zombie', 'tree', 'chicken', 'shelves', 'grass', 'leaves', 'wall', 'door', 'roof', 'falsefront', 'panel']);

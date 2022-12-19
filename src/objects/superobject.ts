@@ -43,23 +43,18 @@ export class superobject extends lod.obj {
 	}
 	nettick() {
 	}
-	set_shadow = (input) => {
+	set_shadow_amount = (input) => {
 		const sprite = this.shape as sprite;
-		input = shadows.mix(
-			input, pts.round(this.wpos));
-		sprite.material.color.fromArray(input); // 0-1 based
+		sprite.shadowAmount = shadows.get_amount(pts.round(this.wpos));
 	}
 	hovering_pass() {
 		const sprite = this.shape as sprite;
-		let color = [1, 1, 1] as vec3;
 		if (sprite.mousing(wastes.gview.mrpos)) {
-			color = [0.7, 1.0, 0.7];
 			hovering_sprites.hover(sprite);
 		}
 		else {
 			hovering_sprites.unhover(sprite);
 		}
-		return color;
 	}
 	tick() {
 		//this.superobject_hovering_pass();
@@ -67,13 +62,11 @@ export class superobject extends lod.obj {
 			this.paintTimer += ren.delta;
 			if (this.paintTimer > 1) {
 				const sprite = this.shape as sprite;
-				this.set_shadow([1, 1, 1]);
-				
-				//sprite.material.color.set('white');
 				this.paintedRed = false;
 				this.paintTimer = 0;
 			}
 		}
+		this.obj_manual_update();
 	}
 	//update(): void {
 	//	this.tiled();

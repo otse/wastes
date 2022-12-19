@@ -410,9 +410,9 @@ const loop = () => {
 };
 
 const outfits: [head: string, body: string, arms: string, legs: string][] = [
-	['#2f302e', '#414439', '#444139', '#3e3f38'], // default
+	//['#2f302e', '#414439', '#444139', '#3e3f38'], // default
 	['#2c3136', '#3a3935', '#3a3935', '#35393a'], // blueish
-	['#474348', '#454049', '#454049', '#484c4c'], // pink
+	//['#474348', '#454049', '#454049', '#484c4c'], // pink
 ]
 
 class supersobj extends slod.sobj {
@@ -932,7 +932,7 @@ class zombie extends npc {
 }
 
 async function boot() {
-	
+
 	await start();
 
 	setInterval(loop, tick_rate);
@@ -943,7 +943,6 @@ async function boot() {
 		connections.push(con);
 
 		console.log('players: ', connections.length);
-
 
 		ws.on('message', (data) => {
 
