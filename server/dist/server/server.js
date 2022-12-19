@@ -1,4 +1,13 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -38,18 +47,26 @@ function sample(a) {
     return a[Math.floor(Math.random() * a.length)];
 }
 function start() {
-    new slod_1.default.sworld();
-    // will observe the trashy vendor and shadow chicken
-    //let villageVantage = new slod.sgrid(slod.gworld, 2, 2);
-    heightmap = new maps_1.default.scolormap('heightmap');
-    buildingmap = new maps_1.default.scolormap('buildingmap');
-    treemap = new maps_1.default.scolormap('treemap');
-    objectmap = new maps_1.default.scolormap('objectmap');
-    colormap = new maps_1.default.scolormap('colormap');
-    // wait for pngs to load
-    setTimeout(start2, 1000);
+    return __awaiter(this, void 0, void 0, function* () {
+        new slod_1.default.sworld();
+        // will always observe the trashy vendor and shadow chicken
+        //let villageVantage = new slod.sgrid(slod.gworld, 2, 2);
+        heightmap = new maps_1.default.scolormap('heightmap');
+        buildingmap = new maps_1.default.scolormap('buildingmap');
+        treemap = new maps_1.default.scolormap('treemap');
+        objectmap = new maps_1.default.scolormap('objectmap');
+        colormap = new maps_1.default.scolormap('colormap');
+        yield heightmap.read();
+        yield buildingmap.read();
+        yield treemap.read();
+        yield objectmap.read();
+        yield colormap.read();
+        console.log('awaited all map reads');
+        //await new Promise((resolve, reject) => {setTimeout(()=>resolve(1), 3000)});
+        registrations();
+    });
 }
-function start2() {
+function registrations() {
     function factory(type, pos, hints = {}) {
         let obj = new type;
         obj.wpos = pos;
@@ -62,11 +79,11 @@ function start2() {
             let pixel = treemap.pixel(pos);
             if (pixel.is_color(colors_1.default.color_decidtree)) {
                 factory(tree, pos);
-                console.log('decid tree', pos);
+                //console.log('decid tree', pos);
             }
             else if (pixel.is_color(colors_1.default.color_deadtree)) {
                 factory(tree, pos);
-                console.log('dead tree', pos);
+                //console.log('dead tree', pos);
             }
         });
         return false;
@@ -75,15 +92,7 @@ function start2() {
         pts_1.default.func(sector.small, (pos) => {
             pos = pts_1.default.subtract(pos, [0, 0]);
             let pixel = buildingmap.pixel(pos);
-            if (pixel.is_color(colors_1.default.color_decidtree)) {
-                factory(tree, pos);
-                console.log('decid tree', pos);
-            }
-            else if (pixel.is_color(colors_1.default.color_deadtree)) {
-                factory(tree, pos);
-                console.log('dead tree', pos);
-            }
-            else if (pixel.is_color(colors_1.default.color_plywood_wall)) {
+            if (pixel.is_color(colors_1.default.color_plywood_wall)) {
                 factory(wall, pos);
             }
             else if (pixel.is_color(colors_1.default.color_overgrown_wall)) {
@@ -106,6 +115,7 @@ function start2() {
             }
             else if (pixel.is_color(colors_1.default.color_shelves)) {
                 factory(shelves, pos);
+                console.log('shelves', pos);
             }
             else {
                 //let chick = new chicken;
@@ -436,7 +446,7 @@ class wall extends supersobj {
     constructor() {
         super();
         this.type = 'wall';
-        console.log('make wall');
+        //console.log('make wall');
     }
 }
 class door extends supersobj {
@@ -480,7 +490,7 @@ class container extends supersobj {
 class shelves extends container {
     constructor() {
         super();
-        console.log('shelves', 1);
+        //console.log('shelves', 1);
         this.type = 'shelves';
         //this.title = 'Shelves';
         this.inventory.add('stuff', 5);
@@ -813,22 +823,27 @@ class zombie extends npc {
         slod_1.default.add(npc);
     }
 }
-start();
-setInterval(loop, tick_rate);
-wss.on('connection', (ws) => {
-    let con = new connection(ws);
-    connections.push(con);
-    console.log('players: ', connections.length);
-    ws.on('message', (data) => {
-        const json = JSON.parse(data);
-        con.receive(json);
-        //console.log('received: %s', data);
+function boot() {
+    return __awaiter(this, void 0, void 0, function* () {
+        yield start();
+        setInterval(loop, tick_rate);
+        wss.on('connection', (ws) => {
+            let con = new connection(ws);
+            connections.push(con);
+            console.log('players: ', connections.length);
+            ws.on('message', (data) => {
+                const json = JSON.parse(data);
+                con.receive(json);
+                //console.log('received: %s', data);
+            });
+            ws.on('close', () => {
+                console.log('closing');
+                con.close();
+                const i = connections.indexOf(con);
+                connections.splice(i, 1);
+            });
+            //ws.send('something');
+        });
     });
-    ws.on('close', () => {
-        console.log('closing');
-        con.close();
-        const i = connections.indexOf(con);
-        connections.splice(i, 1);
-    });
-    //ws.send('something');
-});
+}
+boot();

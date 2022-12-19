@@ -40,25 +40,33 @@ function sample(a) {
 	return a[Math.floor(Math.random() * a.length)];
 }
 
-function start() {
+async function start() {
 
 	new slod.sworld();
 
-	// will observe the trashy vendor and shadow chicken
+	// will always observe the trashy vendor and shadow chicken
 	//let villageVantage = new slod.sgrid(slod.gworld, 2, 2);
 
-	heightmap = new maps.scolormap('heightmap')
-	buildingmap = new maps.scolormap('buildingmap')
-	treemap = new maps.scolormap('treemap')
-	objectmap = new maps.scolormap('objectmap')
-	colormap = new maps.scolormap('colormap')
+	heightmap = new maps.scolormap('heightmap');
+	buildingmap = new maps.scolormap('buildingmap');
+	treemap = new maps.scolormap('treemap');
+	objectmap = new maps.scolormap('objectmap');
+	colormap = new maps.scolormap('colormap');
 
-	// wait for pngs to load
-	setTimeout(start2, 1000);
+	await heightmap.read();
+	await buildingmap.read();
+	await treemap.read();
+	await objectmap.read();
+	await colormap.read();
+
+	console.log('awaited all map reads');
+
+	//await new Promise((resolve, reject) => {setTimeout(()=>resolve(1), 3000)});
+
+	registrations();
 }
 
-function start2() {
-
+function registrations() {
 
 	function factory<type extends supersobj>(type: { new(): type }, pos: vec2, hints = {}) {
 		let obj = new type;
@@ -73,11 +81,11 @@ function start2() {
 			let pixel = treemap.pixel(pos);
 			if (pixel.is_color(colors.color_decidtree)) {
 				factory(tree, pos);
-				console.log('decid tree', pos);
+				//console.log('decid tree', pos);
 			}
 			else if (pixel.is_color(colors.color_deadtree)) {
 				factory(tree, pos);
-				console.log('dead tree', pos);
+				//console.log('dead tree', pos);
 			}
 		});
 		return false;
@@ -87,16 +95,7 @@ function start2() {
 		pts.func(sector.small, (pos) => {
 			pos = pts.subtract(pos, [0, 0])
 			let pixel = buildingmap.pixel(pos);
-			if (pixel.is_color(colors.color_decidtree)) {
-				factory(tree, pos);
-				console.log('decid tree', pos);
-			}
-			else if (pixel.is_color(colors.color_deadtree)) {
-				factory(tree, pos);
-				console.log('dead tree', pos);
-			}
-
-			else if (pixel.is_color(colors.color_plywood_wall)) {
+			if (pixel.is_color(colors.color_plywood_wall)) {
 				factory(wall, pos);
 			}
 			else if (pixel.is_color(colors.color_overgrown_wall)) {
@@ -120,6 +119,7 @@ function start2() {
 			}
 			else if (pixel.is_color(colors.color_shelves)) {
 				factory(shelves, pos);
+				console.log('shelves', pos);
 			}
 			else {
 				//let chick = new chicken;
@@ -144,14 +144,14 @@ function start2() {
 	slod.add(vendor);
 
 	for (let i = 0; i < 1; i++) {
-	let guard = new pawn;
-	guard.wpos = [45, 56];
-	//peacekeeper.outfit = []
-	guard.dialogue = 3;
-	guard.title = 'Guard';
-	guard.subtype = 'guard';
-	guard.walkArea = new aabb2([43, 51], [46, 58]);
-	slod.add(guard);
+		let guard = new pawn;
+		guard.wpos = [45, 56];
+		//peacekeeper.outfit = []
+		guard.dialogue = 3;
+		guard.title = 'Guard';
+		guard.subtype = 'guard';
+		guard.walkArea = new aabb2([43, 51], [46, 58]);
+		slod.add(guard);
 	}
 
 	let zomb = new zombie;
@@ -180,12 +180,12 @@ function start2() {
 
 
 	//for (let i = 0; i < 10; i++) {
-		let shadowChicken = new chicken;
-		shadowChicken.wpos = [42, 53];
-		shadowChicken.respawns = true;
-		shadowChicken.examine = 'This chicken likes the shadow.';
-		shadowChicken.walkArea = new aabb2([41, 54], [43, 51]);
-		slod.add(shadowChicken);
+	let shadowChicken = new chicken;
+	shadowChicken.wpos = [42, 53];
+	shadowChicken.respawns = true;
+	shadowChicken.examine = 'This chicken likes the shadow.';
+	shadowChicken.walkArea = new aabb2([41, 54], [43, 51]);
+	slod.add(shadowChicken);
 	//}
 }
 
@@ -489,8 +489,7 @@ class wall extends supersobj {
 	constructor() {
 		super();
 		this.type = 'wall';
-		console.log('make wall');
-
+		//console.log('make wall');
 	}
 }
 
@@ -539,7 +538,7 @@ class container extends supersobj {
 class shelves extends container {
 	constructor() {
 		super();
-		console.log('shelves', 1);
+		//console.log('shelves', 1);
 		this.type = 'shelves';
 		//this.title = 'Shelves';
 		this.inventory.add('stuff', 5);
@@ -932,36 +931,40 @@ class zombie extends npc {
 	}
 }
 
+async function boot() {
+	
+	await start();
 
-start();
+	setInterval(loop, tick_rate);
 
-setInterval(loop, tick_rate);
+	wss.on('connection', (ws) => {
 
-wss.on('connection', (ws) => {
+		let con = new connection(ws);
+		connections.push(con);
 
-	let con = new connection(ws);
-	connections.push(con);
-
-	console.log('players: ', connections.length);
+		console.log('players: ', connections.length);
 
 
-	ws.on('message', (data) => {
+		ws.on('message', (data) => {
 
-		const json = JSON.parse(data);
+			const json = JSON.parse(data);
 
-		con.receive(json);
+			con.receive(json);
 
-		//console.log('received: %s', data);
+			//console.log('received: %s', data);
 
+		});
+
+		ws.on('close', () => {
+			console.log('closing');
+			con.close();
+			const i = connections.indexOf(con);
+			connections.splice(i, 1);
+		});
+
+
+		//ws.send('something');
 	});
+}
 
-	ws.on('close', () => {
-		console.log('closing');
-		con.close();
-		const i = connections.indexOf(con);
-		connections.splice(i, 1);
-	});
-
-
-	//ws.send('something');
-});
+boot();

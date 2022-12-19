@@ -25,7 +25,10 @@ var maps;
             this.name = name;
             this.pixels = [];
             this.size = [sizeOfMap, sizeOfMap];
-            this.read();
+            //this.read();
+        }
+        then(resolve, reject) {
+            resolve(this);
         }
         normalize(pos) {
             pos[1] = sizeOfMap - pos[1];
@@ -48,30 +51,33 @@ var maps;
         }
         read() {
             const { name, pixels } = this;
-            fs_1.default.createReadStream(`../${name}.png`)
-                .pipe(new pngjs_1.PNG({
-                filterType: 4,
-            }))
-                .on("parsed", function () {
-                for (var y = 0; y < this.height; y++) {
-                    pixels[y] = [];
-                    for (var x = 0; x < this.width; x++) {
-                        var idx = (this.width * y + x) << 2;
-                        // invert color
-                        /*this.data[idx] = 255 - this.data[idx];
-                        this.data[idx + 1] = 255 - this.data[idx + 1];
-                        this.data[idx + 2] = 255 - this.data[idx + 2];*/
-                        pixels[y][x] = [
-                            this.data[idx],
-                            this.data[idx + 1],
-                            this.data[idx + 2],
-                            this.data[idx + 3],
-                        ];
-                        // and reduce opacity
-                        //this.data[idx + 3] = this.data[idx + 3] >> 1;
+            return new Promise((resolve, reject) => {
+                fs_1.default.createReadStream(`../${name}.png`)
+                    .pipe(new pngjs_1.PNG({
+                    filterType: 4,
+                }))
+                    .on("parsed", function () {
+                    for (var y = 0; y < this.height; y++) {
+                        pixels[y] = [];
+                        for (var x = 0; x < this.width; x++) {
+                            var idx = (this.width * y + x) << 2;
+                            // invert color
+                            /*this.data[idx] = 255 - this.data[idx];
+                            this.data[idx + 1] = 255 - this.data[idx + 1];
+                            this.data[idx + 2] = 255 - this.data[idx + 2];*/
+                            pixels[y][x] = [
+                                this.data[idx],
+                                this.data[idx + 1],
+                                this.data[idx + 2],
+                                this.data[idx + 3],
+                            ];
+                            // and reduce opacity
+                            //this.data[idx + 3] = this.data[idx + 3] >> 1;
+                        }
                     }
-                }
-                //this.pack().pipe(fs.createWriteStream("out.png"));
+                    //this.pack().pipe(fs.createWriteStream("out.png"));
+                    resolve(1);
+                });
             });
         }
     }

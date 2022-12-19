@@ -13,14 +13,14 @@ var TEST;
     TEST[TEST["Overlap"] = 2] = "Overlap";
 })(TEST || (TEST = {}));
 class aabb2 {
+    static dupe(bb) {
+        return new aabb2(bb.min, bb.max);
+    }
     constructor(a, b) {
         this.min = this.max = [...a];
         if (b) {
             this.extend(b);
         }
-    }
-    static dupe(bb) {
-        return new aabb2(bb.min, bb.max);
     }
     extend(v) {
         this.min = pts_1.default.min(this.min, v);

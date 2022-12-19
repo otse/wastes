@@ -141,14 +141,14 @@ var wastes = (function (exports, THREE) {
         TEST[TEST["Overlap"] = 2] = "Overlap";
     })(TEST || (TEST = {}));
     class aabb2 {
+        static dupe(bb) {
+            return new aabb2(bb.min, bb.max);
+        }
         constructor(a, b) {
             this.min = this.max = [...a];
             if (b) {
                 this.extend(b);
             }
-        }
-        static dupe(bb) {
-            return new aabb2(bb.min, bb.max);
         }
         extend(v) {
             this.min = pts.min(this.min, v);
@@ -7505,6 +7505,17 @@ void main() {
         }
         win_1.is_hovering = is_hovering;
         class modal {
+            checker(event) {
+                var touch = event;
+                let hovering = false;
+                for (let element of this.polyfill) {
+                    if (element == document.elementFromPoint(touch.pageX, touch.pageY)) {
+                        hovering = true;
+                        break;
+                    }
+                }
+                this.hovering = hovering;
+            }
             constructor(title) {
                 this.polyfill = [];
                 this.element = document.createElement('div');
@@ -7527,17 +7538,6 @@ void main() {
                 this.content.innerHTML = 'content';
                 this.element.append(this.content);
                 win.append(this.element);
-            }
-            checker(event) {
-                var touch = event;
-                let hovering = false;
-                for (let element of this.polyfill) {
-                    if (element == document.elementFromPoint(touch.pageX, touch.pageY)) {
-                        hovering = true;
-                        break;
-                    }
-                }
-                this.hovering = hovering;
             }
             update(title) {
                 if (title)
@@ -9110,6 +9110,7 @@ void main() {
 
     var pawns;
     (function (pawns) {
+        const armsAngle = .1;
         class pawn extends superobject {
             constructor() {
                 super(numbers.pawns);
@@ -9277,7 +9278,6 @@ void main() {
                 const legsHeight = 12;
                 const armsSize = 3;
                 const armsHeight = 12;
-                const armsAngle = .0;
                 const bodyThick = 5;
                 const bodyWidth = 8;
                 const bodyHeight = 12;
@@ -9305,7 +9305,7 @@ void main() {
                     }
                     return materials;
                 };
-                transforme(bodyThick, bodyWidth, bodyHeight, `tex/pawn/body.png`);
+                let materialsBody = transforme(bodyThick, bodyWidth, bodyHeight, `tex/pawn/body.png`);
                 transforme(armsSize, armsSize, armsHeight, `tex/pawn/arms.png`);
                 let boxHead = new THREE.BoxGeometry(headSize, headSize, headSize, 1, 1, 1);
                 let materialHead = new THREE.MeshLambertMaterial({
@@ -9316,8 +9316,12 @@ void main() {
                     color: this.outfit[0]
                 });
                 let boxBody = new THREE.BoxGeometry(bodyWidth, bodyHeight, bodyThick, 1, 1, 1);
-                let materialBody = new THREE.MeshLambertMaterial({
+                new THREE.MeshLambertMaterial({
                     color: this.outfit[1]
+                });
+                let boxVest = new THREE.BoxGeometry(bodyWidth + 2, bodyHeight + 1, bodyThick + 1, 1, 1, 1);
+                let materialVest = new THREE.MeshLambertMaterial({
+                    color: '#33302b'
                 });
                 let boxArms = new THREE.BoxGeometry(armsSize, armsHeight, armsSize, 1, 1, 1);
                 let materialArms = new THREE.MeshLambertMaterial({
@@ -9361,7 +9365,9 @@ void main() {
                 this.meshes.water.visible = false;
                 this.meshes.head = new THREE.Mesh(boxHead, materialHead);
                 this.meshes.gasMask = new THREE.Mesh(boxGasMask, materialGasMask);
-                this.meshes.body = new THREE.Mesh(boxBody, materialBody);
+                this.meshes.body = new THREE.Mesh(boxBody, materialsBody);
+                this.meshes.vest = new THREE.Mesh(boxVest, materialVest);
+                //this.meshes.vest.position.y = 1;
                 this.meshes.arml = new THREE.Mesh(boxArms, materialArms);
                 this.meshes.armr = new THREE.Mesh(boxArms, materialArms);
                 this.meshes.legl = new THREE.Mesh(boxLegs, materialLegs);
@@ -9386,6 +9392,7 @@ void main() {
                 this.groups.head.add(this.meshes.head);
                 this.groups.gasMask.add(this.meshes.gasMask);
                 this.groups.body.add(this.meshes.body);
+                this.groups.body.add(this.meshes.vest);
                 this.groups.arml.add(this.meshes.arml);
                 this.groups.armr.add(this.meshes.armr);
                 this.groups.legl.add(this.meshes.legl);
@@ -9547,9 +9554,9 @@ void main() {
                     this.groups.legl.rotation.x = swoop1 * legsSwoop * this.walkSmoother;
                     this.groups.legr.rotation.x = swoop2 * legsSwoop * this.walkSmoother;
                     this.groups.arml.rotation.x = swoop1 * armsSwoop * this.walkSmoother;
-                    this.groups.arml.rotation.z = 0;
+                    this.groups.arml.rotation.z = armsAngle;
                     this.groups.armr.rotation.x = swoop2 * armsSwoop * this.walkSmoother;
-                    this.groups.armr.rotation.z = 0;
+                    this.groups.armr.rotation.z = -armsAngle;
                     this.groups.handr.rotation.x = 0;
                     this.groups.handr.rotation.z = 0;
                     if (this.gun && !this.gun.handgun) {
@@ -9686,6 +9693,11 @@ void main() {
 
     // the view manages what it sees
     class view {
+        static make() {
+            return new view;
+        }
+        chart(big) {
+        }
         constructor() {
             this.zoom = 0.33;
             this.zoomIndex = 3;
@@ -9700,11 +9712,6 @@ void main() {
             this.show = true;
             new lod$1.world(10);
             this.rpos = lod$1.project(this.wpos);
-        }
-        static make() {
-            return new view;
-        }
-        chart(big) {
         }
         tick() {
             lod$1.ggrid.ticks();

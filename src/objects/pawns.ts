@@ -27,6 +27,8 @@ export namespace pawns {
 
 	const wasterSprite = false;
 
+	const armsAngle = .1;
+
 
 	type inventory = { stamp: number, tuples: [string, number][] }
 
@@ -229,7 +231,6 @@ export namespace pawns {
 			const legsHeight = 12;
 			const armsSize = 3;
 			const armsHeight = 12;
-			const armsAngle = .0;
 			const bodyThick = 5;
 			const bodyWidth = 8;
 			const bodyHeight = 12;
@@ -283,6 +284,11 @@ export namespace pawns {
 				color: this.outfit[1]
 			});
 
+			let boxVest = new BoxGeometry(bodyWidth + 2, bodyHeight + 1, bodyThick + 1, 1, 1, 1);
+			let materialVest = new MeshLambertMaterial({
+				color: '#33302b'
+			});
+
 			let boxArms = new BoxGeometry(armsSize, armsHeight, armsSize, 1, 1, 1);
 			let materialArms = new MeshLambertMaterial({
 				color: this.outfit[2]
@@ -331,7 +337,9 @@ export namespace pawns {
 
 			this.meshes.head = new Mesh(boxHead, materialHead);
 			this.meshes.gasMask = new Mesh(boxGasMask, materialGasMask);
-			this.meshes.body = new Mesh(boxBody, materialBody);
+			this.meshes.body = new Mesh(boxBody, materialsBody);
+			this.meshes.vest = new Mesh(boxVest, materialVest);
+			//this.meshes.vest.position.y = 1;
 
 			this.meshes.arml = new Mesh(boxArms, materialArms);
 			this.meshes.armr = new Mesh(boxArms, materialArms);
@@ -364,6 +372,7 @@ export namespace pawns {
 			this.groups.head.add(this.meshes.head);
 			this.groups.gasMask.add(this.meshes.gasMask);
 			this.groups.body.add(this.meshes.body);
+			this.groups.body.add(this.meshes.vest);
 			this.groups.arml.add(this.meshes.arml);
 			this.groups.armr.add(this.meshes.armr);
 			this.groups.legl.add(this.meshes.legl);
@@ -567,9 +576,9 @@ export namespace pawns {
 				this.groups.legl.rotation.x = swoop1 * legsSwoop * this.walkSmoother;
 				this.groups.legr.rotation.x = swoop2 * legsSwoop * this.walkSmoother;
 				this.groups.arml.rotation.x = swoop1 * armsSwoop * this.walkSmoother;
-				this.groups.arml.rotation.z = 0;
+				this.groups.arml.rotation.z = armsAngle;
 				this.groups.armr.rotation.x = swoop2 * armsSwoop * this.walkSmoother;
-				this.groups.armr.rotation.z = 0;
+				this.groups.armr.rotation.z = -armsAngle;
 				this.groups.handr.rotation.x = 0;
 				this.groups.handr.rotation.z = 0;
 				if (this.gun && !this.gun.handgun) {

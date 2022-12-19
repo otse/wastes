@@ -21,7 +21,10 @@ namespace maps {
 		pixels: vec4[][] = []
 		size: vec2 = [sizeOfMap, sizeOfMap]
 		constructor(private name: string) {
-			this.read();
+			//this.read();
+		}
+		then(resolve, reject) {
+			resolve(this);
 		}
 		normalize(pos: vec2) {
 			pos[1] = sizeOfMap - pos[1];
@@ -44,37 +47,40 @@ namespace maps {
 		}
 		read() {
 			const { name, pixels } = this;
-			fs.createReadStream(`../${name}.png`)
-				.pipe(
-					new PNG({
-						filterType: 4,
-					})
-				)
-				.on("parsed", function () {
-					for (var y = 0; y < this.height; y++) {
-						pixels[y] = [];
-						for (var x = 0; x < this.width; x++) {
-							var idx = (this.width * y + x) << 2;
+			return new Promise((resolve, reject) => {
+				fs.createReadStream(`../${name}.png`)
+					.pipe(
+						new PNG({
+							filterType: 4,
+						})
+					)
+					.on("parsed", function () {
+						for (var y = 0; y < this.height; y++) {
+							pixels[y] = [];
+							for (var x = 0; x < this.width; x++) {
+								var idx = (this.width * y + x) << 2;
 
-							// invert color
-							/*this.data[idx] = 255 - this.data[idx];
-							this.data[idx + 1] = 255 - this.data[idx + 1];
-							this.data[idx + 2] = 255 - this.data[idx + 2];*/
+								// invert color
+								/*this.data[idx] = 255 - this.data[idx];
+								this.data[idx + 1] = 255 - this.data[idx + 1];
+								this.data[idx + 2] = 255 - this.data[idx + 2];*/
 
-							pixels[y][x] = [
-								this.data[idx],
-								this.data[idx + 1],
-								this.data[idx + 2],
-								this.data[idx + 3],
-							]
+								pixels[y][x] = [
+									this.data[idx],
+									this.data[idx + 1],
+									this.data[idx + 2],
+									this.data[idx + 3],
+								]
 
-							// and reduce opacity
-							//this.data[idx + 3] = this.data[idx + 3] >> 1;
+								// and reduce opacity
+								//this.data[idx + 3] = this.data[idx + 3] >> 1;
+							}
 						}
-					}
 
-					//this.pack().pipe(fs.createWriteStream("out.png"));
-				});
+						//this.pack().pipe(fs.createWriteStream("out.png"));
+						resolve(1);
+					});
+			})
 		}
 	}
 }
