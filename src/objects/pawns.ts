@@ -27,7 +27,7 @@ export namespace pawns {
 
 	const wasterSprite = false;
 
-	const armsAngle = .1;
+	const armsAngle = .025;
 
 
 	type inventory = { stamp: number, tuples: [string, number][] }
@@ -271,7 +271,7 @@ export namespace pawns {
 			let materialsBody = transforme(bodyThick, bodyWidth, bodyHeight, `tex/pawn/body.png`);
 			let materialsArms = transforme(armsSize, armsSize, armsHeight, `tex/pawn/arms.png`);
 
-			let boxHelmet = new BoxGeometry(helmetSize, 5, helmetSize, 1, 1, 1);
+			let boxHelmet = new BoxGeometry(helmetSize, 5, helmetSize, 1, 1, 1); 
 			let materialHelmet = new MeshLambertMaterial({
 				color: '#383936'
 			});
@@ -395,7 +395,7 @@ export namespace pawns {
 			/*this.groups.gungrip.add(this.groups.gunbarrel);
 			this.groups.armr.add(this.groups.gungrip);*/
 
-			this.groups.head.add(this.meshes.helmet);
+			//this.groups.head.add(this.meshes.helmet);
 
 			this.groups.body.add(this.groups.head);
 			this.groups.body.add(this.groups.arml);
@@ -589,8 +589,8 @@ export namespace pawns {
 				this.groups.legr.rotation.x = swoop2 * legsSwoop * this.walkSmoother;
 				this.groups.arml.rotation.x = swoop1 * armsSwoop * this.walkSmoother;
 				this.groups.arml.rotation.z = armsAngle;
-				this.groups.armr.rotation.x = swoop2 * armsSwoop * this.walkSmoother;
 				this.groups.armr.rotation.z = -armsAngle;
+				this.groups.armr.rotation.x = swoop2 * armsSwoop * this.walkSmoother;
 				this.groups.handr.rotation.x = 0;
 				this.groups.handr.rotation.z = 0;
 				if (this.gun && !this.gun.handgun) {
@@ -632,6 +632,7 @@ export namespace pawns {
 				}
 				if (this.aiming) {
 					if (this.gun && this.gun.handgun) {
+						this.groups.armr.rotation.z = 0;
 						this.groups.armr.rotation.x = -Math.PI / 2;
 					}
 					else if (this.gun && !this.gun.handgun) {

@@ -14,7 +14,7 @@ void main() {
 }`
 
 const fragmentPost = `
-float saturation = 2.0;
+float saturation = 1.0;
 
 uniform int compression;
 
@@ -37,18 +37,15 @@ void main() {
 	vec4 clr = texture2D( tDiffuse, vUv );
 	clr.rgb = mix(clr.rgb, vec3(0.5), 0.0);
 	
-	/*
 	vec3 original_color = clr.rgb;
 	vec3 lumaWeights = vec3(.25,.50,.25);
 	vec3 grey = vec3(dot(lumaWeights,original_color));
 	vec4 outt = vec4(grey + saturation * (original_color - grey), 1.0);
-	*/
-	vec4 outt;
-	gl_FragColor = clr;
+	//gl_FragColor = outt;
+	
 	if (compression == 1) {
 	mainImage(clr, vUv, gl_FragColor);
 	}
-	//gl_FragColor = outt;
 }`
 
 

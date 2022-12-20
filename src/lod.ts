@@ -51,14 +51,14 @@ namespace lod {
 
 	const chunk_coloration = false;
 
-	const fog_of_war = false;
+	const fog_of_war = true;
 
 	const grid_crawl_makes_sectors = true;
 
 	export var gworld: world;
 	export var ggrid: grid;
 
-	export var SectorSpan = 3;
+	export var SectorSpan = 2;
 
 	export var stamp = 0; // used only by server slod
 
@@ -121,6 +121,7 @@ namespace lod {
 	export class sector extends toggle {
 		group: Group;
 		color?;
+		fog_of_war = false
 		readonly small: aabb2;
 		readonly objs: obj[] = [];
 		constructor(
@@ -269,10 +270,12 @@ namespace lod {
 				if (fog_of_war) {
 					if (sector.dist() == this.outside) {
 						//console.log('brim-chunk');
-						sector.color = '#555555';
+						sector.fog_of_war = true;
+						//sector.color = '#555555';
 					}
 					else {
-						sector.color = '#ffffff';
+						sector.fog_of_war = false;
+						//sector.color = '#ffffff';
 					}
 				}
 			}

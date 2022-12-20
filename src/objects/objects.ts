@@ -485,8 +485,7 @@ namespace objects {
 					color = [
 						Math.floor(color[0] * 1.6),
 						Math.floor(color[1] * 1.6),
-						Math.floor(color[2] * 1.6),
-						color[3],
+						Math.floor(color[2] * 1.6)
 					]
 				}
 				let shape = new sprite({

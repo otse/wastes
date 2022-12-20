@@ -371,7 +371,7 @@ var wastes = (function (exports, THREE) {
     var app$1 = app;
 
     const fragmentPost = `
-float saturation = 2.0;
+float saturation = 1.0;
 
 uniform int compression;
 
@@ -394,18 +394,15 @@ void main() {
 	vec4 clr = texture2D( tDiffuse, vUv );
 	clr.rgb = mix(clr.rgb, vec3(0.5), 0.0);
 	
-	/*
 	vec3 original_color = clr.rgb;
 	vec3 lumaWeights = vec3(.25,.50,.25);
 	vec3 grey = vec3(dot(lumaWeights,original_color));
 	vec4 outt = vec4(grey + saturation * (original_color - grey), 1.0);
-	*/
-	vec4 outt;
-	gl_FragColor = clr;
+	//gl_FragColor = outt;
+	
 	if (compression == 1) {
 	mainImage(clr, vUv, gl_FragColor);
 	}
-	//gl_FragColor = outt;
 }`;
     const vertexScreen = `
 varying vec2 vUv;
@@ -671,7 +668,7 @@ void main() {
     }
     var lod;
     (function (lod) {
-        lod.SectorSpan = 3;
+        lod.SectorSpan = 2;
         lod.stamp = 0; // used only by server slod
         function register() {
             // hooks.create('sectorCreate')
@@ -734,6 +731,7 @@ void main() {
                 super();
                 this.big = big;
                 this.world = world;
+                this.fog_of_war = false;
                 this.objs = [];
                 let min = pts.mult(this.big, lod.SectorSpan);
                 let max = pts.add(min, [lod.SectorSpan - 1, lod.SectorSpan - 1]);
@@ -866,6 +864,17 @@ void main() {
                     else {
                         sector.tick();
                         this.visibleObjs = this.visibleObjs.concat(sector.objs);
+                    }
+                    {
+                        if (sector.dist() == this.outside) {
+                            //console.log('brim-chunk');
+                            sector.fog_of_war = true;
+                            //sector.color = '#555555';
+                        }
+                        else {
+                            sector.fog_of_war = false;
+                            //sector.color = '#ffffff';
+                        }
                     }
                 }
             }
@@ -1480,6 +1489,7 @@ void main() {
                 (_d = this.meshMask.parent) === null || _d === void 0 ? void 0 : _d.remove(this.meshMask);
         }
         shape_manual_update() {
+            var _a;
             if (!this.mesh)
                 return;
             const obj = this.vars.binded;
@@ -1490,6 +1500,9 @@ void main() {
             //else
             //	calc = pts.add(obj.rpos, [0, obj.size[1]]);
             calc = pts.add(calc, [this.rleft, this.rup + this.rup2]);
+            if (this.material.shader) {
+                this.material.shader.uniforms.fogOfWar.value = (_a = obj.sector) === null || _a === void 0 ? void 0 : _a.fog_of_war;
+            }
             let color = this.vars.color;
             if (this.vars.binded.sector.color) {
                 let hex = this.vars.binded.sector.color;
@@ -1556,7 +1569,8 @@ void main() {
             }, {
                 myUvTransform: this.myUvTransform,
                 masked: this.vars.masked,
-                maskColor: maskColor
+                maskColor: maskColor,
+                fogOfWar: true
             }, defines);
             this.mesh = new THREE.Mesh(this.geometry, this.material);
             this.mesh.frustumCulled = false;
@@ -1586,7 +1600,9 @@ void main() {
         material.name = "spritemat";
         material.defines = defines;
         material.onBeforeCompile = function (shader) {
+            material.shader = shader; // hack
             shader.uniforms.myUvTransform = { value: uniforms.myUvTransform };
+            shader.uniforms.fogOfWar = { value: uniforms.fogOfWar };
             if (uniforms.masked) {
                 shader.uniforms.tMask = { value: ren$1.targetMask.texture };
                 shader.uniforms.maskColor = { value: uniforms.maskColor };
@@ -1604,7 +1620,7 @@ void main() {
 			`);
             shader.vertexShader = shader.vertexShader.replace(`#include <uv_vertex>`, `
 			#ifdef USE_UV
-			vUv = ( myUvTransform * vec3( uv, 1 ) ).xy;
+				vUv = ( myUvTransform * vec3( uv, 1 ) ).xy;
 			#endif
 			`);
             shader.fragmentShader = shader.fragmentShader.replace(`#include <map_pars_fragment>`, `
@@ -1612,17 +1628,24 @@ void main() {
 			varying vec2 myPosition;
 			uniform sampler2D tMask;
 			uniform vec3 maskColor;
+			uniform bool fogOfWar;
 			`);
             shader.fragmentShader = shader.fragmentShader.replace(`#include <map_fragment>`, `
 			#include <map_fragment>
 			#ifdef MASKED
-			vec4 texelColor = texture2D( tMask, myPosition );
-			
-			texelColor.rgb = mix(texelColor.rgb, maskColor, 0.7);
-			
-			if (texelColor.a > 0.5)
-			diffuseColor.rgb = texelColor.rgb;
+				vec4 texelColor = texture2D( tMask, myPosition );
+				texelColor.rgb = mix(texelColor.rgb, maskColor, 0.7);
+				if (texelColor.a > 0.5)
+				diffuseColor.rgb = texelColor.rgb;
 			#endif
+			
+			if (fogOfWar) {
+				float saturation = 0.0;
+				vec3 original_color = diffuseColor.rgb;
+				vec3 lumaWeights = vec3(.25,.50,.25);
+				vec3 grey = vec3(dot(lumaWeights, original_color));
+				diffuseColor.rgb = grey + saturation * (original_color - grey);
+			}
 			`);
         };
         return material;
@@ -7103,8 +7126,7 @@ void main() {
                         color = [
                             Math.floor(color[0] * 1.6),
                             Math.floor(color[1] * 1.6),
-                            Math.floor(color[2] * 1.6),
-                            color[3],
+                            Math.floor(color[2] * 1.6)
                         ];
                     }
                     let shape = new sprite$1({
@@ -9111,7 +9133,7 @@ void main() {
 
     var pawns;
     (function (pawns) {
-        const armsAngle = .1;
+        const armsAngle = .025;
         class pawn extends superobject {
             constructor() {
                 super(numbers.pawns);
@@ -9412,7 +9434,7 @@ void main() {
                 this.groups.gunbarrel.add(this.meshes.gunbarrel);*/
                 /*this.groups.gungrip.add(this.groups.gunbarrel);
                 this.groups.armr.add(this.groups.gungrip);*/
-                this.groups.head.add(this.meshes.helmet);
+                //this.groups.head.add(this.meshes.helmet);
                 this.groups.body.add(this.groups.head);
                 this.groups.body.add(this.groups.arml);
                 this.groups.body.add(this.groups.armr);
@@ -9566,8 +9588,8 @@ void main() {
                     this.groups.legr.rotation.x = swoop2 * legsSwoop * this.walkSmoother;
                     this.groups.arml.rotation.x = swoop1 * armsSwoop * this.walkSmoother;
                     this.groups.arml.rotation.z = armsAngle;
-                    this.groups.armr.rotation.x = swoop2 * armsSwoop * this.walkSmoother;
                     this.groups.armr.rotation.z = -armsAngle;
+                    this.groups.armr.rotation.x = swoop2 * armsSwoop * this.walkSmoother;
                     this.groups.handr.rotation.x = 0;
                     this.groups.handr.rotation.z = 0;
                     if (this.gun && !this.gun.handgun) {
@@ -9602,6 +9624,7 @@ void main() {
                     }
                     if (this.aiming) {
                         if (this.gun && this.gun.handgun) {
+                            this.groups.armr.rotation.z = 0;
                             this.groups.armr.rotation.x = -Math.PI / 2;
                         }
                         else if (this.gun && !this.gun.handgun) {

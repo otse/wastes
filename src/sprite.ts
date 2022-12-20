@@ -147,6 +147,9 @@ export class sprite extends lod.shape {
 
 		calc = pts.add(calc, [this.rleft, this.rup + this.rup2]);
 
+		if (this.material.shader) {
+			this.material.shader.uniforms.fogOfWar.value = obj.sector?.fog_of_war;
+		}
 		let color = this.vars.color!;
 
 		if (this.vars.binded.sector!.color) {
@@ -234,7 +237,8 @@ export class sprite extends lod.shape {
 		}, {
 			myUvTransform: this.myUvTransform,
 			masked: this.vars.masked,
-			maskColor: maskColor
+			maskColor: maskColor,
+			fogOfWar: true
 		}, defines);
 		this.mesh = new Mesh(this.geometry, this.material);
 		this.mesh.frustumCulled = false;
@@ -276,8 +280,11 @@ export function SpriteMaterial(parameters: MeshLambertMaterialParameters, unifor
 	material.name = "spritemat";
 	material.defines = defines;
 	material.onBeforeCompile = function (shader: Shader) {
+		material.shader = shader; // hack
 
 		shader.uniforms.myUvTransform = { value: uniforms.myUvTransform }
+		shader.uniforms.fogOfWar = { value: uniforms.fogOfWar }
+
 		if (uniforms.masked) {
 			shader.uniforms.tMask = { value: ren.targetMask.texture }
 			shader.uniforms.maskColor = { value: uniforms.maskColor }
@@ -303,7 +310,7 @@ export function SpriteMaterial(parameters: MeshLambertMaterialParameters, unifor
 			`#include <uv_vertex>`,
 			`
 			#ifdef USE_UV
-			vUv = ( myUvTransform * vec3( uv, 1 ) ).xy;
+				vUv = ( myUvTransform * vec3( uv, 1 ) ).xy;
 			#endif
 			`
 		);
@@ -314,6 +321,7 @@ export function SpriteMaterial(parameters: MeshLambertMaterialParameters, unifor
 			varying vec2 myPosition;
 			uniform sampler2D tMask;
 			uniform vec3 maskColor;
+			uniform bool fogOfWar;
 			`
 		);
 		shader.fragmentShader = shader.fragmentShader.replace(
@@ -321,13 +329,19 @@ export function SpriteMaterial(parameters: MeshLambertMaterialParameters, unifor
 			`
 			#include <map_fragment>
 			#ifdef MASKED
-			vec4 texelColor = texture2D( tMask, myPosition );
-			
-			texelColor.rgb = mix(texelColor.rgb, maskColor, 0.7);
-			
-			if (texelColor.a > 0.5)
-			diffuseColor.rgb = texelColor.rgb;
+				vec4 texelColor = texture2D( tMask, myPosition );
+				texelColor.rgb = mix(texelColor.rgb, maskColor, 0.7);
+				if (texelColor.a > 0.5)
+				diffuseColor.rgb = texelColor.rgb;
 			#endif
+			
+			if (fogOfWar) {
+				float saturation = 0.0;
+				vec3 original_color = diffuseColor.rgb;
+				vec3 lumaWeights = vec3(.25,.50,.25);
+				vec3 grey = vec3(dot(lumaWeights, original_color));
+				diffuseColor.rgb = grey + saturation * (original_color - grey);
+			}
 			`
 		);
 	}
