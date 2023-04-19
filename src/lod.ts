@@ -91,7 +91,7 @@ namespace lod {
 		readonly arrays: sector[][] = []
 		constructor(span) {
 			gworld = this;
-			new grid(1, 1);
+			new grid(2, 2);
 		}
 		update(wpos: vec2) {
 			ggrid.big = lod.world.big(wpos);

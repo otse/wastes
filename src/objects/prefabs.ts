@@ -23,7 +23,7 @@ the code deserves to stay around
 
 export function building_factory() {
 
-	new building_parts('watertower', [41, 42]);
+	//new building_parts('watertower', [41, 42]);
 	//new building_parts('building', [50, 46]);
 	//new building_parts('brickwall', [43, 50]);
 	//new building_parts('squarebarrel', [43, 50]);

@@ -32,7 +32,7 @@ namespace objects {
 
 	export function init() {
 
-
+		
 
 	}
 
@@ -768,6 +768,7 @@ namespace objects {
 			//this.z = 29+4;
 		}
 		override tick() {
+			super.tick()
 			const sprite = this.shape as sprite;
 			if (!sprite)
 				return;

@@ -276,6 +276,12 @@ var wastes = (function (exports, THREE) {
                 if (e.button == 1)
                     return false;
             }
+            function onmouseup(e) {
+                buttons[e.button] = MOUSE.UP;
+            }
+            function onwheel(e) {
+                app.wheel = e.deltaY < 0 ? 1 : -1;
+            }
             let touchStart = [0, 0];
             function ontouchstart(e) {
                 //message("ontouchstart");
@@ -315,8 +321,6 @@ var wastes = (function (exports, THREE) {
                 //message("ontouchend");*/
                 //return false;
             }
-            function onmouseup(e) { buttons[e.button] = MOUSE.UP; }
-            function onwheel(e) { app.wheel = e.deltaY < 0 ? 1 : -1; }
             function onerror(message) { document.querySelectorAll('.stats')[0].innerHTML = message; }
             if (app.mobile) {
                 document.ontouchstart = ontouchstart;
@@ -371,7 +375,7 @@ var wastes = (function (exports, THREE) {
     var app$1 = app;
 
     const fragmentPost = `
-float saturation = 1.0;
+float saturation = 2.0;
 
 uniform int compression;
 
@@ -379,7 +383,6 @@ uniform int compression;
 // 32 is nice
 // 48 is mild
 float factor = 24.0;
-
 
 void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {
 
@@ -392,17 +395,18 @@ varying vec2 vUv;
 uniform sampler2D tDiffuse;
 void main() {
 	vec4 clr = texture2D( tDiffuse, vUv );
-	clr.rgb = mix(clr.rgb, vec3(0.5), 0.0);
-	
-	vec3 original_color = clr.rgb;
-	vec3 lumaWeights = vec3(.25,.50,.25);
-	vec3 grey = vec3(dot(lumaWeights,original_color));
-	vec4 outt = vec4(grey + saturation * (original_color - grey), 1.0);
-	//gl_FragColor = outt;
+	//clr.rgb = mix(clr.rgb, vec3(0.5), 0.0);
 	
 	if (compression == 1) {
-	mainImage(clr, vUv, gl_FragColor);
+	mainImage(clr, vUv, clr);
 	}
+
+	//vec3 original_color = clr.rgb;
+	//vec3 lumaWeights = vec3(.25,.50,.25);
+	//vec3 grey = vec3(dot(lumaWeights,original_color));
+	//clr = vec4(grey + saturation * (original_color - grey), 1.0);
+	
+	gl_FragColor = clr;
 }`;
     const vertexScreen = `
 varying vec2 vUv;
@@ -551,7 +555,7 @@ void main() {
 		      new is ${pts.to_string(ren.screenCorrected)}`);
             ren.target.setSize(ren.screenCorrected[0], ren.screenCorrected[1]);
             ren.targetMask.setSize(ren.screenCorrected[0], ren.screenCorrected[1]);
-            ren.plane = new THREE.PlaneBufferGeometry(ren.screenCorrected[0], ren.screenCorrected[1]);
+            ren.plane = new THREE.PlaneGeometry(ren.screenCorrected[0], ren.screenCorrected[1]);
             if (ren.quadPost)
                 ren.quadPost.geometry = ren.plane;
             {
@@ -699,7 +703,7 @@ void main() {
             constructor(span) {
                 this.arrays = [];
                 lod.gworld = this;
-                new grid(1, 1);
+                new grid(2, 2);
             }
             update(wpos) {
                 lod.ggrid.big = lod.world.big(wpos);
@@ -1572,6 +1576,7 @@ void main() {
                 maskColor: maskColor,
                 fogOfWar: true
             }, defines);
+            //this.material = new MeshLambertMaterial();
             this.mesh = new THREE.Mesh(this.geometry, this.material);
             this.mesh.frustumCulled = false;
             this.mesh.matrixAutoUpdate = false;
@@ -1619,8 +1624,8 @@ void main() {
 			myPosition = (projectionMatrix * mvPosition).xy / 2.0 + vec2(0.5, 0.5);
 			`);
             shader.vertexShader = shader.vertexShader.replace(`#include <uv_vertex>`, `
-			#ifdef USE_UV
-				vUv = ( myUvTransform * vec3( uv, 1 ) ).xy;
+			#ifdef USE_MAP
+				vMapUv = ( myUvTransform * vec3( uv, 1 ) ).xy;
 			#endif
 			`);
             shader.fragmentShader = shader.fragmentShader.replace(`#include <map_pars_fragment>`, `
@@ -1632,6 +1637,11 @@ void main() {
 			`);
             shader.fragmentShader = shader.fragmentShader.replace(`#include <map_fragment>`, `
 			#include <map_fragment>
+			//vec4 sampledDiffuseColor = texture2D( map, vMapUv );
+			//diffuseColor *= sampledDiffuseColor;
+			//diffuseColor.a = 1.0;
+			//diffuseColor.rgb = vec3(1, 2, 0);
+
 			#ifdef MASKED
 				vec4 texelColor = texture2D( tMask, myPosition );
 				texelColor.rgb = mix(texelColor.rgb, maskColor, 0.7);
@@ -6524,202 +6534,6 @@ void main() {
     })(collada || (collada = {}));
     var collada$1 = collada;
 
-    /*
-    this file is a success attempt at piecing apart a sketchup building
-    it however isn't more convenient than making buildings with colormaps
-
-    the code deserves to stay around
-    */
-    function building_factory() {
-        new building_parts('watertower', [41, 42]);
-        //new building_parts('building', [50, 46]);
-        //new building_parts('brickwall', [43, 50]);
-        //new building_parts('squarebarrel', [43, 50]);
-        //new building_parts('barrel', [41, 51]);
-        /*let prefab = new building;
-        prefab.wpos = [45, 48];
-        prefab.produce();
-        lod.add(prefab);*/
-    }
-    class building_parts {
-        constructor(path, corner = [41, 42]) {
-            collada$1.load_model('collada/' + path, 1, (model) => {
-                model.rotation.set(0, 0, 0);
-                //this.group.add(model);
-                //this.group.position.set(0, -23, 0);
-                //this.scene.add(new AxesHelper(100));
-                console.log('add building to scene');
-                function convert(object, target, array, bias) {
-                    if (object.name && object.name.includes(target)) {
-                        let cloned = object.clone();
-                        cloned.scale.multiplyScalar(0.43);
-                        let z = 0;
-                        //console.log("making wall ", cloned.name, cloned);
-                        let height = object.name.split(target)[1];
-                        if (height.includes("_")) {
-                            const split = height.split("_");
-                            height = parseInt(split[0]);
-                            z = parseInt(split[1]);
-                            //console.log('Z is', z);
-                        }
-                        else {
-                            height = parseInt(height);
-                        }
-                        console.log(`${target} height ${height}`);
-                        let thing = new prefab;
-                        array.push(thing);
-                        thing.model = cloned;
-                        thing.solid = true;
-                        thing.type = target;
-                        thing.bias = bias;
-                        thing.height = height;
-                        thing.z = z;
-                        //
-                        cloned.position.set(0, 0, 0);
-                        let pos = [object.position.x, object.position.y];
-                        pos = pts.divide(pos, 39.37008);
-                        pos = pts.round(pos);
-                        pos = [-pos[1], pos[0]];
-                        //console.log("prefab pos", pos);
-                        pos = pts.add(pos, corner);
-                        //console.log('original position is', object.position, pos);
-                        thing.wpos = pos;
-                        thing.rebound();
-                        lod$1.add(thing);
-                    }
-                }
-                let walls = [];
-                let roofs = [];
-                let floors = [];
-                function traverse_floors(object) {
-                    convert(object, "floor", floors, .4);
-                }
-                function traverse_walls(object) {
-                    convert(object, "wall", walls, 1.0);
-                }
-                function traverse_roofs(object) {
-                    convert(object, "roof", roofs, 1.6);
-                }
-                model.traverse(traverse_floors);
-                model.traverse((object) => {
-                    if (object.name && object.name.includes('door')) {
-                        console.log('this a door');
-                        let pos = [object.position.x, object.position.y];
-                        pos = pts.divide(pos, 39.37008);
-                        pos = pts.round(pos);
-                        pos = [-pos[1], pos[0]];
-                        pos = pts.add(pos, corner);
-                        let door = new objects$1.door;
-                        door.cell = [1, 0];
-                        door.wpos = pos;
-                        lod$1.add(door);
-                        console.log('placing door');
-                    }
-                });
-                model.traverse(traverse_walls);
-                model.traverse(traverse_roofs);
-            });
-        }
-    }
-    class prefab extends superobject {
-        constructor() {
-            super([0, 0]);
-            // render this superobject
-            this.rendered = 0;
-            this.size = [24, 40];
-        }
-        render() {
-            this.rendered++;
-            // assume after 60 frames we've rendered this prefab with textures
-            if (this.rendered > 60)
-                return;
-            const sprite = this.shape;
-            sprite.material.map = this.target.texture;
-            ren$1.renderer.setRenderTarget(this.target);
-            ren$1.renderer.clear();
-            ren$1.renderer.render(this.scene, this.camera);
-        }
-        tick() {
-            this.render();
-            if (this.type == 'wall') {
-                shadows$1.shade_matrix(this.wpos, [
-                    [0, 0, 0, 0, 0],
-                    [0, 0, 0, 0, 0],
-                    [0, 0, .8, 0, 0],
-                    [0, 0, 0, .8, 0],
-                    [0, 0, 0, 0, .8]
-                ], true);
-                //console.log('bo');
-            }
-            /*
-            if (app.key('7')) {
-                this.sun.position.x -= 1;
-            }
-            if (app.key('9')) {
-                this.sun.position.x += 1;
-            }
-            if (app.key('4')) {
-                this.sun.position.y -= 1;
-            }
-            if (app.key('6')) {
-                this.sun.position.y += 1;
-            }
-            if (app.key('1')) {
-                this.sun.position.z -= 1;
-            }
-            if (app.key('3')) {
-                this.sun.position.z += 1;
-            }
-            */
-            //console.log('sun', this.sun.position);
-        }
-        set_3d() {
-            // Set scale to increase pixels exponentially
-            const scale = 1;
-            let size = pts.mult(this.size, scale);
-            this.target = ren$1.make_render_target(size[0], size[1]);
-            this.camera = ren$1.make_orthographic_camera(size[0], size[1]);
-            this.scene = new THREE.Scene();
-            this.group = new THREE.Group();
-            //this.group.add(new AxesHelper(25));
-            this.scene.add(this.group);
-            this.scene.scale.set(scale, scale, scale);
-            //this.scene.background = new Color('gray');
-            this.scene.rotation.set(Math.PI / 6, Math.PI / 4, 0);
-            this.group.rotation.set(-Math.PI / 2, 0, 0);
-            this.scene.position.set(0, 0, 0);
-            let amb = new THREE.AmbientLight('#777');
-            this.scene.add(amb);
-            this.sun = new THREE.DirectionalLight(0xffffff, 0.25);
-            const size2 = 10;
-            this.sun.position.set(-size2, 0, size2 / 2);
-            //sun.add(new AxesHelper(100));
-            this.group.add(this.sun);
-            this.group.add(this.sun.target);
-            //sun.target.add(new AxesHelper);
-        }
-        create() {
-            //console.log('builing create');
-            //this.size = [24, 40];
-            let shape = new sprite$1({
-                binded: this,
-                tuple: sprites$1.test100,
-                cell: [0, 0],
-                orderBias: this.bias,
-                masked: true,
-                maskColor: [0.3, 0.3, 0.3]
-            });
-            shape.show();
-            this.rendered = 0;
-            this.set_3d();
-            shape.material.map = this.target.texture;
-            this.group.add(this.model);
-            this.group.position.set(0, -23, 0);
-            //this.group.add(new AxesHelper(100));
-            this.stack();
-        }
-    }
-
     var objects;
     (function (objects) {
         function factory(type, pixel, pos, hints = {}) {
@@ -6840,7 +6654,6 @@ void main() {
         objects.register = register;
         function start() {
             console.log(' objects start ');
-            building_factory();
             //prefab.wpos = [45, 48];
             //prefab.produce();
             //lod.add(prefab);
@@ -7407,6 +7220,7 @@ void main() {
                 //this.z = 29+4;
             }
             tick() {
+                super.tick();
                 const sprite = this.shape;
                 if (!sprite)
                     return;
@@ -9901,7 +9715,7 @@ void main() {
                 crunch += `you: ${pts.to_string(pts.round(pawns$1.you.wpos))}<br />`;
             crunch += `view bigpos: ${pts.to_string(lod$1.world.big(this.wpos))}<br />`;
             if (wastes.gview.center)
-                crunch += `view center: ${pts.to_string_fixed(wastes.gview.center.wpos)}<br />`;
+                crunch += `view center (unused?): ${pts.to_string_fixed(wastes.gview.center.wpos)}<br />`;
             crunch += `view zoom: ${this.zoom}<br />`;
             crunch += `lod grid: ${lod$1.ggrid.spread}, ${lod$1.ggrid.outside}<br />`;
             crunch += '<br />';

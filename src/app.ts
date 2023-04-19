@@ -59,7 +59,12 @@ namespace app {
 			if (e.button == 1)
 				return false
 		}
-		
+		function onmouseup(e) {
+			buttons[e.button] = MOUSE.UP;
+		}
+		function onwheel(e) {
+			wheel = e.deltaY < 0 ? 1 : -1;
+		}
 		let touchStart: vec2 = [0, 0];
 		function ontouchstart(e) {
 			//message("ontouchstart");
@@ -100,8 +105,7 @@ namespace app {
 			//message("ontouchend");*/
 			//return false;
 		}
-		function onmouseup(e) { buttons[e.button] = MOUSE.UP; }
-		function onwheel(e) { wheel = e.deltaY < 0 ? 1 : -1; }
+		
 		function onerror(message) { document.querySelectorAll('.stats')[0].innerHTML = message; }
 		if (mobile) {
 			document.ontouchstart = ontouchstart;

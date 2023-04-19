@@ -240,6 +240,7 @@ export class sprite extends lod.shape {
 			maskColor: maskColor,
 			fogOfWar: true
 		}, defines);
+		//this.material = new MeshLambertMaterial();
 		this.mesh = new Mesh(this.geometry, this.material);
 		this.mesh.frustumCulled = false;
 		this.mesh.matrixAutoUpdate = false;
@@ -309,8 +310,8 @@ export function SpriteMaterial(parameters: MeshLambertMaterialParameters, unifor
 		shader.vertexShader = shader.vertexShader.replace(
 			`#include <uv_vertex>`,
 			`
-			#ifdef USE_UV
-				vUv = ( myUvTransform * vec3( uv, 1 ) ).xy;
+			#ifdef USE_MAP
+				vMapUv = ( myUvTransform * vec3( uv, 1 ) ).xy;
 			#endif
 			`
 		);
@@ -328,6 +329,11 @@ export function SpriteMaterial(parameters: MeshLambertMaterialParameters, unifor
 			`#include <map_fragment>`,
 			`
 			#include <map_fragment>
+			//vec4 sampledDiffuseColor = texture2D( map, vMapUv );
+			//diffuseColor *= sampledDiffuseColor;
+			//diffuseColor.a = 1.0;
+			//diffuseColor.rgb = vec3(1, 2, 0);
+
 			#ifdef MASKED
 				vec4 texelColor = texture2D( tMask, myPosition );
 				texelColor.rgb = mix(texelColor.rgb, maskColor, 0.7);

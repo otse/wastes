@@ -1,4 +1,4 @@
-import { default as THREE, OrthographicCamera, PerspectiveCamera, Clock, Scene, WebGLRenderer, Texture, TextureLoader, WebGLRenderTarget, ShaderMaterial, Mesh, PlaneBufferGeometry, Color, NearestFilter, RGBAFormat, Group, Renderer as ren, AmbientLight, DirectionalLight } from 'three';
+import { default as THREE, OrthographicCamera, PerspectiveCamera, Clock, Scene, WebGLRenderer, Texture, TextureLoader, WebGLRenderTarget, ShaderMaterial, Mesh, PlaneGeometry, Color, NearestFilter, RGBAFormat, Group, Renderer as ren, AmbientLight, DirectionalLight } from 'three';
 
 import app from './app';
 import pts from './pts';
@@ -14,7 +14,7 @@ void main() {
 }`
 
 const fragmentPost = `
-float saturation = 1.0;
+float saturation = 2.0;
 
 uniform int compression;
 
@@ -22,7 +22,6 @@ uniform int compression;
 // 32 is nice
 // 48 is mild
 float factor = 24.0;
-
 
 void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {
 
@@ -35,17 +34,18 @@ varying vec2 vUv;
 uniform sampler2D tDiffuse;
 void main() {
 	vec4 clr = texture2D( tDiffuse, vUv );
-	clr.rgb = mix(clr.rgb, vec3(0.5), 0.0);
-	
-	vec3 original_color = clr.rgb;
-	vec3 lumaWeights = vec3(.25,.50,.25);
-	vec3 grey = vec3(dot(lumaWeights,original_color));
-	vec4 outt = vec4(grey + saturation * (original_color - grey), 1.0);
-	//gl_FragColor = outt;
+	//clr.rgb = mix(clr.rgb, vec3(0.5), 0.0);
 	
 	if (compression == 1) {
-	mainImage(clr, vUv, gl_FragColor);
+	mainImage(clr, vUv, clr);
 	}
+
+	//vec3 original_color = clr.rgb;
+	//vec3 lumaWeights = vec3(.25,.50,.25);
+	//vec3 grey = vec3(dot(lumaWeights,original_color));
+	//clr = vec4(grey + saturation * (original_color - grey), 1.0);
+	
+	gl_FragColor = clr;
 }`
 
 
@@ -267,7 +267,7 @@ namespace ren {
 		target.setSize(screenCorrected[0], screenCorrected[1]);
 		targetMask.setSize(screenCorrected[0], screenCorrected[1]);
 
-		plane = new PlaneBufferGeometry(screenCorrected[0], screenCorrected[1]);
+		plane = new PlaneGeometry(screenCorrected[0], screenCorrected[1]);
 
 		if (quadPost)
 			quadPost.geometry = plane;
