@@ -51,7 +51,7 @@ namespace lod {
 
 	const chunk_coloration = false;
 
-	const fog_of_war = true;
+	const fog_of_war = false;
 
 	const grid_crawl_makes_sectors = true;
 

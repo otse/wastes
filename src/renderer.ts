@@ -175,6 +175,7 @@ namespace ren {
 
 		clock = new Clock()
 
+		THREE.ColorManagement.enabled = false;
 		THREE.Object3D.DefaultMatrixAutoUpdate = true;
 
 		groups.axisSwap = new Group;
@@ -189,6 +190,8 @@ namespace ren {
 
 		scene.add(groups.axisSwap);
 		scene.background = new Color('#333');
+
+		//scene.background.fromArray(([51/255,51/255,51/255, 1]));
 		
 		scene2 = new Scene();
 		scene2.matrixAutoUpdate = false;
@@ -216,6 +219,7 @@ namespace ren {
 		renderer.setSize(100, 100);
 		renderer.autoClear = true;
 		renderer.setClearColor(0xffffff, 0.0);
+		renderer.outputColorSpace = THREE.RGBColorSpace;
 		//renderer.setClearAlpha(1.0);
 
 		document.body.appendChild(renderer.domElement);

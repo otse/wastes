@@ -266,7 +266,6 @@ export class sprite extends lod.shape {
 			this.wireframe.matrixAutoUpdate = false;
 			ren.groups.axisSwap.add(this.wireframe);
 			console.log('add wireframe');
-
 		}
 
 		this.shape_manual_update();

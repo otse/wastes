@@ -484,6 +484,7 @@ void main() {
         function init() {
             console.log('renderer init');
             ren.clock = new THREE.Clock();
+            THREE__default["default"].ColorManagement.enabled = false;
             THREE__default["default"].Object3D.DefaultMatrixAutoUpdate = true;
             groups.axisSwap = new THREE.Group;
             groups.axisSwap.frustumCulled = false;
@@ -495,6 +496,7 @@ void main() {
             ren.scene.matrixWorldAutoUpdate = false;
             ren.scene.add(groups.axisSwap);
             ren.scene.background = new THREE.Color('#333');
+            //scene.background.fromArray(([51/255,51/255,51/255, 1]));
             ren.scene2 = new THREE.Scene();
             ren.scene2.matrixAutoUpdate = false;
             ren.sceneMask = new THREE.Scene();
@@ -515,6 +517,7 @@ void main() {
             ren.renderer.setSize(100, 100);
             ren.renderer.autoClear = true;
             ren.renderer.setClearColor(0xffffff, 0.0);
+            ren.renderer.outputColorSpace = THREE__default["default"].RGBColorSpace;
             //renderer.setClearAlpha(1.0);
             document.body.appendChild(ren.renderer.domElement);
             window.addEventListener('resize', onWindowResize, false);
@@ -869,17 +872,6 @@ void main() {
                         sector.tick();
                         this.visibleObjs = this.visibleObjs.concat(sector.objs);
                     }
-                    {
-                        if (sector.dist() == this.outside) {
-                            //console.log('brim-chunk');
-                            sector.fog_of_war = true;
-                            //sector.color = '#555555';
-                        }
-                        else {
-                            sector.fog_of_war = false;
-                            //sector.color = '#ffffff';
-                        }
-                    }
                 }
             }
             ticks() {
@@ -1122,7 +1114,7 @@ void main() {
         sprites.dwoodywalls = [[264, 40], [24, 40], 0, 'tex/8bit/dwoodywalls'];
         sprites.dplywoodwalls = [[264, 40], [24, 40], 0, 'tex/8bit/dcommonwalls'];
         sprites.dovergrownwalls = [[264, 40], [24, 40], 0, 'tex/8bit/dovergrownwalls'];
-        sprites.dderingerwalls = [[264, 40], [24, 40], 0, 'tex/8bit/dderingerwalls'];
+        sprites.dderingerwalls = [[264, 40], [24, 40], 0, 'tex/8bit/dsideroomwalls'];
         sprites.dmedievalwalls = [[264, 40], [24, 40], 0, 'tex/8bit/dmedievalwalls'];
         sprites.dscrappywalls = [[264, 40], [24, 40], 0, 'tex/dscrappywalls'];
         //export const dscrappywalls2: tuple = [[216, 40], [24, 40], 0, 'tex/dscrappywalls2']
@@ -9248,7 +9240,7 @@ void main() {
                 this.groups.gunbarrel.add(this.meshes.gunbarrel);*/
                 /*this.groups.gungrip.add(this.groups.gunbarrel);
                 this.groups.armr.add(this.groups.gungrip);*/
-                //this.groups.head.add(this.meshes.helmet);
+                this.groups.head.add(this.meshes.helmet);
                 this.groups.body.add(this.groups.head);
                 this.groups.body.add(this.groups.arml);
                 this.groups.body.add(this.groups.armr);

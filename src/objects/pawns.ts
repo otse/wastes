@@ -395,7 +395,7 @@ export namespace pawns {
 			/*this.groups.gungrip.add(this.groups.gunbarrel);
 			this.groups.armr.add(this.groups.gungrip);*/
 
-			//this.groups.head.add(this.meshes.helmet);
+			this.groups.head.add(this.meshes.helmet);
 
 			this.groups.body.add(this.groups.head);
 			this.groups.body.add(this.groups.arml);
