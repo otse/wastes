@@ -32,14 +32,10 @@ namespace objects {
 
 	export function init() {
 
-		
-
 	}
 
 	export function register() {
-
 		console.log(' objects register ');
-
 		for (let id of ['heightmap', 'objectmap', 'buildingmap', 'treemap', 'colormap', 'roughmap', 'roofmap']) {
 			var img = document.getElementById(id) as any;
 			if (!img.complete) {

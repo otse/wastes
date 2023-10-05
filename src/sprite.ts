@@ -251,7 +251,6 @@ export class sprite extends lod.shape {
 				this.meshMask.material = this.material.clone();
 				this.meshMask.material.blending = THREE.CustomBlending;
 				this.meshMask.material.blendEquation = THREE.ReverseSubtractEquation;
-
 			}
 		}
 		// this.vars.binded.sector?.group.add(this.mesh);

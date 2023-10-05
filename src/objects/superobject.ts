@@ -11,10 +11,10 @@ import tiles from "../tiles"
 import wastes from "../wastes"
 
 export class superobject extends lod.obj {
+	isSuper = true
 	static focus: superobject
 	title = ''
 	examine = ''
-	isSuper = true
 	paintTimer = 0
 	paintedRed = false
 	pixel?: colormap.pixel

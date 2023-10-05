@@ -168,14 +168,14 @@ function registrations() {
     talker.subtype = 'civilian';
     talker.walkArea = new aabb2_1.default([43.5, 61.5], [45.5, 59.5]);
     slod_1.default.add(talker);
-    //for (let i = 0; i < 10; i++) {
-    let shadowChicken = new chicken;
-    shadowChicken.wpos = [42, 53];
-    shadowChicken.respawns = true;
-    shadowChicken.examine = 'This chicken likes the shadow.';
-    shadowChicken.walkArea = new aabb2_1.default([41, 54], [43, 51]);
-    slod_1.default.add(shadowChicken);
-    //}
+    for (let i = 0; i < 10; i++) {
+        let shadowChicken = new chicken;
+        shadowChicken.wpos = [42, 53];
+        shadowChicken.respawns = true;
+        shadowChicken.examine = 'This chicken likes the shadow.';
+        shadowChicken.walkArea = new aabb2_1.default([41, 54], [43, 51]);
+        slod_1.default.add(shadowChicken);
+    }
 }
 const tick_rate = 333;
 var delta = tick_rate / 1000;

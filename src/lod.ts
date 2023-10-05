@@ -292,7 +292,7 @@ namespace lod {
 	};
 
 	export class obj extends toggle {
-		id = -1
+		id = -1 
 		type = 'an obj'
 		networked = false
 		solid = false

@@ -54,11 +54,19 @@ export namespace client {
 		type sobj = [random: any, id: number, wpos: vec2, angle: number, type?: string]
 		type news = sobj[];
 
+		/*
+		hey what's up
+		the code isn't the best
+		this function goes over the entire sent news array
+		but only passes when the target matches the type or type2
+		this lets us effectively factory superobjects with custom handle code
+
+		*/
 		function process_news<type extends superobject>(
-			type: { new(): type },
+			type: { new(): type},
 			target: string,
 			data: any,
-			handle,
+			handle: (obj: any, sobj: any) => void,
 			update) {
 
 			for (let sobj of data.news as news) {

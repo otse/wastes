@@ -179,14 +179,14 @@ function registrations() {
 	slod.add(talker);
 
 
-	//for (let i = 0; i < 10; i++) {
+	for (let i = 0; i < 10; i++) {
 	let shadowChicken = new chicken;
 	shadowChicken.wpos = [42, 53];
 	shadowChicken.respawns = true;
 	shadowChicken.examine = 'This chicken likes the shadow.';
 	shadowChicken.walkArea = new aabb2([41, 54], [43, 51]);
 	slod.add(shadowChicken);
-	//}
+	}
 }
 
 const tick_rate = 333;
